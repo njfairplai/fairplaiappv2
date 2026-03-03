@@ -1,12 +1,13 @@
 'use client'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Search, Play, X, ChevronLeft, ChevronRight, Bookmark as BookmarkIcon, SkipBack, SkipForward, Rewind, FastForward, Pause } from 'lucide-react'
+import { Search, Play, X, ChevronLeft, ChevronRight, ChevronDown, Bookmark as BookmarkIcon, SkipBack, SkipForward, Rewind, FastForward, Pause } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { sessions, highlights, players, pitches, rosters, bookmarks, sessionSegments, squadScores } from '@/lib/mockData'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
 import type { Session, Highlight, Bookmark } from '@/lib/types'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── COLORS ──────────────────────────────────────────────────
 const C = {
@@ -156,6 +157,7 @@ export default function WatchPage() {
   const [selectedEventType, setSelectedEventType] = useState<string | null>(null)
   const [markNote, setMarkNote] = useState('')
   const [markSuccess, setMarkSuccess] = useState(false)
+  const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({})
 
   // ─── ROSTER PLAYERS ─────────────────────────────────────────
   const rosterPlayerIds = rosterPlayerMap[selectedRosterId] || []
@@ -201,6 +203,37 @@ export default function WatchPage() {
       const dateStr = session ? formatDateShort(session.date).toLowerCase() : ''
       return playerName.includes(q) || h.eventType.toLowerCase().includes(q) || dateStr.includes(q)
     })
+
+  // Grouped highlights by session
+  const groupedHighlights = useMemo(() => {
+    const groups: Record<string, { session: typeof sessions[0]; clips: typeof highlights }> = {}
+    const sourceHighlights = highlights.filter(h => h.squadId === selectedRosterId)
+
+    for (const clip of sourceHighlights) {
+      if (!groups[clip.sessionId]) {
+        const session = sessions.find(s => s.id === clip.sessionId)
+        if (!session) continue
+        groups[clip.sessionId] = { session, clips: [] }
+      }
+      groups[clip.sessionId].clips.push(clip)
+    }
+
+    return Object.values(groups).sort((a, b) => b.session.date.localeCompare(a.session.date))
+  }, [selectedRosterId])
+
+  // Initialize expanded state: 2 most recent groups expanded by default
+  const isSessionExpanded = (sessionId: string): boolean => {
+    if (expandedSessions[sessionId] !== undefined) return expandedSessions[sessionId]
+    const idx = groupedHighlights.findIndex(g => g.session.id === sessionId)
+    return idx < 2
+  }
+
+  const toggleSession = (sessionId: string) => {
+    setExpandedSessions(prev => ({
+      ...prev,
+      [sessionId]: !isSessionExpanded(sessionId),
+    }))
+  }
 
   // ─── DVR HELPERS ───────────────────────────────────────────
   const dvrTotalDuration = dvrSession ? calcDurationSeconds(dvrSession.startTime, dvrSession.endTime) : 0
@@ -467,8 +500,8 @@ export default function WatchPage() {
                     style={{
                       background: '#fff',
                       borderRadius: 14,
-                      padding: 16,
-                      marginBottom: 10,
+                      padding: '12px 14px',
+                      marginBottom: 8,
                       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
                     }}
                   >
@@ -530,10 +563,10 @@ export default function WatchPage() {
                       onClick={() => openDvr(session)}
                       style={{
                         width: '100%',
-                        height: 38,
+                        height: 36,
                         background: '#0A0E1A',
                         color: '#fff',
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: 600,
                         borderRadius: 8,
                         marginTop: 12,
@@ -719,142 +752,193 @@ export default function WatchPage() {
 
           {/* Result count */}
           <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, margin: '10px 0' }}>
-            Showing {filteredHighlights.length} clips &middot; {rosterName}
+            {highlightSearch.trim()
+              ? `Showing ${filteredHighlights.length} clips · ${rosterName}`
+              : `${highlights.filter(h => h.squadId === selectedRosterId).length} clips · ${groupedHighlights.length} sessions · ${rosterName}`
+            }
           </div>
 
-          {/* 2-column grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {filteredHighlights.map(clip => {
-              const clipPlayer = players.find(p => p.id === clip.playerId)
-              const playerName = clipPlayer ? `${clipPlayer.firstName} ${clipPlayer.lastName}` : 'Unknown'
-              const session = sessions.find(s => s.id === clip.sessionId)
-              const sessionDate = session ? formatDateShort(session.date) : ''
-              const opponent = session?.opponent ? `vs ${session.opponent}` : ''
-              const sessionContext = [sessionDate, opponent].filter(Boolean).join(' \u00B7 ')
-              const cardBadge = getCardBadge(clip.eventType, clip.flaggedByCoach)
-              const durationFormatted = `${Math.floor(clip.durationSeconds / 60)}:${(clip.durationSeconds % 60).toString().padStart(2, '0')}`
+          {/* Search active → flat ungrouped list */}
+          {highlightSearch.trim() ? (
+            <div>
+              {filteredHighlights.map((clip, clipIdx) => {
+                const clipPlayer = players.find(p => p.id === clip.playerId)
+                const playerName = clipPlayer ? `${clipPlayer.firstName} ${clipPlayer.lastName}` : 'Unknown'
+                const session = sessions.find(s => s.id === clip.sessionId)
+                const sessionDate = session ? formatDateShort(session.date) : ''
+                const opponent = session?.opponent ? `vs ${session.opponent}` : 'Training'
+                const badge = getEventBadge(clip.eventType)
+                const minute = Math.floor(clip.timestampSeconds / 60)
+                const durationFormatted = `${Math.floor(clip.durationSeconds / 60)}:${(clip.durationSeconds % 60).toString().padStart(2, '0')}`
 
-              return (
-                <div
-                  key={clip.id}
-                  onClick={() => openClip(clip)}
-                  style={{
-                    aspectRatio: '2/3',
-                    borderRadius: 14,
-                    overflow: 'hidden',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    background: 'linear-gradient(180deg, #1B1650 0%, #0A0E1A 100%)',
-                  }}
-                >
-                  {/* Pitch overlay */}
-                  {renderPitchOverlay(0.04)}
+                return (
+                  <motion.div
+                    key={clip.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: clipIdx * 0.04, duration: 0.2 }}
+                    onClick={() => openClip(clip)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 12px',
+                      background: 'rgba(255,255,255,0.04)',
+                      borderRadius: 10,
+                      marginBottom: 6,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <PlayerAvatar player={clipPlayer!} size="sm" />
+                    <span style={{ ...badge, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: badge.bg, color: badge.color }}>{badge.label}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{minute}&apos;</span>
+                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 600, flex: 1 }}>{playerName}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>{sessionDate} · {opponent}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, background: 'rgba(255,255,255,0.08)', borderRadius: 6, padding: '2px 6px' }}>{durationFormatted}</span>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: getConfidenceColor(clip.aiConfidence) }} />
+                  </motion.div>
+                )
+              })}
+            </div>
+          ) : (
+            /* Grouped by session feed */
+            <div>
+              {groupedHighlights.map(group => {
+                const { session, clips } = group
+                const expanded = isSessionExpanded(session.id)
+                const sessionLabel = session.opponent ? `vs ${session.opponent}` : 'Training Session'
+                const sessionDate = formatDateShort(session.date)
+                const uniquePlayerIds = [...new Set(clips.map(c => c.playerId))]
+                const avatarPlayers = uniquePlayerIds.slice(0, 4).map(pid => players.find(p => p.id === pid)).filter(Boolean)
+                const moreCount = uniquePlayerIds.length - 4
 
-                  {/* Player photo strip (bottom 40%) */}
-                  {clipPlayer?.photo && !clipImgErrors[clip.id] && (
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', overflow: 'hidden' }}>
-                      <Image src={clipPlayer.photo} alt="" fill style={{ objectFit: 'cover', objectPosition: 'top' }} onError={() => setClipImgErrors(prev => ({ ...prev, [clip.id]: true }))} />
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 0%, rgba(10,14,26,0.95) 70%)' }} />
+                return (
+                  <div key={session.id} style={{ marginBottom: 8 }}>
+                    {/* Session header */}
+                    <div
+                      onClick={() => toggleSession(session.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '10px 12px',
+                        background: 'rgba(255,255,255,0.06)',
+                        borderRadius: expanded ? '10px 10px 0 0' : 10,
+                        cursor: 'pointer',
+                        gap: 10,
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>{sessionLabel}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 }}>{sessionDate}</div>
+                      </div>
+                      {/* Clip count badge */}
+                      <span style={{
+                        background: 'rgba(74,74,255,0.2)',
+                        color: '#818CF8',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        borderRadius: 10,
+                        padding: '2px 8px',
+                      }}>
+                        {clips.length} clip{clips.length !== 1 ? 's' : ''}
+                      </span>
+                      {/* Chevron */}
+                      <div style={{
+                        transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 200ms ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}>
+                        <ChevronDown size={18} color="rgba(255,255,255,0.5)" />
+                      </div>
                     </div>
-                  )}
 
-                  {/* Event badge top-left */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    zIndex: 2,
-                    background: 'rgba(10,14,26,0.8)',
-                    backdropFilter: 'blur(4px)',
-                    WebkitBackdropFilter: 'blur(4px)',
-                    borderRadius: 6,
-                    padding: '3px 8px',
-                    borderLeft: `3px solid ${cardBadge.borderColor}`,
-                    color: '#fff',
-                    fontSize: 10,
-                    fontWeight: 700,
-                  }}>
-                    {cardBadge.label}
-                  </div>
+                    {/* Collapsed: stacked avatar strip */}
+                    {!expanded && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '8px 12px',
+                        background: 'rgba(255,255,255,0.03)',
+                        borderRadius: '0 0 10px 10px',
+                        gap: 4,
+                      }}>
+                        <div style={{ display: 'flex' }}>
+                          {avatarPlayers.map((p, i) => (
+                            <div key={p!.id} style={{ marginLeft: i > 0 ? -8 : 0, zIndex: avatarPlayers.length - i }}>
+                              <PlayerAvatar player={p!} size="sm" />
+                            </div>
+                          ))}
+                        </div>
+                        {moreCount > 0 && (
+                          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginLeft: 4 }}>+{moreCount} more</span>
+                        )}
+                      </div>
+                    )}
 
-                  {/* Duration pill top-right */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    zIndex: 2,
-                    background: 'rgba(10,14,26,0.7)',
-                    backdropFilter: 'blur(4px)',
-                    WebkitBackdropFilter: 'blur(4px)',
-                    borderRadius: 6,
-                    padding: '3px 6px',
-                    color: '#fff',
-                    fontSize: 10,
-                  }}>
-                    {durationFormatted}
-                  </div>
+                    {/* Expanded: clip rows */}
+                    <AnimatePresence>
+                      {expanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          style={{ overflow: 'hidden', background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 10px 10px' }}
+                        >
+                          {clips.map((clip, clipIdx) => {
+                            const clipPlayer = players.find(p => p.id === clip.playerId)
+                            const playerName = clipPlayer ? `${clipPlayer.firstName} ${clipPlayer.lastName}` : 'Unknown'
+                            const badge = getEventBadge(clip.eventType)
+                            const minute = Math.floor(clip.timestampSeconds / 60)
+                            const durationFormatted = `${Math.floor(clip.durationSeconds / 60)}:${(clip.durationSeconds % 60).toString().padStart(2, '0')}`
 
-                  {/* Play button centered */}
-                  <div style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.15)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'absolute',
-                    top: '38%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 2,
-                  }}>
-                    <div style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '14px solid #4A4AFF',
-                      borderTop: '8px solid transparent',
-                      borderBottom: '8px solid transparent',
-                      marginLeft: 3,
-                    }} />
+                            return (
+                              <motion.div
+                                key={clip.id}
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: clipIdx * 0.04, duration: 0.2 }}
+                                onClick={() => openClip(clip)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 10,
+                                  padding: '10px 12px',
+                                  borderTop: clipIdx > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <PlayerAvatar player={clipPlayer!} size="sm" />
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: badge.bg, color: badge.color }}>{badge.label}</span>
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{minute}&apos;</span>
+                                <span style={{ color: '#fff', fontSize: 13, fontWeight: 600, flex: 1 }}>{playerName}</span>
+                                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, background: 'rgba(255,255,255,0.08)', borderRadius: 6, padding: '2px 6px' }}>{durationFormatted}</span>
+                                {/* Play button */}
+                                <div style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: '50%',
+                                  background: 'rgba(74,74,255,0.2)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}>
+                                  <Play size={12} color="#818CF8" fill="#818CF8" />
+                                </div>
+                                {/* AI confidence dot */}
+                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: getConfidenceColor(clip.aiConfidence) }} />
+                              </motion.div>
+                            )
+                          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-
-                  {/* Bottom info */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 6,
-                    left: 0,
-                    right: 0,
-                    padding: '0 10px',
-                    zIndex: 2,
-                  }}>
-                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 11 }}>{playerName}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10 }}>{sessionContext}</div>
-                  </div>
-
-                  {/* AI confidence bar */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    zIndex: 3,
-                    background: 'transparent',
-                  }}>
-                    <div style={{
-                      width: `${clip.aiConfidence}%`,
-                      height: 3,
-                      background: getConfidenceColor(clip.aiConfidence),
-                    }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 

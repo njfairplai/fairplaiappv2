@@ -1,7 +1,8 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import { sessions, players, squadScores, highlights } from '@/lib/mockData'
+import Image from 'next/image'
+import { sessions, players, squadScores, highlights, sessionTeamScores } from '@/lib/mockData'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
 import type { Highlight } from '@/lib/types'
 
@@ -62,6 +63,14 @@ function getPositionColor(position: string): string {
   if (['CM', 'AM', 'DM', 'CDM'].includes(position)) return C.primary
   if (['ST', 'CF', 'LW', 'RW'].includes(position)) return '#DC2626'
   return C.muted
+}
+
+function getPositionGradient(position: string): string {
+  if (position === 'GK') return 'linear-gradient(160deg, #D97706 0%, #B45309 100%)'
+  if (['CB', 'LB', 'RB'].includes(position)) return 'linear-gradient(160deg, #059669 0%, #047857 100%)'
+  if (['CM', 'AM', 'DM', 'CDM'].includes(position)) return 'linear-gradient(160deg, #4A4AFF 0%, #3025AE 100%)'
+  if (['ST', 'CF', 'LW', 'RW'].includes(position)) return 'linear-gradient(160deg, #DC2626 0%, #B91C1C 100%)'
+  return 'linear-gradient(160deg, #6E7180 0%, #40424D 100%)'
 }
 
 /* ── hide-scrollbar CSS ── */
@@ -125,7 +134,21 @@ export default function MatchAnalysisPage() {
       <style dangerouslySetInnerHTML={{ __html: hideScrollbarCSS }} />
 
       {/* ─── 1. DARK HEADER ─── */}
-      <div style={{ background: C.darkBg, padding: '48px 20px 20px' }}>
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '48px 20px 20px' }}>
+        {/* Team photo background */}
+        <Image
+          src="/players/teamphoto.jpg"
+          alt="Team"
+          fill
+          style={{ objectFit: 'cover', objectPosition: 'center top' }}
+        />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to bottom, rgba(10,14,26,0.85) 0%, rgba(10,14,26,0.98) 100%)',
+          zIndex: 1,
+        }} />
+        <div style={{ position: 'relative', zIndex: 2 }}>
         {/* Back button */}
         <div
           onClick={() => router.back()}
@@ -214,8 +237,22 @@ export default function MatchAnalysisPage() {
                 {avgScore >= 75 ? 'Strong Performance' : avgScore >= 60 ? 'Average Performance' : 'Needs Improvement'}
               </div>
             </div>
+            {/* W/D/L badge */}
+            <div style={{
+              background: avgScore >= 75 ? '#10B981' : avgScore >= 60 ? '#F59E0B' : '#EF4444',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 700,
+              borderRadius: 20,
+              padding: '3px 10px',
+              marginLeft: 8,
+              alignSelf: 'center',
+            }}>
+              {avgScore >= 75 ? 'W' : avgScore >= 60 ? 'D' : 'L'}
+            </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* ─── 2. TOP PERFORMERS ─── */}
@@ -281,37 +318,124 @@ export default function MatchAnalysisPage() {
       {/* ─── 3. SQUAD PERFORMANCE ─── */}
       {isAnalysed && squadPerformance.length > 0 && (
         <div style={{ padding: '0 16px 20px' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.navy, marginBottom: 12 }}>
-            Squad Performance
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 10 }}>
+            SQUAD PERFORMANCE
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {squadPerformance.map(({ player, compositeScore }) => {
               const scoreColor = getScoreColor(compositeScore)
+              const position = player.position[0] || 'CM'
+              const posColor = getPositionColor(position)
+              const initials = (player.firstName[0] || '') + (player.lastName[0] || '')
+              const avgPlayerScore = squadScores[player.id]?.avgScore ?? 0
+              const diff = compositeScore - avgPlayerScore
+              let trendColor = '#9DA2B3'
+              let trendText = '\u2192'
+              if (diff > 3) { trendColor = '#10B981'; trendText = `\u2191+${diff}` }
+              else if (diff < -3) { trendColor = '#EF4444'; trendText = `\u2193${diff}` }
+
               return (
                 <div
                   key={player.id}
+                  onClick={() => router.push(`/coach/squad/${player.id}`)}
                   style={{
-                    background: '#FFFFFF',
-                    borderRadius: 12,
-                    padding: 12,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
+                    height: 200,
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06)',
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <PlayerAvatar player={player} size="sm" />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.navy, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {player.firstName}
-                      </div>
+                  {/* Photo or gradient fallback */}
+                  {player.photo ? (
+                    <Image
+                      src={player.photo}
+                      alt={`${player.firstName} ${player.lastName}`}
+                      fill
+                      style={{ objectFit: 'cover', objectPosition: 'top center' }}
+                    />
+                  ) : (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: getPositionGradient(position),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <span style={{ fontSize: 36, fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>{initials}</span>
                     </div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: scoreColor, flexShrink: 0 }}>
-                      {compositeScore}
-                    </div>
+                  )}
+
+                  {/* Gradient overlay */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                    background: 'linear-gradient(160deg, rgba(10,14,26,0.0) 0%, rgba(10,14,26,0.1) 35%, rgba(10,14,26,0.7) 65%, rgba(10,14,26,0.96) 100%)',
+                  }} />
+
+                  {/* Position pill top-left */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 8,
+                    left: 8,
+                    zIndex: 2,
+                    background: `${posColor}D9`,
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: 10,
+                    padding: '3px 7px',
+                    borderRadius: 20,
+                  }}>
+                    {position}
                   </div>
-                  {/* Score bar */}
-                  <div style={{ height: 4, borderRadius: 2, background: '#F1F5F9', marginTop: 8, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', borderRadius: 2, background: scoreColor, width: `${compositeScore}%` }} />
+
+                  {/* Jersey badge top-right */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 2,
+                    width: 26,
+                    height: 26,
+                    borderRadius: '50%',
+                    background: 'rgba(10,14,26,0.75)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(8px)',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: 11,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {player.jerseyNumber}
+                  </div>
+
+                  {/* Bottom content */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: '10px 12px',
+                    zIndex: 2,
+                  }}>
+                    <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 14, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+                      {player.firstName} {player.lastName}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                      <span style={{ fontSize: 24, fontWeight: 800, color: scoreColor, textShadow: `0 0 8px ${scoreColor}66` }}>
+                        {compositeScore}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: trendColor }}>
+                        {trendText}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )

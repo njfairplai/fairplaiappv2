@@ -17,6 +17,8 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const router = useRouter()
 
+  const activeIndex = tabs.findIndex(tab => pathname.startsWith(tab.href))
+
   return (
     <TeamProvider>
       <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 80, minHeight: '100vh', background: '#F8F9FC' }}>
@@ -39,7 +41,22 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
           margin: '0 auto',
           height: 64,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          position: 'relative',
         }}>
+          {/* Sliding active indicator */}
+          {activeIndex >= 0 && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: `calc(${activeIndex * 20 + 10}% - 1px)`,
+              width: 2,
+              height: 20,
+              background: '#4A4AFF',
+              borderRadius: 1,
+              transition: 'left 300ms ease',
+            }} />
+          )}
+
           {tabs.map(tab => {
             const isActive = pathname.startsWith(tab.href)
             const Icon = tab.icon
@@ -60,27 +77,13 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
                   padding: 0,
                 }}
               >
-                {/* Active indicator bar at top of nav */}
-                {isActive && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 2,
-                    height: 20,
-                    background: '#4A4AFF',
-                    borderRadius: 1,
-                  }} />
-                )}
-
                 {/* Pill background + icon + label container */}
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 2,
-                  padding: isActive ? '4px 16px' : '4px 16px',
+                  padding: '4px 16px',
                   borderRadius: 12,
                   background: isActive ? 'rgba(74,74,255,0.12)' : 'transparent',
                   position: 'relative',

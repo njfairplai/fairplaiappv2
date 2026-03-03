@@ -506,6 +506,7 @@ export default function PlayerDetailPage() {
       {activeTab === 'stats' && (
         <div style={{ background: '#F8F9FC', padding: 16 }}>
           {/* 1) Physical Stats Cards Row */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 0, marginBottom: 10 }}>PHYSICAL</div>
           <div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
             {[
               { value: `${distanceCovered} km`, trend: '+9%', label: 'Distance', icon: '\uD83C\uDFC3' },
@@ -518,7 +519,7 @@ export default function PlayerDetailPage() {
                   flex: 1,
                   background: '#FFFFFF',
                   borderRadius: 12,
-                  padding: 14,
+                  padding: 12,
                   boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
                 }}
               >
@@ -553,12 +554,13 @@ export default function PlayerDetailPage() {
           </div>
 
           {/* 2) Radar Chart */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 20, marginBottom: 10 }}>PERFORMANCE</div>
           <div
             style={{
               background: '#FFFFFF',
               borderRadius: 14,
               padding: 16,
-              marginTop: 12,
+              marginTop: 0,
               boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >
@@ -579,12 +581,13 @@ export default function PlayerDetailPage() {
           </div>
 
           {/* 3) Category Grades Grid */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 20, marginBottom: 10 }}>CATEGORIES</div>
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: 8,
-              marginTop: 12,
+              marginTop: 0,
             }}
           >
             {categoryGrades.map((cg, i) => {
@@ -615,7 +618,8 @@ export default function PlayerDetailPage() {
                       height: '100%',
                       borderRadius: 2,
                       background: gradeColor,
-                      width: `${cg.score}%`,
+                      width: barsAnimated ? `${cg.score}%` : '0%',
+                      transition: 'width 600ms ease-out',
                     }} />
                   </div>
                   {/* Sub-metric pills */}
@@ -641,12 +645,13 @@ export default function PlayerDetailPage() {
           </div>
 
           {/* 4) Season Progression Chart */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 20, marginBottom: 10 }}>SEASON</div>
           <div
             style={{
               background: '#FFFFFF',
               borderRadius: 14,
               padding: 16,
-              marginTop: 12,
+              marginTop: 0,
               boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >
@@ -657,12 +662,13 @@ export default function PlayerDetailPage() {
           </div>
 
           {/* 5) Percentile Bars */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 20, marginBottom: 10 }}>PEER COMPARISON</div>
           <div
             style={{
               background: '#FFFFFF',
               borderRadius: 14,
               padding: 16,
-              marginTop: 12,
+              marginTop: 0,
               boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >

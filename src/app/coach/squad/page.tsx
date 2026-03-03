@@ -1,12 +1,13 @@
 'use client'
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { AlertTriangle } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { COLORS } from '@/lib/constants'
-import { players, rosters, squadScores } from '@/lib/mockData'
+import { players, rosters, squadScores, playerStandoutMetrics } from '@/lib/mockData'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
+import { motion } from 'framer-motion'
 import type { Player } from '@/lib/types'
 
 const rosterPlayerMap: Record<string, string[]> = {
@@ -49,6 +50,7 @@ export default function SquadPage() {
   const handleImgError = useCallback((playerId: string) => {
     setImgErrors(prev => ({ ...prev, [playerId]: true }))
   }, [])
+  const [animatedScores, setAnimatedScores] = useState<Record<string, number>>({})
 
   const selectedRoster = rosters.find(r => r.id === selectedRosterId) || rosters[0]
 
@@ -72,6 +74,36 @@ export default function SquadPage() {
         return arr
     }
   }, [rosterPlayers, sortBy])
+
+  useEffect(() => {
+    const targets: Record<string, number> = {}
+    for (const p of sortedPlayers) {
+      targets[p.id] = squadScores[p.id]?.compositeScore ?? 0
+    }
+    const duration = 600
+    let start: number | null = null
+    let rafId: number
+
+    const step = (timestamp: number) => {
+      if (start === null) start = timestamp
+      const elapsed = timestamp - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+
+      const current: Record<string, number> = {}
+      for (const id in targets) {
+        current[id] = eased * targets[id]
+      }
+      setAnimatedScores(current)
+
+      if (progress < 1) {
+        rafId = requestAnimationFrame(step)
+      }
+    }
+
+    rafId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(rafId)
+  }, [timeframe, sortedPlayers])
 
   // Find flagged player (avgScore - compositeScore > 15)
   const flaggedPlayer = useMemo(() => {
@@ -214,14 +246,15 @@ export default function SquadPage() {
 
       {/* SQUAD GRID */}
       <div
+        key={timeframe}
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: 12,
+          gap: 10,
           padding: 16,
         }}
       >
-        {sortedPlayers.map(player => {
+        {sortedPlayers.map((player, index) => {
           const score = squadScores[player.id]
           const compositeScore = score?.compositeScore ?? 0
           const avgScore = score?.avgScore ?? 0
@@ -242,12 +275,17 @@ export default function SquadPage() {
           }
 
           return (
-            <div
+            <motion.div
               key={player.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.06, duration: 0.3 }}
+            >
+            <div
               className="squad-card-tap"
               onClick={() => router.push(`/coach/squad/${player.id}`)}
               style={{
-                height: 240,
+                height: 230,
                 borderRadius: 16,
                 overflow: 'hidden',
                 position: 'relative',
@@ -400,7 +438,7 @@ export default function SquadPage() {
                       textShadow: `0 0 8px ${scoreColor}66`,
                     }}
                   >
-                    {compositeScore}
+                    {Math.round(animatedScores[player.id] ?? 0)}
                   </span>
 
                   {/* Trend arrow + delta */}
@@ -414,8 +452,17 @@ export default function SquadPage() {
                     {trendText}
                   </span>
                 </div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 2 }}>
+                  Avg: {avgScore}
+                </div>
+                {playerStandoutMetrics[player.id] && (
+                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 3 }}>
+                    {playerStandoutMetrics[player.id]}
+                  </div>
+                )}
               </div>
             </div>
+            </motion.div>
           )
         })}
       </div>

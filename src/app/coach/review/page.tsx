@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { pendingReviewItems, players } from '@/lib/mockData'
 import type { PendingReviewItem } from '@/lib/types'
 import { CheckCircle, AlertTriangle, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const positionColors: Record<string, string> = {
   GK: '#F39C12',
@@ -97,12 +98,11 @@ export default function ReviewPage() {
             borderRadius: 20,
             padding: '40px 32px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-            margin: '24px 20px',
+            margin: '24px 16px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             width: '100%',
-            maxWidth: 400,
           }}>
             {/* Checkmark circle */}
             <div style={{
@@ -203,8 +203,15 @@ export default function ReviewPage() {
               </div>
 
               {/* EXPANDED: CLASSIFY SESSION */}
+              <AnimatePresence>
               {isExpanded && item.type === 'classify' && item.segments && (
-                <div style={{ overflow: 'hidden', maxHeight: 2000, transition: 'max-height 0.3s ease' }}>
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ overflow: 'hidden' }}
+                >
                   <div style={{ padding: '0 16px' }}>
                     {/* Timeline Bar */}
                     {(() => {
@@ -377,12 +384,20 @@ export default function ReviewPage() {
                       High-confidence sessions are classified automatically. You only see this when we're genuinely uncertain.
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
 
               {/* EXPANDED: TAG PLAYERS */}
+              <AnimatePresence>
               {isExpanded && item.type === 'tag' && item.playersToTag && (
-                <div style={{ overflow: 'hidden', maxHeight: 3000, transition: 'max-height 0.3s ease' }}>
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ overflow: 'hidden' }}
+                >
                   <div style={{ padding: 16 }}>
                     {/* Info Card */}
                     <div style={{ background: '#EFF6FF', padding: '10px 14px', borderRadius: 8, marginBottom: 12 }}>
@@ -619,8 +634,9 @@ export default function ReviewPage() {
                       Skipping is fine — analysis will run using jersey numbers only.
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
           )
         })}

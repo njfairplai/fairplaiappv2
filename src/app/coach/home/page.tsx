@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Bell, ChevronRight, AlertTriangle } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
-import { sessions, players, rosters, pendingReviewItems, squadScores, pitches } from '@/lib/mockData'
+import { sessions, players, rosters, pendingReviewItems, squadScores, pitches, sessionTeamScores } from '@/lib/mockData'
 import { coachTokens } from '@/styles/coach-tokens'
 
 /* ── helpers ── */
@@ -275,7 +275,7 @@ export default function CoachHomePage() {
         </div>
 
         {/* ═══════════ STATS STRIP ═══════════ */}
-        <div style={{ background: '#111827', padding: '16px 20px' }}>
+        <div style={{ background: '#111827', padding: '10px 16px' }}>
           {/* Row 1 */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -320,33 +320,35 @@ export default function CoachHomePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>Form</span>
             <div style={{ display: 'flex', gap: 6 }}>
-              {recentSessions.slice(0, 5).reverse().map((s, i) => {
-                const participantScores = s.participatingPlayerIds
-                  .map(pid => squadScores[pid]?.compositeScore)
-                  .filter((v): v is number => v !== undefined)
-                const sessionScore = participantScores.length > 0
-                  ? Math.round(participantScores.reduce((a, b) => a + b, 0) / participantScores.length)
-                  : 50
+              {(() => {
+                const analysedMatches = rosterSessions
+                  .filter(s => s.type === 'match' && s.status === 'analysed' && sessionTeamScores[s.id] !== undefined)
+                  .sort((a, b) => b.date.localeCompare(a.date))
+                  .slice(0, 5)
+                  .reverse()
 
-                let dotColor = '#10B981' // win (>=75)
-                if (sessionScore < 60) dotColor = '#EF4444' // loss
-                else if (sessionScore < 75) dotColor = '#F59E0B' // draw
+                return analysedMatches.map((s, i) => {
+                  const score = sessionTeamScores[s.id]
+                  let dotColor = '#10B981'
+                  if (score < 60) dotColor = '#EF4444'
+                  else if (score < 75) dotColor = '#F59E0B'
 
-                return (
-                  <div key={i} style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: dotColor,
-                  }} />
-                )
-              })}
+                  return (
+                    <div key={i} style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      background: dotColor,
+                    }} />
+                  )
+                })
+              })()}
             </div>
           </div>
         </div>
 
         {/* ═══════════ UPCOMING SESSIONS ═══════════ */}
-        <div style={{ background: '#F8F9FC', padding: '20px 20px 8px' }}>
+        <div style={{ background: '#F8F9FC', padding: '16px 16px 8px' }}>
           {/* Section header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <span style={{ color: '#0F172A', fontSize: 16, fontWeight: 700 }}>Upcoming</span>
@@ -376,7 +378,7 @@ export default function CoachHomePage() {
                       borderRadius: 14,
                       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
                       padding: 14,
-                      marginRight: 12,
+                      marginRight: 10,
                       position: 'relative',
                       overflow: 'hidden',
                       display: 'flex',
@@ -506,7 +508,7 @@ export default function CoachHomePage() {
                   borderRadius: 14,
                   boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                   padding: 0,
-                  marginBottom: 10,
+                  marginBottom: 8,
                   overflow: 'hidden',
                   borderLeft: `4px solid ${accentBorderColor}`,
                   cursor: 'pointer',

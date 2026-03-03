@@ -220,6 +220,10 @@ export const sessions: Session[] = [
 
   // 1 upcoming match for U12 Red
   { id: 'session_012', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-07', startTime: '15:00', endTime: '16:30', type: 'match', status: 'scheduled', opponent: 'Dubai SC', competition: 'UAE Youth League', programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds] },
+
+  // 2 past match sessions for U12 Red — for form dots
+  { id: 'session_013', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-24', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Sharjah FC', competition: 'UAE Youth League', creditsConsumed: 36, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 87, autoTriggeredAnalysis: true },
+  { id: 'session_014', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-31', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Ajman FC', competition: 'Cup', creditsConsumed: 40, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 89, autoTriggeredAnalysis: true },
 ]
 
 // ─── MATCH ANALYSIS (Kiyan Makkawi — across multiple matches) ────
@@ -247,6 +251,18 @@ export const highlights: Highlight[] = [
   { id: 'highlight_008', sessionId: 'session_007', playerId: 'player_005', eventType: 'save', timestampSeconds: 4680, durationSeconds: 7, releasedToParent: false, confidence: 0.88, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 88, flaggedByCoach: false },
   // Rashid Al Shamsi
   { id: 'highlight_009', sessionId: 'session_007', playerId: 'player_008', eventType: 'tackle', timestampSeconds: 3300, durationSeconds: 6, releasedToParent: false, confidence: 0.80, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 80, flaggedByCoach: false },
+
+  // ── Session 005 — vs Baniyas SC (Feb 7) ──
+  { id: 'highlight_010', sessionId: 'session_005', playerId: 'player_001', eventType: 'key_pass', timestampSeconds: 1260, durationSeconds: 9, releasedToParent: false, confidence: 0.88, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 84, flaggedByCoach: false },
+  { id: 'highlight_011', sessionId: 'session_005', playerId: 'player_002', eventType: 'goal', timestampSeconds: 2520, durationSeconds: 11, releasedToParent: true, confidence: 0.94, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_001', aiConfidence: 92, flaggedByCoach: false },
+  { id: 'highlight_012', sessionId: 'session_005', playerId: 'player_004', eventType: 'sprint_recovery', timestampSeconds: 3600, durationSeconds: 13, releasedToParent: false, confidence: 0.83, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 79, flaggedByCoach: false },
+  { id: 'highlight_013', sessionId: 'session_005', playerId: 'player_003', eventType: 'tackle', timestampSeconds: 4500, durationSeconds: 7, releasedToParent: false, confidence: 0.86, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 83, flaggedByCoach: false },
+
+  // ── Session 006 — vs Al Ain FC (Feb 14) ──
+  { id: 'highlight_014', sessionId: 'session_006', playerId: 'player_001', eventType: 'goal', timestampSeconds: 1800, durationSeconds: 12, releasedToParent: true, confidence: 0.96, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_001', aiConfidence: 94, flaggedByCoach: true },
+  { id: 'highlight_015', sessionId: 'session_006', playerId: 'player_007', eventType: 'key_pass', timestampSeconds: 3060, durationSeconds: 8, releasedToParent: false, confidence: 0.87, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 85, flaggedByCoach: false },
+  { id: 'highlight_016', sessionId: 'session_006', playerId: 'player_005', eventType: 'save', timestampSeconds: 3900, durationSeconds: 6, releasedToParent: false, confidence: 0.90, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 90, flaggedByCoach: false },
+  { id: 'highlight_017', sessionId: 'session_006', playerId: 'player_006', eventType: 'tackle', timestampSeconds: 4800, durationSeconds: 9, releasedToParent: false, confidence: 0.84, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 81, flaggedByCoach: false },
 ]
 
 // ─── COACH FLAGGED CLIPS ──────────────────────────────────
@@ -444,6 +460,28 @@ export const squadScores: Record<string, { compositeScore: number; avgScore: num
   player_006: { compositeScore: 69, avgScore: 67 },
   player_007: { compositeScore: 75, avgScore: 72 },
   player_008: { compositeScore: 72, avgScore: 70 },
+}
+
+// ─── SESSION TEAM SCORES (for form dots) ─────────────────────
+export const sessionTeamScores: Record<string, number> = {
+  session_007: 78,  // Feb 24 vs Al Wasl — win
+  session_006: 71,  // Feb 14 vs Al Ain — draw
+  session_005: 65,  // Feb 7 vs Baniyas — draw
+  session_014: 82,  // Jan 31 vs Ajman — win
+  session_013: 55,  // Jan 24 vs Sharjah — loss
+  session_010: 74,  // Feb 22 vs Sharjah (U14)
+}
+
+// ─── PLAYER STANDOUT METRICS (for squad cards) ───────────────
+export const playerStandoutMetrics: Record<string, string> = {
+  player_001: '7.4km covered',
+  player_002: '9 shots',
+  player_003: '8 interceptions',
+  player_004: '14 sprints',
+  player_005: '6 saves',
+  player_006: '11 sprints',
+  player_007: '6.9km covered',
+  player_008: '6.2km covered',
 }
 
 // ─── ANALYSIS MINUTES TRANSACTIONS ─────────────────────────
