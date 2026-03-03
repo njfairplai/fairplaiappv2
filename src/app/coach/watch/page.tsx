@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Search, Play, X, ChevronLeft, ChevronRight, Bookmark as BookmarkIcon, SkipBack, SkipForward, Rewind, FastForward, Pause } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
-import { sessions, highlights, players, pitches, rosters, bookmarks, sessionSegments } from '@/lib/mockData'
+import { sessions, highlights, players, pitches, rosters, bookmarks, sessionSegments, squadScores } from '@/lib/mockData'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
 import type { Session, Highlight, Bookmark } from '@/lib/types'
 
@@ -121,7 +121,7 @@ const highlightEventOptions = [
 ]
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────
-type SubTab = 'footage' | 'highlights'
+type SubTab = 'footage' | 'match' | 'highlights'
 
 export default function WatchPage() {
   const { selectedRosterId } = useTeam()
@@ -183,6 +183,11 @@ export default function WatchPage() {
         .join(' ')
       return dateStr.includes(q) || rName.includes(q) || pitchName.includes(q) || playerNames.includes(q)
     })
+
+  // ─── MATCH FOOTAGE DATA ───────────────────────────────────
+  const matchSessions = sessions
+    .filter(s => s.rosterId === selectedRosterId && s.type === 'match' && (s.status === 'analysed' || s.status === 'complete'))
+    .sort((a, b) => b.date.localeCompare(a.date))
 
   // ─── HIGHLIGHTS DATA ───────────────────────────────────────
   const filteredHighlights = highlights
@@ -347,7 +352,7 @@ export default function WatchPage() {
   // RENDER
   // ═══════════════════════════════════════════════════════════
   return (
-    <div style={{ paddingBottom: 100, background: subTab === 'highlights' ? C.darkBg : C.lightBg, minHeight: '100vh' }}>
+    <div style={{ paddingBottom: 100, background: subTab === 'highlights' ? C.darkBg : C.lightBg, minHeight: '100vh' }} >
       {/* ─── PAGE HEADER ───────────────────────────────────── */}
       <div style={{ background: C.darkBg, padding: '48px 20px 0' }}>
         <div style={{ color: '#fff', fontSize: 28, fontWeight: 800 }}>Watch</div>
@@ -368,6 +373,22 @@ export default function WatchPage() {
             }}
           >
             Training Footage
+          </button>
+          <button
+            onClick={() => { setSubTab('match') }}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: subTab === 'match' ? '2px solid #fff' : '2px solid transparent',
+              color: subTab === 'match' ? '#fff' : 'rgba(255,255,255,0.45)',
+              fontSize: 15,
+              fontWeight: subTab === 'match' ? 600 : 400,
+              padding: '0 0 8px 0',
+              marginRight: 24,
+              cursor: 'pointer',
+            }}
+          >
+            Match Footage
           </button>
           <button
             onClick={() => { setSubTab('highlights'); setHighlightSearch('') }}
@@ -527,6 +548,146 @@ export default function WatchPage() {
               })
             )}
           </div>
+        </div>
+      )}
+
+      {/* ═══ MATCH FOOTAGE ═══ */}
+      {subTab === 'match' && (
+        <div style={{ background: C.lightBg, padding: 16 }}>
+          {matchSessions.length === 0 ? (
+            <div style={{ textAlign: 'center', color: C.muted, fontSize: 14, padding: 40 }}>
+              No match footage available yet for this team.
+            </div>
+          ) : (
+            matchSessions.map(session => {
+              const pitch = pitches.find(p => p.id === session.pitchId)
+              const pitchName = pitch?.name ?? ''
+              const duration = calcDurationMinutes(session.startTime, session.endTime)
+              const isAnalysed = session.status === 'analysed'
+
+              /* compute average squad score for analysed matches */
+              let avgMatchScore: number | null = null
+              let scoreColor = ''
+              if (isAnalysed) {
+                const participantScores = session.participatingPlayerIds
+                  .map(pid => squadScores[pid]?.compositeScore)
+                  .filter((v): v is number => v !== undefined)
+                avgMatchScore = participantScores.length > 0
+                  ? Math.round(participantScores.reduce((a, b) => a + b, 0) / participantScores.length)
+                  : null
+                if (avgMatchScore !== null) {
+                  if (avgMatchScore >= 75) scoreColor = C.success
+                  else if (avgMatchScore >= 60) scoreColor = C.warning
+                  else scoreColor = C.error
+                }
+              }
+
+              return (
+                <div
+                  key={session.id}
+                  style={{
+                    background: '#fff',
+                    borderRadius: 14,
+                    padding: 16,
+                    marginBottom: 10,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
+                    borderLeft: isAnalysed ? `4px solid ${C.primary}` : `4px solid ${C.warning}`,
+                  }}
+                >
+                  {/* Top row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: C.navy, fontSize: 15 }}>
+                        vs {session.opponent}
+                      </div>
+                      <div style={{ color: C.muted, fontSize: 13, marginTop: 2 }}>
+                        {formatDateFull(session.date)} &middot; {duration} min
+                      </div>
+                    </div>
+                    {/* Score badge */}
+                    {avgMatchScore !== null && (
+                      <div style={{
+                        fontSize: 24,
+                        fontWeight: 800,
+                        color: scoreColor,
+                      }}>
+                        {avgMatchScore}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Meta row */}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                    {session.competition && (
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        borderRadius: 20,
+                        padding: '3px 10px',
+                        background: '#EFF6FF',
+                        color: C.primary,
+                      }}>
+                        {session.competition}
+                      </span>
+                    )}
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      borderRadius: 20,
+                      padding: '3px 10px',
+                      background: isAnalysed ? '#ECFDF5' : '#FFFBEB',
+                      color: isAnalysed ? '#059669' : '#D97706',
+                    }}>
+                      {isAnalysed ? 'Analysed' : 'Pending Analysis'}
+                    </span>
+                  </div>
+
+                  {/* Pitch info */}
+                  <div style={{ color: C.muted, fontSize: 12, marginTop: 6 }}>
+                    {rosterName} &middot; {pitchName}
+                  </div>
+
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button
+                      onClick={() => openDvr(session)}
+                      style={{
+                        flex: 1,
+                        height: 38,
+                        background: C.darkBg,
+                        color: '#fff',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        border: 'none',
+                      }}
+                    >
+                      {'\u25B6'} Watch Footage
+                    </button>
+                    {isAnalysed && (
+                      <button
+                        onClick={() => router.push(`/coach/match/${session.id}`)}
+                        style={{
+                          flex: 1,
+                          height: 38,
+                          background: C.primary,
+                          color: '#fff',
+                          fontSize: 13,
+                          fontWeight: 600,
+                          borderRadius: 8,
+                          cursor: 'pointer',
+                          border: 'none',
+                        }}
+                      >
+                        View Analysis &rarr;
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       )}
 

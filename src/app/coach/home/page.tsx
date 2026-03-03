@@ -125,6 +125,12 @@ export default function CoachHomePage() {
 
   /* ── DVR overlay handler ── */
   function handleRecentSessionTap(session: typeof sessions[0]) {
+    // Analysed matches → navigate to match analysis page
+    if (session.status === 'analysed' && session.type === 'match') {
+      router.push(`/coach/match/${session.id}`)
+      return
+    }
+
     if (
       session.status === 'analysed' ||
       session.status === 'playback_ready' ||
@@ -579,7 +585,7 @@ export default function CoachHomePage() {
                         {badgeText}
                       </span>
                     )}
-                    <ChevronRight size={20} color="#CBD5E1" style={{ marginLeft: 8 }} />
+                    <ChevronRight size={20} color={session.status === 'analysed' && session.type === 'match' ? '#4A4AFF' : '#CBD5E1'} style={{ marginLeft: 8 }} />
                   </div>
                 </div>
               </div>

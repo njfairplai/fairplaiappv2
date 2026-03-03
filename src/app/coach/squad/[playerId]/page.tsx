@@ -186,6 +186,18 @@ export default function PlayerDetailPage() {
     [playerId]
   )
 
+  // Match footage sessions: match + (analysed or complete)
+  const matchFootageSessions = useMemo(
+    () =>
+      sessions.filter(
+        s =>
+          s.participatingPlayerIds.includes(playerId) &&
+          s.type === 'match' &&
+          (s.status === 'analysed' || s.status === 'complete')
+      ).sort((a, b) => b.date.localeCompare(a.date)),
+    [playerId]
+  )
+
   // Auto-clear toast
   useEffect(() => {
     if (toastVisible) {
@@ -884,7 +896,94 @@ export default function PlayerDetailPage() {
       {/* FOOTAGE TAB */}
       {activeTab === 'footage' && (
         <div style={{ padding: 16 }}>
-          {/* Label */}
+          {/* ── Match Footage Section ── */}
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Match Footage</span>
+            <span
+              style={{
+                background: '#F8F9FC',
+                color: '#64748B',
+                fontSize: 11,
+                padding: '2px 8px',
+                borderRadius: 10,
+                marginLeft: 8,
+              }}
+            >
+              {matchFootageSessions.length}
+            </span>
+          </div>
+
+          {matchFootageSessions.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '24px 20px', color: '#64748B', fontSize: 13 }}>
+              No match footage available yet.
+            </div>
+          ) : (
+            <div style={{ marginTop: 8 }}>
+              {matchFootageSessions.map(s => {
+                const pitch = pitches.find(p => p.id === s.pitchId)
+                const isAnalysed = s.status === 'analysed'
+                return (
+                  <div
+                    key={s.id}
+                    style={{
+                      background: '#FFFFFF',
+                      borderRadius: 10,
+                      padding: '12px 14px',
+                      marginBottom: 8,
+                      borderLeft: isAnalysed ? '3px solid #4A4AFF' : '3px solid #F59E0B',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, color: '#0F172A', fontWeight: 600 }}>
+                          vs {s.opponent}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                          {formatSessionDateFull(s.date)} &middot; {formatDuration(s.startTime, s.endTime)} &middot; {pitch?.name ?? ''}
+                        </div>
+                        {s.competition && (
+                          <span style={{
+                            display: 'inline-block',
+                            fontSize: 10,
+                            fontWeight: 600,
+                            borderRadius: 20,
+                            padding: '2px 8px',
+                            background: '#EFF6FF',
+                            color: '#4A4AFF',
+                            marginTop: 4,
+                          }}>
+                            {s.competition}
+                          </span>
+                        )}
+                      </div>
+                      {isAnalysed && (
+                        <button
+                          onClick={() => router.push(`/coach/match/${s.id}`)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#4A4AFF',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            flexShrink: 0,
+                            padding: '6px 0',
+                          }}
+                        >
+                          Analysis &rarr;
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Divider */}
+          <div style={{ height: 1, background: '#E2E8F0', margin: '16px 0' }} />
+
+          {/* ── Training Footage Section ── */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Training Sessions</span>
             <span
