@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+@theme {
+  --font-inter: 'Inter', sans-serif;
+  --color-deep-indigo: #1B1650;
+  --color-electric-navy: #282689;
+  --color-ahoy-blue: #4A4AFF;
+  --color-active-blue: #4536F5;
+  --color-periwinkle: #757FFF;
+  --color-fp-white: #F5F6FC;
+  --color-cloud: #EDEFF7;
+  --color-phantom: #1E1E24;
+  --color-arsenic: #40424D;
+  --color-graphite: #6E7180;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #0D1020;
+  overscroll-behavior: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Ken Burns ── */
+@keyframes kenBurns {
+  from { transform: scale(1.06); }
+  to   { transform: scale(1.0); }
+}
+
+.ken-burns {
+  animation: kenBurns 2s ease-out forwards;
+}
+
+/* ── Tab fade ── */
+@keyframes tabFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.tab-fade {
+  animation: tabFade 180ms ease-out both;
+}
+
+/* ── Fade-up entrance ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up-0 { animation: fadeUp 0.5s ease-out 0.0s both; }
+.fade-up-1 { animation: fadeUp 0.5s ease-out 0.15s both; }
+.fade-up-2 { animation: fadeUp 0.5s ease-out 0.3s both; }
+.fade-up-3 { animation: fadeUp 0.5s ease-out 0.45s both; }
+.fade-up-4 { animation: fadeUp 0.5s ease-out 0.6s both; }
+
+/* ── Score arc animation (CSS approach) ── */
+@keyframes drawArc {
+  from { stroke-dashoffset: 226.2; }
+  to   { stroke-dashoffset: 42.98; }
+}
+
+.score-arc-animate {
+  stroke-dasharray: 226.2;
+  stroke-dashoffset: 226.2;
+  animation: drawArc 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
+}
+
+/* ── Number fade for score toggle ── */
+@keyframes numFade {
+  0%   { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.num-fade {
+  animation: numFade 200ms ease-out both;
+}
+
+/* ── Shimmer on cards ── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+}
+
+.shimmer-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.06) 40%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.06) 60%,
+    transparent 100%
+  );
+  animation: shimmer 4s ease-in-out 1s infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Skeleton loading shimmer ── */
+@keyframes skeletonShimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e8eaed 25%, #f5f5f5 50%, #e8eaed 75%);
+  background-size: 400px 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ── Percentile bar animation ── */
+.percentile-bar {
+  width: 0%;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.percentile-bar.animate {
+  /* width set by inline style */
+}
+
+/* ── Slide-up clip transition ── */
+@keyframes slideUpClip {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.slide-up-clip {
+  animation: slideUpClip 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Hide scrollbar ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Snap ── */
+.snap-x { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+.snap-start { scroll-snap-align: start; }
+
+/* ── Pulse for play buttons ── */
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.6; }
+  70%  { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.play-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: rgba(74, 74, 255, 0.3);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* ── Highlight pulse (nav icon, once) ── */
+@keyframes scoreArcPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.highlight-pulse {
+  animation: scoreArcPulse 0.6s ease-out 0.4s both;
+}
+
+/* ── Stat card shadow ── */
+.card-shadow {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
