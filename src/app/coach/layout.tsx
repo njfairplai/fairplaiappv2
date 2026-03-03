@@ -19,22 +19,109 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
 
   return (
     <TeamProvider>
-      <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 80, minHeight: '100vh', background: '#F5F6FC' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 80, minHeight: '100vh', background: '#F8F9FC' }}>
         {children}
       </div>
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: '#fff', borderTop: '1px solid #E8EAED', boxShadow: '0 -2px 16px rgba(0,0,0,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', maxWidth: 480, margin: '0 auto', paddingBottom: 'env(safe-area-inset-bottom, 6px)' }}>
+      <nav style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        background: '#0A0E1A',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'stretch',
+          justifyContent: 'space-around',
+          maxWidth: 480,
+          margin: '0 auto',
+          height: 64,
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}>
           {tabs.map(tab => {
             const isActive = pathname.startsWith(tab.href)
             const Icon = tab.icon
             return (
-              <button key={tab.id} onClick={() => router.push(tab.href)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '10px 0', flex: 1, background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}>
-                {isActive && <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 24, height: 3, background: '#4A4AFF', borderRadius: '0 0 3px 3px' }} />}
-                <Icon size={22} color={isActive ? '#4A4AFF' : '#9DA2B3'} strokeWidth={isActive ? 2.2 : 1.7} />
-                {tab.badge && tab.badge > 0 && (
-                  <div style={{ position: 'absolute', top: 4, right: 'calc(50% - 16px)', width: 16, height: 16, background: '#F39C12', borderRadius: '50%', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{tab.badge}</div>
+              <button
+                key={tab.id}
+                onClick={() => router.push(tab.href)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  padding: 0,
+                }}
+              >
+                {/* Active indicator bar at top of nav */}
+                {isActive && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 2,
+                    height: 20,
+                    background: '#4A4AFF',
+                    borderRadius: 1,
+                  }} />
                 )}
-                <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 600, color: isActive ? '#4A4AFF' : '#9DA2B3' }}>{tab.label}</span>
+
+                {/* Pill background + icon + label container */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 2,
+                  padding: isActive ? '4px 16px' : '4px 16px',
+                  borderRadius: 12,
+                  background: isActive ? 'rgba(74,74,255,0.12)' : 'transparent',
+                  position: 'relative',
+                }}>
+                  {/* Icon wrapper for badge positioning */}
+                  <div style={{ position: 'relative', lineHeight: 0 }}>
+                    <Icon
+                      size={22}
+                      color={isActive ? '#4A4AFF' : '#64748B'}
+                      strokeWidth={isActive ? 2.2 : 1.7}
+                    />
+                    {/* Badge on the review tab */}
+                    {tab.badge && tab.badge > 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: -4,
+                        right: -8,
+                        minWidth: 16,
+                        height: 16,
+                        background: '#EF4444',
+                        borderRadius: '50%',
+                        color: '#fff',
+                        fontSize: 9,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1,
+                      }}>
+                        {tab.badge}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? '#4A4AFF' : '#64748B',
+                  }}>
+                    {tab.label}
+                  </span>
+                </div>
               </button>
             )
           })}

@@ -11,14 +11,14 @@ import type { Session, Highlight, Bookmark } from '@/lib/types'
 // ─── COLORS ──────────────────────────────────────────────────
 const C = {
   primary: '#4A4AFF',
-  navy: '#1B1650',
-  darkBg: '#0D1020',
-  muted: '#6E7180',
-  lightBg: '#F5F6FC',
-  border: '#E8EAED',
-  success: '#27AE60',
-  warning: '#F39C12',
-  error: '#E74C3C',
+  navy: '#0F172A',
+  darkBg: '#0A0E1A',
+  muted: '#64748B',
+  lightBg: '#F8F9FC',
+  border: '#E2E8F0',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
   electricNavy: '#282689',
 }
 
@@ -80,11 +80,11 @@ function getEventBadge(eventType: string): { bg: string; color: string; label: s
 function getSegmentChip(classification: string): { bg: string; color: string; label: string } {
   switch (classification) {
     case 'drill':
-      return { bg: '#DCFCE7', color: '#166534', label: 'Drill' }
+      return { bg: '#ECFDF5', color: '#059669', label: 'Drill' }
     case 'match':
-      return { bg: '#EFF6FF', color: '#1E40AF', label: 'Match' }
+      return { bg: '#EFF6FF', color: '#4A4AFF', label: 'Match' }
     case 'training_match':
-      return { bg: '#FEF3C7', color: '#92400E', label: 'Training Match' }
+      return { bg: '#FFFBEB', color: '#D97706', label: 'Training Match' }
     default:
       return { bg: '#F5F6FC', color: '#9DA2B3', label: 'Unclassified' }
   }
@@ -95,22 +95,22 @@ const rosterPlayerMap: Record<string, string[]> = {
   roster_002: ['player_009', 'player_010', 'player_011', 'player_012', 'player_013', 'player_014', 'player_015', 'player_016'],
 }
 
-function getCardBadge(eventType: string, flaggedByCoach: boolean): { bg: string; label: string } {
-  if (flaggedByCoach) return { bg: 'rgba(255,215,0,0.9)', label: '\uD83C\uDFC6 Coach Pick' }
+function getCardBadge(eventType: string, flaggedByCoach: boolean): { borderColor: string; label: string } {
+  if (flaggedByCoach) return { borderColor: '#FFD700', label: '\uD83C\uDFC6 Pick' }
   switch (eventType) {
-    case 'goal': return { bg: 'rgba(245,166,35,0.9)', label: '\u26BD Goal' }
-    case 'key_pass': return { bg: 'rgba(74,74,255,0.9)', label: '\uD83C\uDFAF Key Pass' }
-    case 'sprint_recovery': return { bg: 'rgba(39,174,96,0.9)', label: '\u26A1 Sprint' }
-    case 'tackle': return { bg: 'rgba(155,89,182,0.9)', label: '\uD83D\uDEE1 Tackle' }
-    case 'save': return { bg: 'rgba(245,166,35,0.9)', label: '\uD83E\uDDE4 Save' }
-    default: return { bg: 'rgba(110,113,128,0.9)', label: eventType }
+    case 'goal': return { borderColor: '#F59E0B', label: '\u26BD Goal' }
+    case 'key_pass': return { borderColor: '#4A4AFF', label: '\uD83C\uDFAF Pass' }
+    case 'sprint_recovery': return { borderColor: '#10B981', label: '\u26A1 Sprint' }
+    case 'tackle': return { borderColor: '#9B59B6', label: '\uD83D\uDEE1 Tackle' }
+    case 'save': return { borderColor: '#F59E0B', label: '\uD83E\uDDE4 Save' }
+    default: return { borderColor: '#6E7180', label: eventType }
   }
 }
 
 function getConfidenceColor(confidence: number): string {
-  if (confidence >= 85) return '#27AE60'
-  if (confidence >= 70) return '#F39C12'
-  return '#E74C3C'
+  if (confidence >= 85) return '#10B981'
+  if (confidence >= 70) return '#F59E0B'
+  return '#EF4444'
 }
 
 const highlightEventOptions = [
@@ -347,74 +347,77 @@ export default function WatchPage() {
   // RENDER
   // ═══════════════════════════════════════════════════════════
   return (
-    <div style={{ paddingBottom: 100, background: C.lightBg, minHeight: '100vh' }}>
-      {/* ─── SUB-TABS ───────────────────────────────────────── */}
-      <div style={{ display: 'flex', flexDirection: 'row', borderBottom: `1px solid ${C.border}`, background: '#fff' }}>
-        <button
-          onClick={() => { setSubTab('footage'); setSearchQuery('') }}
-          style={{
-            flex: 1,
-            textAlign: 'center',
-            padding: '14px 0',
-            cursor: 'pointer',
-            background: 'none',
-            border: 'none',
-            borderBottom: subTab === 'footage' ? `2px solid ${C.primary}` : '2px solid transparent',
-            color: subTab === 'footage' ? C.navy : '#9DA2B3',
-            fontWeight: subTab === 'footage' ? 700 : 400,
-            fontSize: 15,
-          }}
-        >
-          Training Footage
-        </button>
-        <button
-          onClick={() => { setSubTab('highlights'); setHighlightSearch('') }}
-          style={{
-            flex: 1,
-            textAlign: 'center',
-            padding: '14px 0',
-            cursor: 'pointer',
-            background: 'none',
-            border: 'none',
-            borderBottom: subTab === 'highlights' ? `2px solid ${C.primary}` : '2px solid transparent',
-            color: subTab === 'highlights' ? C.navy : '#9DA2B3',
-            fontWeight: subTab === 'highlights' ? 700 : 400,
-            fontSize: 15,
-          }}
-        >
-          Highlights
-        </button>
+    <div style={{ paddingBottom: 100, background: subTab === 'highlights' ? C.darkBg : C.lightBg, minHeight: '100vh' }}>
+      {/* ─── PAGE HEADER ───────────────────────────────────── */}
+      <div style={{ background: C.darkBg, padding: '48px 20px 0' }}>
+        <div style={{ color: '#fff', fontSize: 28, fontWeight: 800 }}>Watch</div>
+        {/* Sub-tab row */}
+        <div style={{ display: 'flex', flexDirection: 'row', marginTop: 16, paddingBottom: 16 }}>
+          <button
+            onClick={() => { setSubTab('footage'); setSearchQuery('') }}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: subTab === 'footage' ? '2px solid #fff' : '2px solid transparent',
+              color: subTab === 'footage' ? '#fff' : 'rgba(255,255,255,0.45)',
+              fontSize: 15,
+              fontWeight: subTab === 'footage' ? 600 : 400,
+              padding: '0 0 8px 0',
+              marginRight: 24,
+              cursor: 'pointer',
+            }}
+          >
+            Training Footage
+          </button>
+          <button
+            onClick={() => { setSubTab('highlights'); setHighlightSearch('') }}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: subTab === 'highlights' ? '2px solid #fff' : '2px solid transparent',
+              color: subTab === 'highlights' ? '#fff' : 'rgba(255,255,255,0.45)',
+              fontSize: 15,
+              fontWeight: subTab === 'highlights' ? 600 : 400,
+              padding: '0 0 8px 0',
+              marginRight: 24,
+              cursor: 'pointer',
+            }}
+          >
+            Highlights
+          </button>
+        </div>
       </div>
 
       {/* ═══ TRAINING FOOTAGE ═══ */}
       {subTab === 'footage' && (
-        <div>
+        <div style={{ background: C.lightBg, padding: 16 }}>
           {/* Search bar */}
-          <div style={{ padding: '16px 16px 0' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={18} color="#9DA2B3" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search by player, date, or session type..."
-                style={{
-                  width: '100%',
-                  height: 44,
-                  background: '#fff',
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 22,
-                  padding: '0 16px 0 40px',
-                  fontSize: 13,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+          <div style={{ position: 'relative' }}>
+            <Search size={18} color="#4A4AFF" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by player, date, or session type..."
+              style={{
+                width: '100%',
+                height: 48,
+                background: '#fff',
+                border: `1px solid ${C.border}`,
+                borderRadius: 12,
+                padding: '0 16px 0 44px',
+                fontSize: 13,
+                outline: 'none',
+                boxSizing: 'border-box',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#4A4AFF' }}
+              onBlur={e => { e.currentTarget.style.borderColor = C.border }}
+            />
           </div>
 
           {/* Session cards */}
-          <div style={{ padding: '16px 16px 0' }}>
+          <div style={{ marginTop: 16 }}>
             {filteredSessions.length === 0 ? (
               searchQuery.trim() ? (
                 <div style={{ textAlign: 'center', color: C.muted, fontSize: 14, padding: 40 }}>
@@ -442,27 +445,27 @@ export default function WatchPage() {
                     key={session.id}
                     style={{
                       background: '#fff',
-                      borderRadius: 12,
+                      borderRadius: 14,
                       padding: 16,
                       marginBottom: 10,
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
                     }}
                   >
                     {/* Top row */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontWeight: 700, color: C.navy, fontSize: 15 }}>
+                      <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 15 }}>
                         {formatDateFull(session.date)}
                       </div>
-                      <div style={{ color: '#9DA2B3', fontSize: 13 }}>
+                      <div style={{ color: '#64748B', fontSize: 13 }}>
                         {formatDuration(session.startTime, session.endTime)}
                       </div>
                     </div>
-                    {/* Second row */}
-                    <div style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>
+                    {/* Meta row */}
+                    <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>
                       {rosterName} &middot; {pitchName}
                     </div>
                     {/* Segment chips */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                       {segments.length > 0
                         ? segments.map(seg => {
                             const chip = getSegmentChip(seg.aiClassification)
@@ -471,8 +474,9 @@ export default function WatchPage() {
                                 key={seg.id}
                                 style={{
                                   fontSize: 11,
+                                  fontWeight: 600,
                                   borderRadius: 20,
-                                  padding: '4px 10px',
+                                  padding: '3px 10px',
                                   background: chip.bg,
                                   color: chip.color,
                                 }}
@@ -487,8 +491,9 @@ export default function WatchPage() {
                               <span
                                 style={{
                                   fontSize: 11,
+                                  fontWeight: 600,
                                   borderRadius: 20,
-                                  padding: '4px 10px',
+                                  padding: '3px 10px',
                                   background: chip.bg,
                                   color: chip.color,
                                 }}
@@ -504,18 +509,18 @@ export default function WatchPage() {
                       onClick={() => openDvr(session)}
                       style={{
                         width: '100%',
-                        height: 40,
-                        background: C.primary,
+                        height: 38,
+                        background: '#0A0E1A',
                         color: '#fff',
                         fontSize: 13,
-                        fontWeight: 700,
+                        fontWeight: 600,
                         borderRadius: 8,
-                        marginTop: 10,
+                        marginTop: 12,
                         cursor: 'pointer',
                         border: 'none',
                       }}
                     >
-                      Watch
+                      {'\u25B6'} Watch
                     </button>
                   </div>
                 )
@@ -527,38 +532,37 @@ export default function WatchPage() {
 
       {/* ═══ HIGHLIGHTS ═══ */}
       {subTab === 'highlights' && (
-        <div>
-          {/* Search bar */}
-          <div style={{ padding: '16px 16px 0' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={18} color="#9DA2B3" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                type="text"
-                value={highlightSearch}
-                onChange={e => setHighlightSearch(e.target.value)}
-                placeholder="Search by player name, date..."
-                style={{
-                  width: '100%',
-                  height: 44,
-                  background: '#fff',
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 22,
-                  padding: '0 16px 0 40px',
-                  fontSize: 13,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+        <div style={{ background: C.darkBg, padding: 12 }}>
+          {/* Search bar (dark version) */}
+          <div style={{ position: 'relative' }}>
+            <Search size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              type="text"
+              value={highlightSearch}
+              onChange={e => setHighlightSearch(e.target.value)}
+              placeholder="Search by player name, date..."
+              style={{
+                width: '100%',
+                height: 44,
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 12,
+                padding: '0 16px 0 40px',
+                fontSize: 13,
+                outline: 'none',
+                boxSizing: 'border-box',
+                color: '#fff',
+              }}
+            />
           </div>
 
           {/* Result count */}
-          <div style={{ color: '#9DA2B3', fontSize: 13, padding: '12px 16px 8px' }}>
+          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, margin: '10px 0' }}>
             Showing {filteredHighlights.length} clips &middot; {rosterName}
           </div>
 
           {/* 2-column grid */}
-          <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {filteredHighlights.map(clip => {
               const clipPlayer = players.find(p => p.id === clip.playerId)
               const playerName = clipPlayer ? `${clipPlayer.firstName} ${clipPlayer.lastName}` : 'Unknown'
@@ -574,19 +578,22 @@ export default function WatchPage() {
                   key={clip.id}
                   onClick={() => openClip(clip)}
                   style={{
-                    aspectRatio: '9/16',
+                    aspectRatio: '2/3',
                     borderRadius: 14,
                     overflow: 'hidden',
                     position: 'relative',
                     cursor: 'pointer',
-                    background: 'linear-gradient(180deg, #1B1650 0%, #0D1020 100%)',
+                    background: 'linear-gradient(180deg, #1B1650 0%, #0A0E1A 100%)',
                   }}
                 >
-                  {/* Player photo strip (bottom 35%) */}
+                  {/* Pitch overlay */}
+                  {renderPitchOverlay(0.04)}
+
+                  {/* Player photo strip (bottom 40%) */}
                   {clipPlayer?.photo && !clipImgErrors[clip.id] && (
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '35%', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', overflow: 'hidden' }}>
                       <Image src={clipPlayer.photo} alt="" fill style={{ objectFit: 'cover', objectPosition: 'top' }} onError={() => setClipImgErrors(prev => ({ ...prev, [clip.id]: true }))} />
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.9) 80%)' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 0%, rgba(10,14,26,0.95) 70%)' }} />
                     </div>
                   )}
 
@@ -596,9 +603,12 @@ export default function WatchPage() {
                     top: 8,
                     left: 8,
                     zIndex: 2,
-                    background: cardBadge.bg,
-                    borderRadius: 20,
-                    padding: '4px 10px',
+                    background: 'rgba(10,14,26,0.8)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)',
+                    borderRadius: 6,
+                    padding: '3px 8px',
+                    borderLeft: `3px solid ${cardBadge.borderColor}`,
                     color: '#fff',
                     fontSize: 10,
                     fontWeight: 700,
@@ -612,9 +622,11 @@ export default function WatchPage() {
                     top: 8,
                     right: 8,
                     zIndex: 2,
-                    background: 'rgba(0,0,0,0.5)',
-                    borderRadius: 20,
-                    padding: '4px 8px',
+                    background: 'rgba(10,14,26,0.7)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)',
+                    borderRadius: 6,
+                    padding: '3px 6px',
                     color: '#fff',
                     fontSize: 10,
                   }}>
@@ -623,18 +635,18 @@ export default function WatchPage() {
 
                   {/* Play button centered */}
                   <div style={{
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.2)',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.25)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'absolute',
-                    top: '35%',
+                    top: '38%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
                     zIndex: 2,
@@ -642,24 +654,24 @@ export default function WatchPage() {
                     <div style={{
                       width: 0,
                       height: 0,
-                      borderLeft: '12px solid #4A4AFF',
-                      borderTop: '7px solid transparent',
-                      borderBottom: '7px solid transparent',
-                      marginLeft: 2,
+                      borderLeft: '14px solid #4A4AFF',
+                      borderTop: '8px solid transparent',
+                      borderBottom: '8px solid transparent',
+                      marginLeft: 3,
                     }} />
                   </div>
 
-                  {/* Bottom overlay */}
+                  {/* Bottom info */}
                   <div style={{
                     position: 'absolute',
-                    bottom: 0,
+                    bottom: 6,
                     left: 0,
                     right: 0,
-                    padding: '8px 10px',
+                    padding: '0 10px',
                     zIndex: 2,
                   }}>
-                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 12 }}>{playerName}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>{sessionContext}</div>
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 11 }}>{playerName}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10 }}>{sessionContext}</div>
                   </div>
 
                   {/* AI confidence bar */}
@@ -668,13 +680,13 @@ export default function WatchPage() {
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    height: 4,
+                    height: 3,
                     zIndex: 3,
                     background: 'transparent',
                   }}>
                     <div style={{
                       width: `${clip.aiConfidence}%`,
-                      height: 4,
+                      height: 3,
                       background: getConfidenceColor(clip.aiConfidence),
                     }} />
                   </div>
@@ -769,9 +781,9 @@ export default function WatchPage() {
                 height: 72,
                 borderRadius: '50%',
                 background: 'rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.3)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.25)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -1202,9 +1214,9 @@ export default function WatchPage() {
 
                       {/* Separator */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0' }}>
-                        <div style={{ flex: 1, height: 1, background: '#E8EAED' }} />
+                        <div style={{ flex: 1, height: 1, background: C.border }} />
                         <span style={{ color: '#9DA2B3', fontSize: 12 }}>or</span>
-                        <div style={{ flex: 1, height: 1, background: '#E8EAED' }} />
+                        <div style={{ flex: 1, height: 1, background: C.border }} />
                       </div>
 
                       {/* Mark as Highlight button */}
@@ -1254,7 +1266,7 @@ export default function WatchPage() {
               right: 0,
               bottom: 0,
               zIndex: 9998,
-              background: '#000',
+              background: C.darkBg,
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -1317,9 +1329,9 @@ export default function WatchPage() {
                   height: 72,
                   borderRadius: '50%',
                   background: 'rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.25)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1347,12 +1359,12 @@ export default function WatchPage() {
               right: 0,
               padding: '20px 16px',
               paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
-              background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+              background: 'linear-gradient(to top, rgba(10,14,26,0.9), transparent)',
             }}>
               <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>
                 {playerName} &middot; {badge.label}
               </div>
-              <div style={{ color: '#9DA2B3', fontSize: 13, marginTop: 2 }}>
+              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginTop: 2 }}>
                 {sessionContext}
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>

@@ -84,6 +84,7 @@ export const rosters: Roster[] = [
     gender: 'male',
     type: 'competitive',
     coachId: 'coach_001',
+    teamPhoto: '/players/teamphoto.jpg',
   },
   {
     id: 'roster_002',

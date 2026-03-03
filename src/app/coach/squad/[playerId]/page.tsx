@@ -19,8 +19,8 @@ const RadarChartSection = dynamic(
           <RadarChart data={data} cx="50%" cy="50%" outerRadius="70%">
             <PolarGrid stroke="#E8EAED" />
             <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: '#9DA2B3' }} />
-            <Radar name="This Session" dataKey="player" stroke="#4A4AFF" strokeWidth={2} fill="#4A4AFF" fillOpacity={0.2} />
-            <Radar name="Season Avg" dataKey="avg" stroke="#9DA2B3" strokeWidth={1} fill="none" fillOpacity={0} />
+            <Radar name="This Session" dataKey="player" stroke="#4A4AFF" strokeWidth={2} fill="rgba(74,74,255,0.15)" fillOpacity={1} />
+            <Radar name="Season Avg" dataKey="avg" stroke="#CBD5E1" strokeWidth={1.5} fill="transparent" fillOpacity={0} />
             <Legend />
           </RadarChart>
         </ResponsiveContainer>
@@ -43,7 +43,7 @@ const SeasonProgressChart = dynamic(
             <XAxis dataKey="match" tick={{ fontSize: 11, fill: '#9DA2B3' }} axisLine={false} tickLine={false} />
             <YAxis domain={[0, 100]} hide />
             <Area type="monotone" dataKey="score" fill="#4A4AFF" fillOpacity={0.1} stroke="none" />
-            <Line type="monotone" dataKey="score" stroke="#4A4AFF" strokeWidth={3} dot={{ fill: '#FFFFFF', stroke: '#4A4AFF', strokeWidth: 2, r: 4 }} activeDot={{ fill: '#4A4AFF', stroke: '#FFFFFF', strokeWidth: 2, r: 6 }} />
+            <Line type="monotone" dataKey="score" stroke="#4A4AFF" strokeWidth={2.5} dot={{ fill: '#FFFFFF', stroke: '#4A4AFF', strokeWidth: 2, r: 4 }} activeDot={{ fill: '#4A4AFF', stroke: '#FFFFFF', strokeWidth: 2, r: 6 }} />
           </LineChart>
         </ResponsiveContainer>
       )
@@ -133,10 +133,10 @@ function formatDuration(startTime: string, endTime: string): string {
 type TabKey = 'stats' | 'highlights' | 'footage' | 'notes'
 
 function getGradeColor(grade: string): string {
-  if (grade.startsWith('A')) return '#27AE60'
+  if (grade.startsWith('A')) return '#10B981'
   if (grade.startsWith('B')) return '#4A4AFF'
-  if (grade.startsWith('C')) return '#F39C12'
-  return '#E74C3C'
+  if (grade.startsWith('C')) return '#F59E0B'
+  return '#EF4444'
 }
 
 export default function PlayerDetailPage() {
@@ -270,8 +270,8 @@ export default function PlayerDetailPage() {
 
   if (!player) {
     return (
-      <div style={{ background: COLORS.lightBg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: COLORS.muted, fontSize: 16 }}>Player not found</p>
+      <div style={{ background: '#F8F9FC', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#64748B', fontSize: 16 }}>Player not found</p>
       </div>
     )
   }
@@ -283,22 +283,27 @@ export default function PlayerDetailPage() {
   }
 
   function getPercentileColor(percentile: number): string {
-    if (percentile > 60) return '#27AE60'
-    if (percentile >= 40) return '#F39C12'
-    return '#E74C3C'
+    if (percentile > 60) return '#10B981'
+    if (percentile >= 40) return '#F59E0B'
+    return '#EF4444'
   }
 
+  // Score arc calculations
+  const arcRadius = 32
+  const arcCircumference = 2 * Math.PI * arcRadius
+  const arcOffset = arcCircumference - (arcCircumference * compositeScore / 100)
+
   return (
-    <div style={{ background: COLORS.lightBg, minHeight: '100vh' }}>
+    <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
       {/* CSS Animations */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes ken-burns { from { transform: scale(1.06); } to { transform: scale(1); } }
-        @keyframes arc-fill { from { stroke-dashoffset: 201; } }
+        @keyframes arc-fill { from { stroke-dashoffset: ${arcCircumference}; } }
         @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
       ` }} />
 
       {/* CINEMATIC HERO */}
-      <div style={{ height: 260, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: 280, position: 'relative', overflow: 'hidden' }}>
         {/* Player photo background */}
         {player.photo && !heroImgError ? (
           <Image
@@ -308,7 +313,7 @@ export default function PlayerDetailPage() {
             style={{
               objectFit: 'cover',
               objectPosition: 'top center',
-              animation: 'ken-burns 2s ease-out forwards',
+              animation: 'ken-burns 2.5s ease-out forwards',
             }}
             onError={() => setHeroImgError(true)}
           />
@@ -320,11 +325,19 @@ export default function PlayerDetailPage() {
           }} />
         )}
 
-        {/* Gradient overlay */}
+        {/* Gradient layer 1 */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to bottom, rgba(13,16,32,0.2) 0%, rgba(13,16,32,0.4) 40%, rgba(13,16,32,0.98) 100%)',
+          background: 'linear-gradient(to bottom, rgba(10,14,26,0.15), rgba(10,14,26,0.98))',
+          zIndex: 1,
+        }} />
+
+        {/* Gradient layer 2 */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to right, rgba(10,14,26,0.3), transparent 70%)',
           zIndex: 1,
         }} />
 
@@ -334,23 +347,36 @@ export default function PlayerDetailPage() {
           top: 0,
           left: 0,
           right: 0,
-          padding: 16,
+          padding: '48px 20px 0',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           zIndex: 2,
         }}>
-          <div onClick={() => router.back()} style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <ChevronLeft size={24} color="#fff" />
+          <div
+            onClick={() => router.back()}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              background: 'rgba(10,14,26,0.5)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <ChevronLeft size={18} color="#fff" />
           </div>
           <div style={{
-            background: 'rgba(255,255,255,0.15)',
+            background: 'rgba(10,14,26,0.5)',
             backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.2)',
+            border: '1px solid rgba(255,255,255,0.15)',
             borderRadius: 20,
-            padding: '4px 12px',
+            padding: '5px 10px',
           }}>
-            <span style={{ color: '#fff', fontSize: 11, fontWeight: 600 }}>MAK Academy</span>
+            <span style={{ color: '#fff', fontSize: 11 }}>MAK Academy</span>
           </div>
         </div>
 
@@ -362,57 +388,65 @@ export default function PlayerDetailPage() {
           right: 0,
           padding: '16px 20px',
           zIndex: 2,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
         }}>
-          <div>
-            <div style={{ color: '#4A4AFF', fontSize: 13, fontWeight: 700, textTransform: 'uppercase' as const }}>
-              {position === 'CM' ? 'CENTRAL MIDFIELDER' : position === 'ST' ? 'STRIKER' : position === 'CB' ? 'CENTER BACK' : position === 'GK' ? 'GOALKEEPER' : position === 'RW' ? 'RIGHT WINGER' : position === 'LB' ? 'LEFT BACK' : position === 'RB' ? 'RIGHT BACK' : position === 'LW' ? 'LEFT WINGER' : position} · #{player.jerseyNumber}
-            </div>
-            <div style={{
-              color: '#fff',
-              fontSize: 28,
-              fontWeight: 700,
-              textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-              marginTop: 2,
-            }}>
-              {player.firstName} {player.lastName}
-            </div>
-            {/* Stats strip */}
-            <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
-              <div>
-                <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{compositeScore}</div>
-                <div style={{ color: '#9DA2B3', fontSize: 11 }}>Score</div>
-              </div>
-              <div>
-                <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{distanceCovered}km</div>
-                <div style={{ color: '#9DA2B3', fontSize: 11 }}>Distance</div>
-              </div>
-              <div>
-                <div style={{ color: diff > 0 ? '#27AE60' : diff < 0 ? '#E74C3C' : '#9DA2B3', fontSize: 16, fontWeight: 700 }}>
-                  {diff > 0 ? `\u2191+${diff}` : diff < 0 ? `\u2193${diff}` : '\u2192'}
-                </div>
-                <div style={{ color: '#9DA2B3', fontSize: 11 }}>vs Avg</div>
-              </div>
-            </div>
+          <div style={{
+            color: '#4A4AFF',
+            fontSize: 12,
+            fontWeight: 600,
+            textTransform: 'uppercase' as const,
+            letterSpacing: 1,
+          }}>
+            {position === 'CM' ? 'CENTRAL MIDFIELDER' : position === 'ST' ? 'STRIKER' : position === 'CB' ? 'CENTER BACK' : position === 'GK' ? 'GOALKEEPER' : position === 'RW' ? 'RIGHT WINGER' : position === 'LB' ? 'LEFT BACK' : position === 'RB' ? 'RIGHT BACK' : position === 'LW' ? 'LEFT WINGER' : position} &middot; #{player.jerseyNumber}
+          </div>
+          <div style={{
+            color: '#fff',
+            fontSize: 30,
+            fontWeight: 800,
+            textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+            marginTop: 4,
+          }}>
+            {player.firstName} {player.lastName}
           </div>
 
-          {/* Score arc SVG */}
-          <svg width={68} height={68} viewBox="0 0 68 68">
-            <circle cx={34} cy={34} r={32} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={4} />
+          {/* Quick Stats Row */}
+          <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
+            <div>
+              <div style={{ color: '#fff', fontSize: 17, fontWeight: 700 }}>{compositeScore}</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Score</div>
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontSize: 17, fontWeight: 700 }}>{distanceCovered}km</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Distance</div>
+            </div>
+            <div>
+              <div style={{
+                color: diff > 0 ? '#10B981' : diff < 0 ? '#EF4444' : 'rgba(255,255,255,0.5)',
+                fontSize: 17,
+                fontWeight: 700,
+              }}>
+                {diff > 0 ? `\u2191+${diff}` : diff < 0 ? `\u2193${diff}` : '\u2192'}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>vs Last</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Score Arc */}
+        <div style={{ position: 'absolute', right: 20, bottom: 20, zIndex: 2 }}>
+          <svg width={80} height={80} viewBox="0 0 80 80">
+            <circle cx={40} cy={40} r={arcRadius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={4} />
             <circle
-              cx={34} cy={34} r={32}
+              cx={40} cy={40} r={arcRadius}
               fill="none"
               stroke="#4A4AFF"
               strokeWidth={4}
-              strokeDasharray={201}
-              strokeDashoffset={201 - (201 * compositeScore / 100)}
+              strokeDasharray={arcCircumference}
+              strokeDashoffset={arcOffset}
               strokeLinecap="round"
-              transform="rotate(-90 34 34)"
-              style={{ animation: 'arc-fill 1.5s ease-out forwards' }}
+              transform="rotate(-90 40 40)"
+              style={{ animation: 'arc-fill 1s ease-out forwards' }}
             />
-            <text x={34} y={38} textAnchor="middle" fill="#fff" fontSize={20} fontWeight={700}>
+            <text x={40} y={44} textAnchor="middle" fill="#fff" fontSize={18} fontWeight={700}>
               {compositeScore}
             </text>
           </svg>
@@ -422,13 +456,12 @@ export default function PlayerDetailPage() {
       {/* TAB BAR */}
       <div
         style={{
-          background: '#1B1650',
+          background: '#111827',
           padding: '0 16px',
-          height: 44,
+          height: 48,
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'stretch',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
         }}
       >
         {(['stats', 'highlights', 'footage', 'notes'] as TabKey[]).map(tab => {
@@ -444,10 +477,10 @@ export default function PlayerDetailPage() {
                 cursor: 'pointer',
                 background: 'none',
                 border: 'none',
-                borderBottom: isActive ? '2px solid #FFFFFF' : '2px solid transparent',
+                borderBottom: isActive ? '2px solid #4A4AFF' : '2px solid transparent',
                 padding: '12px 0',
-                color: isActive ? '#FFFFFF' : '#9DA2B3',
-                fontWeight: isActive ? 700 : 400,
+                color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
+                fontWeight: isActive ? 600 : 400,
                 fontSize: 14,
               }}
             >
@@ -457,15 +490,15 @@ export default function PlayerDetailPage() {
         })}
       </div>
 
-      {/* ═══ STATS TAB ═══ */}
+      {/* STATS TAB */}
       {activeTab === 'stats' && (
-        <div style={{ background: '#F5F6FC', padding: 16 }}>
+        <div style={{ background: '#F8F9FC', padding: 16 }}>
           {/* 1) Physical Stats Cards Row */}
-          <div style={{ display: 'flex', flexDirection: 'row', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
             {[
-              { value: `${distanceCovered} km`, trend: '(+9% vs avg)', label: 'Distance' },
-              { value: `${topSpeed} km/h`, trend: '(+8%)', label: 'Top Speed' },
-              { value: `${sprintCount}`, trend: '(+27%)', label: 'Sprints' },
+              { value: `${distanceCovered} km`, trend: '+9%', label: 'Distance', icon: '\uD83C\uDFC3' },
+              { value: `${topSpeed} km/h`, trend: '+8%', label: 'Top Speed', icon: '\uD83D\uDCCD' },
+              { value: `${sprintCount}`, trend: '+27%', label: 'Sprints', icon: '\u26A1' },
             ].map((card, i) => (
               <div
                 key={i}
@@ -474,12 +507,35 @@ export default function PlayerDetailPage() {
                   background: '#FFFFFF',
                   borderRadius: 12,
                   padding: 14,
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
                 }}
               >
-                <div style={{ fontSize: 20, fontWeight: 700, color: COLORS.navy }}>{card.value}</div>
-                <div style={{ fontSize: 12, color: '#27AE60', marginTop: 2 }}>{card.trend}</div>
-                <div style={{ fontSize: 11, color: '#9DA2B3', marginTop: 2 }}>{card.label}</div>
+                <div style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: 'rgba(74,74,255,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 16,
+                }}>
+                  {card.icon}
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', marginTop: 8 }}>{card.value}</div>
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{card.label}</div>
+                <div style={{
+                  display: 'inline-block',
+                  background: '#ECFDF5',
+                  color: '#059669',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  borderRadius: 20,
+                  padding: '2px 8px',
+                  marginTop: 6,
+                }}>
+                  {card.trend}
+                </div>
               </div>
             ))}
           </div>
@@ -488,14 +544,14 @@ export default function PlayerDetailPage() {
           <div
             style={{
               background: '#FFFFFF',
-              borderRadius: 12,
+              borderRadius: 14,
               padding: 16,
               marginTop: 12,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, marginBottom: 8 }}>
-              Performance Radar
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>
+              Performance Breakdown
             </div>
             <RadarChartSection data={radarData} />
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 8 }}>
@@ -504,7 +560,7 @@ export default function PlayerDetailPage() {
                 <span style={{ fontSize: 11, color: '#9DA2B3' }}>This Session</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#9DA2B3' }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#CBD5E1' }} />
                 <span style={{ fontSize: 11, color: '#9DA2B3' }}>Season Avg</span>
               </div>
             </div>
@@ -515,61 +571,74 @@ export default function PlayerDetailPage() {
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: 10,
+              gap: 8,
               marginTop: 12,
             }}
           >
-            {categoryGrades.map((cg, i) => (
-              <div
-                key={i}
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: 12,
-                  padding: 12,
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.navy }}>{cg.category}</div>
-                    <div style={{ fontSize: 12, color: '#9DA2B3', marginTop: 2 }}>{cg.label}</div>
-                    <div style={{ fontSize: 11, color: '#9DA2B3', marginTop: 2 }}>{cg.score}/100</div>
-                  </div>
-                  <div style={{ fontSize: 32, fontWeight: 700, color: getGradeColor(cg.grade) }}>
+            {categoryGrades.map((cg, i) => {
+              const gradeColor = getGradeColor(cg.grade)
+              return (
+                <div
+                  key={i}
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: 12,
+                    padding: 14,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <div style={{ fontSize: 36, fontWeight: 800, color: gradeColor }}>
                     {cg.grade}
                   </div>
+                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{cg.category}</div>
+                  {/* Score bar */}
+                  <div style={{
+                    height: 4,
+                    borderRadius: 2,
+                    background: '#F1F5F9',
+                    marginTop: 8,
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      height: '100%',
+                      borderRadius: 2,
+                      background: gradeColor,
+                      width: `${cg.score}%`,
+                    }} />
+                  </div>
+                  {/* Sub-metric pills */}
+                  <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+                    {cg.subMetrics.map((sm, j) => (
+                      <span
+                        key={j}
+                        style={{
+                          background: '#F8FAFC',
+                          color: '#64748B',
+                          fontSize: 10,
+                          borderRadius: 8,
+                          padding: '2px 8px',
+                        }}
+                      >
+                        {sm}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
-                  {cg.subMetrics.map((sm, j) => (
-                    <span
-                      key={j}
-                      style={{
-                        background: '#F5F6FC',
-                        color: '#6E7180',
-                        fontSize: 11,
-                        borderRadius: 8,
-                        padding: '2px 8px',
-                      }}
-                    >
-                      {sm}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* 4) Season Progression Chart */}
           <div
             style={{
               background: '#FFFFFF',
-              borderRadius: 12,
+              borderRadius: 14,
               padding: 16,
               marginTop: 12,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, marginBottom: 8 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
               Season Progression
             </div>
             <SeasonProgressChart data={seasonProgressData} />
@@ -579,42 +648,45 @@ export default function PlayerDetailPage() {
           <div
             style={{
               background: '#FFFFFF',
-              borderRadius: 12,
+              borderRadius: 14,
               padding: 16,
               marginTop: 12,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy }}>Peer Comparison</div>
-            <div style={{ fontSize: 12, color: '#9DA2B3', marginTop: 2, marginBottom: 16 }}>vs U12 Midfielders</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Peer Comparison</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2, marginBottom: 16 }}>vs U12 Midfielders</div>
 
-            {percentileItems.map((item, i) => (
-              <div key={i} style={{ marginBottom: i < percentileItems.length - 1 ? 14 : 0 }}>
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, color: COLORS.navy }}>{item.metric}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.navy }}>{item.percentile}th</span>
+            {percentileItems.map((item, i) => {
+              const pColor = getPercentileColor(item.percentile)
+              return (
+                <div key={i} style={{ marginBottom: i < percentileItems.length - 1 ? 14 : 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{item.metric}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: pColor }}>{item.percentile}th</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 3, background: '#F1F5F9', position: 'relative', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        borderRadius: 3,
+                        background: pColor,
+                        width: barsAnimated ? `${item.percentile}%` : '0%',
+                        transition: 'width 1s ease-out',
+                      }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'right', marginTop: 2 }}>
+                    <span style={{ fontSize: 11, color: '#64748B' }}>{item.topPct}</span>
+                  </div>
                 </div>
-                <div style={{ height: 8, borderRadius: 4, background: '#F5F6FC', position: 'relative', overflow: 'hidden' }}>
-                  <div
-                    style={{
-                      height: '100%',
-                      borderRadius: 4,
-                      background: getPercentileColor(item.percentile),
-                      width: barsAnimated ? `${item.percentile}%` : '0%',
-                      transition: 'width 1s ease-out',
-                    }}
-                  />
-                </div>
-                <div style={{ textAlign: 'right', marginTop: 2 }}>
-                  <span style={{ fontSize: 11, color: '#9DA2B3' }}>{item.topPct}</span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* ═══ HIGHLIGHTS TAB ═══ */}
+      {/* HIGHLIGHTS TAB */}
       {activeTab === 'highlights' && (() => {
         const filteredHighlights = playerHighlights.filter(h => {
           if (highlightFilter === 'coach') return h.flaggedByCoach
@@ -631,8 +703,8 @@ export default function PlayerDetailPage() {
               return (
                 <button key={f} onClick={() => setHighlightFilter(f)} style={{
                   padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  background: isActive ? '#4A4AFF' : '#F5F6FC',
-                  color: isActive ? '#fff' : '#6E7180',
+                  background: isActive ? '#4A4AFF' : '#F8F9FC',
+                  color: isActive ? '#fff' : '#64748B',
                   border: 'none',
                 }}>
                   {labels[f]}
@@ -644,11 +716,11 @@ export default function PlayerDetailPage() {
           {filteredHighlights.length === 0 ? (
             /* Empty state */
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <Film size={48} color="#9DA2B3" />
-              <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.navy, marginTop: 12 }}>
+              <Film size={48} color="#64748B" />
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginTop: 12 }}>
                 No highlights yet for {player.firstName}
               </div>
-              <div style={{ fontSize: 13, color: COLORS.muted, marginTop: 4, textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 4, textAlign: 'center' }}>
                 Highlights are generated automatically after each session analysis.
               </div>
             </div>
@@ -670,7 +742,7 @@ export default function PlayerDetailPage() {
                     borderRadius: 12,
                     padding: 14,
                     marginBottom: 10,
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
                   }}
                 >
                   {/* Top row */}
@@ -690,10 +762,10 @@ export default function PlayerDetailPage() {
                       >
                         {badge.label}
                       </span>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.navy, marginTop: 6 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginTop: 6 }}>
                         {sessionLabel} &middot; {sessionDate}
                       </div>
-                      <div style={{ fontSize: 12, color: '#9DA2B3', marginTop: 2 }}>
+                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
                         {minute}th min &middot; {h.durationSeconds}s
                       </div>
                     </div>
@@ -703,7 +775,7 @@ export default function PlayerDetailPage() {
                       style={{
                         width: 80,
                         height: 56,
-                        background: COLORS.navy,
+                        background: '#0F172A',
                         borderRadius: 8,
                         overflow: 'hidden',
                         position: 'relative',
@@ -769,8 +841,8 @@ export default function PlayerDetailPage() {
                       style={{
                         flex: 1,
                         background: '#FFFFFF',
-                        border: `1px solid ${COLORS.border}`,
-                        color: COLORS.navy,
+                        border: '1px solid #E8EAED',
+                        color: '#0F172A',
                         padding: '8px 12px',
                         borderRadius: 8,
                         fontSize: 12,
@@ -789,8 +861,8 @@ export default function PlayerDetailPage() {
                       style={{
                         flex: 1,
                         background: '#FFFFFF',
-                        border: `1px solid ${COLORS.border}`,
-                        color: COLORS.navy,
+                        border: '1px solid #E8EAED',
+                        color: '#0F172A',
                         padding: '8px 12px',
                         borderRadius: 8,
                         fontSize: 12,
@@ -809,16 +881,16 @@ export default function PlayerDetailPage() {
         )
       })()}
 
-      {/* ═══ FOOTAGE TAB ═══ */}
+      {/* FOOTAGE TAB */}
       {activeTab === 'footage' && (
         <div style={{ padding: 16 }}>
           {/* Label */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.navy }}>Training Sessions</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Training Sessions</span>
             <span
               style={{
-                background: COLORS.lightBg,
-                color: COLORS.muted,
+                background: '#F8F9FC',
+                color: '#64748B',
                 fontSize: 11,
                 padding: '2px 8px',
                 borderRadius: 10,
@@ -832,21 +904,21 @@ export default function PlayerDetailPage() {
           {/* Note card */}
           <div
             style={{
-              background: COLORS.lightBg,
+              background: '#F8F9FC',
               borderRadius: 8,
               padding: '10px 14px',
               margin: '12px 0',
             }}
           >
-            <span style={{ fontSize: 12, color: COLORS.muted, fontStyle: 'italic' }}>
+            <span style={{ fontSize: 12, color: '#64748B', fontStyle: 'italic' }}>
               Training footage is only visible to coaches and is never shared with parents.
             </span>
           </div>
 
           {footageSessions.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <Film size={48} color="#9DA2B3" />
-              <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.navy, marginTop: 12 }}>
+              <Film size={48} color="#64748B" />
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginTop: 12 }}>
                 No training footage available yet.
               </div>
             </div>
@@ -867,16 +939,16 @@ export default function PlayerDetailPage() {
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, color: COLORS.navy, fontWeight: 600 }}>
+                    <div style={{ fontSize: 14, color: '#0F172A', fontWeight: 600 }}>
                       {formatSessionDateFull(s.date)}
                     </div>
-                    <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
                       {formatDuration(s.startTime, s.endTime)} &middot; {pitch?.name ?? ''}
                     </div>
                   </div>
                   <button
                     style={{
-                      background: COLORS.primary,
+                      background: '#4A4AFF',
                       color: '#FFFFFF',
                       padding: '6px 14px',
                       borderRadius: 6,
@@ -896,7 +968,7 @@ export default function PlayerDetailPage() {
         </div>
       )}
 
-      {/* ═══ NOTES TAB ═══ */}
+      {/* NOTES TAB */}
       {activeTab === 'notes' && (
         <div style={{ padding: 16 }}>
           <div
@@ -905,11 +977,11 @@ export default function PlayerDetailPage() {
               borderRadius: 12,
               padding: 16,
               marginTop: 12,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy }}>Private Coach Notes</div>
-            <div style={{ fontSize: 12, color: '#9DA2B3', marginTop: 2, marginBottom: 12 }}>Only visible to you</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Private Coach Notes</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2, marginBottom: 12 }}>Only visible to you</div>
             <textarea
               value={noteText}
               onChange={e => setNoteText(e.target.value)}
@@ -917,7 +989,7 @@ export default function PlayerDetailPage() {
               style={{
                 width: '100%',
                 minHeight: 120,
-                border: `1px solid ${COLORS.border}`,
+                border: '1px solid #E8EAED',
                 borderRadius: 8,
                 padding: 12,
                 fontSize: 14,
@@ -927,7 +999,7 @@ export default function PlayerDetailPage() {
               }}
             />
             {lastSaved && (
-              <div style={{ fontSize: 11, color: '#9DA2B3', marginTop: 4 }}>Last saved: {lastSaved}</div>
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>Last saved: {lastSaved}</div>
             )}
           </div>
         </div>
@@ -965,13 +1037,13 @@ export default function PlayerDetailPage() {
               style={{
                 width: 36,
                 height: 4,
-                background: COLORS.border,
+                background: '#E8EAED',
                 borderRadius: 2,
                 margin: '0 auto 16px',
               }}
             />
 
-            <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.navy }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>
               Send to {player.firstName} &amp; Parent
             </div>
 
@@ -980,7 +1052,7 @@ export default function PlayerDetailPage() {
               onChange={e => setFlagNote(e.target.value)}
               placeholder="Add a note for the player..."
               style={{
-                border: `1px solid ${COLORS.border}`,
+                border: '1px solid #E8EAED',
                 borderRadius: 8,
                 padding: 12,
                 width: '100%',
@@ -996,7 +1068,7 @@ export default function PlayerDetailPage() {
             <button
               onClick={handleSendFlag}
               style={{
-                background: COLORS.primary,
+                background: '#4A4AFF',
                 color: '#FFFFFF',
                 width: '100%',
                 height: 44,
@@ -1022,7 +1094,7 @@ export default function PlayerDetailPage() {
             bottom: 100,
             left: '50%',
             transform: 'translateX(-50%)',
-            background: COLORS.navy,
+            background: '#0F172A',
             color: '#FFFFFF',
             padding: '10px 20px',
             borderRadius: 8,

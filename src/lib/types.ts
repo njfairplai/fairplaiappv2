@@ -44,6 +44,7 @@ export interface Roster {
   gender: 'male' | 'female' | 'mixed'
   type: 'development' | 'competitive' | 'elite'
   coachId: string
+  teamPhoto?: string
 }
 
 export interface Player {

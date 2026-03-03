@@ -18,25 +18,25 @@ type Timeframe = 'last_session' | 'last_5' | 'season'
 type SortKey = 'score' | 'distance' | 'sprints' | 'position'
 
 function getPositionColor(position: string): string {
-  if (position === 'GK') return COLORS.warning
-  if (['CB', 'LB', 'RB'].includes(position)) return COLORS.success
-  if (['CM', 'AM', 'DM', 'CDM'].includes(position)) return COLORS.primary
-  if (['ST', 'CF', 'LW', 'RW'].includes(position)) return COLORS.error
-  return COLORS.muted
+  if (position === 'GK') return '#D97706'
+  if (['CB', 'LB', 'RB'].includes(position)) return '#059669'
+  if (['CM', 'AM', 'DM', 'CDM'].includes(position)) return '#4A4AFF'
+  if (['ST', 'CF', 'LW', 'RW'].includes(position)) return '#DC2626'
+  return '#64748B'
 }
 
 function getPositionGradient(position: string): string {
-  if (position === 'GK') return 'linear-gradient(160deg, #F39C12 0%, #E67E22 100%)'
-  if (['CB', 'LB', 'RB'].includes(position)) return 'linear-gradient(160deg, #27AE60 0%, #1E8449 100%)'
+  if (position === 'GK') return 'linear-gradient(160deg, #D97706 0%, #B45309 100%)'
+  if (['CB', 'LB', 'RB'].includes(position)) return 'linear-gradient(160deg, #059669 0%, #047857 100%)'
   if (['CM', 'AM', 'DM', 'CDM'].includes(position)) return 'linear-gradient(160deg, #4A4AFF 0%, #3025AE 100%)'
-  if (['ST', 'CF', 'LW', 'RW'].includes(position)) return 'linear-gradient(160deg, #E74C3C 0%, #C0392B 100%)'
+  if (['ST', 'CF', 'LW', 'RW'].includes(position)) return 'linear-gradient(160deg, #DC2626 0%, #B91C1C 100%)'
   return 'linear-gradient(160deg, #6E7180 0%, #40424D 100%)'
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 75) return COLORS.success
-  if (score >= 60) return COLORS.warning
-  return COLORS.error
+  if (score >= 75) return '#10B981'
+  if (score >= 60) return '#F59E0B'
+  return '#EF4444'
 }
 
 export default function SquadPage() {
@@ -100,53 +100,52 @@ export default function SquadPage() {
   ]
 
   return (
-    <div style={{ background: COLORS.lightBg, minHeight: '100vh' }}>
+    <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes pulse-dot { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        @keyframes pulse-dot { 0%,100% { transform: scale(1); } 50% { transform: scale(1.4); } }
         .squad-card-tap { transition: transform 100ms ease; }
         .squad-card-tap:active { transform: scale(0.97); }
       ` }} />
 
       {/* HEADER */}
-      <div style={{ padding: '20px 16px 0' }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: COLORS.navy }}>Squad</h1>
-        <p style={{ margin: '2px 0 0', fontSize: 14, color: COLORS.muted }}>{selectedRoster.name}</p>
-      </div>
+      <div style={{ background: '#0A0E1A', padding: '48px 20px 20px' }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF' }}>Squad</h1>
+        <p style={{ margin: '2px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{selectedRoster.name}</p>
 
-      {/* TOGGLE ROW */}
-      <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'center', margin: '16px 0' }}>
-        {timeframes.map(tf => {
-          const isActive = tf.key === timeframe
-          return (
-            <button
-              key={tf.key}
-              onClick={() => setTimeframe(tf.key)}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 20,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: isActive ? 'none' : `1px solid ${COLORS.primary}`,
-                background: isActive ? COLORS.primary : '#FFFFFF',
-                color: isActive ? '#FFFFFF' : COLORS.primary,
-              }}
-            >
-              {tf.label}
-            </button>
-          )
-        })}
+        {/* TOGGLE ROW */}
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 8, marginTop: 16 }}>
+          {timeframes.map(tf => {
+            const isActive = tf.key === timeframe
+            return (
+              <button
+                key={tf.key}
+                onClick={() => setTimeframe(tf.key)}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: isActive ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                  background: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
+                  color: isActive ? '#0A0E1A' : 'rgba(255,255,255,0.5)',
+                }}
+              >
+                {tf.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* ALERT STRIP */}
       {flaggedPlayer && !alertDismissed && (
         <div
           style={{
-            background: '#FFF3CD',
-            border: '1px solid #FCD34D',
-            borderRadius: 10,
+            background: '#FFFBEB',
+            borderLeft: '4px solid #F59E0B',
+            borderRadius: 0,
             padding: '12px 16px',
-            margin: '0 16px 12px',
             display: 'flex',
             flexDirection: 'row',
             gap: 8,
@@ -154,7 +153,7 @@ export default function SquadPage() {
           }}
         >
           <AlertTriangle size={16} color="#92400E" style={{ flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontSize: 13, color: '#92400E', flex: 1 }}>
+          <span style={{ fontSize: 14, color: '#92400E', flex: 1 }}>
             {flaggedPlayer.firstName} {flaggedPlayer.lastName} — performance down {flaggedDiff}% vs average. Review recommended.
           </span>
           <button
@@ -180,13 +179,14 @@ export default function SquadPage() {
         style={{
           display: 'flex',
           flexDirection: 'row',
-          padding: '0 16px',
-          marginBottom: 12,
+          padding: '12px 16px',
           alignItems: 'center',
           justifyContent: 'space-between',
+          background: '#FFFFFF',
+          borderBottom: '1px solid #E2E8F0',
         }}
       >
-        <span style={{ fontSize: 12, color: COLORS.muted }}>Sort by</span>
+        <span style={{ fontSize: 12, color: '#64748B' }}>Sort by</span>
         <div style={{ display: 'flex', flexDirection: 'row', gap: 6 }}>
           {sortOptions.map(opt => {
             const isActive = opt.key === sortBy
@@ -195,14 +195,14 @@ export default function SquadPage() {
                 key={opt.key}
                 onClick={() => setSortBy(opt.key)}
                 style={{
-                  padding: '5px 12px',
-                  borderRadius: 16,
-                  fontSize: 11,
-                  fontWeight: 600,
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: isActive ? 700 : 400,
                   cursor: 'pointer',
                   border: 'none',
-                  background: isActive ? COLORS.primary : COLORS.lightBg,
-                  color: isActive ? '#FFFFFF' : COLORS.muted,
+                  background: isActive ? '#4A4AFF' : 'transparent',
+                  color: isActive ? '#FFFFFF' : '#64748B',
                 }}
               >
                 {opt.label}
@@ -218,8 +218,7 @@ export default function SquadPage() {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: 12,
-          padding: '0 16px',
-          paddingBottom: 20,
+          padding: 16,
         }}
       >
         {sortedPlayers.map(player => {
@@ -235,10 +234,10 @@ export default function SquadPage() {
           let trendColor = '#9DA2B3'
           let trendText = '\u2192'
           if (diff > 3) {
-            trendColor = COLORS.success
+            trendColor = '#10B981'
             trendText = `\u2191+${diff}`
           } else if (diff < -3) {
-            trendColor = COLORS.error
+            trendColor = '#EF4444'
             trendText = `\u2193${diff}`
           }
 
@@ -248,14 +247,15 @@ export default function SquadPage() {
               className="squad-card-tap"
               onClick={() => router.push(`/coach/squad/${player.id}`)}
               style={{
-                height: 220,
+                height: 240,
                 borderRadius: 16,
                 overflow: 'hidden',
                 position: 'relative',
                 cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06)',
               }}
             >
-              {/* BACKGROUND LAYER */}
+              {/* PHOTO LAYER */}
               {player.photo && !imgErrors[player.id] ? (
                 <Image
                   src={player.photo}
@@ -295,24 +295,24 @@ export default function SquadPage() {
                   zIndex: 1,
                   pointerEvents: 'none',
                   background:
-                    'linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(13,16,32,0.6) 60%, rgba(13,16,32,0.95) 100%)',
+                    'linear-gradient(160deg, rgba(10,14,26,0.0) 0%, rgba(10,14,26,0.1) 35%, rgba(10,14,26,0.7) 65%, rgba(10,14,26,0.96) 100%)',
                 }}
               />
 
-              {/* JERSEY NUMBER */}
+              {/* JERSEY BADGE */}
               <div
                 style={{
                   position: 'absolute',
-                  top: 8,
-                  right: 8,
+                  top: 10,
+                  right: 10,
                   zIndex: 2,
                   width: 28,
                   height: 28,
                   borderRadius: '50%',
-                  background: 'rgba(13,16,32,0.7)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  backdropFilter: 'blur(4px)',
-                  WebkitBackdropFilter: 'blur(4px)',
+                  background: 'rgba(10,14,26,0.75)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
                   color: '#FFFFFF',
                   fontWeight: 700,
                   fontSize: 12,
@@ -324,18 +324,36 @@ export default function SquadPage() {
                 {player.jerseyNumber}
               </div>
 
+              {/* POSITION ACCENT */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  zIndex: 2,
+                  background: `${getPositionColor(position)}D9`,
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: 10,
+                  padding: '3px 7px',
+                  borderRadius: 20,
+                }}
+              >
+                {position}
+              </div>
+
               {/* ALERT DOT */}
               {isFlagged && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: 8,
-                    left: 8,
+                    top: 36,
+                    left: 10,
                     zIndex: 2,
-                    width: 10,
-                    height: 10,
+                    width: 8,
+                    height: 8,
                     borderRadius: '50%',
-                    background: '#F39C12',
+                    background: '#EF4444',
                     animation: 'pulse-dot 1.5s infinite',
                   }}
                 />
@@ -348,7 +366,7 @@ export default function SquadPage() {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  padding: '10px 12px',
+                  padding: '12px 14px',
                   zIndex: 2,
                 }}
               >
@@ -357,16 +375,11 @@ export default function SquadPage() {
                   style={{
                     color: '#FFFFFF',
                     fontWeight: 700,
-                    fontSize: 14,
-                    textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+                    fontSize: 15,
+                    textShadow: '0 1px 8px rgba(0,0,0,0.6)',
                   }}
                 >
                   {player.firstName} {player.lastName}
-                </div>
-
-                {/* Position */}
-                <div style={{ color: '#9DA2B3', fontSize: 11, marginTop: 2 }}>
-                  {position}
                 </div>
 
                 {/* Score row */}
@@ -374,17 +387,17 @@ export default function SquadPage() {
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    marginTop: 6,
+                    alignItems: 'center',
+                    marginTop: 4,
                   }}
                 >
                   {/* Composite score */}
                   <span
                     style={{
-                      fontSize: 26,
-                      fontWeight: 700,
+                      fontSize: 28,
+                      fontWeight: 800,
                       color: scoreColor,
-                      textShadow: `0 0 12px ${scoreColor}66`,
+                      textShadow: `0 0 8px ${scoreColor}66`,
                     }}
                   >
                     {compositeScore}
