@@ -4,6 +4,7 @@ import type {
   Notification, CategoryGrade, PercentileItem, SeasonProgressPoint,
   RadarDataItem, MatchRecord, HighlightClip, Program, Bookmark,
   TournamentPlaceholder, CoachFlaggedClip, PendingReviewItem,
+  PlayerSeasonStats,
 } from './types'
 
 // ─── FACILITIES ────────────────────────────────────────────
@@ -395,6 +396,82 @@ export const playerProfile = {
   compositeScore: 81,
 }
 
+// ─── POSITION-SPECIFIC SEASON STATS ──────────────────────────
+export const playerSeasonStats: PlayerSeasonStats[] = [
+  // Kiyan (CM) — Midfielder
+  { playerId: 'player_001', positionGroup: 'midfielder', stats: [
+    { label: 'Passes', value: '312' },
+    { label: 'Pass Accuracy', value: '79%' },
+    { label: 'Key Passes', value: '14' },
+    { label: 'Distance', value: '6.8km avg' },
+    { label: 'Goals + Assists', value: '6' },
+    { label: 'Avg Score', value: '73' },
+  ]},
+  // Ahmed (ST) — Forward
+  { playerId: 'player_002', positionGroup: 'forward', stats: [
+    { label: 'Goals', value: '8' },
+    { label: 'Assists', value: '4' },
+    { label: 'Shots', value: '28' },
+    { label: 'Shot Accuracy', value: '61%' },
+    { label: 'Dribbles', value: '21' },
+    { label: 'Avg Score', value: '76' },
+  ]},
+  // Omar (CB) — Defender
+  { playerId: 'player_003', positionGroup: 'defender', stats: [
+    { label: 'Clean Sheets', value: '4' },
+    { label: 'Duels Won', value: '68%' },
+    { label: 'Interceptions', value: '18' },
+    { label: 'Clearances', value: '24' },
+    { label: 'Pass Accuracy', value: '81%' },
+    { label: 'Avg Score', value: '71' },
+  ]},
+  // Saeed (RW) — Forward
+  { playerId: 'player_004', positionGroup: 'forward', stats: [
+    { label: 'Goals', value: '5' },
+    { label: 'Assists', value: '7' },
+    { label: 'Shots', value: '22' },
+    { label: 'Shot Accuracy', value: '55%' },
+    { label: 'Dribbles', value: '34' },
+    { label: 'Avg Score', value: '74' },
+  ]},
+  // Hamdan (GK) — Goalkeeper
+  { playerId: 'player_005', positionGroup: 'goalkeeper', stats: [
+    { label: 'Clean Sheets', value: '4' },
+    { label: 'Saves', value: '23' },
+    { label: 'Save Rate', value: '79%' },
+    { label: 'Goals Conceded', value: '6' },
+    { label: 'Distribution', value: '71%' },
+    { label: 'Avg Score', value: '74' },
+  ]},
+  // Faisal (LB) — Defender
+  { playerId: 'player_006', positionGroup: 'defender', stats: [
+    { label: 'Clean Sheets', value: '3' },
+    { label: 'Duels Won', value: '64%' },
+    { label: 'Interceptions', value: '15' },
+    { label: 'Clearances', value: '19' },
+    { label: 'Pass Accuracy', value: '77%' },
+    { label: 'Avg Score', value: '68' },
+  ]},
+  // Zayed (CM) — Midfielder
+  { playerId: 'player_007', positionGroup: 'midfielder', stats: [
+    { label: 'Passes', value: '287' },
+    { label: 'Pass Accuracy', value: '76%' },
+    { label: 'Key Passes', value: '11' },
+    { label: 'Distance', value: '6.5km avg' },
+    { label: 'Goals + Assists', value: '4' },
+    { label: 'Avg Score', value: '70' },
+  ]},
+  // Rashid (RB) — Defender
+  { playerId: 'player_008', positionGroup: 'defender', stats: [
+    { label: 'Clean Sheets', value: '3' },
+    { label: 'Duels Won', value: '62%' },
+    { label: 'Interceptions', value: '14' },
+    { label: 'Clearances', value: '16' },
+    { label: 'Pass Accuracy', value: '74%' },
+    { label: 'Avg Score', value: '66' },
+  ]},
+]
+
 export const highlightClips: HighlightClip[] = [
   { id: 1, title: 'Goal', subtitle: '34th minute', duration: '0:12', label: 'Goal', eventType: 'Goal', minute: "34'", color: '#22c55e' },
   { id: 2, title: 'Key Pass', subtitle: '67th minute', duration: '0:08', label: 'Key Pass', eventType: 'Key Pass', minute: "67'", color: '#4A4AFF' },
@@ -440,14 +517,20 @@ export const seasonProgressData: SeasonProgressPoint[] = [
 ]
 
 export const matchHistory: MatchRecord[] = [
-  { id: 1, day: 24, month: 'Feb', opponent: 'Al Wasl Academy', competition: 'UAE Youth League', duration: '90min', score: 81, tier: 'green' },
-  { id: 2, day: 17, month: 'Feb', opponent: 'Al Ain FC', competition: 'UAE Youth League', duration: '90min', score: 78, tier: 'green' },
-  { id: 3, day: 10, month: 'Feb', opponent: 'Shabab Al Ahli', competition: 'Friendly', duration: '85min', score: 71, tier: 'amber' },
-  { id: 4, day: 3, month: 'Feb', opponent: 'Dubai SC', competition: 'UAE Youth League', duration: '90min', score: 75, tier: 'green' },
-  { id: 5, day: 27, month: 'Jan', opponent: 'Sharjah FC', competition: 'UAE Youth League', duration: '80min', score: 68, tier: 'amber' },
-  { id: 6, day: 20, month: 'Jan', opponent: 'Ajman FC', competition: 'Cup', duration: '90min', score: 72, tier: 'amber' },
-  { id: 7, day: 13, month: 'Jan', opponent: 'Al Jazira', competition: 'UAE Youth League', duration: '90min', score: 69, tier: 'amber' },
-  { id: 8, day: 6, month: 'Jan', opponent: 'Baniyas SC', competition: 'Friendly', duration: '75min', score: 65, tier: 'red' },
+  { id: 1, day: 24, month: 'Feb', opponent: 'Al Wasl Academy', competition: 'UAE Youth League', duration: '90min', score: 81, tier: 'green', type: 'match' },
+  { id: 9, day: 21, month: 'Feb', opponent: 'MAK Academy', competition: 'Team Training', duration: '75min', score: 74, tier: 'green', type: 'training' },
+  { id: 2, day: 17, month: 'Feb', opponent: 'Al Ain FC', competition: 'UAE Youth League', duration: '90min', score: 78, tier: 'green', type: 'match' },
+  { id: 10, day: 14, month: 'Feb', opponent: 'MAK Academy', competition: 'Team Training', duration: '60min', score: 70, tier: 'amber', type: 'training' },
+  { id: 3, day: 10, month: 'Feb', opponent: 'Shabab Al Ahli', competition: 'Friendly', duration: '85min', score: 71, tier: 'amber', type: 'match' },
+  { id: 11, day: 7, month: 'Feb', opponent: 'MAK Academy', competition: 'Skills Session', duration: '60min', score: 76, tier: 'green', type: 'training' },
+  { id: 4, day: 3, month: 'Feb', opponent: 'Dubai SC', competition: 'UAE Youth League', duration: '90min', score: 75, tier: 'green', type: 'match' },
+  { id: 12, day: 31, month: 'Jan', opponent: 'MAK Academy', competition: 'Team Training', duration: '75min', score: 72, tier: 'amber', type: 'training' },
+  { id: 5, day: 27, month: 'Jan', opponent: 'Sharjah FC', competition: 'UAE Youth League', duration: '80min', score: 68, tier: 'amber', type: 'match' },
+  { id: 6, day: 20, month: 'Jan', opponent: 'Ajman FC', competition: 'Cup', duration: '90min', score: 72, tier: 'amber', type: 'match' },
+  { id: 13, day: 17, month: 'Jan', opponent: 'MAK Academy', competition: 'Skills Session', duration: '60min', score: 67, tier: 'amber', type: 'training' },
+  { id: 7, day: 13, month: 'Jan', opponent: 'Al Jazira', competition: 'UAE Youth League', duration: '90min', score: 69, tier: 'amber', type: 'match' },
+  { id: 14, day: 10, month: 'Jan', opponent: 'MAK Academy', competition: 'Team Training', duration: '75min', score: 63, tier: 'red', type: 'training' },
+  { id: 8, day: 6, month: 'Jan', opponent: 'Baniyas SC', competition: 'Friendly', duration: '75min', score: 65, tier: 'red', type: 'match' },
 ]
 
 // ─── SQUAD COMPOSITE SCORES (for coach portal) ────────────

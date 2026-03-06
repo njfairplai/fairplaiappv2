@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { matchHistory } from '@/lib/mockData'
+import { matchHistory, playerSeasonStats } from '@/lib/mockData'
 import { SHADOWS, COLORS } from '@/lib/constants'
 import type { MatchRecord } from '@/lib/types'
 import MatchCard from '@/components/parent/MatchCard'
@@ -15,9 +15,16 @@ function SectionLabel({ text }: { text: string }) {
   )
 }
 
+type HistoryTab = 'match' | 'training'
+
 export default function MatchesPage() {
   const [selectedMatch, setSelectedMatch] = useState<MatchRecord | null>(null)
+  const [historyTab, setHistoryTab] = useState<HistoryTab>('match')
+
   if (selectedMatch) return <MatchDetail match={selectedMatch} onBack={() => setSelectedMatch(null)} />
+
+  const filtered = matchHistory.filter((m) => m.type === historyTab)
+
   return (
     <div className="tab-fade" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F6FC', paddingBottom: 100 }}>
       <div style={{ padding: '24px 20px 4px' }}>
@@ -42,19 +49,43 @@ export default function MatchesPage() {
             </div>
           </div>
         ))}
-        <SectionLabel text="Season Overview" />
+        <SectionLabel text="My Season" />
         <div style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: SHADOWS.card }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
-            {[{ value: '23', label: 'Matches' },{ value: '8', label: 'Goals' },{ value: '12', label: 'Assists' },{ value: '6.9km', label: 'Avg Dist' }].map(({ value, label }, i, arr) => (
-              <div key={label} style={{ textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid #EDEFF7' : 'none', padding: '4px 0' }}>
-                <p style={{ fontSize: 22, fontWeight: 800, color: '#1B1650', letterSpacing: '-0.5px', margin: 0 }}>{value}</p>
-                <p style={{ fontSize: 12, color: '#6E7180', marginTop: 2 }}>{label}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px 0' }}>
+            {(playerSeasonStats.find(s => s.playerId === 'player_001')?.stats ?? []).map(({ value, label }) => (
+              <div key={label} style={{ textAlign: 'center', padding: '4px 0' }}>
+                <p style={{ fontSize: 20, fontWeight: 800, color: '#1B1650', letterSpacing: '-0.5px', margin: 0 }}>{value}</p>
+                <p style={{ fontSize: 11, color: '#6E7180', marginTop: 2 }}>{label}</p>
               </div>
             ))}
           </div>
         </div>
-        <SectionLabel text="Match History" />
-        {matchHistory.map((m) => <MatchCard key={m.id} match={m} onClick={() => setSelectedMatch(m)} />)}
+
+        {/* Toggle + History */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 12 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.primary, letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>Match History</p>
+          <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 10, padding: 3 }}>
+            {([['match', 'Matches'], ['training', 'Training']] as const).map(([key, label]) => {
+              const active = historyTab === key
+              return (
+                <button
+                  key={key}
+                  onClick={() => setHistoryTab(key)}
+                  style={{
+                    fontSize: 12, fontWeight: active ? 700 : 500,
+                    color: active ? '#fff' : '#64748B',
+                    background: active ? '#4A4AFF' : 'transparent',
+                    border: 'none', borderRadius: 8, padding: '5px 14px',
+                    cursor: 'pointer', transition: 'all 0.15s ease',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        {filtered.map((m) => <MatchCard key={m.id} match={m} onClick={() => setSelectedMatch(m)} />)}
       </div>
     </div>
   )

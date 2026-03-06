@@ -27,7 +27,16 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
         <span style={{ fontSize: 11, color: '#6E7180', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{match.month}</span>
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 15, fontWeight: 700, color: '#1B1650', margin: 0 }}>{match.opponent}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#1B1650', margin: 0 }}>{match.opponent}</p>
+          <span style={{
+            fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '3px 8px', lineHeight: 1,
+            background: match.type === 'match' ? '#EFF6FF' : '#ECFDF5',
+            color: match.type === 'match' ? '#4A4AFF' : '#059669',
+          }}>
+            {match.type === 'match' ? 'Match' : 'Training'}
+          </span>
+        </div>
         <p style={{ fontSize: 12, color: '#9DA2B3', marginTop: 2 }}>{match.competition}</p>
         <p style={{ fontSize: 12, color: '#9DA2B3' }}>{match.duration}</p>
       </div>

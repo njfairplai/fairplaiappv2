@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import type { MatchRecord } from '@/lib/types'
 import { scoreColor } from '@/lib/utils'
@@ -7,7 +8,50 @@ import { SHADOWS, COLORS } from '@/lib/constants'
 import { highlightClips, radarData } from '@/lib/mockData'
 import { ChevronLeft } from 'lucide-react'
 
-const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
+const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 240 }} /> })
+
+type PerformanceCategory = 'Physical' | 'Positional' | 'Passing' | 'Dribbling' | 'Control' | 'Defending'
+
+interface CategoryStat {
+  label: string
+  value: string
+  avg: string
+  pct: string
+  positive: boolean
+}
+
+const categoryStats: Record<PerformanceCategory, CategoryStat[]> = {
+  Physical: [
+    { label: 'Distance', value: '7.4 km', avg: '6.8 km', pct: '+9%', positive: true },
+    { label: 'Top Speed', value: '27.3 km/h', avg: '25.1 km/h', pct: '+8%', positive: true },
+    { label: 'Sprints', value: '14', avg: '11', pct: '+27%', positive: true },
+  ],
+  Positional: [
+    { label: 'Heat Map', value: '68%', avg: '62%', pct: '+10%', positive: true },
+    { label: 'Avg Position', value: 'Advanced', avg: 'Normal', pct: '+1', positive: true },
+    { label: 'Zone Entries', value: '12', avg: '9', pct: '+33%', positive: true },
+  ],
+  Passing: [
+    { label: 'Completion', value: '73%', avg: '69%', pct: '+6%', positive: true },
+    { label: 'Key Passes', value: '4', avg: '3', pct: '+33%', positive: true },
+    { label: 'Long Balls', value: '6', avg: '4', pct: '+50%', positive: true },
+  ],
+  Dribbling: [
+    { label: 'Completed', value: '5', avg: '4', pct: '+25%', positive: true },
+    { label: 'Success Rate', value: '71%', avg: '68%', pct: '+4%', positive: true },
+    { label: 'Chances', value: '3', avg: '2', pct: '+50%', positive: true },
+  ],
+  Control: [
+    { label: 'Touches', value: '48', avg: '42', pct: '+14%', positive: true },
+    { label: 'Retention', value: '82%', avg: '78%', pct: '+5%', positive: true },
+    { label: '1st Touch', value: 'Good', avg: 'Avg', pct: '+1', positive: true },
+  ],
+  Defending: [
+    { label: 'Tackles', value: '4', avg: '3', pct: '+33%', positive: true },
+    { label: 'Intercepts', value: '3', avg: '2', pct: '+50%', positive: true },
+    { label: 'Duels Won', value: '67%', avg: '61%', pct: '+10%', positive: true },
+  ],
+}
 
 function SectionLabel({ text }: { text: string }) {
   return (
@@ -19,6 +63,22 @@ function SectionLabel({ text }: { text: string }) {
 
 export default function MatchDetail({ match, onBack }: { match: MatchRecord; onBack: () => void }) {
   const color = scoreColor(match.score)
+  const [selectedCategory, setSelectedCategory] = useState<PerformanceCategory>('Physical')
+  const [tileOpacity, setTileOpacity] = useState(1)
+  const [displayedCategory, setDisplayedCategory] = useState<PerformanceCategory>('Physical')
+
+  useEffect(() => {
+    if (selectedCategory !== displayedCategory) {
+      setTileOpacity(0)
+      const timer = setTimeout(() => {
+        setDisplayedCategory(selectedCategory)
+        setTileOpacity(1)
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [selectedCategory, displayedCategory])
+
+  const stats = categoryStats[displayedCategory]
 
   return (
     <div className="tab-fade" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F6FC', paddingBottom: 24 }}>
@@ -43,7 +103,7 @@ export default function MatchDetail({ match, onBack }: { match: MatchRecord; onB
           </div>
         </div>
 
-        <SectionLabel text="Match Performance" />
+        <SectionLabel text="How I Played" />
         <div style={{ background: '#fff', borderRadius: 14, padding: '12px 0 6px', boxShadow: SHADOWS.card }}>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', padding: '0 16px 8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -55,23 +115,26 @@ export default function MatchDetail({ match, onBack }: { match: MatchRecord; onB
               <span style={{ fontSize: 11, color: '#6E7180', fontWeight: 600 }}>Season Avg</span>
             </div>
           </div>
-          <RadarChartDynamic data={radarData} />
+          <RadarChartDynamic
+            data={radarData}
+            selectedCategory={selectedCategory}
+            onCategoryClick={(cat: string) => setSelectedCategory(cat as PerformanceCategory)}
+          />
         </div>
 
-        <SectionLabel text="Physical Stats" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-          {[
-            { label: 'Distance', value: '7.4 km', avg: '6.8km', pct: '+9%', c: COLORS.success },
-            { label: 'Top Speed', value: '27.3 km/h', avg: '25.1', pct: '+8%', c: COLORS.success },
-            { label: 'Sprints', value: '14', avg: 'avg 11', pct: '+27%', c: COLORS.success },
-          ].map(({ label, value, avg, pct, c: col }) => (
-            <div key={label} style={{ background: '#fff', borderRadius: 14, padding: '14px 10px', textAlign: 'center', boxShadow: SHADOWS.card }}>
-              <p style={{ fontSize: 17, fontWeight: 900, color: '#1B1650', letterSpacing: '-0.3px', lineHeight: 1 }}>{value}</p>
-              <p style={{ fontSize: 10, color: '#9DA2B3', fontWeight: 600, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
-              <p style={{ fontSize: 10, color: '#9DA2B3', marginTop: 2 }}>{avg}</p>
-              <p style={{ fontSize: 11, fontWeight: 700, color: col, marginTop: 2 }}>{pct}</p>
-            </div>
-          ))}
+        <SectionLabel text={`${displayedCategory} Stats`} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, opacity: tileOpacity, transition: 'opacity 150ms ease' }}>
+          {stats.map(({ label, value, avg, pct, positive }) => {
+            const pctColor = positive ? COLORS.success : '#EF4444'
+            return (
+              <div key={label} style={{ background: '#fff', borderRadius: 14, padding: '14px 10px', textAlign: 'center', boxShadow: SHADOWS.card }}>
+                <p style={{ fontSize: 17, fontWeight: 900, color: '#1B1650', letterSpacing: '-0.3px', lineHeight: 1 }}>{value}</p>
+                <p style={{ fontSize: 10, color: '#9DA2B3', fontWeight: 600, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
+                <p style={{ fontSize: 10, color: '#9DA2B3', marginTop: 2 }}>{avg}</p>
+                <p style={{ fontSize: 11, fontWeight: 700, color: pctColor, marginTop: 2 }}>{pct}</p>
+              </div>
+            )
+          })}
         </div>
 
         <SectionLabel text="Highlights" />

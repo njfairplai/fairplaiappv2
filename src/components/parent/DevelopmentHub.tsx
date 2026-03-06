@@ -126,18 +126,18 @@ export default function DevelopmentHub() {
         <SectionLabel text="Coach's Analysis" />
         <CoachMessageCard />
 
-        <SectionLabel text="Performance Breakdown" />
+        <SectionLabel text="How I Played" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {categoryGrades.map((g) => <CategoryGrade key={g.category} item={g} />)}
         </div>
 
-        <SectionLabel text="Season Progression" />
+        <SectionLabel text="My Season" />
         <div style={{ background: '#fff', borderRadius: 12, padding: '16px 4px 12px', boxShadow: SHADOWS.card }}>
           <LineChartDynamic />
           <p style={{ fontSize: 12, color: '#9DA2B3', textAlign: 'center', marginTop: 6 }}>#8 in U12 · Top 35% this season</p>
         </div>
 
-        <SectionLabel text="How Kiyan Compares" sub="vs U12 Midfielders on FairplAI" />
+        <SectionLabel text="How I Compare" sub="vs U12 Midfielders on FairplAI" />
         <div style={{ background: '#fff', borderRadius: 12, padding: '16px 16px 4px', boxShadow: SHADOWS.card }}>
           {percentileData.map((item) => <PercentileBar key={item.metric} item={item} />)}
         </div>

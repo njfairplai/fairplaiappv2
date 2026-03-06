@@ -72,7 +72,9 @@
       "Bash(python3 << 'PYEOF'\nwith open\\('src/app/coach/watch/page.tsx', 'r'\\) as f:\n    lines = f.readlines\\(\\)\n\nfor i in range\\(975, 1235\\):\n    line = lines[i]\n    opens = line.count\\('{'\\) - line.count\\('}'\\)\n    parens = line.count\\('\\('\\) - line.count\\('\\)'\\)\n    if opens != 0 or parens != 0:\n        print\\(f'L{i+1}: braces={opens:+d} parens={parens:+d} | {line.rstrip\\(\\)[:100]}'\\)\nPYEOF)",
       "Bash(python3 << 'PYEOF'\nwith open\\('src/app/coach/watch/page.tsx', 'r'\\) as f:\n    lines = f.readlines\\(\\)\n\nbrace_total = 0\nparen_total = 0\nfor i in range\\(1005, 1230\\):\n    line = lines[i]\n    brace_total += line.count\\('{'\\) - line.count\\('}'\\)\n    paren_total += line.count\\('\\('\\) - line.count\\('\\)'\\)\n    if i+1 in [1006, 1013, 1014, 1119, 1120, 1199, 1226, 1227, 1228, 1229]:\n        print\\(f'L{i+1}: brace_running={brace_total:+d} paren_running={paren_total:+d} | {line.rstrip\\(\\)[:100]}'\\)\nPYEOF)",
       "Bash(npx tsc --noEmit --pretty 2>&1 | head -30)",
-      "Bash(lsof -ti:3001 | xargs kill -9 2>/dev/null; sleep 1 && npm run dev -- --port 3001)"
+      "Bash(lsof -ti:3001 | xargs kill -9 2>/dev/null; sleep 1 && npm run dev -- --port 3001)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git add src/app/parent/matches/page.tsx src/components/charts/RadarChart.tsx src/components/parent/DevelopmentHub.tsx src/components/parent/MatchCard.tsx src/components/parent/MatchDetail.tsx src/lib/mockData.ts src/lib/types.ts .claude/launch.json .claude/settings.local.json)"
     ]
   }
 }

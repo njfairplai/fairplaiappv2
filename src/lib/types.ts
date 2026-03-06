@@ -254,6 +254,7 @@ export interface MatchRecord {
   duration: string
   score: number
   tier: 'green' | 'amber' | 'red'
+  type: 'match' | 'training'
 }
 
 export interface HighlightClip {
@@ -307,4 +308,17 @@ export interface PendingReviewItem {
   playersToTag?: PendingPlayerTag[]
   totalPlayers?: number
   autoTaggedCount?: number
+}
+
+export type PositionGroup = 'goalkeeper' | 'defender' | 'midfielder' | 'forward'
+
+export interface SeasonStat {
+  label: string
+  value: string
+}
+
+export interface PlayerSeasonStats {
+  playerId: string
+  positionGroup: PositionGroup
+  stats: SeasonStat[]
 }
