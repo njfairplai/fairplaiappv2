@@ -9,28 +9,7 @@ import { players, rosters, squadScores, highlights, sessions, pitches, matchAnal
 import type { Highlight } from '@/lib/types'
 import dynamic from 'next/dynamic'
 
-const RadarChartSection = dynamic(
-  () => import('recharts').then(mod => {
-    const { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Legend } = mod
-
-    function RadarChartComponent({ data }: { data: { category: string; player: number; avg: number }[] }) {
-      return (
-        <ResponsiveContainer width="100%" height={280}>
-          <RadarChart data={data} cx="50%" cy="50%" outerRadius="70%">
-            <PolarGrid stroke="#E8EAED" />
-            <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: '#9DA2B3' }} />
-            <Radar name="This Session" dataKey="player" stroke="#4A4AFF" strokeWidth={2} fill="rgba(74,74,255,0.15)" fillOpacity={1} />
-            <Radar name="Season Avg" dataKey="avg" stroke="#CBD5E1" strokeWidth={1.5} fill="transparent" fillOpacity={0} />
-            <Legend />
-          </RadarChart>
-        </ResponsiveContainer>
-      )
-    }
-
-    return RadarChartComponent
-  }),
-  { ssr: false }
-)
+const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 240 }} /> })
 
 const SeasonProgressChart = dynamic(
   () => import('recharts').then(mod => {
@@ -131,6 +110,48 @@ function formatDuration(startTime: string, endTime: string): string {
 }
 
 type TabKey = 'stats' | 'highlights' | 'footage' | 'notes'
+type PerformanceCategory = 'Physical' | 'Positional' | 'Passing' | 'Dribbling' | 'Control' | 'Defending'
+
+interface CategoryStat {
+  label: string
+  value: string
+  avg: string
+  pct: string
+  positive: boolean
+}
+
+const categoryStatsMap: Record<PerformanceCategory, CategoryStat[]> = {
+  Physical: [
+    { label: 'Distance', value: '7.4 km', avg: '6.8 km', pct: '+9%', positive: true },
+    { label: 'Top Speed', value: '27.3 km/h', avg: '25.1 km/h', pct: '+8%', positive: true },
+    { label: 'Sprints', value: '14', avg: '11', pct: '+27%', positive: true },
+  ],
+  Positional: [
+    { label: 'Heat Map', value: '68%', avg: '62%', pct: '+10%', positive: true },
+    { label: 'Avg Position', value: 'Advanced', avg: 'Normal', pct: '+1', positive: true },
+    { label: 'Zone Entries', value: '12', avg: '9', pct: '+33%', positive: true },
+  ],
+  Passing: [
+    { label: 'Completion', value: '73%', avg: '69%', pct: '+6%', positive: true },
+    { label: 'Key Passes', value: '4', avg: '3', pct: '+33%', positive: true },
+    { label: 'Long Balls', value: '6', avg: '4', pct: '+50%', positive: true },
+  ],
+  Dribbling: [
+    { label: 'Completed', value: '5', avg: '4', pct: '+25%', positive: true },
+    { label: 'Success Rate', value: '71%', avg: '68%', pct: '+4%', positive: true },
+    { label: 'Chances', value: '3', avg: '2', pct: '+50%', positive: true },
+  ],
+  Control: [
+    { label: 'Touches', value: '48', avg: '42', pct: '+14%', positive: true },
+    { label: 'Retention', value: '82%', avg: '78%', pct: '+5%', positive: true },
+    { label: '1st Touch', value: 'Good', avg: 'Avg', pct: '+1', positive: true },
+  ],
+  Defending: [
+    { label: 'Tackles', value: '4', avg: '3', pct: '+33%', positive: true },
+    { label: 'Intercepts', value: '3', avg: '2', pct: '+50%', positive: true },
+    { label: 'Duels Won', value: '67%', avg: '61%', pct: '+10%', positive: true },
+  ],
+}
 
 function getGradeColor(grade: string): string {
   if (grade.startsWith('A')) return '#10B981'
@@ -145,6 +166,9 @@ export default function PlayerDetailPage() {
   const playerId = params.playerId as string
 
   const [activeTab, setActiveTab] = useState<TabKey>('stats')
+  const [selectedCategory, setSelectedCategory] = useState<PerformanceCategory>('Physical')
+  const [tileOpacity, setTileOpacity] = useState(1)
+  const [displayedCategory, setDisplayedCategory] = useState<PerformanceCategory>('Physical')
   const [flagSheetPlayerId, setFlagSheetPlayerId] = useState<string | null>(null)
   const [flagNote, setFlagNote] = useState('')
   const [toastVisible, setToastVisible] = useState(false)
@@ -233,6 +257,20 @@ export default function PlayerDetailPage() {
     return () => clearTimeout(timer)
   }, [noteText, playerId])
 
+  // Fade transition for category stat tiles
+  useEffect(() => {
+    if (selectedCategory !== displayedCategory) {
+      setTileOpacity(0)
+      const timer = setTimeout(() => {
+        setDisplayedCategory(selectedCategory)
+        setTileOpacity(1)
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [selectedCategory, displayedCategory])
+
+  const catStats = categoryStatsMap[displayedCategory]
+
   // Physical stats from analysis or hardcoded defaults
   const distanceCovered = analysis?.distanceCovered ?? 7.4
   const topSpeed = analysis?.topSpeed ?? 27.3
@@ -245,7 +283,7 @@ export default function PlayerDetailPage() {
       : [82, 74, 68, 71, 65, 70]
     const avgScores = [76, 70, 65, 68, 62, 67]
     const categories = ['Physical', 'Positional', 'Passing', 'Dribbling', 'Control', 'Defending']
-    return categories.map((cat, i) => ({ category: cat, player: playerScores[i], avg: avgScores[i] }))
+    return categories.map((cat, i) => ({ category: cat, score: playerScores[i], avg: avgScores[i] }))
   }, [analysis])
 
   // Category grades
@@ -505,79 +543,48 @@ export default function PlayerDetailPage() {
       {/* STATS TAB */}
       {activeTab === 'stats' && (
         <div style={{ background: '#F8F9FC', padding: 16 }}>
-          {/* 1) Physical Stats Cards Row */}
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 0, marginBottom: 10 }}>PHYSICAL</div>
-          <div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
-            {[
-              { value: `${distanceCovered} km`, trend: '+9%', label: 'Distance', icon: '\uD83C\uDFC3' },
-              { value: `${topSpeed} km/h`, trend: '+8%', label: 'Top Speed', icon: '\uD83D\uDCCD' },
-              { value: `${sprintCount}`, trend: '+27%', label: 'Sprints', icon: '\u26A1' },
-            ].map((card, i) => (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  background: '#FFFFFF',
-                  borderRadius: 12,
-                  padding: 12,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-                }}
-              >
-                <div style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: 'rgba(74,74,255,0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 16,
-                }}>
-                  {card.icon}
-                </div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', marginTop: 8 }}>{card.value}</div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{card.label}</div>
-                <div style={{
-                  display: 'inline-block',
-                  background: '#ECFDF5',
-                  color: '#059669',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  borderRadius: 20,
-                  padding: '2px 8px',
-                  marginTop: 6,
-                }}>
-                  {card.trend}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 2) Radar Chart */}
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 20, marginBottom: 10 }}>PERFORMANCE</div>
+          {/* 1) Interactive Radar Chart */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 0, marginBottom: 10 }}>PERFORMANCE</div>
           <div
             style={{
               background: '#FFFFFF',
               borderRadius: 14,
-              padding: 16,
+              padding: '12px 0 6px',
               marginTop: 0,
               boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>
-              Performance Breakdown
-            </div>
-            <RadarChartSection data={radarData} />
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 8 }}>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4A4AFF' }} />
-                <span style={{ fontSize: 11, color: '#9DA2B3' }}>This Session</span>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', padding: '0 16px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: '#4A4AFF', opacity: 0.7 }} />
+                <span style={{ fontSize: 11, color: '#6E7180', fontWeight: 600 }}>This Session</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#CBD5E1' }} />
-                <span style={{ fontSize: 11, color: '#9DA2B3' }}>Season Avg</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: '#d1d5db' }} />
+                <span style={{ fontSize: 11, color: '#6E7180', fontWeight: 600 }}>Season Avg</span>
               </div>
             </div>
+            <RadarChartDynamic
+              data={radarData}
+              selectedCategory={selectedCategory}
+              onCategoryClick={(cat: string) => setSelectedCategory(cat as PerformanceCategory)}
+            />
+          </div>
+
+          {/* 2) Dynamic Category Stats */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 20, marginBottom: 10 }}>{displayedCategory.toUpperCase()} STATS</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, opacity: tileOpacity, transition: 'opacity 150ms ease' }}>
+            {catStats.map(({ label, value, avg, pct, positive }) => {
+              const pctColor = positive ? '#10B981' : '#EF4444'
+              return (
+                <div key={label} style={{ background: '#fff', borderRadius: 12, padding: '14px 10px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}>
+                  <p style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.3px', lineHeight: 1, margin: 0 }}>{value}</p>
+                  <p style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
+                  <p style={{ fontSize: 10, color: '#9DA2B3', marginTop: 2 }}>{avg}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: pctColor, marginTop: 2 }}>{pct}</p>
+                </div>
+              )
+            })}
           </div>
 
           {/* 3) Category Grades Grid */}
