@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { playerProfile } from '@/lib/mockData'
 import ScoreArc from '@/components/charts/ScoreArc'
+import KeyMetricsBlock from '@/components/shared/KeyMetricsBlock'
 
 type Period = 'last-match' | 'last-5' | 'season'
 
@@ -117,6 +118,10 @@ export default function HeroSection() {
         <p key={activePeriod} className="num-fade fade-up-4" style={{ fontSize: 12, color: '#6E7180', textAlign: 'center' }}>
           {currentData.context}
         </p>
+
+        <div className="fade-up-5" style={{ width: '100%', marginTop: 16 }}>
+          <KeyMetricsBlock playerId="player_001" dark={true} />
+        </div>
       </div>
     </div>
   )

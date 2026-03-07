@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, X, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Plus, Share2, Copy, Check, MessageCircle } from 'lucide-react'
 import { COLORS, SHADOWS, RADIUS } from '@/lib/constants'
 import { sessions, pitches, academies, rosters } from '@/lib/mockData'
+import Modal from '@/components/ui/Modal'
 import type { Session } from '@/lib/types'
 
 const FACILITY_ID = 'facility_001'
@@ -61,10 +62,16 @@ function getStatusBadge(status: Session['status']): { bg: string; color: string;
   }
 }
 
+function getGuestLink(sessionId: string): string {
+  return `${typeof window !== 'undefined' ? window.location.origin : ''}/guest/demo-${sessionId}`
+}
+
 export default function SessionsPage() {
   const [view, setView] = useState<'calendar' | 'list'>('calendar')
   const [weekOffset, setWeekOffset] = useState(0)
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
   const [showAddPanel, setShowAddPanel] = useState(false)
 
   // Add session form state
@@ -271,13 +278,13 @@ export default function SessionsPage() {
       {/* SESSION POPOVER */}
       {selectedSession && (
         <>
-          <div onClick={() => setSelectedSession(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.2)', zIndex: 99 }} />
+          <div onClick={() => { setSelectedSession(null); setShareModalOpen(false); setShareCopied(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.2)', zIndex: 99 }} />
           <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#fff', borderRadius: RADIUS.card, padding: 24, boxShadow: SHADOWS.elevated, zIndex: 100, width: 380, maxWidth: '90vw' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: COLORS.navy, margin: 0 }}>
                 {popoverAcademy?.name}{popoverRoster ? ` \u00B7 ${popoverRoster.name}` : ''}
               </h3>
-              <button onClick={() => setSelectedSession(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color={COLORS.muted} /></button>
+              <button onClick={() => { setSelectedSession(null); setShareModalOpen(false); setShareCopied(false) }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color={COLORS.muted} /></button>
             </div>
             <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 12px' }}>{popoverPitch?.name}</p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
@@ -298,9 +305,89 @@ export default function SessionsPage() {
             {selectedSession.type === 'match' && selectedSession.opponent && (
               <p style={{ fontSize: 14, color: COLORS.navy, margin: '0 0 8px' }}><strong>Opponent:</strong> {selectedSession.opponent}</p>
             )}
+            {(selectedSession.status === 'analysed' || selectedSession.status === 'playback_ready') && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${COLORS.border}` }}>
+                <button
+                  onClick={() => setShareModalOpen(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    width: '100%', padding: '10px 0',
+                    background: COLORS.primary, color: '#fff', border: 'none',
+                    borderRadius: RADIUS.input, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                    transition: 'opacity 0.15s ease',
+                  }}
+                >
+                  <Share2 size={16} />
+                  Share Footage
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
+
+      {/* SHARE FOOTAGE MODAL */}
+      <Modal
+        open={shareModalOpen}
+        onClose={() => { setShareModalOpen(false); setShareCopied(false) }}
+        title="Share Footage"
+        maxWidth={440}
+      >
+        <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px' }}>
+          Share a guest link so anyone can view the match footage.
+        </p>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: '#F5F6FC', borderRadius: RADIUS.input, padding: '10px 12px', marginBottom: 16,
+        }}>
+          <input
+            readOnly
+            value={selectedSession ? getGuestLink(selectedSession.id) : ''}
+            style={{
+              flex: 1, border: 'none', background: 'transparent',
+              fontSize: 13, color: COLORS.navy, outline: 'none', fontFamily: 'Inter, sans-serif',
+            }}
+          />
+          <button
+            onClick={() => {
+              if (selectedSession) {
+                navigator.clipboard.writeText(getGuestLink(selectedSession.id))
+                setShareCopied(true)
+                setTimeout(() => setShareCopied(false), 2000)
+              }
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '6px 12px', borderRadius: RADIUS.pill, border: 'none',
+              background: shareCopied ? COLORS.success : COLORS.primary,
+              color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              transition: 'background 0.2s ease', whiteSpace: 'nowrap',
+            }}
+          >
+            {shareCopied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
+          </button>
+        </div>
+        <button
+          onClick={() => {
+            if (selectedSession) {
+              const link = getGuestLink(selectedSession.id)
+              const text = encodeURIComponent(`Your match footage is ready! Watch it here: ${link}`)
+              window.open(`https://wa.me/?text=${text}`, '_blank')
+            }
+          }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', padding: '12px 0', borderRadius: RADIUS.input, border: 'none',
+            background: '#25D366', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          <MessageCircle size={16} />
+          Send via WhatsApp
+        </button>
+        <p style={{ fontSize: 12, color: COLORS.muted, textAlign: 'center', marginTop: 16, marginBottom: 0, fontStyle: 'italic' }}>
+          Link expires in 7 days
+        </p>
+      </Modal>
 
       {/* ADD AD HOC SESSION SLIDE-IN PANEL */}
       {showAddPanel && (

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { COLORS, RADIUS, ROLE_PATHS } from '@/lib/constants'
 import type { UserRole } from '@/lib/types'
-import { Building2, GraduationCap, Trophy, Heart, ArrowRightLeft, X } from 'lucide-react'
+import { Building2, GraduationCap, Trophy, Heart, ArrowRightLeft, X, Video } from 'lucide-react'
 
 const roles: { role: UserRole; label: string; icon: React.ElementType; description: string }[] = [
   { role: 'facility_admin', label: 'Facility Admin', icon: Building2, description: 'Manage pitches & contracts' },
@@ -130,6 +130,45 @@ export default function RoleSwitcher() {
                   </button>
                 )
               })}
+
+              {/* Guest Footage link */}
+              <div style={{ borderTop: `1px solid ${COLORS.border}`, marginTop: 8, paddingTop: 8 }}>
+                <button
+                  onClick={() => { setOpen(false); router.push('/guest/demo-session_007') }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '14px 16px',
+                    borderRadius: RADIUS.card,
+                    background: '#F5F6FC',
+                    border: '2px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s',
+                    width: '100%',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      background: `${COLORS.primary}15`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Video size={20} color={COLORS.primary} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Guest Footage</p>
+                    <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>View match footage as a guest</p>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>

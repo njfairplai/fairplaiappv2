@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronLeft, Film } from 'lucide-react'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
+import KeyMetricsBlock from '@/components/shared/KeyMetricsBlock'
 import { COLORS } from '@/lib/constants'
 import { players, rosters, squadScores, highlights, sessions, pitches, matchAnalyses } from '@/lib/mockData'
 import type { Highlight } from '@/lib/types'
@@ -501,6 +502,11 @@ export default function PlayerDetailPage() {
             </text>
           </svg>
         </div>
+      </div>
+
+      {/* KEY METRICS */}
+      <div style={{ background: '#111827', padding: '16px 0' }}>
+        <KeyMetricsBlock playerId={playerId} dark={true} />
       </div>
 
       {/* TAB BAR */}

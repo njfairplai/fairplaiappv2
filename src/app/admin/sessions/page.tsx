@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { sessions, rosters, pitches, programs } from '@/lib/mockData'
+import { sessions as baseSessions, rosters, pitches, programs, tournamentFixtures } from '@/lib/mockData'
 import { COLORS, SHADOWS } from '@/lib/constants'
 import type { Session, Program } from '@/lib/types'
+import AdHocSessionForm from '@/components/academy-admin/AdHocSessionForm'
 import {
   Info,
   Calendar,
@@ -11,6 +12,7 @@ import {
   ChevronRight,
   X,
   Plus,
+  CheckCircle,
 } from 'lucide-react'
 
 /* ─── helpers ─────────────────────────────────────────────── */
@@ -55,6 +57,16 @@ function countSessionsBetween(days: number[], start: string, end: string): numbe
 export default function SessionsPage() {
   const [activeTab, setActiveTab] = useState<'programs' | 'sessions'>('programs')
   const [panelOpen, setPanelOpen] = useState(false)
+  const [adHocPanelOpen, setAdHocPanelOpen] = useState(false)
+  const [adHocSessions, setAdHocSessions] = useState<Session[]>([])
+  const [toast, setToast] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [toast])
 
   /* ── Create Program form state ── */
   const [formName, setFormName] = useState('')
@@ -68,12 +80,13 @@ export default function SessionsPage() {
 
   /* ── Sessions filter state ── */
   const [filterRoster, setFilterRoster] = useState('all')
-  const [filterType, setFilterType] = useState<'all' | 'match' | 'drill'>('all')
+  const [filterType, setFilterType] = useState<'all' | 'match' | 'drill' | 'tournament'>('all')
   const [filterStatus, setFilterStatus] = useState<'all' | Session['status']>('all')
 
   const academyRosters = rosters.filter((r) => r.academyId === 'academy_001')
   const academyPrograms = programs.filter((p) => p.academyId === 'academy_001')
-  const academySessions = sessions.filter((s) => s.academyId === 'academy_001')
+  const allSessions = [...baseSessions, ...adHocSessions]
+  const academySessions = allSessions.filter((s) => s.academyId === 'academy_001')
 
   /* program preview count */
   const effectiveLength = formLength === 0 ? (parseInt(formCustomLength) || 0) : formLength
@@ -84,12 +97,18 @@ export default function SessionsPage() {
     let list = [...academySessions]
     if (filterRoster !== 'all') list = list.filter((s) => s.rosterId === filterRoster)
     if (filterType !== 'all') {
-      list = list.filter((s) => (filterType === 'match' ? s.type === 'match' : s.type === 'drill'))
+      if (filterType === 'tournament') {
+        list = list.filter((s) => !!s.tournamentFixtureId)
+      } else if (filterType === 'match') {
+        list = list.filter((s) => s.type === 'match' && !s.tournamentFixtureId)
+      } else {
+        list = list.filter((s) => s.type === 'drill' || s.type === 'training_match')
+      }
     }
     if (filterStatus !== 'all') list = list.filter((s) => s.status === filterStatus)
     list.sort((a, b) => b.date.localeCompare(a.date))
     return list
-  }, [filterRoster, filterType, filterStatus])
+  }, [filterRoster, filterType, filterStatus, academySessions])
 
   /* auto-suggest name when roster selected */
   useEffect(() => {
@@ -156,6 +175,19 @@ export default function SessionsPage() {
               }}
             >
               <Plus size={16} /> Create Program
+            </button>
+          )}
+          {activeTab === 'sessions' && (
+            <button
+              onClick={() => setAdHocPanelOpen(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '10px 20px', borderRadius: 20, border: 'none',
+                background: COLORS.primary, color: '#fff', fontSize: 14, fontWeight: 700,
+                cursor: 'pointer', marginLeft: 8,
+              }}
+            >
+              <Plus size={16} /> New Session
             </button>
           )}
         </div>
@@ -289,13 +321,13 @@ export default function SessionsPage() {
 
             {/* Type pills */}
             <div style={{ display: 'flex', gap: 4 }}>
-              {(['all', 'match', 'drill'] as const).map((t) => (
+              {(['all', 'match', 'drill', 'tournament'] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setFilterType(t as typeof filterType)}
                   style={smallPill(filterType === t)}
                 >
-                  {t === 'all' ? 'All' : t === 'match' ? 'Match' : 'Training'}
+                  {t === 'all' ? 'All' : t === 'match' ? 'Match' : t === 'drill' ? 'Training' : 'Tournament'}
                 </button>
               ))}
             </div>
@@ -359,21 +391,40 @@ export default function SessionsPage() {
 
                   {/* Center */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.navy }}>
                         {roster?.name}{s.opponent ? ` vs ${s.opponent}` : ''}
                       </span>
+                      {/* Type badge */}
                       <span style={{
-                        background: s.type === 'match' ? `${COLORS.primary}1A` : `${COLORS.success}1A`,
-                        color: s.type === 'match' ? COLORS.primary : COLORS.success,
+                        background: s.tournamentFixtureId ? `${COLORS.warning}1A` : s.type === 'match' ? `${COLORS.primary}1A` : `${COLORS.success}1A`,
+                        color: s.tournamentFixtureId ? COLORS.warning : s.type === 'match' ? COLORS.primary : COLORS.success,
                         fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
                       }}>
-                        {s.type === 'match' ? 'Match' : 'Training'}
+                        {s.tournamentFixtureId ? 'Tournament' : s.type === 'match' ? 'Match' : s.type === 'training_match' ? 'Training Match' : 'Training'}
                       </span>
+                      {/* Ad Hoc badge */}
+                      {s.isAdHoc && (
+                        <span style={{
+                          background: '#F3F4F6', color: '#6B7280',
+                          fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+                        }}>
+                          Ad Hoc
+                        </span>
+                      )}
                     </div>
                     <span style={{ fontSize: 13, color: COLORS.muted }}>
                       {pitch?.name} &middot; {s.startTime}&ndash;{s.endTime}
                     </span>
+                    {/* Tournament fixture details */}
+                    {s.tournamentFixtureId && (() => {
+                      const fixture = tournamentFixtures.find(f => f.id === s.tournamentFixtureId)
+                      return fixture ? (
+                        <div style={{ fontSize: 12, color: COLORS.warning, fontWeight: 600, marginTop: 3 }}>
+                          {fixture.tournamentName} &middot; {fixture.round} &middot; {fixture.venue}
+                        </div>
+                      ) : null
+                    })()}
                   </div>
 
                   {/* Right badges */}
@@ -384,6 +435,36 @@ export default function SessionsPage() {
                     }}>
                       {statusLabel[s.status]}
                     </span>
+                    {/* Parent notification indicator */}
+                    {(s.type === 'match' || s.tournamentFixtureId) && (() => {
+                      const isProcessing = s.status === 'scheduled' || s.status === 'in_progress'
+                      const isSent = s.status === 'analysed' || s.status === 'playback_ready'
+                      if (isProcessing) {
+                        return (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            fontSize: 11, fontWeight: 600, color: COLORS.muted,
+                            padding: '3px 8px', borderRadius: 10, background: '#F3F4F6',
+                          }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.warning, animation: 'pulse 1.5s ease-in-out infinite' }} />
+                            Analysis processing…
+                          </span>
+                        )
+                      }
+                      if (isSent) {
+                        return (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            fontSize: 11, fontWeight: 600, color: COLORS.success,
+                            padding: '3px 8px', borderRadius: 10, background: `${COLORS.success}1A`,
+                          }}>
+                            <CheckCircle size={12} />
+                            Parent notification sent
+                          </span>
+                        )
+                      }
+                      return null
+                    })()}
                     {s.status === 'analysed' && (
                       <button style={{
                         background: 'none', border: 'none', color: COLORS.primary,
@@ -410,6 +491,39 @@ export default function SessionsPage() {
           </div>
         </div>
       )}
+
+      {/* ─── AD HOC SESSION SLIDE-IN ──────────────────────── */}
+      <AdHocSessionForm
+        open={adHocPanelOpen}
+        onClose={() => setAdHocPanelOpen(false)}
+        onCreated={(session) => {
+          setAdHocSessions(prev => [...prev, session])
+          setToast('Session created ✓')
+          setActiveTab('sessions')
+        }}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          background: COLORS.navy, color: '#fff', padding: '14px 28px', borderRadius: 12,
+          fontSize: 14, fontWeight: 600, boxShadow: SHADOWS.elevated, zIndex: 1000,
+          animation: 'fadeInUp 0.3s ease',
+        }}>
+          {toast}
+        </div>
+      )}
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
 
       {/* ─── CREATE PROGRAM SLIDE-IN PANEL ────────────────── */}
       {panelOpen && (

@@ -88,7 +88,7 @@ export interface Session {
   date: string
   startTime: string
   endTime: string
-  type: 'match' | 'drill'
+  type: 'match' | 'drill' | 'training_match'
   status: 'scheduled' | 'in_progress' | 'complete' | 'analysed' | 'playback_ready'
   opponent?: string
   competition?: string
@@ -97,6 +97,8 @@ export interface Session {
   participatingPlayerIds: string[]
   aiMatchConfidence?: number
   autoTriggeredAnalysis?: boolean
+  isAdHoc?: boolean
+  tournamentFixtureId?: string
 }
 
 export interface MatchAnalysis {
@@ -204,6 +206,20 @@ export interface TournamentPlaceholder {
   endDate: string
   location: string
   rosterIds: string[]
+}
+
+export interface TournamentFixture {
+  id: string
+  tournamentId: string
+  tournamentName: string
+  round: string
+  opponent: string
+  venue: string
+  date: string
+  startTime: string
+  endTime: string
+  rosterId: string
+  sessionId?: string
 }
 
 export type DVRFilter = 'all' | 'by_squad' | 'by_player'

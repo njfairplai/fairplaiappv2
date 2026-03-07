@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import RoleSwitcher from '@/components/ui/RoleSwitcher'
-import { LayoutDashboard, Users, ClipboardList, UserCheck, Calendar, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, ClipboardList, UserCheck, Calendar, CreditCard, FileText } from 'lucide-react'
 
 const COLORS = { primary: '#4A4AFF', muted: '#6E7180', border: '#E8EAED' }
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin/coaches', label: 'Coaches', icon: UserCheck },
   { href: '/admin/sessions', label: 'Sessions', icon: Calendar },
   { href: '/admin/credits', label: 'Credits', icon: CreditCard },
+  { href: '/admin/reports', label: 'Reports', icon: FileText },
 ]
 
 export default function AcademyAdminLayout({ children }: { children: React.ReactNode }) {

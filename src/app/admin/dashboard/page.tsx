@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import Badge from '@/components/ui/Badge'
-import { players, rosters, sessions, academies, tournaments, creditUsageByMonth } from '@/lib/mockData'
+import { players, rosters, sessions, academies, tournaments, tournamentFixtures, creditUsageByMonth } from '@/lib/mockData'
 import { COLORS, SHADOWS } from '@/lib/constants'
 import { Trophy } from 'lucide-react'
+import CalendarView from '@/components/academy-admin/CalendarView'
 
 const BarChartDynamic = dynamic(() => import('./CreditChart'), { ssr: false })
 
@@ -67,37 +68,25 @@ export default function AcademyDashboard() {
         <StatCard value={`${academy.creditBalance} min`} label="Minutes Remaining" />
       </div>
 
-      {/* Activity + Upcoming */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: SHADOWS.card }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: COLORS.navy, margin: '0 0 16px' }}>Recent Activity</h3>
-          {recentActivity.map((a, i) => (
-            <div key={i} style={{
-              display: 'flex', gap: 10, padding: '10px 0',
-              borderBottom: i < recentActivity.length - 1 ? `1px solid ${COLORS.border}` : 'none',
-            }}>
-              <span style={{ fontSize: 12, color: COLORS.muted, whiteSpace: 'nowrap', minWidth: 50 }}>{a.time}</span>
-              <span style={{ fontSize: 14, color: COLORS.navy }}>{a.action}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: SHADOWS.card }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: COLORS.navy, margin: '0 0 16px' }}>Upcoming Sessions</h3>
-          {upcomingSessions.map((s) => (
-            <div key={s.id} style={{ padding: '12px 0', borderBottom: `1px solid ${COLORS.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: COLORS.navy, margin: 0 }}>
-                    {s.type === 'match' ? `vs ${s.opponent}` : 'Training'}
-                  </p>
-                  <p style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>{s.date} &middot; {s.startTime}</p>
-                </div>
-                <Badge variant={s.type === 'match' ? 'info' : 'success'}>{s.type}</Badge>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Recent Activity */}
+      <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: SHADOWS.card, marginBottom: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: COLORS.navy, margin: '0 0 16px' }}>Recent Activity</h3>
+        {recentActivity.map((a, i) => (
+          <div key={i} style={{
+            display: 'flex', gap: 10, padding: '10px 0',
+            borderBottom: i < recentActivity.length - 1 ? `1px solid ${COLORS.border}` : 'none',
+          }}>
+            <span style={{ fontSize: 12, color: COLORS.muted, whiteSpace: 'nowrap', minWidth: 50 }}>{a.time}</span>
+            <span style={{ fontSize: 14, color: COLORS.navy }}>{a.action}</span>
+          </div>
+        ))}
       </div>
+
+      {/* Sessions Calendar */}
+      <CalendarView
+        sessions={sessions.filter(s => s.academyId === 'academy_001')}
+        tournamentFixtures={tournamentFixtures}
+      />
 
       {/* Tournaments section */}
       {tournament && (

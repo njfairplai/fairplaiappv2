@@ -3,7 +3,7 @@ import type {
   Session, MatchAnalysis, Highlight, SessionSegment, LeaseContract,
   Notification, CategoryGrade, PercentileItem, SeasonProgressPoint,
   RadarDataItem, MatchRecord, HighlightClip, Program, Bookmark,
-  TournamentPlaceholder, CoachFlaggedClip, PendingReviewItem,
+  TournamentPlaceholder, TournamentFixture, CoachFlaggedClip, PendingReviewItem,
   PlayerSeasonStats,
   CoachFeedback,
 } from './types'
@@ -226,6 +226,14 @@ export const sessions: Session[] = [
   // 2 past match sessions for U12 Red — for form dots
   { id: 'session_013', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-24', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Sharjah FC', competition: 'UAE Youth League', creditsConsumed: 36, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 87, autoTriggeredAnalysis: true },
   { id: 'session_014', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-31', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Ajman FC', competition: 'Cup', creditsConsumed: 40, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 89, autoTriggeredAnalysis: true },
+
+  // Tournament fixture sessions — UAE U12 Spring Cup
+  { id: 'session_015', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-15', startTime: '10:00', endTime: '11:30', type: 'match', status: 'scheduled', opponent: 'Al Wahda FC', competition: 'UAE U12 Spring Cup', participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_001' },
+  { id: 'session_016', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-16', startTime: '14:00', endTime: '15:30', type: 'match', status: 'scheduled', opponent: 'Sharjah Youth', competition: 'UAE U12 Spring Cup', participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_002' },
+  { id: 'session_017', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-17', startTime: '16:00', endTime: '17:30', type: 'match', status: 'scheduled', opponent: 'Abu Dhabi Stars', competition: 'UAE U12 Spring Cup', participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_003' },
+
+  // Ad hoc session (standalone, not from a program)
+  { id: 'session_018', facilityId: 'facility_001', pitchId: 'pitch_003', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-10', startTime: '16:00', endTime: '17:30', type: 'drill', status: 'scheduled', participatingPlayerIds: [...u12RedPlayerIds], isAdHoc: true },
 ]
 
 // ─── MATCH ANALYSIS (Kiyan Makkawi — across multiple matches) ────
@@ -366,6 +374,13 @@ export const tournaments: TournamentPlaceholder[] = [
     location: 'Dubai Sports City',
     rosterIds: ['roster_001'],
   },
+]
+
+// ─── TOURNAMENT FIXTURES ─────────────────────────────────────
+export const tournamentFixtures: TournamentFixture[] = [
+  { id: 'fixture_001', tournamentId: 'tournament_001', tournamentName: 'UAE U12 Spring Cup', round: 'Group Stage', opponent: 'Al Wahda FC', venue: 'Dubai Sports City — Pitch A', date: '2026-04-15', startTime: '10:00', endTime: '11:30', rosterId: 'roster_001', sessionId: 'session_015' },
+  { id: 'fixture_002', tournamentId: 'tournament_001', tournamentName: 'UAE U12 Spring Cup', round: 'Quarter-Final', opponent: 'Sharjah Youth', venue: 'Dubai Sports City — Pitch B', date: '2026-04-16', startTime: '14:00', endTime: '15:30', rosterId: 'roster_001', sessionId: 'session_016' },
+  { id: 'fixture_003', tournamentId: 'tournament_001', tournamentName: 'UAE U12 Spring Cup', round: 'Semi-Final', opponent: 'Abu Dhabi Stars', venue: 'Dubai Sports City — Main Arena', date: '2026-04-17', startTime: '16:00', endTime: '17:30', rosterId: 'roster_001', sessionId: 'session_017' },
 ]
 
 // ─── NOTIFICATIONS ─────────────────────────────────────────
@@ -621,3 +636,67 @@ export const coachFeedbackHistory: CoachFeedback[] = [
 
 // ─── SESSIONS NEEDING ATTENDANCE ───────────────────────────
 export const sessionsNeedingAttendance: string[] = ['session_004', 'session_008']
+
+// ─── PLAYER KEY METRICS (Technical, Temperament, Strain) ──
+export const playerKeyMetrics: Record<string, { technical: number; temperament: number; strain: 'low' | 'moderate' | 'high' }> = {
+  player_001: { technical: 81, temperament: 88, strain: 'low' },
+  player_002: { technical: 63, temperament: 72, strain: 'moderate' },
+  player_003: { technical: 74, temperament: 85, strain: 'low' },
+  player_004: { technical: 78, temperament: 70, strain: 'moderate' },
+  player_005: { technical: 71, temperament: 82, strain: 'low' },
+  player_006: { technical: 69, temperament: 90, strain: 'low' },
+  player_007: { technical: 75, temperament: 68, strain: 'high' },
+  player_008: { technical: 72, temperament: 76, strain: 'moderate' },
+  player_009: { technical: 80, temperament: 84, strain: 'low' },
+  player_010: { technical: 73, temperament: 79, strain: 'moderate' },
+  player_011: { technical: 67, temperament: 74, strain: 'moderate' },
+  player_012: { technical: 70, temperament: 86, strain: 'low' },
+  player_013: { technical: 76, temperament: 71, strain: 'high' },
+  player_014: { technical: 68, temperament: 80, strain: 'low' },
+  player_015: { technical: 62, temperament: 65, strain: 'high' },
+  player_016: { technical: 74, temperament: 77, strain: 'moderate' },
+}
+
+// ─── ATTENDANCE DATA (per roster) ─────────────────────────
+export const attendanceData: Record<string, Array<{ playerId: string; sessionsAttended: number; totalSessions: number }>> = {
+  roster_001: [
+    { playerId: 'player_001', sessionsAttended: 16, totalSessions: 18 },
+    { playerId: 'player_002', sessionsAttended: 14, totalSessions: 18 },
+    { playerId: 'player_003', sessionsAttended: 17, totalSessions: 18 },
+    { playerId: 'player_004', sessionsAttended: 12, totalSessions: 18 },
+    { playerId: 'player_005', sessionsAttended: 15, totalSessions: 18 },
+    { playerId: 'player_006', sessionsAttended: 18, totalSessions: 18 },
+    { playerId: 'player_007', sessionsAttended: 13, totalSessions: 18 },
+    { playerId: 'player_008', sessionsAttended: 16, totalSessions: 18 },
+  ],
+  roster_002: [
+    { playerId: 'player_009', sessionsAttended: 14, totalSessions: 16 },
+    { playerId: 'player_010', sessionsAttended: 15, totalSessions: 16 },
+    { playerId: 'player_011', sessionsAttended: 12, totalSessions: 16 },
+    { playerId: 'player_012', sessionsAttended: 16, totalSessions: 16 },
+    { playerId: 'player_013', sessionsAttended: 11, totalSessions: 16 },
+    { playerId: 'player_014', sessionsAttended: 13, totalSessions: 16 },
+    { playerId: 'player_015', sessionsAttended: 8, totalSessions: 16 },
+    { playerId: 'player_016', sessionsAttended: 15, totalSessions: 16 },
+  ],
+}
+
+// ─── DEVELOPMENT REPORT DATA ──────────────────────────────
+export const developmentReportData: Record<string, { softSkills: Array<{ category: string; score: number; avg: number }>; coachNotes: string }> = {
+  player_001: { softSkills: [{ category: 'Attitude', score: 90, avg: 75 }, { category: 'Effort', score: 85, avg: 72 }, { category: 'Coachability', score: 92, avg: 70 }, { category: 'Sportsmanship', score: 80, avg: 74 }, { category: 'Leadership', score: 78, avg: 65 }], coachNotes: 'Kiyan continues to show exceptional leadership and game intelligence. Keep working on maintaining effort for the full 90 minutes.' },
+  player_002: { softSkills: [{ category: 'Attitude', score: 70, avg: 75 }, { category: 'Effort', score: 78, avg: 72 }, { category: 'Coachability', score: 65, avg: 70 }, { category: 'Sportsmanship', score: 72, avg: 74 }, { category: 'Leadership', score: 55, avg: 65 }], coachNotes: 'Ahmed has great natural ability but needs to work on consistency and focus during training sessions.' },
+  player_003: { softSkills: [{ category: 'Attitude', score: 88, avg: 75 }, { category: 'Effort', score: 90, avg: 72 }, { category: 'Coachability', score: 85, avg: 70 }, { category: 'Sportsmanship', score: 92, avg: 74 }, { category: 'Leadership', score: 70, avg: 65 }], coachNotes: 'Omar is a model professional. Excellent defensive awareness and always sets a great example for the team.' },
+  player_004: { softSkills: [{ category: 'Attitude', score: 75, avg: 75 }, { category: 'Effort', score: 82, avg: 72 }, { category: 'Coachability', score: 70, avg: 70 }, { category: 'Sportsmanship', score: 68, avg: 74 }, { category: 'Leadership', score: 60, avg: 65 }], coachNotes: 'Saeed has explosive pace and good instincts. Needs to channel energy more productively in tight situations.' },
+  player_005: { softSkills: [{ category: 'Attitude', score: 85, avg: 75 }, { category: 'Effort', score: 80, avg: 72 }, { category: 'Coachability', score: 88, avg: 70 }, { category: 'Sportsmanship', score: 82, avg: 74 }, { category: 'Leadership', score: 72, avg: 65 }], coachNotes: 'Hamdan is a reliable goalkeeper with good communication. Working on distribution and decision-making under pressure.' },
+  player_006: { softSkills: [{ category: 'Attitude', score: 95, avg: 75 }, { category: 'Effort', score: 92, avg: 72 }, { category: 'Coachability', score: 90, avg: 70 }, { category: 'Sportsmanship', score: 88, avg: 74 }, { category: 'Leadership', score: 75, avg: 65 }], coachNotes: 'Faisal has the best attitude on the team. Always first to training and last to leave. A genuine pleasure to coach.' },
+  player_007: { softSkills: [{ category: 'Attitude', score: 65, avg: 75 }, { category: 'Effort', score: 60, avg: 72 }, { category: 'Coachability', score: 68, avg: 70 }, { category: 'Sportsmanship', score: 70, avg: 74 }, { category: 'Leadership', score: 58, avg: 65 }], coachNotes: 'Zayed has talent but effort levels have dropped recently. Need to have a conversation about commitment and goals.' },
+  player_008: { softSkills: [{ category: 'Attitude', score: 78, avg: 75 }, { category: 'Effort', score: 75, avg: 72 }, { category: 'Coachability', score: 80, avg: 70 }, { category: 'Sportsmanship', score: 76, avg: 74 }, { category: 'Leadership', score: 62, avg: 65 }], coachNotes: 'Rashid is a steady and dependable defender. Would benefit from more vocal communication during matches.' },
+  player_009: { softSkills: [{ category: 'Attitude', score: 86, avg: 75 }, { category: 'Effort', score: 84, avg: 72 }, { category: 'Coachability', score: 82, avg: 70 }, { category: 'Sportsmanship', score: 80, avg: 74 }, { category: 'Leadership', score: 78, avg: 65 }], coachNotes: 'Zain is the captain of U14 Blue for a reason. Strong leader with excellent technical ability.' },
+  player_010: { softSkills: [{ category: 'Attitude', score: 80, avg: 75 }, { category: 'Effort', score: 78, avg: 72 }, { category: 'Coachability', score: 76, avg: 70 }, { category: 'Sportsmanship', score: 82, avg: 74 }, { category: 'Leadership', score: 68, avg: 65 }], coachNotes: 'Tariq is a solid centre-back with room to grow. Positioning has improved significantly this term.' },
+  player_011: { softSkills: [{ category: 'Attitude', score: 72, avg: 75 }, { category: 'Effort', score: 70, avg: 72 }, { category: 'Coachability', score: 74, avg: 70 }, { category: 'Sportsmanship', score: 75, avg: 74 }, { category: 'Leadership', score: 60, avg: 65 }], coachNotes: 'Ibrahim has good technical skill but needs more consistency in matches. Training performance doesn\'t always transfer to game day.' },
+  player_012: { softSkills: [{ category: 'Attitude', score: 88, avg: 75 }, { category: 'Effort', score: 86, avg: 72 }, { category: 'Coachability', score: 84, avg: 70 }, { category: 'Sportsmanship', score: 90, avg: 74 }, { category: 'Leadership', score: 72, avg: 65 }], coachNotes: 'Majed has 100% attendance and always gives maximum effort. A great team player and reliable left-back.' },
+  player_013: { softSkills: [{ category: 'Attitude', score: 68, avg: 75 }, { category: 'Effort', score: 72, avg: 72 }, { category: 'Coachability', score: 66, avg: 70 }, { category: 'Sportsmanship', score: 64, avg: 74 }, { category: 'Leadership', score: 55, avg: 65 }], coachNotes: 'Nasser has pace and skill but needs to improve attitude in training. Potential is there but needs more discipline.' },
+  player_014: { softSkills: [{ category: 'Attitude', score: 82, avg: 75 }, { category: 'Effort', score: 78, avg: 72 }, { category: 'Coachability', score: 80, avg: 70 }, { category: 'Sportsmanship', score: 78, avg: 74 }, { category: 'Leadership', score: 65, avg: 65 }], coachNotes: 'Waleed is a dependable goalkeeper. Good shot-stopping and improving distribution. Needs to be more commanding in the box.' },
+  player_015: { softSkills: [{ category: 'Attitude', score: 60, avg: 75 }, { category: 'Effort', score: 58, avg: 72 }, { category: 'Coachability', score: 62, avg: 70 }, { category: 'Sportsmanship', score: 65, avg: 74 }, { category: 'Leadership', score: 50, avg: 65 }], coachNotes: 'Bilal has been struggling with injury and motivation. Need to support his recovery and rebuild confidence gradually.' },
+  player_016: { softSkills: [{ category: 'Attitude', score: 78, avg: 75 }, { category: 'Effort', score: 76, avg: 72 }, { category: 'Coachability', score: 74, avg: 70 }, { category: 'Sportsmanship', score: 80, avg: 74 }, { category: 'Leadership', score: 64, avg: 65 }], coachNotes: 'Sami is a creative winger with good instincts. Working on defensive contribution and tracking back.' },
+}

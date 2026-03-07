@@ -5,6 +5,7 @@ import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import PlayerForm from '@/components/academy-admin/PlayerForm'
+import CsvImportModal from '@/components/academy-admin/CsvImportModal'
 import { players, rosters } from '@/lib/mockData'
 import { Search, Upload } from 'lucide-react'
 
@@ -14,13 +15,14 @@ const SHADOWS = { card: '0 2px 12px rgba(0,0,0,0.06)' }
 export default function AcademyPlayersPage() {
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
+  const [csvModalOpen, setCsvModalOpen] = useState(false)
   const academyPlayers = players.filter((p) => p.academyId === 'academy_001')
   const filtered = search ? academyPlayers.filter((p) => `${p.firstName} ${p.lastName}`.toLowerCase().includes(search.toLowerCase())) : academyPlayers
   return (
     <div style={{ padding: 32 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Players</h1>
-        <div style={{ display: 'flex', gap: 8 }}><Button variant="secondary" size="sm"><Upload size={14} /> Import CSV</Button><Button onClick={() => setFormOpen(true)}>Add Player</Button></div>
+        <div style={{ display: 'flex', gap: 8 }}><Button variant="secondary" size="sm" onClick={() => setCsvModalOpen(true)}><Upload size={14} /> Import CSV</Button><Button onClick={() => setFormOpen(true)}>Add Player</Button></div>
       </div>
       <div style={{ position: 'relative', marginBottom: 20 }}>
         <Search size={16} color={COLORS.muted} style={{ position: 'absolute', left: 14, top: 12 }} />
@@ -50,6 +52,7 @@ export default function AcademyPlayersPage() {
         </table>
       </div>
       {formOpen && <PlayerForm onClose={() => setFormOpen(false)} />}
+      <CsvImportModal open={csvModalOpen} onClose={() => setCsvModalOpen(false)} />
     </div>
   )
 }
