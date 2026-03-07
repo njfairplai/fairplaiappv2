@@ -1,15 +1,14 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Users, PlayCircle, ClipboardCheck, Settings } from 'lucide-react'
+import { Home, Users, PlayCircle, ClipboardList, Settings } from 'lucide-react'
 import { TeamProvider } from '@/contexts/TeamContext'
 import RoleSwitcher from '@/components/ui/RoleSwitcher'
-import { pendingReviewItems } from '@/lib/mockData'
 
 const tabs = [
   { id: 'home', label: 'Home', href: '/coach/home', icon: Home },
   { id: 'squad', label: 'Squad', href: '/coach/squad', icon: Users },
   { id: 'watch', label: 'Watch', href: '/coach/watch', icon: PlayCircle },
-  { id: 'review', label: 'Review', href: '/coach/review', icon: ClipboardCheck, badge: pendingReviewItems.length },
+  { id: 'hub', label: 'Coach', href: '/coach/hub', icon: ClipboardList },
   { id: 'settings', label: 'Settings', href: '/coach/settings', icon: Settings },
 ]
 
@@ -95,27 +94,6 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
                       color={isActive ? '#4A4AFF' : '#64748B'}
                       strokeWidth={isActive ? 2.2 : 1.7}
                     />
-                    {/* Badge on the review tab */}
-                    {tab.badge && tab.badge > 0 && (
-                      <div style={{
-                        position: 'absolute',
-                        top: -4,
-                        right: -8,
-                        minWidth: 16,
-                        height: 16,
-                        background: '#EF4444',
-                        borderRadius: '50%',
-                        color: '#fff',
-                        fontSize: 9,
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        lineHeight: 1,
-                      }}>
-                        {tab.badge}
-                      </div>
-                    )}
                   </div>
                   <span style={{
                     fontSize: 10,

@@ -322,3 +322,16 @@ export interface PlayerSeasonStats {
   positionGroup: PositionGroup
   stats: SeasonStat[]
 }
+
+export interface CoachFeedback {
+  id: string
+  playerId: string
+  coachId: string
+  date: string
+  attitude: number
+  effort: number
+  coachability: number
+  sportsmanship: number
+  summary: string
+  sessionsSinceLastFeedback: number
+}

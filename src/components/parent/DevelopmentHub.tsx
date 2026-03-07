@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
-import { categoryGrades, percentileData, coachFlaggedClips, highlights } from '@/lib/mockData'
+import { categoryGrades, percentileData, coachFlaggedClips, highlights, coachFeedbackHistory } from '@/lib/mockData'
 import CategoryGrade from './CategoryGrade'
 import PercentileBar from '@/components/charts/PercentileBar'
 import SkeletonLoader from '@/components/ui/SkeletonLoader'
@@ -112,6 +112,70 @@ function CoachMessageCard() {
   )
 }
 
+function CoachFeedbackCard() {
+  const feedback = coachFeedbackHistory.find(f => f.playerId === 'player_001')
+
+  if (!feedback) {
+    return (
+      <>
+        <SectionLabel text="Coach Feedback" />
+        <div style={{ background: '#fff', borderRadius: 16, padding: 20, boxShadow: SHADOWS.card, textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: '#9DA2B3', margin: 0 }}>No feedback submitted yet this term.</p>
+        </div>
+      </>
+    )
+  }
+
+  const attributes = [
+    { label: 'Attitude', value: feedback.attitude, emoji: '🧠' },
+    { label: 'Effort', value: feedback.effort, emoji: '💪' },
+    { label: 'Coachability', value: feedback.coachability, emoji: '📋' },
+    { label: 'Sportsmanship', value: feedback.sportsmanship, emoji: '🤝' },
+  ]
+
+  return (
+    <>
+      <SectionLabel text="Coach Feedback" />
+      <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: SHADOWS.card }}>
+        {/* Rating bars */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          {attributes.map(attr => (
+            <div key={attr.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>{attr.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: COLORS.navy }}>{attr.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: COLORS.primary }}>{attr.value}/5</span>
+                </div>
+                <div style={{ height: 6, background: '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', width: `${(attr.value / 5) * 100}%`,
+                    background: 'linear-gradient(90deg, #4A4AFF, #757FFF)',
+                    borderRadius: 3,
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Coach's written note */}
+        {feedback.summary && (
+          <div style={{ background: '#F5F6FC', borderRadius: 10, padding: '12px 14px' }}>
+            <p style={{ fontSize: 13, color: COLORS.navy, fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
+              &ldquo;{feedback.summary}&rdquo;
+            </p>
+            <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 6, margin: '6px 0 0' }}>
+              Coach Marcus · {feedback.date}
+            </p>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
 export default function DevelopmentHub() {
   return (
     <div className="tab-fade" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F6FC', paddingBottom: 24 }}>
@@ -122,6 +186,8 @@ export default function DevelopmentHub() {
 
       <div style={{ padding: '0 20px' }}>
         <CoachNotesCard />
+
+        <CoachFeedbackCard />
 
         <SectionLabel text="Coach's Analysis" />
         <CoachMessageCard />

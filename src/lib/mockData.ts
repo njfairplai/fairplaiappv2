@@ -5,6 +5,7 @@ import type {
   RadarDataItem, MatchRecord, HighlightClip, Program, Bookmark,
   TournamentPlaceholder, CoachFlaggedClip, PendingReviewItem,
   PlayerSeasonStats,
+  CoachFeedback,
 } from './types'
 
 // ─── FACILITIES ────────────────────────────────────────────
@@ -589,3 +590,34 @@ export const creditUsageByMonth = [
   { month: 'Jan', credits: 5 },
   { month: 'Feb', credits: 4 },
 ]
+
+// ─── COACH FEEDBACK STATUS ─────────────────────────────────
+export const playerFeedbackStatus: Record<string, { sessionsSinceLastFeedback: number; lastFeedbackDate: string | null }> = {
+  player_001: { sessionsSinceLastFeedback: 4, lastFeedbackDate: '2026-02-10' },
+  player_002: { sessionsSinceLastFeedback: 12, lastFeedbackDate: '2026-01-06' },
+  player_003: { sessionsSinceLastFeedback: 10, lastFeedbackDate: '2026-01-13' },
+  player_004: { sessionsSinceLastFeedback: 6, lastFeedbackDate: '2026-01-27' },
+  player_005: { sessionsSinceLastFeedback: 11, lastFeedbackDate: '2026-01-06' },
+  player_006: { sessionsSinceLastFeedback: 3, lastFeedbackDate: '2026-02-17' },
+  player_007: { sessionsSinceLastFeedback: 14, lastFeedbackDate: '2025-12-16' },
+  player_008: { sessionsSinceLastFeedback: 8, lastFeedbackDate: '2026-01-20' },
+}
+
+// ─── COACH FEEDBACK HISTORY ────────────────────────────────
+export const coachFeedbackHistory: CoachFeedback[] = [
+  {
+    id: 'feedback_001',
+    playerId: 'player_001',
+    coachId: 'coach_001',
+    date: '2026-02-10',
+    attitude: 5,
+    effort: 4,
+    coachability: 5,
+    sportsmanship: 4,
+    summary: 'Kiyan continues to show excellent leadership on the pitch. His willingness to listen and adapt during training is outstanding. Keep working on maintaining effort for the full 90 minutes.',
+    sessionsSinceLastFeedback: 6,
+  },
+]
+
+// ─── SESSIONS NEEDING ATTENDANCE ───────────────────────────
+export const sessionsNeedingAttendance: string[] = ['session_004', 'session_008']
