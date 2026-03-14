@@ -63,20 +63,45 @@ function CheckboxItem({ checked, onChange, children, note }: CheckboxItemProps) 
   )
 }
 
+const CURRENT_POLICY_VERSION = '2.0'
+
 export default function ConsentPage() {
   const router = useRouter()
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [dataConsent, setDataConsent] = useState(false)
+  const [parentalConsent, setParentalConsent] = useState(false)
+  const [isReConsent, setIsReConsent] = useState(false)
 
-  const allChecked = termsAccepted && privacyAccepted && dataConsent
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const storedVersion = localStorage.getItem('policy_version')
+      if (storedVersion && storedVersion < CURRENT_POLICY_VERSION) {
+        setIsReConsent(true)
+      }
+    }
+  })
+
+  const allChecked = termsAccepted && privacyAccepted && dataConsent && parentalConsent
 
   function handleContinue() {
     if (!allChecked) return
     localStorage.setItem('fairplai_consented', 'true')
     localStorage.setItem('consent_timestamp', new Date().toISOString())
-    localStorage.setItem('policy_version', '1.0')
-    router.push('/')
+    localStorage.setItem('policy_version', CURRENT_POLICY_VERSION)
+    // Append to consent records
+    const existing = localStorage.getItem('fairplai_consent_records')
+    const records = existing ? JSON.parse(existing) : []
+    records.push({
+      policyVersion: CURRENT_POLICY_VERSION,
+      acceptedAt: new Date().toISOString(),
+      parentalConsent: true,
+      reConsent: isReConsent,
+    })
+    localStorage.setItem('fairplai_consent_records', JSON.stringify(records))
+    const role = localStorage.getItem('fairplai_role')
+    const ROLE_PATHS: Record<string, string> = { facility_admin: '/facility/dashboard', academy_admin: '/admin/dashboard', coach: '/coach/home', parent: '/parent/home' }
+    router.push(role ? (ROLE_PATHS[role] || '/') : '/')
   }
 
   return (
@@ -124,6 +149,13 @@ export default function ConsentPage() {
       >
         Please review and accept the following
       </p>
+
+      {/* Re-consent banner */}
+      {isReConsent && (
+        <div style={{ width: '100%', maxWidth: 440, background: `${COLORS.warning}20`, border: `1px solid ${COLORS.warning}40`, borderRadius: 12, padding: '12px 16px', marginBottom: 16, boxSizing: 'border-box', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: '#92400E', margin: 0, fontWeight: 600 }}>Our policies have been updated. Please review and re-accept to continue.</p>
+        </div>
+      )}
 
       {/* White Card */}
       <div
@@ -174,6 +206,16 @@ export default function ConsentPage() {
           analytical purposes in accordance with UAE PDPL
         </CheckboxItem>
 
+        {/* Checkbox 4 — Parental Consent */}
+        <CheckboxItem
+          checked={parentalConsent}
+          onChange={setParentalConsent}
+          note="Required for all participants under 18"
+        >
+          As a parent or guardian, I give consent for my child to participate in FairPlai&apos;s
+          video recording and performance analysis program
+        </CheckboxItem>
+
         {/* Policy version */}
         <p
           style={{
@@ -183,7 +225,7 @@ export default function ConsentPage() {
             margin: '24px 0 24px',
           }}
         >
-          Policy version 1.0 &middot; March 2026
+          Policy version {CURRENT_POLICY_VERSION} &middot; March 2026
         </p>
 
         {/* Continue Button */}

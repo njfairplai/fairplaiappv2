@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTeam } from '@/contexts/TeamContext'
 import { sessions, players, rosters, pitches, playerFeedbackStatus, sessionsNeedingAttendance } from '@/lib/mockData'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
@@ -21,8 +21,10 @@ function SectionLabel({ text }: { text: string }) {
 
 export default function CoachHubPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { selectedRosterId } = useTeam()
-  const [activeTab, setActiveTab] = useState<HubTab>('sessions')
+  const initialTab = (searchParams.get('tab') as HubTab) || 'sessions'
+  const [activeTab, setActiveTab] = useState<HubTab>(initialTab)
   const [attendanceMarked, setAttendanceMarked] = useState<Record<string, boolean>>({})
 
   useEffect(() => {

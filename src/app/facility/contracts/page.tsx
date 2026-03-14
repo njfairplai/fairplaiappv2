@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, AlertTriangle, Clock, DollarSign, TrendingUp } from 'lucide-react'
 import { COLORS, SHADOWS, RADIUS } from '@/lib/constants'
-import { leaseContracts, pitches, academies } from '@/lib/mockData'
-import type { LeaseContract } from '@/lib/types'
+import { leaseContracts, pitches, academies, contractRateHistory, expiredContracts } from '@/lib/mockData'
+import type { LeaseContract, RateChange } from '@/lib/types'
 
 const FACILITY_ID = 'facility_001'
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -48,6 +48,13 @@ function countSessionsBetween(days: number[], startDate: string, endDate: string
 export default function ContractsPage() {
   const [showNewPanel, setShowNewPanel] = useState(false)
   const [renewContract, setRenewContract] = useState<LeaseContract | null>(null)
+  const [rateHistoryContract, setRateHistoryContract] = useState<LeaseContract | null>(null)
+  const [showMarketSlots, setShowMarketSlots] = useState(false)
+
+  // Rate history form state
+  const [newRate, setNewRate] = useState('')
+  const [newRateReason, setNewRateReason] = useState('')
+  const [rateSuccess, setRateSuccess] = useState(false)
 
   // New contract form state
   const [ncAcademyId, setNcAcademyId] = useState('')
@@ -130,6 +137,46 @@ export default function ContractsPage() {
     }, 3000)
   }
 
+  function handleRateHistoryOpen(c: LeaseContract) {
+    setRateHistoryContract(c)
+    setNewRate('')
+    setNewRateReason('')
+    setRateSuccess(false)
+  }
+
+  function handleApplyNewRate() {
+    setRateSuccess(true)
+    setTimeout(() => {
+      setRateHistoryContract(null)
+      setRateSuccess(false)
+    }, 3000)
+  }
+
+  function handleRebook(c: LeaseContract) {
+    setShowNewPanel(true)
+    setNcAcademyId(c.academyId)
+    setNcPitchId(c.pitchId)
+    setNcDays(c.dayOfWeek)
+    const times: Record<number, string> = {}
+    c.dayOfWeek.forEach(d => { times[d] = c.startTime })
+    setNcDayTimes(times)
+    setNcRate(String(c.ratePerSession))
+    setNcCurrency(c.currency)
+  }
+
+  function getDaysUntilExpiry(endDate: string): number {
+    const end = new Date(endDate + 'T00:00:00')
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  }
+
+  function formatFullDate(dateStr: string): string {
+    const d = new Date(dateStr + 'T00:00:00')
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+  }
+
   const ncAcademy = academies.find(a => a.id === ncAcademyId)
   const ncPitch = facilityPitches.find(p => p.id === ncPitchId)
 
@@ -157,6 +204,7 @@ export default function ContractsPage() {
               const academy = academies.find(a => a.id === c.academyId)
               const pitch = pitches.find(p => p.id === c.pitchId)
               const statusBadge = getStatusBadge(c.status)
+              const daysLeft = getDaysUntilExpiry(c.endDate)
               return (
                 <tr key={c.id} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
                   <td style={{ padding: '14px 16px', fontSize: 14, fontWeight: 600, color: COLORS.navy }}>{academy?.name}</td>
@@ -165,17 +213,38 @@ export default function ContractsPage() {
                   <td style={{ padding: '14px 16px', fontSize: 14, color: COLORS.navy }}>{c.ratePerSession} {c.currency}/session</td>
                   <td style={{ padding: '14px 16px', fontSize: 14, color: COLORS.navy }}>{formatTerm(c.startDate, c.endDate)}</td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      display: 'inline-block', fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: RADIUS.pill,
-                      background: statusBadge.bg, color: statusBadge.color,
-                    }}>
-                      {statusBadge.label}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{
+                        display: 'inline-block', fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: RADIUS.pill,
+                        background: statusBadge.bg, color: statusBadge.color,
+                      }}>
+                        {statusBadge.label}
+                      </span>
+                      {daysLeft > 0 && daysLeft <= 7 && (
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: RADIUS.pill,
+                          background: '#E74C3C22', color: '#E74C3C',
+                        }}>
+                          <AlertTriangle size={11} /> 7-day reminder
+                        </span>
+                      )}
+                      {daysLeft > 7 && daysLeft <= 30 && (
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: RADIUS.pill,
+                          background: '#F39C1222', color: '#92400E',
+                        }}>
+                          <Clock size={11} /> 30-day reminder
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button style={{ background: 'none', border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: COLORS.navy, cursor: 'pointer' }}>Edit</button>
                       <button onClick={() => handleRenewOpen(c)} style={{ background: 'none', border: `1px solid ${COLORS.primary}`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: COLORS.primary, cursor: 'pointer' }}>Renew</button>
+                      <button onClick={() => handleRateHistoryOpen(c)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'none', border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: COLORS.navy, cursor: 'pointer' }}>
+                        <DollarSign size={12} /> Rate History
+                      </button>
                       <button style={{ background: 'none', border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: COLORS.muted, cursor: 'pointer' }}>View Sessions</button>
                     </div>
                   </td>
@@ -385,6 +454,124 @@ export default function ContractsPage() {
           </div>
         </>
       )}
+
+      {/* RATE HISTORY SLIDE-IN PANEL */}
+      {rateHistoryContract && (
+        <>
+          <div onClick={() => { setRateHistoryContract(null); setRateSuccess(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 199 }} />
+          <div style={{ position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: '#fff', zIndex: 200, boxShadow: SHADOWS.elevated, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}` }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Rate History</h2>
+              <button onClick={() => { setRateHistoryContract(null); setRateSuccess(false) }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} color={COLORS.muted} /></button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+              {/* Current Rate */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.muted, display: 'block', marginBottom: 6 }}>Current Rate</label>
+                <p style={{ fontSize: 28, fontWeight: 800, color: COLORS.navy, margin: 0 }}>
+                  {rateHistoryContract.ratePerSession} <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.muted }}>{rateHistoryContract.currency}/session</span>
+                </p>
+              </div>
+
+              {/* Rate Timeline */}
+              <div style={{ marginBottom: 28 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.muted, display: 'block', marginBottom: 12 }}>Change History</label>
+                {(contractRateHistory[rateHistoryContract.id] || []).map((entry, i, arr) => (
+                  <div key={i} style={{ display: 'flex', gap: 14, position: 'relative' }}>
+                    {/* Timeline line & dot */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 16, flexShrink: 0 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: i === arr.length - 1 ? COLORS.primary : COLORS.border, border: `2px solid ${i === arr.length - 1 ? COLORS.primary : COLORS.muted}`, flexShrink: 0, marginTop: 4 }} />
+                      {i < arr.length - 1 && (
+                        <div style={{ width: 2, flex: 1, background: COLORS.border, minHeight: 32 }} />
+                      )}
+                    </div>
+                    {/* Content */}
+                    <div style={{ paddingBottom: i < arr.length - 1 ? 20 : 0, flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.navy, margin: 0 }}>{formatFullDate(entry.date)}</p>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: COLORS.primary, margin: '4px 0 2px' }}>
+                        <TrendingUp size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                        {entry.rate} {entry.currency}/session
+                      </p>
+                      <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>{entry.reason}</p>
+                    </div>
+                  </div>
+                ))}
+                {!(contractRateHistory[rateHistoryContract.id]?.length) && (
+                  <p style={{ fontSize: 13, color: COLORS.muted, fontStyle: 'italic', margin: 0 }}>No rate history available for this contract.</p>
+                )}
+              </div>
+
+              {/* Adjust Rate Section */}
+              <div style={{ borderTop: `1px solid ${COLORS.border}`, paddingTop: 20 }}>
+                <label style={{ fontSize: 14, fontWeight: 700, color: COLORS.navy, display: 'block', marginBottom: 14 }}>Adjust Rate</label>
+                {rateSuccess ? (
+                  <div style={{ background: `${COLORS.success}15`, border: `1px solid ${COLORS.success}40`, borderRadius: RADIUS.card, padding: 16, textAlign: 'center' }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.success, margin: 0 }}>Rate updated. Change logged.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.muted, display: 'block', marginBottom: 6 }}>New Rate ({rateHistoryContract.currency}/session)</label>
+                      <input type="number" value={newRate} onChange={e => setNewRate(e.target.value)} placeholder="e.g., 200" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 14, color: COLORS.navy, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: 18 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.muted, display: 'block', marginBottom: 6 }}>Reason</label>
+                      <textarea value={newRateReason} onChange={e => setNewRateReason(e.target.value)} rows={3} placeholder="e.g., Annual rate review, peak hours adjustment..." style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 14, color: COLORS.navy, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                    </div>
+                    <button onClick={handleApplyNewRate} disabled={!newRate || !newRateReason} style={{ width: '100%', padding: '12px 0', background: (!newRate || !newRateReason) ? COLORS.muted : COLORS.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: (!newRate || !newRateReason) ? 'not-allowed' : 'pointer', opacity: (!newRate || !newRateReason) ? 0.5 : 1 }}>
+                      Apply New Rate
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* AVAILABLE SLOTS — EXPIRED CONTRACTS */}
+      <div style={{ marginTop: 32, background: '#fff', borderRadius: RADIUS.card, boxShadow: SHADOWS.card, overflow: 'hidden' }}>
+        <div style={{ padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}` }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Available Slots</h2>
+          <p style={{ fontSize: 13, color: COLORS.muted, margin: '4px 0 0' }}>Expired contracts with open time slots</p>
+        </div>
+        {expiredContracts.filter(c => c.status === 'expired').length === 0 ? (
+          <div style={{ padding: '32px 24px', textAlign: 'center' }}>
+            <p style={{ fontSize: 14, color: COLORS.muted, margin: 0 }}>No expired contracts with available slots.</p>
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#F5F6FC' }}>
+                {['Academy', 'Pitch', 'Schedule', 'Last Rate', 'Expired Date', 'Actions'].map(h => (
+                  <th key={h} style={{ padding: '10px 16px', fontSize: 12, fontWeight: 700, color: COLORS.muted, textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {expiredContracts.filter(c => c.status === 'expired').map(c => {
+                const academy = academies.find(a => a.id === c.academyId)
+                const pitch = pitches.find(p => p.id === c.pitchId)
+                return (
+                  <tr key={c.id} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
+                    <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: COLORS.navy }}>{academy?.name}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: COLORS.navy }}>{pitch?.name}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: COLORS.navy }}>{formatSchedule(c)}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: COLORS.navy }}>{c.ratePerSession} {c.currency}/session</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: COLORS.muted }}>{formatTerm(c.startDate, c.endDate)}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button style={{ background: 'none', border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: COLORS.muted, cursor: 'pointer' }}>List as Available</button>
+                        <button onClick={() => handleRebook(c)} style={{ background: 'none', border: `1px solid ${COLORS.primary}`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: COLORS.primary, cursor: 'pointer' }}>Rebook</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   )
 }

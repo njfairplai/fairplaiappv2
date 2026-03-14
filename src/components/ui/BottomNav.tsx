@@ -1,8 +1,9 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell } from 'lucide-react'
+import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User } from 'lucide-react'
 import { COLORS } from '@/lib/constants'
+import { playerTokens } from '@/styles/player-tokens'
 
 interface NavItem {
   id: string
@@ -14,9 +15,16 @@ interface NavItem {
 const parentNav: NavItem[] = [
   { id: 'home', label: 'Home', href: '/parent/home', icon: Home },
   { id: 'highlights', label: 'Highlights', href: '/parent/highlights', icon: Play },
-  { id: 'matches', label: 'Matches', href: '/parent/matches', icon: Calendar },
-  { id: 'development', label: 'Development', href: '/parent/development', icon: TrendingUp },
+  { id: 'matches', label: 'Schedule', href: '/parent/matches', icon: Calendar },
+  { id: 'development', label: 'Progress', href: '/parent/development', icon: TrendingUp },
   { id: 'settings', label: 'Settings', href: '/parent/settings', icon: Settings },
+]
+
+const playerNav: NavItem[] = [
+  { id: 'home', label: 'Home', href: '/player/home', icon: Home },
+  { id: 'sessions', label: 'Sessions', href: '/player/sessions', icon: Calendar },
+  { id: 'highlights', label: 'Highlights', href: '/player/highlights', icon: Play },
+  { id: 'profile', label: 'Profile', href: '/player/profile', icon: User },
 ]
 
 const coachNav: NavItem[] = [
@@ -26,10 +34,11 @@ const coachNav: NavItem[] = [
   { id: 'settings', label: 'Settings', href: '/coach/settings', icon: Settings },
 ]
 
-export default function BottomNav({ portal }: { portal: 'parent' | 'coach' }) {
+export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'player' }) {
   const pathname = usePathname()
   const router = useRouter()
-  const items = portal === 'parent' ? parentNav : coachNav
+  const items = portal === 'player' ? playerNav : portal === 'parent' ? parentNav : coachNav
+  const accentColor = portal === 'player' ? playerTokens.primary : COLORS.primary
 
   return (
     <nav
@@ -84,12 +93,12 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' }) {
                     transform: 'translateX(-50%)',
                     width: 24,
                     height: 3,
-                    background: COLORS.primary,
+                    background: accentColor,
                     borderRadius: '0 0 3px 3px',
                   }}
                 />
               )}
-              <Icon size={22} color={isActive ? COLORS.primary : COLORS.muted} strokeWidth={isActive ? 2.2 : 1.7} />
+              <Icon size={22} color={isActive ? accentColor : COLORS.muted} strokeWidth={isActive ? 2.2 : 1.7} />
               <span
                 style={{
                   fontSize: 9,

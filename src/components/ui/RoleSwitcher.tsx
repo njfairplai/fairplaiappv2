@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { COLORS, RADIUS, ROLE_PATHS } from '@/lib/constants'
 import type { UserRole } from '@/lib/types'
-import { Building2, GraduationCap, Trophy, Heart, ArrowRightLeft, X, Video } from 'lucide-react'
+import { Building2, GraduationCap, Trophy, Heart, Zap, ArrowRightLeft, X, Video, Home } from 'lucide-react'
 
 const roles: { role: UserRole; label: string; icon: React.ElementType; description: string }[] = [
   { role: 'facility_admin', label: 'Facility Admin', icon: Building2, description: 'Manage pitches & contracts' },
-  { role: 'academy_admin', label: 'Academy Admin', icon: GraduationCap, description: 'Manage rosters, players & credits' },
+  { role: 'academy_admin', label: 'Academy Admin', icon: GraduationCap, description: 'Manage squads, players & credits' },
   { role: 'coach', label: 'Coach', icon: Trophy, description: 'View squad, sessions & analytics' },
   { role: 'parent', label: 'Parent', icon: Heart, description: "Track your child's progress" },
+  { role: 'player', label: 'Player', icon: Zap, description: 'See your game plan & highlights' },
 ]
 
 export default function RoleSwitcher() {
@@ -30,6 +31,29 @@ export default function RoleSwitcher() {
 
   return (
     <>
+      {/* Home button */}
+      <button
+        onClick={() => router.push('/')}
+        style={{
+          position: 'fixed',
+          bottom: 148,
+          right: 16,
+          zIndex: 999,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          background: '#fff',
+          border: `1.5px solid ${COLORS.primary}`,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        }}
+      >
+        <Home size={18} color={COLORS.primary} />
+      </button>
+
       {/* Floating trigger */}
       <button
         onClick={() => setOpen(true)}

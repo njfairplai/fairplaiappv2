@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, X, Plus, Share2, Copy, Check, MessageCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Plus, Share2, Copy, Check, MessageCircle, AlertTriangle } from 'lucide-react'
 import { COLORS, SHADOWS, RADIUS } from '@/lib/constants'
 import { sessions, pitches, academies, rosters } from '@/lib/mockData'
+import { checkConflicts } from '@/lib/conflictDetection'
 import Modal from '@/components/ui/Modal'
 import type { Session } from '@/lib/types'
 
@@ -86,6 +87,21 @@ export default function SessionsPage() {
 
   const facilitySessions = useMemo(() => sessions.filter(s => s.facilityId === FACILITY_ID), [])
   const facilityPitches = useMemo(() => pitches.filter(p => p.facilityId === FACILITY_ID), [])
+
+  // Conflict detection for add session form
+  const addEndTime = useMemo(() => {
+    if (!addStartTime) return ''
+    const [h, m] = addStartTime.split(':').map(Number)
+    const total = h * 60 + m + addDuration
+    const hh = Math.floor(total / 60) % 24
+    const mm = total % 60
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
+  }, [addStartTime, addDuration])
+
+  const addConflict = useMemo(() => {
+    if (!addPitchId || !addDate || !addStartTime || !addEndTime) return null
+    return checkConflicts(addPitchId, addDate, addStartTime, addEndTime)
+  }, [addPitchId, addDate, addStartTime, addEndTime])
 
   // Calendar dates
   const todayMonday = getMonday(new Date())
@@ -222,7 +238,7 @@ export default function SessionsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#F5F6FC' }}>
-                {['Date', 'Time', 'Pitch', 'Academy', 'Roster', 'Type', 'Status'].map(h => (
+                {['Date', 'Time', 'Pitch', 'Academy', 'Squad', 'Type', 'Status'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', fontSize: 12, fontWeight: 700, color: COLORS.muted, textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -477,9 +493,39 @@ export default function SessionsPage() {
                     </div>
                   )}
 
-                  <p style={{ fontSize: 12, color: COLORS.muted, fontStyle: 'italic', margin: '0 0 24px' }}>Ad hoc sessions are single bookings outside of existing contracts.</p>
+                  <p style={{ fontSize: 12, color: COLORS.muted, fontStyle: 'italic', margin: '0 0 16px' }}>Ad hoc sessions are single bookings outside of existing contracts.</p>
 
-                  <button onClick={handleAddSubmit} style={{ width: '100%', padding: '12px 0', background: COLORS.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                  {/* Conflict warning */}
+                  {addConflict?.hasConflict && (
+                    <div style={{
+                      background: '#FEF3C7',
+                      border: '1px solid #F59E0B40',
+                      borderRadius: 8,
+                      padding: 12,
+                      marginBottom: 16,
+                      display: 'flex',
+                      gap: 8,
+                      alignItems: 'flex-start',
+                    }}>
+                      <AlertTriangle size={16} color="#F59E0B" style={{ flexShrink: 0, marginTop: 2 }} />
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: '#92400E', margin: 0 }}>
+                          {addConflict.type === 'session_overlap' ? 'Scheduling Conflict' : 'Outside Contracted Hours'}
+                        </p>
+                        <p style={{ fontSize: 12, color: '#92400E', margin: '4px 0 0' }}>{addConflict.message}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleAddSubmit}
+                    disabled={addConflict?.type === 'session_overlap'}
+                    style={{
+                      width: '100%', padding: '12px 0', background: addConflict?.type === 'session_overlap' ? `${COLORS.primary}40` : COLORS.primary,
+                      color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700,
+                      cursor: addConflict?.type === 'session_overlap' ? 'not-allowed' : 'pointer',
+                    }}
+                  >
                     Create Session
                   </button>
                 </>

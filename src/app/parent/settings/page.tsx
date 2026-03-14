@@ -57,6 +57,29 @@ export default function ParentSettingsPage() {
       </div>
       <div style={{ height: 1, background: '#EDEFF7', margin: '20px 20px 0' }} />
       <div style={{ padding: '0 20px' }}>
+        <SectionLabel text="Player View" />
+        <SectionCard>
+          <button
+            onClick={() => {
+              localStorage.setItem('fairplai_view_as_player', 'true')
+              router.push('/player/home')
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              width: '100%', height: 52, padding: '0 16px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <span style={{ fontSize: 15, fontWeight: 500, color: COLORS.navy }}>View as Kiyan</span>
+            <span style={{
+              fontSize: 12, fontWeight: 700, color: '#00C9A7',
+              background: 'rgba(0,201,167,0.1)', padding: '4px 10px', borderRadius: 8,
+            }}>
+              Open Player View →
+            </span>
+          </button>
+        </SectionCard>
         <SectionLabel text="Notifications" />
         <SectionCard>
           <ToggleRow label="New match analysed" value={notifs.newMatch} onChange={(v) => setNotifs((s) => ({ ...s, newMatch: v }))} />
@@ -83,9 +106,9 @@ export default function ParentSettingsPage() {
           <RowDivider />
           <button onClick={() => window.alert('Your deletion request has been submitted.')} style={{ display: 'block', width: '100%', height: 52, padding: '0 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500, color: COLORS.error }}>Request Data Deletion</button>
           <RowDivider />
-          <button onClick={() => { if (window.confirm('Sign out?')) router.push('/login') }} style={{ display: 'block', width: '100%', height: 52, padding: '0 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500, color: COLORS.error }}>Sign Out</button>
+          <button onClick={() => { localStorage.removeItem('fairplai_auth_session'); localStorage.removeItem('fairplai_role'); localStorage.removeItem('fairplai_consented'); router.push('/login') }} style={{ display: 'block', width: '100%', height: 52, padding: '0 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500, color: COLORS.error }}>Sign Out</button>
         </SectionCard>
-        <p style={{ fontSize: 12, color: '#9DA2B3', textAlign: 'center', marginTop: 24 }}>FairPlai Parent Portal · v2.0.0<br /><span style={{ fontSize: 11, opacity: 0.7 }}>fairpl.ai · Made for GCC football families</span></p>
+        <p style={{ fontSize: 12, color: '#9DA2B3', textAlign: 'center', marginTop: 24 }}>FairPlai Parent/Player Portal · v2.0.0<br /><span style={{ fontSize: 11, opacity: 0.7 }}>fairpl.ai · Made for GCC football families</span></p>
       </div>
     </div>
   )

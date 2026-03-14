@@ -1,35 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { rosters, pitches } from '@/lib/mockData'
 import { COLORS } from '@/lib/constants'
-import { X } from 'lucide-react'
+import { X, Lock, AlertTriangle } from 'lucide-react'
+import { checkConflicts } from '@/lib/conflictDetection'
 import type { Session } from '@/lib/types'
 
 interface AdHocSessionFormProps {
   open: boolean
   onClose: () => void
   onCreated: (session: Session) => void
+  editSession?: Session
 }
 
 type SessionType = 'drill' | 'match' | 'training_match'
 
-export default function AdHocSessionForm({ open, onClose, onCreated }: AdHocSessionFormProps) {
-  const [formRoster, setFormRoster] = useState('')
-  const [formPitch, setFormPitch] = useState('')
-  const [formDate, setFormDate] = useState('')
-  const [formStart, setFormStart] = useState('17:00')
-  const [formEnd, setFormEnd] = useState('19:00')
-  const [formType, setFormType] = useState<SessionType>('drill')
+export default function AdHocSessionForm({ open, onClose, onCreated, editSession }: AdHocSessionFormProps) {
+  const [formRoster, setFormRoster] = useState(editSession?.rosterId || '')
+  const [formPitch, setFormPitch] = useState(editSession?.pitchId || '')
+  const [formDate, setFormDate] = useState(editSession?.date || '')
+  const [formStart, setFormStart] = useState(editSession?.startTime || '17:00')
+  const [formEnd, setFormEnd] = useState(editSession?.endTime || '19:00')
+  const [formType, setFormType] = useState<SessionType>((editSession?.type as SessionType) || 'drill')
 
   const academyRosters = rosters.filter(r => r.academyId === 'academy_001')
   const facilityPitches = pitches.filter(p => p.facilityId === 'facility_001')
 
-  const canSubmit = formRoster && formPitch && formDate && formStart && formEnd
+  const conflict = useMemo(() =>
+    checkConflicts(formPitch, formDate, formStart, formEnd, editSession?.id),
+    [formPitch, formDate, formStart, formEnd, editSession?.id]
+  )
+
+  const canSubmit = formRoster && formPitch && formDate && formStart && formEnd && !(conflict.hasConflict && conflict.type === 'session_overlap')
 
   function handleCreate() {
     if (!canSubmit) return
-    const roster = rosters.find(r => r.id === formRoster)
     const newSession: Session = {
       id: `session_adhoc_${Date.now()}`,
       facilityId: 'facility_001',
@@ -84,6 +90,8 @@ export default function AdHocSessionForm({ open, onClose, onCreated }: AdHocSess
     boxSizing: 'border-box' as const,
   }
 
+  const isEditing = !!editSession
+
   return (
     <>
       {/* Overlay */}
@@ -102,7 +110,7 @@ export default function AdHocSessionForm({ open, onClose, onCreated }: AdHocSess
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: COLORS.navy, margin: 0 }}>New Session</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: COLORS.navy, margin: 0 }}>{isEditing ? 'Edit Session' : 'New Session'}</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
             <X size={20} color={COLORS.muted} />
           </button>
@@ -110,7 +118,7 @@ export default function AdHocSessionForm({ open, onClose, onCreated }: AdHocSess
 
         {/* Info */}
         <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 20px', lineHeight: 1.5 }}>
-          Schedule a standalone session outside of your regular programs.
+          {isEditing ? 'Edit session details. Note: session type cannot be changed.' : 'Schedule a standalone session outside of your regular programs.'}
         </p>
 
         {/* Team */}
@@ -176,22 +184,44 @@ export default function AdHocSessionForm({ open, onClose, onCreated }: AdHocSess
           </div>
         </div>
 
+        {/* Conflict Warning */}
+        {conflict.hasConflict && (
+          <div style={{
+            background: 'rgba(243,156,18,0.1)',
+            border: '1px solid rgba(243,156,18,0.25)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            marginBottom: 16,
+            display: 'flex',
+            gap: 8,
+            alignItems: 'flex-start',
+          }}>
+            <AlertTriangle size={16} color="#F39C12" style={{ flexShrink: 0, marginTop: 2 }} />
+            <span style={{ fontSize: 13, color: '#92400E' }}>{conflict.message}</span>
+          </div>
+        )}
+
         {/* Session Type */}
         <div style={{ marginBottom: 24 }}>
-          <label style={labelStyle}>Session Type</label>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
+            Session Type
+            {isEditing && <Lock size={12} color={COLORS.muted} />}
+          </label>
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
             {typeOptions.map(opt => {
               const isActive = formType === opt.value
               return (
                 <button
                   key={opt.value}
-                  onClick={() => setFormType(opt.value)}
+                  onClick={isEditing ? undefined : () => setFormType(opt.value)}
                   style={{
                     padding: '8px 16px', borderRadius: 8,
                     border: isActive ? `2px solid ${COLORS.primary}` : `1px solid ${COLORS.border}`,
                     background: isActive ? `${COLORS.primary}0D` : '#fff',
                     color: isActive ? COLORS.primary : COLORS.muted,
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600,
+                    cursor: isEditing ? 'not-allowed' : 'pointer',
+                    opacity: isEditing && !isActive ? 0.4 : 1,
                     transition: 'all 0.15s ease',
                   }}
                 >
@@ -200,6 +230,11 @@ export default function AdHocSessionForm({ open, onClose, onCreated }: AdHocSess
               )
             })}
           </div>
+          {isEditing && (
+            <p style={{ fontSize: 12, color: '#F39C12', fontStyle: 'italic', margin: '6px 0 0' }}>
+              Session type cannot be changed after creation. Delete and recreate if needed.
+            </p>
+          )}
         </div>
 
         {/* Create button */}
@@ -214,7 +249,7 @@ export default function AdHocSessionForm({ open, onClose, onCreated }: AdHocSess
             transition: 'all 0.15s ease',
           }}
         >
-          Create Session
+          {isEditing ? 'Save Changes' : 'Create Session'}
         </button>
       </div>
     </>

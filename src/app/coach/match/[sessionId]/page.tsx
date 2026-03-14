@@ -1,10 +1,14 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import Image from 'next/image'
-import { sessions, players, squadScores, highlights, sessionTeamScores } from '@/lib/mockData'
+import { sessions, players, squadScores, highlights, sessionTeamScores, highlightLocations, highlightClips } from '@/lib/mockData'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
-import type { Highlight } from '@/lib/types'
+import WhatsAppDeliveryPanel from '@/components/shared/WhatsAppDeliveryPanel'
+import EventTimeline from '@/components/coach/EventTimeline'
+import PitchEventMap from '@/components/coach/PitchEventMap'
+import type { TimelineEvent } from '@/lib/types'
 
 /* ── colour constants ── */
 const C = {
@@ -65,13 +69,6 @@ function getPositionColor(position: string): string {
   return C.muted
 }
 
-function getPositionGradient(position: string): string {
-  if (position === 'GK') return 'linear-gradient(160deg, #D97706 0%, #B45309 100%)'
-  if (['CB', 'LB', 'RB'].includes(position)) return 'linear-gradient(160deg, #059669 0%, #047857 100%)'
-  if (['CM', 'AM', 'DM', 'CDM'].includes(position)) return 'linear-gradient(160deg, #4A4AFF 0%, #3025AE 100%)'
-  if (['ST', 'CF', 'LW', 'RW'].includes(position)) return 'linear-gradient(160deg, #DC2626 0%, #B91C1C 100%)'
-  return 'linear-gradient(160deg, #6E7180 0%, #40424D 100%)'
-}
 
 /* ── hide-scrollbar CSS ── */
 const hideScrollbarCSS = `
@@ -86,6 +83,32 @@ export default function MatchAnalysisPage() {
   const sessionId = params.sessionId as string
 
   const session = sessions.find(s => s.id === sessionId)
+
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false)
+  const [matchNote, setMatchNote] = useState('')
+  const [matchNoteLastSaved, setMatchNoteLastSaved] = useState<string | null>(null)
+  const [notesExpanded, setNotesExpanded] = useState(false)
+  const [highlightPrivacy, setHighlightPrivacy] = useState<Record<string, string>>({})
+  const [showEventMap, setShowEventMap] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionId) {
+      const saved = localStorage.getItem(`fairplai_match_note_${sessionId}`)
+      if (saved) { setMatchNote(saved); setNotesExpanded(true) }
+      const privData = localStorage.getItem('fairplai_highlight_privacy')
+      if (privData) setHighlightPrivacy(JSON.parse(privData))
+    }
+  }, [sessionId])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !matchNote || !sessionId) return
+    const timer = setTimeout(() => {
+      localStorage.setItem(`fairplai_match_note_${sessionId}`, matchNote)
+      const now = new Date()
+      setMatchNoteLastSaved(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`)
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [matchNote, sessionId])
 
   if (!session) {
     return (
@@ -117,12 +140,19 @@ export default function MatchAnalysisPage() {
     .sort((a, b) => b.compositeScore - a.compositeScore)
     .slice(0, 5)
 
-  /* squad performance (all players sorted by score descending) */
-  const squadPerformance = [...participatingPlayers]
-    .sort((a, b) => b.compositeScore - a.compositeScore)
-
   /* highlights for this session */
   const sessionHighlights = highlights.filter(h => h.sessionId === sessionId)
+
+  /* build timeline events from highlights */
+  const timelineEvents: TimelineEvent[] = sessionHighlights.map(h => ({
+    highlightId: h.id,
+    playerId: h.playerId,
+    eventType: h.eventType,
+    timestampSeconds: h.timestampSeconds,
+    confidence: h.confidence,
+    pitchX: highlightLocations[h.id]?.pitchX,
+    pitchY: highlightLocations[h.id]?.pitchY,
+  }))
 
   /* score arc calculations */
   const arcRadius = 36
@@ -315,244 +345,140 @@ export default function MatchAnalysisPage() {
         </div>
       )}
 
-      {/* ─── 3. SQUAD PERFORMANCE ─── */}
-      {isAnalysed && squadPerformance.length > 0 && (
+      {/* ─── 2b. MATCH TIMELINE ─── */}
+      {isAnalysed && timelineEvents.length > 0 && (
+        <div style={{ padding: '0 16px 20px' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.navy, marginBottom: 12 }}>
+            Match Timeline
+          </div>
+          <EventTimeline
+            events={timelineEvents}
+            durationMinutes={durationMin}
+            players={participatingPlayers.map(pp => pp.player)}
+          />
+
+          {/* Pitch Event Map toggle */}
+          <button
+            onClick={() => setShowEventMap(prev => !prev)}
+            style={{
+              marginTop: 10, background: 'none', border: `1px solid ${C.border}`,
+              borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600,
+              color: C.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            {showEventMap ? '▲ Hide Pitch View' : '▼ Show Pitch View'}
+          </button>
+
+          {showEventMap && (
+            <div style={{ marginTop: 10 }}>
+              <PitchEventMap
+                events={timelineEvents}
+                players={participatingPlayers.map(pp => pp.player)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── 3. TEAM STATS ─── */}
+      {isAnalysed && (
         <div style={{ padding: '0 16px 20px' }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 10 }}>
-            SQUAD PERFORMANCE
+            TEAM STATS
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {squadPerformance.map(({ player, compositeScore }) => {
-              const scoreColor = getScoreColor(compositeScore)
-              const position = player.position[0] || 'CM'
-              const posColor = getPositionColor(position)
-              const initials = (player.firstName[0] || '') + (player.lastName[0] || '')
-              const avgPlayerScore = squadScores[player.id]?.avgScore ?? 0
-              const diff = compositeScore - avgPlayerScore
-              let trendColor = '#9DA2B3'
-              let trendText = '\u2192'
-              if (diff > 3) { trendColor = '#10B981'; trendText = `\u2191+${diff}` }
-              else if (diff < -3) { trendColor = '#EF4444'; trendText = `\u2193${diff}` }
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[
+              { label: 'Possession', value: '54%', color: C.primary },
+              { label: 'Pass Acc.', value: '78%', color: C.success },
+              { label: 'Shots', value: '12', color: C.warning },
+              { label: 'Tackles', value: '18', color: '#8B5CF6' },
+              { label: 'Fouls', value: '6', color: C.error },
+              { label: 'Corners', value: '5', color: C.primary },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{
+                background: '#fff', borderRadius: 12, padding: '14px 10px',
+                textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+              }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+                <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── 4. MATCH HIGHLIGHTS (parent portal style) ─── */}
+      <div style={{ padding: '0 16px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1 }}>
+            HIGHLIGHTS
+          </div>
+          <span style={{ background: '#F1F5F9', color: C.muted, fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>
+            {sessionHighlights.length}
+          </span>
+        </div>
+
+        {sessionHighlights.length === 0 ? (
+          <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '32px 20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: 32 }}>{'\uD83C\uDFA5'}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.navy, marginTop: 8 }}>No highlights yet</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>Highlights will appear once the match is analysed.</div>
+          </div>
+        ) : (
+          <div className="hide-scrollbar" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+            {sessionHighlights.map(h => {
+              const highlightPlayer = players.find(p => p.id === h.playerId)
+              const minute = Math.floor(h.timestampSeconds / 60)
+              const badge = getEventBadge(h.eventType)
+              const clip = highlightClips.find(c => c.eventType.toLowerCase().replace(/\s+/g, '_') === h.eventType) || highlightClips[0]
 
               return (
-                <div
-                  key={player.id}
-                  onClick={() => router.push(`/coach/squad/${player.id}`)}
-                  style={{
-                    height: 200,
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06)',
-                  }}
-                >
-                  {/* Photo or gradient fallback */}
-                  {player.photo ? (
-                    <Image
-                      src={player.photo}
-                      alt={`${player.firstName} ${player.lastName}`}
-                      fill
-                      style={{ objectFit: 'cover', objectPosition: 'top center' }}
-                    />
-                  ) : (
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: getPositionGradient(position),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      <span style={{ fontSize: 36, fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>{initials}</span>
+                <div key={h.id} style={{
+                  flexShrink: 0, width: 180, height: 110, borderRadius: 14,
+                  background: 'linear-gradient(135deg, #1B1650, #0D1020)',
+                  position: 'relative', overflow: 'hidden',
+                  border: '1px solid rgba(74,74,255,0.15)', cursor: 'pointer',
+                }}>
+                  {/* Play button center */}
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 4 L10.5 7 L5.5 10 Z" fill="white" /></svg>
                     </div>
-                  )}
-
-                  {/* Gradient overlay */}
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 1,
-                    pointerEvents: 'none',
-                    background: 'linear-gradient(160deg, rgba(10,14,26,0.0) 0%, rgba(10,14,26,0.1) 35%, rgba(10,14,26,0.7) 65%, rgba(10,14,26,0.96) 100%)',
-                  }} />
-
-                  {/* Position pill top-left */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    zIndex: 2,
-                    background: `${posColor}D9`,
-                    color: '#FFFFFF',
-                    fontWeight: 700,
-                    fontSize: 10,
-                    padding: '3px 7px',
-                    borderRadius: 20,
-                  }}>
-                    {position}
                   </div>
 
-                  {/* Jersey badge top-right */}
+                  {/* Event badge top-left */}
                   <div style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    zIndex: 2,
-                    width: 26,
-                    height: 26,
-                    borderRadius: '50%',
-                    background: 'rgba(10,14,26,0.75)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backdropFilter: 'blur(8px)',
-                    color: '#FFFFFF',
-                    fontWeight: 700,
-                    fontSize: 11,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    position: 'absolute', top: 8, left: 8,
+                    fontSize: 10, fontWeight: 700, color: '#fff',
+                    background: badge.color === '#92400E' ? '#F59E0B' : badge.color === '#1E40AF' ? C.primary : badge.color === '#166534' ? '#10B981' : badge.color === '#6B21A8' ? '#8B5CF6' : C.muted,
+                    borderRadius: 100, padding: '2px 8px',
                   }}>
-                    {player.jerseyNumber}
+                    {badge.label.replace(/^[^\w]+\s*/, '')}
                   </div>
 
-                  {/* Bottom content */}
+                  {/* Duration top-right */}
                   <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    padding: '10px 12px',
-                    zIndex: 2,
+                    position: 'absolute', top: 8, right: 8,
+                    fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
+                    background: 'rgba(0,0,0,0.4)', borderRadius: 100, padding: '2px 7px',
                   }}>
-                    <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 14, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
-                      {player.firstName} {player.lastName}
+                    {h.durationSeconds}s
+                  </div>
+
+                  {/* Bottom: player + minute */}
+                  <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {highlightPlayer ? `${highlightPlayer.firstName} ${highlightPlayer.lastName}` : 'Unknown'}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-                      <span style={{ fontSize: 24, fontWeight: 800, color: scoreColor, textShadow: `0 0 8px ${scoreColor}66` }}>
-                        {compositeScore}
-                      </span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: trendColor }}>
-                        {trendText}
-                      </span>
+                    <div style={{ fontSize: 10, color: 'rgba(245,246,252,0.5)', fontWeight: 600, marginTop: 1 }}>
+                      {minute}&apos;
                     </div>
                   </div>
                 </div>
               )
             })}
           </div>
-        </div>
-      )}
-
-      {/* ─── 4. MATCH HIGHLIGHTS ─── */}
-      <div style={{ padding: '0 16px 20px' }}>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.navy }}>Match Highlights</div>
-          <span
-            style={{
-              background: '#F1F5F9',
-              color: C.muted,
-              fontSize: 11,
-              fontWeight: 600,
-              padding: '2px 8px',
-              borderRadius: 10,
-              marginLeft: 8,
-            }}
-          >
-            {sessionHighlights.length}
-          </span>
-        </div>
-
-        {sessionHighlights.length === 0 ? (
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 12,
-              padding: '32px 20px',
-              textAlign: 'center',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-            }}
-          >
-            <div style={{ fontSize: 32 }}>{'\uD83C\uDFA5'}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.navy, marginTop: 8 }}>
-              No highlights yet
-            </div>
-            <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>
-              Highlights will appear here once the match has been analysed.
-            </div>
-          </div>
-        ) : (
-          sessionHighlights.map((h: Highlight) => {
-            const badge = getEventBadge(h.eventType)
-            const highlightPlayer = players.find(p => p.id === h.playerId)
-            const minute = Math.floor(h.timestampSeconds / 60)
-
-            return (
-              <div
-                key={h.id}
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: 12,
-                  padding: 14,
-                  marginBottom: 8,
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-                }}
-              >
-                {/* Left content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '3px 10px',
-                      borderRadius: 10,
-                      background: badge.bg,
-                      color: badge.color,
-                    }}
-                  >
-                    {badge.label}
-                  </span>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginTop: 6 }}>
-                    {highlightPlayer ? `${highlightPlayer.firstName} ${highlightPlayer.lastName}` : 'Unknown'} &middot; {minute}&apos;
-                  </div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
-                    {h.durationSeconds}s
-                  </div>
-                </div>
-
-                {/* Play button */}
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    background: C.darkBg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    marginLeft: 10,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '10px solid #FFFFFF',
-                      borderTop: '6px solid transparent',
-                      borderBottom: '6px solid transparent',
-                      marginLeft: 2,
-                    }}
-                  />
-                </div>
-              </div>
-            )
-          })
         )}
       </div>
 
@@ -579,6 +505,86 @@ export default function MatchAnalysisPage() {
           {'\u25B6'} Watch Full Match
         </button>
       </div>
+
+      {/* ─── 6. SEND VIA WHATSAPP ─── */}
+      {isAnalysed && (
+        <div style={{ padding: '0 16px 16px' }}>
+          <button
+            onClick={() => setWhatsAppOpen(true)}
+            style={{
+              width: '100%',
+              height: 48,
+              background: '#25D366',
+              color: '#FFFFFF',
+              borderRadius: 12,
+              fontSize: 15,
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <MessageCircle size={18} /> Send Summary via WhatsApp
+          </button>
+        </div>
+      )}
+
+      {/* ─── 7. COACH NOTES ─── */}
+      <div style={{ padding: '0 16px 24px' }}>
+        <button
+          onClick={() => setNotesExpanded(!notesExpanded)}
+          style={{
+            width: '100%',
+            background: '#fff',
+            borderRadius: notesExpanded ? '12px 12px 0 0' : 12,
+            padding: '14px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            border: `1px solid ${C.border}`,
+            cursor: 'pointer',
+            fontSize: 14,
+            fontWeight: 700,
+            color: C.navy,
+          }}
+        >
+          Coach Notes
+          {notesExpanded ? <ChevronUp size={16} color={C.muted} /> : <ChevronDown size={16} color={C.muted} />}
+        </button>
+        {notesExpanded && (
+          <div style={{ background: '#fff', borderRadius: '0 0 12px 12px', padding: '0 16px 16px', borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+            <textarea
+              value={matchNote}
+              onChange={e => setMatchNote(e.target.value)}
+              placeholder="Add notes about this match..."
+              style={{
+                width: '100%',
+                minHeight: 80,
+                border: `1px solid ${C.border}`,
+                borderRadius: 8,
+                padding: 12,
+                fontSize: 14,
+                resize: 'vertical',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+            {matchNoteLastSaved && (
+              <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>Last saved: {matchNoteLastSaved}</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* WhatsApp Delivery Panel */}
+      <WhatsAppDeliveryPanel
+        open={whatsAppOpen}
+        onClose={() => setWhatsAppOpen(false)}
+        session={session ? { id: session.id, rosterId: session.rosterId, opponent: session.opponent, date: session.date, type: session.type } : null}
+      />
 
       {/* Bottom spacer */}
       <div style={{ height: 24 }} />

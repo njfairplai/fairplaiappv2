@@ -6,11 +6,12 @@ import { COLORS } from '@/lib/constants'
 interface NotificationBellProps {
   count?: number
   dark?: boolean
+  onClick?: () => void
 }
 
-export default function NotificationBell({ count = 0, dark = false }: NotificationBellProps) {
+export default function NotificationBell({ count = 0, dark = false, onClick }: NotificationBellProps) {
   return (
-    <button style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative', padding: 4 }}>
+    <button onClick={onClick} style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative', padding: 4 }}>
       <Bell size={22} color={dark ? '#fff' : COLORS.navy} />
       {count > 0 && (
         <div

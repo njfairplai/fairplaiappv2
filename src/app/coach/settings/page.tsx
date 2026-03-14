@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
@@ -13,6 +14,7 @@ const defaultToggles = {
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [toggles, setToggles] = useState(defaultToggles)
 
   const handleToggle = (key: keyof typeof defaultToggles) => {
@@ -103,7 +105,7 @@ export default function SettingsPage() {
           Marcus Silva
         </div>
 
-        {/* Academy + Rosters */}
+        {/* Academy + Squads */}
         <div style={{
           color: 'rgba(255,255,255,0.5)',
           fontSize: 14,
@@ -181,7 +183,12 @@ export default function SettingsPage() {
             <ChevronRight size={18} color="#9DA2B3" />
           </div>
 
-          <div style={{
+          <div onClick={() => {
+            localStorage.removeItem('fairplai_auth_session')
+            localStorage.removeItem('fairplai_role')
+            localStorage.removeItem('fairplai_consented')
+            router.push('/login')
+          }} style={{
             height: 52,
             padding: '0 16px',
             display: 'flex',

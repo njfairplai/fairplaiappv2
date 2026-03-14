@@ -126,7 +126,7 @@ export default function CreditsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ borderBottom: `2px solid ${COLORS.border}` }}>
-                {['Date', 'Session', 'Roster', 'Minutes Analysed', 'Balance After'].map((h) => (
+                {['Date', 'Session', 'Squad', 'Minutes Analysed', 'Balance After'].map((h) => (
                   <th key={h} style={{
                     padding: '10px 14px', textAlign: 'left', fontWeight: 700,
                     color: COLORS.muted, fontSize: 12, textTransform: 'uppercase',
@@ -158,18 +158,6 @@ export default function CreditsPage() {
         </p>
       </div>
 
-      {/* Request Top-Up button */}
-      <button
-        onClick={() => { setModalOpen(true); setRequestSent(false) }}
-        style={{
-          padding: '12px 24px', borderRadius: 8,
-          border: `2px solid ${COLORS.primary}`, background: 'transparent',
-          color: COLORS.primary, fontSize: 15, fontWeight: 700, cursor: 'pointer',
-          marginBottom: 32,
-        }}
-      >
-        Request Top-Up
-      </button>
 
       {/* Plans & Pricing */}
       <h3 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: '0 0 16px' }}>Plans & Pricing</h3>
@@ -207,62 +195,6 @@ export default function CreditsPage() {
         ))}
       </div>
 
-      {/* ─── Request Top-Up Modal ─── */}
-      {modalOpen && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false) }}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', zIndex: 1000, padding: 20,
-          }}
-        >
-          <div style={{
-            background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 440,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Request Additional Minutes</h3>
-              <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                <X size={20} color={COLORS.muted} />
-              </button>
-            </div>
-
-            {requestSent ? (
-              <div style={{
-                background: `${COLORS.success}1A`, borderRadius: 12, padding: 20, textAlign: 'center',
-              }}>
-                <p style={{ fontSize: 16, fontWeight: 700, color: COLORS.success, margin: 0 }}>&#10003; Request sent</p>
-                <p style={{ fontSize: 13, color: COLORS.muted, margin: '8px 0 0' }}>Your account manager will be in touch shortly.</p>
-              </div>
-            ) : (
-              <>
-                <label style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, display: 'block', marginBottom: 6 }}>
-                  Message to account manager
-                </label>
-                <textarea
-                  placeholder="e.g. We need an extra 60 minutes for the upcoming tournament weekend..."
-                  rows={4}
-                  style={{
-                    width: '100%', padding: '12px 14px', borderRadius: 8,
-                    border: `1px solid ${COLORS.border}`, fontSize: 14, outline: 'none',
-                    resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
-                  }}
-                />
-                <button
-                  onClick={() => setRequestSent(true)}
-                  style={{
-                    marginTop: 16, width: '100%', padding: '14px 0', borderRadius: 12,
-                    border: 'none', background: COLORS.primary, color: '#fff',
-                    fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                  }}
-                >
-                  Send Request
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -89,7 +89,7 @@ export default function RosterForm({ onClose, onCreated }: RosterFormProps) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}`,
         }}>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Add Roster</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Add Squad</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
             <X size={20} color={COLORS.muted} />
           </button>
@@ -97,10 +97,10 @@ export default function RosterForm({ onClose, onCreated }: RosterFormProps) {
 
         {/* Form */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Roster Name */}
+          {/* Squad Name */}
           <div>
             <label style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, display: 'block', marginBottom: 4 }}>
-              Roster Name
+              Squad Name
             </label>
             <input
               style={inputStyle}
@@ -190,7 +190,7 @@ export default function RosterForm({ onClose, onCreated }: RosterFormProps) {
         {/* Footer */}
         <div style={{ padding: 24, borderTop: `1px solid ${COLORS.border}` }}>
           <Button fullWidth onClick={handleSubmit} disabled={!canSubmit}>
-            Create Roster
+            Create Squad
           </Button>
         </div>
       </div>

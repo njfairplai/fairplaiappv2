@@ -59,6 +59,22 @@ export interface Player {
   dominantFoot: 'left' | 'right' | 'both'
   status: 'active' | 'injured' | 'inactive'
   parentIds: string[]
+  guardianEmail?: string
+  inviteStatus?: 'pending' | 'sent' | 'completed'
+  inviteToken?: string
+}
+
+export interface PlayerProfile {
+  nationality?: string
+  passportId?: string
+  schoolName?: string
+  previousClub?: string
+  kitSize?: string
+  medicalNotes?: string
+  emergencyContactName?: string
+  emergencyContactPhone?: string
+  mediaConsent?: boolean
+  medicalConsent?: boolean
 }
 
 export interface Coach {
@@ -77,6 +93,8 @@ export interface Parent {
   phone?: string
   whatsappVerified: boolean
   playerIds: string[]
+  relationship?: 'parent' | 'legal_guardian'
+  onboardingComplete?: boolean
 }
 
 export interface Session {
@@ -89,7 +107,8 @@ export interface Session {
   startTime: string
   endTime: string
   type: 'match' | 'drill' | 'training_match'
-  status: 'scheduled' | 'in_progress' | 'complete' | 'analysed' | 'playback_ready'
+  status: 'scheduled' | 'in_progress' | 'complete' | 'processing' | 'analysed' | 'playback_ready'
+  processingStatusId?: string
   opponent?: string
   competition?: string
   creditsConsumed?: number
@@ -350,4 +369,224 @@ export interface CoachFeedback {
   sportsmanship: number
   summary: string
   sessionsSinceLastFeedback: number
+}
+
+// ─── WORKLOAD & INJURY RISK ──────────────────────────────
+export interface PlayerWorkload {
+  playerId: string
+  weeklyLoads: number[] // Last 8 weeks (index 0 = oldest)
+  minutesLast7: number
+  minutesLast28: number
+  intensityAvg: number // 1-10
+  restDaysLast7: number
+  injuryHistory: Array<{ date: string; type: string; daysOut: number }>
+}
+
+export type RiskLevel = 'low' | 'moderate' | 'high' | 'critical'
+
+// ─── RATE HISTORY ────────────────────────────────────────
+export interface RateChange {
+  date: string
+  rate: number
+  currency: 'AED' | 'SAR'
+  reason: string
+}
+
+// ─── BENCHMARKING ────────────────────────────────────────
+export type BenchmarkGroup = 'academy' | 'position' | 'age_group'
+
+export interface BenchmarkAverage {
+  metric: string
+  playerValue: number
+  groupAverage: number
+  groupLabel: string
+}
+
+// ─── PROCESSING PIPELINE ────────────────────────────────
+
+export type ProcessingStage =
+  | 'nvr_capture'
+  | 'ingestion'
+  | 'calibration'
+  | 'player_tracking'
+  | 'ball_tracking'
+  | 'event_detection'
+  | 'metric_computation'
+  | 'highlights'
+  | 'composite_score'
+  | 'delivery'
+
+export interface ProcessingStageStatus {
+  name: ProcessingStage
+  label: string
+  status: 'complete' | 'in_progress' | 'pending'
+  duration?: string
+  startedAt?: string
+}
+
+export interface ProcessingStatus {
+  sessionId: string
+  stage: ProcessingStage
+  progress: number
+  eta: string
+  startedAt: string
+  stages: ProcessingStageStatus[]
+}
+
+// ─── HEATMAP ────────────────────────────────────────────
+
+export interface HeatmapPoint {
+  x: number
+  y: number
+  intensity: number
+}
+
+export interface PlayerHeatmapData {
+  sessionId: string
+  playerId: string
+  positionLabel: string
+  points: HeatmapPoint[]
+  averagePosition: { x: number; y: number }
+}
+
+// ─── EVENT TIMELINE ─────────────────────────────────────
+
+export interface TimelineEvent {
+  highlightId: string
+  playerId: string
+  eventType: 'goal' | 'key_pass' | 'sprint_recovery' | 'tackle' | 'save'
+  timestampSeconds: number
+  confidence: number
+  pitchX?: number
+  pitchY?: number
+}
+
+// ─── SEASON REVIEW ───────────────────────────────────────
+export interface SeasonReviewData {
+  playerId: string
+  seasonLabel: string
+  matchesPlayed: number
+  totalMinutes: number
+  avgScore: number
+  peakScore: number
+  goalsAndAssists: number
+  bestMatch: { opponent: string; score: number; date: string }
+  improvementAreas: string[]
+  strengthAreas: string[]
+  highlightCount: number
+}
+
+// ─── COMMAND CENTRE CHAT ────────────────────────────────
+
+export type ChatMessageRole = 'assistant' | 'user'
+
+export type ChatCardType =
+  | 'action_chips'
+  | 'inline_form'
+  | 'stat_card'
+  | 'progress_card'
+  | 'confirmation'
+  | 'entity_list'
+  | 'csv_import'
+  | 'choice_card'
+  | 'smart_upload'
+
+export interface ChatCard {
+  type: ChatCardType
+  payload: Record<string, unknown>
+}
+
+export interface ChatMessage {
+  id: string
+  role: ChatMessageRole
+  text?: string
+  cards?: ChatCard[]
+  timestamp: number
+}
+
+export type SetupStep =
+  | 'roster_created'
+  | 'coach_added'
+  | 'players_added'
+  | 'session_scheduled'
+  | 'program_created'
+  | 'credits_checked'
+
+export interface SetupProgress {
+  completedSteps: SetupStep[]
+  totalSteps: number
+}
+
+export type AgentAction =
+  | 'add_player'
+  | 'add_coach'
+  | 'create_roster'
+  | 'schedule_session'
+  | 'add_program'
+  | 'import_csv'
+  | 'bulk_import'
+  | 'view_stats'
+  | 'check_credits'
+  | 'list_players'
+  | 'list_rosters'
+  | 'list_coaches'
+  | 'list_sessions'
+  | 'list_programs'
+
+// Coach Hub types
+export type CoachChatCardType =
+  | 'action_chips'
+  | 'stat_card'
+  | 'player_card'
+  | 'alert_card'
+  | 'review_prompt'
+  | 'player_list'
+
+export type CoachAgentAction =
+  | 'view_squad'
+  | 'analyze_player'
+  | 'check_schedule'
+  | 'review_session'
+  | 'create_idp'
+  | 'view_stats'
+
+export interface CoachChatCard {
+  type: CoachChatCardType
+  payload: Record<string, unknown>
+}
+
+export interface CoachChatMessage {
+  id: string
+  role: ChatMessageRole
+  text?: string
+  cards?: CoachChatCard[]
+  timestamp: number
+}
+
+// ─── SESSION PREP (Coach → Player) ──────────────────────
+
+export interface SessionPrep {
+  sessionId: string
+  squadSize: number
+  formationId: string
+  lineup: Record<number, string> // position index → playerId
+  playingStyle: string
+  setPieces: string
+  tacticalNotes: string
+  drillIds: string[] // for training sessions
+  createdAt: string
+}
+
+export interface DrillInfo {
+  id: string
+  name: string
+  category: string
+  duration: string
+  difficulty: string
+  players: string
+  setup: string
+  description: string
+  coachingPoints: string[]
+  variations: string[]
+  targetSkills: string[]
 }

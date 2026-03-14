@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { categoryGrades, percentileData, coachFlaggedClips, highlights, coachFeedbackHistory } from '@/lib/mockData'
 import CategoryGrade from './CategoryGrade'
 import PercentileBar from '@/components/charts/PercentileBar'
+import BenchmarkComparison from './BenchmarkComparison'
 import SkeletonLoader from '@/components/ui/SkeletonLoader'
 import { SHADOWS, COLORS } from '@/lib/constants'
 
@@ -180,7 +181,7 @@ export default function DevelopmentHub() {
   return (
     <div className="tab-fade" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F6FC', paddingBottom: 24 }}>
       <div style={{ padding: '24px 20px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1B1650', letterSpacing: '-0.4px', margin: 0 }}>Development Hub</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1B1650', letterSpacing: '-0.4px', margin: 0 }}>Progress Report</h1>
         <Image src="/logos/mak-academy.jpeg" alt="MAK Academy" width={56} height={28} style={{ height: 28, width: 'auto', objectFit: 'contain' }} />
       </div>
 
@@ -203,10 +204,7 @@ export default function DevelopmentHub() {
           <p style={{ fontSize: 12, color: '#9DA2B3', textAlign: 'center', marginTop: 6 }}>#8 in U12 · Top 35% this season</p>
         </div>
 
-        <SectionLabel text="How I Compare" sub="vs U12 Midfielders on FairplAI" />
-        <div style={{ background: '#fff', borderRadius: 12, padding: '16px 16px 4px', boxShadow: SHADOWS.card }}>
-          {percentileData.map((item) => <PercentileBar key={item.metric} item={item} />)}
-        </div>
+        <BenchmarkComparison />
       </div>
     </div>
   )

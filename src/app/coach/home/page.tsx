@@ -1,33 +1,26 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Bell, ChevronRight, AlertTriangle } from 'lucide-react'
+import {
+  Bell, ChevronDown, ChevronUp, ChevronRight, Clock, MapPin,
+  TrendingUp, TrendingDown, X, Activity, Brain, Zap, ExternalLink,
+} from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
-import { sessions, players, rosters, pendingReviewItems, squadScores, pitches, sessionTeamScores } from '@/lib/mockData'
-import { coachTokens } from '@/styles/coach-tokens'
+import {
+  sessions, players, rosters, pendingReviewItems, pitches,
+  squadScores, sessionTeamScores, playerKeyMetrics,
+} from '@/lib/mockData'
+import NotificationCentre from '@/components/shared/NotificationCentre'
 
 /* ── helpers ── */
-function getPlayerIdsForRoster(rosterId: string): string[] {
-  const ids = new Set<string>()
-  sessions
-    .filter(s => s.rosterId === rosterId)
-    .forEach(s => s.participatingPlayerIds.forEach(pid => ids.add(pid)))
-  return Array.from(ids)
-}
-
 const dayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-function formatCardDate(dateStr: string): string {
+function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   return `${dayAbbr[d.getDay()]}, ${monthAbbr[d.getMonth()]} ${d.getDate()}`
-}
-
-function diffMinutes(start: string, end: string): number {
-  const [sh, sm] = start.split(':').map(Number)
-  const [eh, em] = end.split(':').map(Number)
-  return (eh * 60 + em) - (sh * 60 + sm)
 }
 
 function daysBetween(a: string, b: string): number {
@@ -36,636 +29,337 @@ function daysBetween(a: string, b: string): number {
   return Math.round((db.getTime() - da.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-/* ── scrollbar-hidden CSS ── */
-const hideScrollbarCSS = `
-.hide-scrollbar::-webkit-scrollbar { display: none; }
-.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-`
-
-interface DvrSession {
-  id: string
-  label: string
-  date: string
-  duration: number
+function getScoreColor(score: number): string {
+  if (score >= 75) return '#10B981'
+  if (score >= 60) return '#F59E0B'
+  return '#EF4444'
 }
+
+const rosterPlayerMap: Record<string, string[]> = {
+  roster_001: ['player_001', 'player_002', 'player_003', 'player_004', 'player_005', 'player_006', 'player_007', 'player_008'],
+  roster_002: ['player_009', 'player_010', 'player_011', 'player_012', 'player_013', 'player_014', 'player_015', 'player_016'],
+}
+
+const MAX_VISIBLE_SESSIONS = 3
 
 export default function CoachHomePage() {
   const router = useRouter()
-  const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
-  const [dvrSession, setDvrSession] = useState<DvrSession | null>(null)
-  const [animatedValues, setAnimatedValues] = useState<Record<string, number>>({})
-  const animStarted = useRef(false)
-
-  const selectedRoster = rosters.find(r => r.id === selectedRosterId) || rosters[0]
-  const rosterPlayerIds = getPlayerIdsForRoster(selectedRosterId)
-  const rosterPlayers = players.filter(p => rosterPlayerIds.includes(p.id))
-  const rosterSessions = sessions.filter(s => s.rosterId === selectedRosterId)
+  const { availableRosters } = useTeam()
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [showAllSessions, setShowAllSessions] = useState(false)
+  const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null) // null = All Teams
+  const [playerSnapshotId, setPlayerSnapshotId] = useState<string | null>(null)
 
   const todayStr = new Date().toISOString().slice(0, 10)
+  const teamPhotoRoster = rosters.find(r => r.teamPhoto)
 
-  /* ── season summary stats ── */
-  const sessionCount = rosterSessions.length
-  const playerScores = rosterPlayerIds
-    .map(pid => squadScores[pid])
-    .filter(Boolean)
-  const avgScore = playerScores.length > 0
-    ? Math.round(playerScores.reduce((sum, s) => sum + s.compositeScore, 0) / playerScores.length)
+  /* ── Upcoming sessions ── */
+  const allUpcoming = sessions
+    .filter(s => s.status === 'scheduled')
+    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+
+  const nextSessionDay = allUpcoming.length > 0 ? allUpcoming[0].date : null
+  const todaySessions = allUpcoming.filter(s => s.date === todayStr)
+  const nextDaySessions = nextSessionDay ? allUpcoming.filter(s => s.date === nextSessionDay) : []
+
+  const primarySessions = todaySessions.length > 0 ? todaySessions : nextDaySessions
+  const displaySessions = showAllSessions ? allUpcoming : primarySessions.slice(0, MAX_VISIBLE_SESSIONS)
+  const remainingCount = allUpcoming.length - primarySessions.slice(0, MAX_VISIBLE_SESSIONS).length
+  const hasMoreSessions = remainingCount > 0
+
+  /* ── Team Form (filtered by roster) ── */
+  const teamForm = useMemo(() => {
+    const matchSessions = sessions
+      .filter(s => s.type === 'match' && ['analysed', 'playback_ready'].includes(s.status))
+      .filter(s => !selectedRosterId || s.rosterId === selectedRosterId)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 5)
+
+    return matchSessions.map(s => ({
+      id: s.id,
+      opponent: s.opponent || 'Unknown',
+      date: s.date,
+      score: sessionTeamScores[s.id] ?? 0,
+      rosterId: s.rosterId,
+    }))
+  }, [selectedRosterId])
+
+  const avgTeamScore = teamForm.length > 0
+    ? Math.round(teamForm.reduce((sum, m) => sum + m.score, 0) / teamForm.length)
     : 0
-  const topScorerEntry = rosterPlayerIds
-    .map(pid => ({ pid, score: squadScores[pid]?.compositeScore ?? 0 }))
-    .sort((a, b) => b.score - a.score)[0]
-  const topScorer = topScorerEntry ? players.find(p => p.id === topScorerEntry.pid) : null
 
-  /* ── upcoming sessions ── */
-  const upcomingSessions = [...rosterSessions]
-    .filter(s => s.date >= todayStr)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 5)
+  /* ── Players to Watch (filtered by roster) ── */
+  const playersToWatch = useMemo(() => {
+    const playerIds = selectedRosterId
+      ? new Set(rosterPlayerMap[selectedRosterId] || [])
+      : new Set(Object.values(rosterPlayerMap).flat())
 
-  /* ── recent sessions ── */
-  const recentSessions = [...rosterSessions]
-    .filter(s => s.date < todayStr)
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5)
+    return players
+      .filter(p => playerIds.has(p.id))
+      .map(p => {
+        const score = squadScores[p.id]
+        if (!score) return null
+        const diff = score.compositeScore - score.avgScore
+        return { ...p, compositeScore: score.compositeScore, avgScore: score.avgScore, diff }
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null)
+      .filter(p => Math.abs(p.diff) > 3)
+      .sort((a, b) => a.diff - b.diff)
+      .slice(0, 4)
+  }, [selectedRosterId])
 
-  // Animated counter
-  useEffect(() => {
-    if (animStarted.current) return
-    animStarted.current = true
+  /* ── Player snapshot data ── */
+  const snapshotPlayer = playerSnapshotId ? players.find(p => p.id === playerSnapshotId) : null
+  const snapshotScore = snapshotPlayer ? squadScores[snapshotPlayer.id] : null
 
-    const targets: Record<string, number> = {
-      sessions: sessionCount,
-      winRate: 68,
-      avgScore: avgScore,
-      goals: 18,
-      distance: 6.8,
-      topScorer: 0, // not animated — text value
-    }
-
-    const duration = 800
-    const startTime = performance.now()
-
-    function animate(now: number) {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      // ease-out: 1 - (1-p)^3
-      const eased = 1 - Math.pow(1 - progress, 3)
-
-      const current: Record<string, number> = {}
-      for (const [key, target] of Object.entries(targets)) {
-        current[key] = Math.round(target * eased * 10) / 10
-      }
-      setAnimatedValues(current)
-
-      if (progress < 1) requestAnimationFrame(animate)
-    }
-
-    requestAnimationFrame(animate)
-  }, [sessionCount, avgScore])
-
-  /* ── DVR overlay handler ── */
-  function handleRecentSessionTap(session: typeof sessions[0]) {
-    // Analysed matches → navigate to match analysis page
-    if (session.status === 'analysed' && session.type === 'match') {
-      router.push(`/coach/match/${session.id}`)
-      return
-    }
-
-    if (
-      session.status === 'analysed' ||
-      session.status === 'playback_ready' ||
-      session.status === 'complete'
-    ) {
-      const isMatch = session.type === 'match'
-      const label = isMatch ? `vs ${session.opponent}` : 'Training Session'
-      const duration = diffMinutes(session.startTime, session.endTime)
-      setDvrSession({ id: session.id, label, date: session.date, duration })
-    }
-  }
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: hideScrollbarCSS }} />
       <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
 
-        {/* ═══════════ HERO SECTION ═══════════ */}
-        <div style={{ position: 'relative', overflow: 'hidden', height: 320 }}>
-          {/* Team photo background */}
-          <Image
-            src="/players/teamphoto.jpg"
-            alt="Team"
-            fill
-            style={{ objectFit: 'cover', objectPosition: 'center top' }}
-            priority
-          />
-
-          {/* Gradient overlay layer 1: bottom fade */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to bottom, rgba(10,14,26,0.3) 0%, rgba(10,14,26,0.95) 100%)',
-            zIndex: 1,
-          }} />
-          {/* Gradient overlay layer 2: left darken */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to right, rgba(10,14,26,0.4) 0%, transparent 60%)',
-            zIndex: 2,
-          }} />
-
-          {/* Top bar */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            padding: '48px 20px 0',
-            zIndex: 3,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
+        {/* ═══════════ HERO HEADER WITH TEAM PHOTO ═══════════ */}
+        <div style={{
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: 200,
+        }}>
+          {teamPhotoRoster?.teamPhoto && (
             <Image
-              src="/logo-white.png"
-              alt="FairplAI"
-              width={72}
-              height={22}
-              style={{ objectFit: 'contain' }}
+              src={teamPhotoRoster.teamPhoto}
+              alt="Team"
+              fill
+              style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
+              priority
             />
-            <div style={{ position: 'relative', cursor: 'pointer' }}>
-              <Bell size={22} color="#fff" />
-              {pendingReviewItems.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: '#EF4444',
-                }} />
-              )}
-            </div>
-          </div>
-
-          {/* Bottom content */}
+          )}
           <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: 20,
-            zIndex: 3,
-          }}>
-            <div style={{
-              color: '#4A4AFF',
-              fontSize: 11,
-              fontWeight: 700,
-              textTransform: 'uppercase' as const,
-              letterSpacing: 2,
-            }}>
-              SPRING TERM 2026
-            </div>
-            <h1 style={{
-              color: '#fff',
-              fontSize: 34,
-              fontWeight: 800,
-              lineHeight: 1.1,
-              margin: 0,
-              marginTop: 4,
-            }}>
-              {selectedRoster.name}
-            </h1>
-            <p style={{
-              color: 'rgba(255,255,255,0.6)',
-              fontSize: 14,
-              margin: '4px 0 0',
-            }}>
-              Marcus Silva
-            </p>
+            position: 'absolute', inset: 0,
+            background: teamPhotoRoster?.teamPhoto
+              ? 'linear-gradient(180deg, rgba(10,14,26,0.7) 0%, rgba(10,14,26,0.85) 60%, rgba(10,14,26,0.98) 100%)'
+              : '#0A0E1A',
+          }} />
 
-            {/* Team toggle pills */}
-            {availableRosters.length > 1 && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                {availableRosters.map(r => {
-                  const isActive = r.id === selectedRosterId
-                  return (
-                    <button
-                      key={r.id}
-                      onClick={() => setSelectedRosterId(r.id)}
-                      style={{
-                        padding: '6px 16px',
-                        borderRadius: 20,
-                        fontSize: 13,
-                        fontWeight: isActive ? 700 : 500,
-                        background: isActive ? '#fff' : 'rgba(255,255,255,0.12)',
-                        color: isActive ? '#0A0E1A' : 'rgba(255,255,255,0.6)',
-                        border: isActive ? 'none' : '1px solid rgba(255,255,255,0.15)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {r.name}
-                    </button>
-                  )
-                })}
+          <div style={{ position: 'relative', zIndex: 1, padding: '48px 20px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <Image src="/logo-white.png" alt="FairplAI" width={72} height={22} style={{ objectFit: 'contain' }} />
+              <div onClick={() => setNotifOpen(true)} style={{ position: 'relative', cursor: 'pointer' }}>
+                <Bell size={22} color="#fff" />
+                {pendingReviewItems.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: 0, right: 0,
+                    width: 8, height: 8, borderRadius: '50%', background: '#EF4444',
+                  }} />
+                )}
               </div>
+            </div>
+
+            <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: 0, lineHeight: 1.2, textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+              {availableRosters.length === 1 ? availableRosters[0].name : 'Home'}
+            </h1>
+            {availableRosters.length > 1 && (
+              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, margin: '4px 0 0', textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
+                {availableRosters.map(r => r.name).join(' · ')}
+              </p>
             )}
           </div>
         </div>
 
-        {/* ═══════════ STATS STRIP ═══════════ */}
-        <div style={{ background: '#111827', padding: '10px 16px' }}>
-          {/* Row 1 */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>{Math.round(animatedValues.sessions ?? 0)}</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 2 }}>Sessions Played</div>
-            </div>
-            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', alignSelf: 'center' }} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>{Math.round(animatedValues.winRate ?? 0)}%</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 2 }}>Win Rate</div>
-            </div>
-            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', alignSelf: 'center' }} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>{Math.round(animatedValues.avgScore ?? 0)}</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 2 }}>Avg Score</div>
-            </div>
+
+        {/* ═══════════ ROSTER TOGGLE ═══════════ */}
+        {availableRosters.length > 1 && (
+          <div style={{
+            display: 'flex', gap: 6, padding: '12px 16px 0',
+            overflowX: 'auto',
+          }}>
+            <button
+              onClick={() => setSelectedRosterId(null)}
+              style={{
+                padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0,
+                background: !selectedRosterId ? '#4A4AFF' : '#E2E8F0',
+                color: !selectedRosterId ? '#fff' : '#64748B',
+              }}
+            >
+              All Teams
+            </button>
+            {availableRosters.map(r => (
+              <button
+                key={r.id}
+                onClick={() => setSelectedRosterId(r.id)}
+                style={{
+                  padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                  fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0,
+                  background: selectedRosterId === r.id ? '#4A4AFF' : '#E2E8F0',
+                  color: selectedRosterId === r.id ? '#fff' : '#64748B',
+                }}
+              >
+                {r.name}
+              </button>
+            ))}
           </div>
-
-          {/* Row separator */}
-          <div style={{ height: 12 }} />
-
-          {/* Row 2 */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>{Math.round(animatedValues.goals ?? 0)}</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 2 }}>Total Goals</div>
-            </div>
-            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', alignSelf: 'center' }} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>{(animatedValues.distance ?? 0).toFixed(1)}km</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 2 }}>Avg Distance</div>
-            </div>
-            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', alignSelf: 'center' }} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>{topScorer?.firstName ?? '\u2014'}</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 2 }}>Top Performer</div>
-            </div>
-          </div>
-
-          {/* Recent Form strip */}
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 0' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>Form</span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {(() => {
-                const analysedMatches = rosterSessions
-                  .filter(s => s.type === 'match' && s.status === 'analysed' && sessionTeamScores[s.id] !== undefined)
-                  .sort((a, b) => b.date.localeCompare(a.date))
-                  .slice(0, 5)
-                  .reverse()
-
-                return analysedMatches.map((s, i) => {
-                  const score = sessionTeamScores[s.id]
-                  let dotColor = '#10B981'
-                  if (score < 60) dotColor = '#EF4444'
-                  else if (score < 75) dotColor = '#F59E0B'
-
-                  return (
-                    <div key={i} style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      background: dotColor,
-                    }} />
-                  )
-                })
-              })()}
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* ═══════════ UPCOMING SESSIONS ═══════════ */}
-        <div style={{ background: '#F8F9FC', padding: '16px 16px 8px' }}>
-          {/* Section header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <span style={{ color: '#0F172A', fontSize: 16, fontWeight: 700 }}>Upcoming</span>
-            <span style={{ color: '#4A4AFF', fontSize: 13, cursor: 'pointer' }}>See all</span>
-          </div>
+        <div style={{ padding: '16px 16px 0' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            {todaySessions.length > 0 ? 'Today' : 'Next Up'}
+          </span>
 
-          {upcomingSessions.length > 0 ? (
-            <div
-              className="hide-scrollbar"
-              style={{ display: 'flex', overflowX: 'auto', flexWrap: 'nowrap' }}
-            >
-              {upcomingSessions.map(session => {
+          {displaySessions.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              {displaySessions.map((session, idx) => {
                 const isMatch = session.type === 'match'
                 const accentColor = isMatch ? '#4A4AFF' : '#10B981'
-                const label = isMatch ? `vs ${session.opponent}` : 'Training Session'
                 const pitch = pitches.find(p => p.id === session.pitchId)
-                const pitchName = pitch?.name ?? ''
+                const roster = rosters.find(r => r.id === session.rosterId)
                 const daysUntil = daysBetween(todayStr, session.date)
+                const daysLabel = daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`
 
                 return (
-                  <div
-                    key={session.id}
-                    style={{
-                      width: 200,
-                      minWidth: 200,
-                      background: '#fff',
-                      borderRadius: 14,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-                      padding: 14,
-                      marginRight: 10,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    {/* Top accent bar */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3,
-                      background: accentColor,
-                      borderRadius: '3px 3px 0 0',
-                    }} />
+                  <div key={session.id} style={{
+                    background: '#fff',
+                    borderRadius: 16,
+                    borderLeft: `4px solid ${accentColor}`,
+                    padding: '18px 16px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Clock size={13} /> {formatDate(session.date)} · {session.startTime}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: daysUntil <= 1 ? '#F59E0B' : '#94a3b8' }}>
+                        {daysLabel}
+                      </span>
+                    </div>
 
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#64748B', marginTop: 2 }}>
-                      {formatCardDate(session.date)}
+                    <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 4 }}>
+                      {isMatch ? `vs ${session.opponent}` : 'Training Session'}
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginTop: 4 }}>
-                      {label}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-                      {session.startTime} &middot; {pitchName}
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginTop: 10,
-                    }}>
-                      {isMatch ? (
-                        <span style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: '3px 8px',
-                          borderRadius: 20,
-                          background: '#EFF6FF',
-                          color: '#4A4AFF',
-                        }}>
-                          Match
-                        </span>
-                      ) : (
-                        <span style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: '3px 8px',
-                          borderRadius: 20,
-                          background: '#ECFDF5',
-                          color: '#059669',
-                        }}>
-                          Training
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: idx === 0 ? 14 : 0 }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20,
+                        background: isMatch ? '#EFF6FF' : '#ECFDF5',
+                        color: isMatch ? '#4A4AFF' : '#059669',
+                      }}>
+                        {isMatch ? 'Match' : 'Training'}
+                      </span>
+                      {roster && (
+                        <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>
+                          {roster.name}
                         </span>
                       )}
-                      {daysUntil <= 7 && (
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B' }}>
-                          {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
+                      {pitch && (
+                        <span style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <MapPin size={12} /> {pitch.name}
                         </span>
                       )}
                     </div>
+
+                    {idx === 0 && (
+                      <button
+                        onClick={() => router.push('/coach/record')}
+                        style={{
+                          width: '100%', padding: '12px 0', borderRadius: 12,
+                          background: accentColor, color: '#fff',
+                          fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
+                        }}
+                      >
+                        Start Session →
+                      </button>
+                    )}
                   </div>
                 )
               })}
+
+              {hasMoreSessions && !showAllSessions && (
+                <button
+                  onClick={() => setShowAllSessions(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    background: 'none', border: '1px solid #E2E8F0', borderRadius: 12,
+                    padding: '10px 0', cursor: 'pointer', width: '100%',
+                    fontSize: 13, fontWeight: 600, color: '#4A4AFF',
+                  }}
+                >
+                  <ChevronDown size={14} /> {remainingCount} more session{remainingCount > 1 ? 's' : ''}
+                </button>
+              )}
+              {showAllSessions && (
+                <button
+                  onClick={() => setShowAllSessions(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    background: 'none', border: '1px solid #E2E8F0', borderRadius: 12,
+                    padding: '10px 0', cursor: 'pointer', width: '100%',
+                    fontSize: 13, fontWeight: 600, color: '#64748B',
+                  }}
+                >
+                  <ChevronUp size={14} /> Show less
+                </button>
+              )}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', color: '#64748B', fontSize: 14, padding: '20px 0' }}>
-              No upcoming sessions scheduled
+            <div style={{
+              marginTop: 8, padding: 24, textAlign: 'center',
+              background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            }}>
+              <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>No sessions scheduled</p>
             </div>
           )}
         </div>
 
-        {/* ═══════════ RECENT SESSIONS ═══════════ */}
-        <div style={{ background: '#F8F9FC', padding: 20 }}>
-          {/* Section header */}
-          <div style={{ marginBottom: 12 }}>
-            <span style={{ color: '#0F172A', fontSize: 16, fontWeight: 700 }}>Recent Sessions</span>
-          </div>
 
-          {recentSessions.map(session => {
-            const d = new Date(session.date + 'T00:00:00')
-            const dayNum = d.getDate()
-            const month = monthAbbr[d.getMonth()]
-            const isMatch = session.type === 'match'
-            const label = isMatch ? `vs ${session.opponent}` : 'Training Session'
-            const rosterName = rosters.find(r => r.id === session.rosterId)?.name ?? ''
-            const typeLabel = isMatch ? 'Match' : 'Training'
-            const duration = diffMinutes(session.startTime, session.endTime)
-
-            /* status badge / score */
-            let badgeText = ''
-            let badgeBg = ''
-            let badgeColor = ''
-            let scoreDisplay: number | null = null
-            let scoreColor = ''
-            let accentBorderColor = '#F59E0B' // pending default
-
-            if (session.status === 'analysed') {
-              const participantScores = session.participatingPlayerIds
-                .map(pid => squadScores[pid]?.compositeScore)
-                .filter((v): v is number => v !== undefined)
-              scoreDisplay = participantScores.length > 0
-                ? Math.round(participantScores.reduce((a, b) => a + b, 0) / participantScores.length)
-                : 75
-              if (scoreDisplay >= 75) scoreColor = '#10B981'
-              else if (scoreDisplay >= 60) scoreColor = '#F59E0B'
-              else scoreColor = '#EF4444'
-              accentBorderColor = '#4A4AFF'
-            } else if (session.type === 'drill' && session.status === 'playback_ready') {
-              badgeText = '\u25B6 Footage'
-              badgeBg = 'transparent'
-              badgeColor = '#10B981'
-              accentBorderColor = '#10B981'
-            } else if (session.status === 'complete' || session.status === 'scheduled') {
-              badgeText = 'Pending'
-              badgeBg = 'transparent'
-              badgeColor = '#F59E0B'
-              accentBorderColor = '#F59E0B'
-            }
-
-            return (
-              <div
-                key={session.id}
-                onClick={() => handleRecentSessionTap(session)}
-                style={{
-                  background: '#fff',
-                  borderRadius: 14,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                  padding: 0,
-                  marginBottom: 8,
-                  overflow: 'hidden',
-                  borderLeft: `4px solid ${accentBorderColor}`,
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{
-                  padding: '14px 16px',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}>
-                  {/* Date block */}
-                  <div style={{
-                    width: 48,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', lineHeight: 1 }}>{dayNum}</span>
-                    <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase' as const }}>{month}</span>
-                  </div>
-
-                  {/* Center info */}
-                  <div style={{ flex: 1, minWidth: 0, padding: '0 12px' }}>
-                    <div style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: '#0F172A',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {label}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginTop: 4 }}>
-                      {isMatch ? (
-                        <span style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: 20,
-                          background: '#EFF6FF',
-                          color: '#4A4AFF',
-                        }}>
-                          Match
-                        </span>
-                      ) : (
-                        <span style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: 20,
-                          background: '#ECFDF5',
-                          color: '#059669',
-                        }}>
-                          Training
-                        </span>
-                      )}
-                      <span style={{ fontSize: 12, color: '#64748B', marginLeft: 8 }}>{duration} min</span>
-                    </div>
-                  </div>
-
-                  {/* Right: score or badge + chevron */}
-                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                    {scoreDisplay !== null && (
-                      <span style={{ fontSize: 24, fontWeight: 800, color: scoreColor }}>{scoreDisplay}</span>
-                    )}
-                    {badgeText && (
-                      <span style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: badgeColor,
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {badgeText}
-                      </span>
-                    )}
-                    <ChevronRight size={20} color={session.status === 'analysed' && session.type === 'match' ? '#4A4AFF' : '#CBD5E1'} style={{ marginLeft: 8 }} />
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* ═══════════ NEEDS YOUR INPUT ═══════════ */}
-        {pendingReviewItems.length > 0 && (
-          <div style={{
-            background: '#FFFBEB',
-            padding: '16px 20px',
-            borderLeft: '3px solid #F59E0B',
-          }}>
-            <div style={{ marginBottom: 12 }}>
-              <span style={{
-                color: '#92400E',
-                fontSize: 13,
-                fontWeight: 600,
-              }}>
-                {'\u26A0'} Needs Your Input
+        {/* ═══════════ TEAM FORM ═══════════ */}
+        {teamForm.length > 0 && (
+          <div style={{ padding: '20px 16px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Recent Form
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: getScoreColor(avgTeamScore) }}>
+                Avg: {avgTeamScore}
               </span>
             </div>
 
-            <div
-              className="hide-scrollbar"
-              style={{ display: 'flex', overflowX: 'auto', flexWrap: 'nowrap' }}
-            >
-              {pendingReviewItems.map(item => {
-                const isClassify = item.type === 'classify'
+            <div style={{
+              display: 'flex', gap: 8, marginTop: 8, overflowX: 'auto',
+              paddingBottom: 4,
+            }}>
+              {teamForm.map(match => {
+                const scoreColor = getScoreColor(match.score)
+                const dateObj = new Date(match.date + 'T00:00:00')
+                const roster = rosters.find(r => r.id === match.rosterId)
+
                 return (
                   <div
-                    key={item.id}
+                    key={match.id}
+                    onClick={() => router.push(`/coach/match/${match.id}`)}
                     style={{
-                      width: 200,
-                      minWidth: 200,
-                      padding: 12,
-                      background: '#fff',
-                      borderRadius: 12,
-                      borderLeft: '4px solid #F59E0B',
+                      minWidth: 120, background: '#fff', borderRadius: 14,
+                      padding: '14px 12px', textAlign: 'center',
                       boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                      marginRight: 12,
+                      flexShrink: 0, cursor: 'pointer',
+                      transition: 'transform 100ms ease',
                     }}
                   >
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '3px 10px',
-                      borderRadius: 10,
-                      background: isClassify ? '#FEF3C7' : '#EFF6FF',
-                      color: isClassify ? '#92400E' : '#1E40AF',
+                    <div style={{ fontSize: 28, fontWeight: 800, color: scoreColor, lineHeight: 1 }}>
+                      {match.score}
+                    </div>
+                    <div style={{
+                      fontSize: 12, fontWeight: 600, color: '#0F172A',
+                      marginTop: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
-                      {isClassify ? 'Classify Session' : 'Tag Players'}
-                    </span>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginTop: 6 }}>
-                      {item.sessionLabel}
+                      vs {match.opponent}
                     </div>
-                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-                      {isClassify
-                        ? `${item.segments?.filter(s => s.aiClassification === 'uncertain').length ?? 1} uncertain segment needs confirmation`
-                        : `${item.playersToTag?.length ?? 0} players need identity confirmation`
-                      }
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                      {monthAbbr[dateObj.getMonth()]} {dateObj.getDate()}
                     </div>
-                    <button
-                      onClick={() => router.push('/coach/review')}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#4A4AFF',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        padding: 0,
-                        marginTop: 8,
-                      }}
-                    >
-                      {'Review \u2192'}
-                    </button>
+                    {!selectedRosterId && roster && (
+                      <div style={{ fontSize: 10, color: '#CBD5E1', marginTop: 2 }}>
+                        {roster.name}
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -673,226 +367,243 @@ export default function CoachHomePage() {
           </div>
         )}
 
+
+        {/* ═══════════ PLAYERS TO WATCH ═══════════ */}
+        {playersToWatch.length > 0 && (
+          <div style={{ padding: '20px 16px 0' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Players to Watch
+            </span>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+              {playersToWatch.map(player => {
+                const isDecline = player.diff < 0
+                const TrendIcon = isDecline ? TrendingDown : TrendingUp
+                const trendColor = isDecline ? '#EF4444' : '#10B981'
+                const trendBg = isDecline ? '#FEF2F2' : '#ECFDF5'
+
+                return (
+                  <button
+                    key={player.id}
+                    onClick={() => setPlayerSnapshotId(player.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      background: '#fff', borderRadius: 14, padding: '12px 14px',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      width: '100%', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                    }}
+                  >
+                    <div style={{
+                      width: 4, height: 36, borderRadius: 2,
+                      background: trendColor, flexShrink: 0,
+                    }} />
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>
+                        {player.firstName} {player.lastName}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#64748B', marginTop: 1 }}>
+                        {player.position[0]} · #{player.jerseyNumber}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: getScoreColor(player.compositeScore) }}>
+                        {player.compositeScore}
+                      </span>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 2,
+                        padding: '2px 6px', borderRadius: 16, background: trendBg,
+                      }}>
+                        <TrendIcon size={12} color={trendColor} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: trendColor }}>
+                          {isDecline ? '' : '+'}{player.diff}
+                        </span>
+                      </div>
+                    </div>
+
+                    <ChevronRight size={16} color="#CBD5E1" />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Bottom spacer */}
-        <div style={{ height: 24 }} />
+        <div style={{ height: 100 }} />
       </div>
 
-      {/* ═══════════ DVR PLAYER OVERLAY ═══════════ */}
-      {dvrSession && (
+      {/* ═══════════ PLAYER SNAPSHOT MODAL ═══════════ */}
+      {snapshotPlayer && snapshotScore && (
         <div
-          onClick={() => setDvrSession(null)}
+          onClick={() => setPlayerSnapshotId(null)}
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 100,
-            background: '#0D1020',
-            display: 'flex',
-            flexDirection: 'column',
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end',
+            justifyContent: 'center', zIndex: 1000,
           }}
         >
-          {/* Top bar */}
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '48px 16px 12px',
+              background: '#fff', borderRadius: '20px 20px 0 0',
+              width: '100%', maxWidth: 480, padding: '20px 20px 32px',
+              maxHeight: '80vh', overflowY: 'auto',
             }}
           >
-            <button
-              onClick={() => setDvrSession(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#fff',
-                fontSize: 28,
-                fontWeight: 300,
-                cursor: 'pointer',
-                lineHeight: 1,
-                padding: 0,
-                width: 40,
-                textAlign: 'left',
-              }}
-            >
-              &times;
-            </button>
-            <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{dvrSession.label}</div>
-              <div style={{ color: '#9DA2B3', fontSize: 12 }}>
-                {formatCardDate(dvrSession.date)}
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>
+                  {snapshotPlayer.firstName} {snapshotPlayer.lastName}
+                </div>
+                <div style={{ fontSize: 13, color: '#64748B' }}>
+                  {snapshotPlayer.position[0]} · #{snapshotPlayer.jerseyNumber}
+                </div>
               </div>
-            </div>
-            <div style={{ width: 40 }} />
-          </div>
-
-          {/* CSS-drawn pitch */}
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
-          >
-            <div style={{
-              width: '100%',
-              maxWidth: 400,
-              aspectRatio: '3 / 2',
-              background: '#2E7D32',
-              borderRadius: 8,
-              border: '2px solid #fff',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              {/* Center line */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: '50%',
-                width: 2,
-                height: '100%',
-                background: 'rgba(255,255,255,0.6)',
-              }} />
-              {/* Center circle */}
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 60,
-                height: 60,
-                borderRadius: '50%',
-                border: '2px solid rgba(255,255,255,0.6)',
-                transform: 'translate(-50%, -50%)',
-              }} />
-              {/* Center dot */}
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.6)',
-                transform: 'translate(-50%, -50%)',
-              }} />
-              {/* Left penalty area */}
-              <div style={{
-                position: 'absolute',
-                top: '20%',
-                left: 0,
-                width: '18%',
-                height: '60%',
-                borderRight: '2px solid rgba(255,255,255,0.6)',
-                borderTop: '2px solid rgba(255,255,255,0.6)',
-                borderBottom: '2px solid rgba(255,255,255,0.6)',
-              }} />
-              {/* Right penalty area */}
-              <div style={{
-                position: 'absolute',
-                top: '20%',
-                right: 0,
-                width: '18%',
-                height: '60%',
-                borderLeft: '2px solid rgba(255,255,255,0.6)',
-                borderTop: '2px solid rgba(255,255,255,0.6)',
-                borderBottom: '2px solid rgba(255,255,255,0.6)',
-              }} />
-              {/* Left goal area */}
-              <div style={{
-                position: 'absolute',
-                top: '35%',
-                left: 0,
-                width: '8%',
-                height: '30%',
-                borderRight: '2px solid rgba(255,255,255,0.6)',
-                borderTop: '2px solid rgba(255,255,255,0.6)',
-                borderBottom: '2px solid rgba(255,255,255,0.6)',
-              }} />
-              {/* Right goal area */}
-              <div style={{
-                position: 'absolute',
-                top: '35%',
-                right: 0,
-                width: '8%',
-                height: '30%',
-                borderLeft: '2px solid rgba(255,255,255,0.6)',
-                borderTop: '2px solid rgba(255,255,255,0.6)',
-                borderBottom: '2px solid rgba(255,255,255,0.6)',
-              }} />
-
-              {/* Play button centered on pitch */}
-              <button
-                onClick={e => e.stopPropagation()}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: 56,
-                  height: 56,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.9)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 2,
-                }}
-              >
-                <div style={{
-                  width: 0,
-                  height: 0,
-                  borderTop: '10px solid transparent',
-                  borderBottom: '10px solid transparent',
-                  borderLeft: '18px solid #0D1020',
-                  marginLeft: 4,
-                }} />
+              <button onClick={() => setPlayerSnapshotId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                <X size={20} color="#94a3b8" />
               </button>
             </div>
-          </div>
 
-          {/* Scrub bar at bottom */}
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ padding: '12px 16px 40px' }}
-          >
-            <div style={{
-              height: 4,
-              borderRadius: 2,
-              background: 'rgba(255,255,255,0.15)',
-              position: 'relative',
-              marginBottom: 8,
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                height: 4,
-                width: '0%',
-                borderRadius: 2,
-                background: 'linear-gradient(90deg, #4A4AFF, #7C3AED)',
-              }} />
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '0%',
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                background: '#fff',
-                transform: 'translate(-50%, -50%)',
-              }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12, color: '#9DA2B3' }}>00:00</span>
-              <span style={{ fontSize: 12, color: '#9DA2B3' }}>
-                {String(Math.floor(dvrSession.duration / 60)).padStart(2, '0')}:{String(dvrSession.duration % 60).padStart(2, '0')}
-              </span>
-            </div>
+            {/* Score + Trend */}
+            {(() => {
+              const diff = snapshotScore.compositeScore - snapshotScore.avgScore
+              const isDecline = diff < 0
+              const trendColor = isDecline ? '#EF4444' : '#10B981'
+              const TrendIcon = isDecline ? TrendingDown : TrendingUp
+              const metrics = playerKeyMetrics[snapshotPlayer.id]
+
+              return (
+                <>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 16,
+                    background: '#F8F9FC', borderRadius: 16, padding: '16px 20px', marginBottom: 16,
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 40, fontWeight: 800, color: getScoreColor(snapshotScore.compositeScore), lineHeight: 1 }}>
+                        {snapshotScore.compositeScore}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginTop: 2 }}>SCORE</div>
+                    </div>
+                    <div style={{ width: 1, height: 48, background: '#E2E8F0' }} />
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <TrendIcon size={16} color={trendColor} />
+                        <span style={{ fontSize: 15, fontWeight: 700, color: trendColor }}>
+                          {isDecline ? '' : '+'}{diff} vs average
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                        Season avg: {snapshotScore.avgScore}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Areas */}
+                  {metrics && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                      {/* Technical */}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Activity size={14} color="#4A4AFF" />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Technical</span>
+                          </div>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: getScoreColor(metrics.technical) }}>
+                            {metrics.technical}
+                          </span>
+                        </div>
+                        <div style={{ height: 6, borderRadius: 3, background: '#F1F5F9' }}>
+                          <div style={{
+                            height: '100%', borderRadius: 3, width: `${metrics.technical}%`,
+                            background: getScoreColor(metrics.technical),
+                            transition: 'width 0.5s ease',
+                          }} />
+                        </div>
+                      </div>
+
+                      {/* Temperament */}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Brain size={14} color="#8B5CF6" />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Temperament</span>
+                          </div>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: getScoreColor(metrics.temperament) }}>
+                            {metrics.temperament}
+                          </span>
+                        </div>
+                        <div style={{ height: 6, borderRadius: 3, background: '#F1F5F9' }}>
+                          <div style={{
+                            height: '100%', borderRadius: 3, width: `${metrics.temperament}%`,
+                            background: getScoreColor(metrics.temperament),
+                            transition: 'width 0.5s ease',
+                          }} />
+                        </div>
+                      </div>
+
+                      {/* Strain */}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Zap size={14} color="#F59E0B" />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Strain</span>
+                          </div>
+                          <span style={{
+                            fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                            background: metrics.strain === 'high' ? '#FEF2F2' : metrics.strain === 'moderate' ? '#FEF3C7' : '#ECFDF5',
+                            color: metrics.strain === 'high' ? '#EF4444' : metrics.strain === 'moderate' ? '#D97706' : '#059669',
+                            textTransform: 'capitalize',
+                          }}>
+                            {metrics.strain}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Insight */}
+                  <div style={{
+                    background: isDecline ? '#FEF2F2' : '#ECFDF5',
+                    borderRadius: 12, padding: '12px 16px', marginBottom: 16,
+                    borderLeft: `3px solid ${trendColor}`,
+                  }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: trendColor, marginBottom: 2 }}>
+                      {isDecline ? 'Needs Attention' : 'Improving'}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
+                      {isDecline
+                        ? `Score dropped ${Math.abs(diff)} pts from season average. ${metrics && metrics.temperament < 75 ? 'Temperament may be a factor — consider a 1-on-1 check-in.' : 'Review recent sessions for patterns.'}`
+                        : `Up ${diff} pts vs season average. ${metrics && metrics.temperament >= 80 ? 'Great attitude and coachability.' : 'Keep momentum going with targeted challenges.'}`
+                      }
+                    </div>
+                  </div>
+
+                  {/* View Full Profile */}
+                  <button
+                    onClick={() => {
+                      setPlayerSnapshotId(null)
+                      router.push(`/coach/squad/${snapshotPlayer.id}`)
+                    }}
+                    style={{
+                      width: '100%', padding: '12px 0', borderRadius: 12,
+                      background: '#0A0E1A', color: '#fff',
+                      fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    View Full Profile <ExternalLink size={14} />
+                  </button>
+                </>
+              )
+            })()}
           </div>
         </div>
       )}
+
+      <NotificationCentre open={notifOpen} onClose={() => setNotifOpen(false)} role="coach" />
     </>
   )
 }

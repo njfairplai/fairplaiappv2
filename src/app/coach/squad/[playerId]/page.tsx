@@ -2,11 +2,13 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronLeft, Film } from 'lucide-react'
+import { ChevronLeft, Film, Share2 } from 'lucide-react'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
 import KeyMetricsBlock from '@/components/shared/KeyMetricsBlock'
+import PlayerCardShareModal from '@/components/shared/PlayerCardShareModal'
 import { COLORS } from '@/lib/constants'
-import { players, rosters, squadScores, highlights, sessions, pitches, matchAnalyses } from '@/lib/mockData'
+import { players, rosters, squadScores, highlights, sessions, pitches, matchAnalyses, playerHeatmaps } from '@/lib/mockData'
+import PitchHeatmap from '@/components/coach/PitchHeatmap'
 import type { Highlight } from '@/lib/types'
 import dynamic from 'next/dynamic'
 
@@ -110,7 +112,7 @@ function formatDuration(startTime: string, endTime: string): string {
   return `${hours}h ${mins.toString().padStart(2, '0')}m`
 }
 
-type TabKey = 'stats' | 'highlights' | 'footage' | 'notes'
+type TabKey = 'stats' | 'highlights' | 'footage' | 'heatmap' | 'notes'
 type PerformanceCategory = 'Physical' | 'Positional' | 'Passing' | 'Dribbling' | 'Control' | 'Defending'
 
 interface CategoryStat {
@@ -178,6 +180,11 @@ export default function PlayerDetailPage() {
   const [noteText, setNoteText] = useState('')
   const [lastSaved, setLastSaved] = useState<string | null>(null)
   const [highlightFilter, setHighlightFilter] = useState<'all' | 'ai' | 'coach'>('all')
+  const [shareOpen, setShareOpen] = useState(false)
+  const [highlightPrivacy, setHighlightPrivacy] = useState<Record<string, string>>({})
+  const [highlightWatermarks, setHighlightWatermarks] = useState<Record<string, boolean>>({})
+  const [sessionNotes, setSessionNotes] = useState<Record<string, string>>({})
+  const [sessionNotesLastSaved, setSessionNotesLastSaved] = useState<string | null>(null)
 
   const player = players.find(p => p.id === playerId)
   const score = squadScores[playerId]
@@ -242,6 +249,15 @@ export default function PlayerDetailPage() {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(`fairplai_notes_${playerId}`)
       if (saved) setNoteText(saved)
+      // Load highlight privacy
+      const privData = localStorage.getItem('fairplai_highlight_privacy')
+      if (privData) setHighlightPrivacy(JSON.parse(privData))
+      // Load highlight watermarks
+      const wmData = localStorage.getItem('fairplai_highlight_watermarks')
+      if (wmData) setHighlightWatermarks(JSON.parse(wmData))
+      // Load session notes
+      const snData = localStorage.getItem(`fairplai_session_notes_${playerId}`)
+      if (snData) setSessionNotes(JSON.parse(snData))
     }
   }, [playerId])
 
@@ -420,14 +436,33 @@ export default function PlayerDetailPage() {
           >
             <ChevronLeft size={18} color="#fff" />
           </div>
-          <div style={{
-            background: 'rgba(10,14,26,0.5)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 20,
-            padding: '5px 10px',
-          }}>
-            <span style={{ color: '#fff', fontSize: 11 }}>MAK Academy</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setShareOpen(true)}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: 'rgba(10,14,26,0.5)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <Share2 size={16} color="#fff" />
+            </button>
+            <div style={{
+              background: 'rgba(10,14,26,0.5)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: 20,
+              padding: '5px 10px',
+            }}>
+              <span style={{ color: '#fff', fontSize: 11 }}>MAK Academy</span>
+            </div>
           </div>
         </div>
 
@@ -520,9 +555,9 @@ export default function PlayerDetailPage() {
           alignItems: 'stretch',
         }}
       >
-        {(['stats', 'highlights', 'footage', 'notes'] as TabKey[]).map(tab => {
+        {(['stats', 'highlights', 'footage', 'heatmap', 'notes'] as TabKey[]).map(tab => {
           const isActive = activeTab === tab
-          const labels: Record<TabKey, string> = { stats: 'Stats', highlights: 'Highlights', footage: 'Footage', notes: 'Notes' }
+          const labels: Record<TabKey, string> = { stats: 'Stats', highlights: 'Highlights', footage: 'Footage', heatmap: 'Heatmap', notes: 'Notes' }
           return (
             <button
               key={tab}
@@ -904,6 +939,48 @@ export default function PlayerDetailPage() {
                       {'\uD83D\uDCAC'} WhatsApp
                     </button>
                   </div>
+
+                  {/* Privacy controls */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600, marginRight: 4 }}>Visibility:</span>
+                    {(['parent_visible', 'team_only', 'private'] as const).map(p => {
+                      const currentPrivacy = highlightPrivacy[h.id] || h.privacy || 'parent_visible'
+                      const isActive = currentPrivacy === p
+                      const labels = { parent_visible: 'Parent/Player', team_only: 'Team', private: 'Private' }
+                      const colors = { parent_visible: '#27AE60', team_only: '#4A4AFF', private: '#6E7180' }
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => {
+                            const newPrivacy = { ...highlightPrivacy, [h.id]: p }
+                            setHighlightPrivacy(newPrivacy)
+                            localStorage.setItem('fairplai_highlight_privacy', JSON.stringify(newPrivacy))
+                          }}
+                          style={{
+                            padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            background: isActive ? `${colors[p]}1A` : '#F8F9FC',
+                            color: isActive ? colors[p] : '#9DA2B3',
+                            border: isActive ? `1px solid ${colors[p]}40` : '1px solid transparent',
+                          }}
+                        >
+                          {labels[p]}
+                        </button>
+                      )
+                    })}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 8, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={highlightWatermarks[h.id] ?? h.watermarkEnabled ?? false}
+                        onChange={(e) => {
+                          const newWm = { ...highlightWatermarks, [h.id]: e.target.checked }
+                          setHighlightWatermarks(newWm)
+                          localStorage.setItem('fairplai_highlight_watermarks', JSON.stringify(newWm))
+                        }}
+                        style={{ width: 14, height: 14, accentColor: '#4A4AFF' }}
+                      />
+                      <span style={{ fontSize: 11, color: '#64748B' }}>Watermark</span>
+                    </label>
+                  </div>
                 </div>
               )
             })
@@ -1086,9 +1163,95 @@ export default function PlayerDetailPage() {
         </div>
       )}
 
+      {/* HEATMAP TAB */}
+      {activeTab === 'heatmap' && (
+        <div style={{ background: '#F8F9FC', padding: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 10 }}>
+            LATEST MATCH HEATMAP
+          </div>
+          {(() => {
+            // Find the most recent match session for this player that has heatmap data
+            const matchSessions = sessions
+              .filter(s => s.type === 'match' && (s.status === 'analysed' || s.status === 'playback_ready') && s.participatingPlayerIds.includes(playerId))
+              .sort((a, b) => b.date.localeCompare(a.date))
+
+            const latestKey = matchSessions
+              .map(s => `${s.id}_${playerId}`)
+              .find(key => playerHeatmaps[key])
+
+            if (!latestKey) {
+              return (
+                <div style={{
+                  background: '#fff', borderRadius: 14, padding: 32, textAlign: 'center',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}>
+                  <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>No heatmap data available yet</p>
+                  <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>Heatmaps will appear after match analysis is complete</p>
+                </div>
+              )
+            }
+
+            const heatmapData = playerHeatmaps[latestKey]
+            const matchSession = sessions.find(s => s.id === heatmapData.sessionId)
+
+            return (
+              <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                {matchSession && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
+                      vs {matchSession.opponent}
+                    </span>
+                    <span style={{ fontSize: 12, color: '#64748B' }}>
+                      {matchSession.date}
+                    </span>
+                  </div>
+                )}
+                <PitchHeatmap data={heatmapData} showLegend />
+              </div>
+            )
+          })()}
+
+          {/* Previous matches with heatmaps */}
+          {(() => {
+            const matchSessions = sessions
+              .filter(s => s.type === 'match' && (s.status === 'analysed' || s.status === 'playback_ready') && s.participatingPlayerIds.includes(playerId))
+              .sort((a, b) => b.date.localeCompare(a.date))
+
+            const heatmapSessions = matchSessions.filter(s => playerHeatmaps[`${s.id}_${playerId}`])
+            if (heatmapSessions.length <= 1) return null
+
+            return (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 10 }}>
+                  PREVIOUS MATCHES
+                </div>
+                {heatmapSessions.slice(1).map(s => {
+                  const key = `${s.id}_${playerId}`
+                  const data = playerHeatmaps[key]
+                  return (
+                    <div key={s.id} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
+                          vs {s.opponent}
+                        </span>
+                        <span style={{ fontSize: 12, color: '#64748B' }}>
+                          {s.date}
+                        </span>
+                      </div>
+                      <PitchHeatmap data={data} />
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
       {/* NOTES TAB */}
       {activeTab === 'notes' && (
         <div style={{ padding: 16 }}>
+          {/* Global notes */}
           <div
             style={{
               background: '#FFFFFF',
@@ -1120,6 +1283,50 @@ export default function PlayerDetailPage() {
               <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>Last saved: {lastSaved}</div>
             )}
           </div>
+
+          {/* Per-session notes */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: 20, marginBottom: 10 }}>SESSION NOTES</div>
+          {matchFootageSessions.length === 0 && footageSessions.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: '#64748B', fontSize: 13 }}>No sessions to add notes for yet.</div>
+          ) : (
+            [...matchFootageSessions, ...footageSessions].map(s => {
+              const sessionLabel = s.opponent ? `vs ${s.opponent}` : 'Training'
+              const hasNote = !!sessionNotes[s.id]
+              return (
+                <div key={s.id} style={{
+                  background: '#fff', borderRadius: 12, padding: 14, marginBottom: 8,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    {hasNote && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#27AE60' }} />}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{sessionLabel}</span>
+                    <span style={{ fontSize: 12, color: '#64748B' }}>{formatSessionDateFull(s.date)}</span>
+                  </div>
+                  <textarea
+                    value={sessionNotes[s.id] || ''}
+                    onChange={e => {
+                      const newNotes = { ...sessionNotes, [s.id]: e.target.value }
+                      setSessionNotes(newNotes)
+                      // Auto-save with debounce via effect
+                      clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)[`_snTimer_${s.id}`])
+                      ;(window as unknown as Record<string, ReturnType<typeof setTimeout>>)[`_snTimer_${s.id}`] = setTimeout(() => {
+                        localStorage.setItem(`fairplai_session_notes_${playerId}`, JSON.stringify(newNotes))
+                        setSessionNotesLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+                      }, 1500)
+                    }}
+                    placeholder={`Notes for ${sessionLabel}...`}
+                    style={{
+                      width: '100%', minHeight: 60, border: '1px solid #E8EAED', borderRadius: 8,
+                      padding: 10, fontSize: 13, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              )
+            })
+          )}
+          {sessionNotesLastSaved && (
+            <div style={{ fontSize: 11, color: '#64748B', textAlign: 'right' }}>Session notes saved: {sessionNotesLastSaved}</div>
+          )}
         </div>
       )}
 
@@ -1202,6 +1409,23 @@ export default function PlayerDetailPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* PLAYER CARD SHARE MODAL */}
+      {player && (
+        <PlayerCardShareModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          player={{
+            name: `${player.firstName} ${player.lastName}`,
+            position: position,
+            jerseyNumber: player.jerseyNumber,
+            team: rosterName,
+            academy: 'MAK Academy',
+            photo: player.photo,
+          }}
+          compositeScore={compositeScore}
+        />
       )}
 
       {/* TOAST */}

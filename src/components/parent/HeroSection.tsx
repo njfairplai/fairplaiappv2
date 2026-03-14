@@ -5,6 +5,10 @@ import Image from 'next/image'
 import { playerProfile } from '@/lib/mockData'
 import ScoreArc from '@/components/charts/ScoreArc'
 import KeyMetricsBlock from '@/components/shared/KeyMetricsBlock'
+import NotificationBell from '@/components/shared/NotificationBell'
+import NotificationCentre from '@/components/shared/NotificationCentre'
+import PlayerCardShareModal from '@/components/shared/PlayerCardShareModal'
+import { Share2 } from 'lucide-react'
 
 type Period = 'last-match' | 'last-5' | 'season'
 
@@ -19,6 +23,8 @@ export default function HeroSection() {
   const [displayScore, setDisplayScore] = useState(81)
   const [scoreKey, setScoreKey] = useState(0)
   const solidRef = useRef<HTMLDivElement>(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   function handlePeriodChange(p: Period) {
     setActivePeriod(p)
@@ -52,13 +58,17 @@ export default function HeroSection() {
         </div>
 
         {/* Top bar */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '48px 18px 12px' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '48px 18px 12px', zIndex: 5 }}>
           <div style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '6px 10px' }}>
             <Image src="/logos/mak-academy.jpeg" alt="MAK Academy" width={80} height={32} style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
           </div>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 100, padding: '5px 14px', backdropFilter: 'blur(8px)' }}>
-            {playerProfile.team}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setShareOpen(true)} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 100, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, backdropFilter: 'blur(8px)' }}>
+              <Share2 size={14} color="#fff" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>Share</span>
+            </button>
+            <NotificationBell count={2} dark onClick={() => setNotifOpen(true)} />
+          </div>
         </div>
 
         <div style={{ position: 'absolute', bottom: 12, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
@@ -123,6 +133,24 @@ export default function HeroSection() {
           <KeyMetricsBlock playerId="player_001" dark={true} />
         </div>
       </div>
+
+      {/* Notification Centre */}
+      <NotificationCentre open={notifOpen} onClose={() => setNotifOpen(false)} role="parent" />
+
+      {/* Player Card Share Modal */}
+      <PlayerCardShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        player={{
+          name: playerProfile.name,
+          position: playerProfile.position,
+          jerseyNumber: playerProfile.jerseyNumber,
+          team: playerProfile.team,
+          academy: playerProfile.academy,
+          photo: '/players/kiyan.jpg',
+        }}
+        compositeScore={displayScore}
+      />
     </div>
   )
 }

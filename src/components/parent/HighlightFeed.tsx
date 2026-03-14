@@ -1,13 +1,28 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { highlightClips, highlights } from '@/lib/mockData'
 import { X, Copy, Check } from 'lucide-react'
 
 export default function HighlightFeed() {
-  // Only show clips that are parent_visible
-  const visibleHighlights = useMemo(() => highlights.filter(h => h.privacy === 'parent_visible'), [])
-  const visibleClips = useMemo(() => highlightClips.filter((_, i) => visibleHighlights[i]), [visibleHighlights])
+  const [privacyOverrides, setPrivacyOverrides] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('fairplai_highlight_privacy')
+      if (stored) setPrivacyOverrides(JSON.parse(stored))
+    }
+  }, [])
+
+  // Only show clips that are parent_visible (with coach privacy overrides)
+  const visibleHighlights = useMemo(() => highlights.filter(h => {
+    const effectivePrivacy = privacyOverrides[h.id] || h.privacy
+    return effectivePrivacy === 'parent_visible'
+  }), [privacyOverrides])
+  const visibleClips = useMemo(() => {
+    const visibleIds = new Set(visibleHighlights.map(h => h.id))
+    return highlightClips.filter((_, i) => highlights[i] && visibleIds.has(highlights[i].id))
+  }, [visibleHighlights])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sharedConfirm, setSharedConfirm] = useState(false)

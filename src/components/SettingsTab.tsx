@@ -235,7 +235,7 @@ export default function SettingsTab() {
 
         {/* Version */}
         <p style={{ fontSize: 12, color: "#9DA2B3", textAlign: "center", marginTop: 24 }}>
-          FairPlai Parent Portal · v2.0.0<br />
+          FairPlai Parent/Player Portal · v2.0.0<br />
           <span style={{ fontSize: 11, opacity: 0.7 }}>fairpl.ai · Made for GCC football families</span>
         </p>
       </div>

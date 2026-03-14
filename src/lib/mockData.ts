@@ -6,6 +6,14 @@ import type {
   TournamentPlaceholder, TournamentFixture, CoachFlaggedClip, PendingReviewItem,
   PlayerSeasonStats,
   CoachFeedback,
+  PlayerWorkload,
+  RateChange,
+  BenchmarkAverage,
+  SeasonReviewData,
+  ProcessingStatus,
+  PlayerHeatmapData,
+  SessionPrep,
+  DrillInfo,
 } from './types'
 
 // ─── FACILITIES ────────────────────────────────────────────
@@ -234,6 +242,10 @@ export const sessions: Session[] = [
 
   // Ad hoc session (standalone, not from a program)
   { id: 'session_018', facilityId: 'facility_001', pitchId: 'pitch_003', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-10', startTime: '16:00', endTime: '17:30', type: 'drill', status: 'scheduled', participatingPlayerIds: [...u12RedPlayerIds], isAdHoc: true },
+
+  // Processing sessions (pipeline in progress)
+  { id: 'session_019', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-05', startTime: '15:00', endTime: '16:30', type: 'match', status: 'processing', opponent: 'Al Jazira Youth', competition: 'UAE Youth League', programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], processingStatusId: 'proc_001' },
+  { id: 'session_020', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-04', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'processing', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds], processingStatusId: 'proc_002' },
 ]
 
 // ─── MATCH ANALYSIS (Kiyan Makkawi — across multiple matches) ────
@@ -699,4 +711,371 @@ export const developmentReportData: Record<string, { softSkills: Array<{ categor
   player_014: { softSkills: [{ category: 'Attitude', score: 82, avg: 75 }, { category: 'Effort', score: 78, avg: 72 }, { category: 'Coachability', score: 80, avg: 70 }, { category: 'Sportsmanship', score: 78, avg: 74 }, { category: 'Leadership', score: 65, avg: 65 }], coachNotes: 'Waleed is a dependable goalkeeper. Good shot-stopping and improving distribution. Needs to be more commanding in the box.' },
   player_015: { softSkills: [{ category: 'Attitude', score: 60, avg: 75 }, { category: 'Effort', score: 58, avg: 72 }, { category: 'Coachability', score: 62, avg: 70 }, { category: 'Sportsmanship', score: 65, avg: 74 }, { category: 'Leadership', score: 50, avg: 65 }], coachNotes: 'Bilal has been struggling with injury and motivation. Need to support his recovery and rebuild confidence gradually.' },
   player_016: { softSkills: [{ category: 'Attitude', score: 78, avg: 75 }, { category: 'Effort', score: 76, avg: 72 }, { category: 'Coachability', score: 74, avg: 70 }, { category: 'Sportsmanship', score: 80, avg: 74 }, { category: 'Leadership', score: 64, avg: 65 }], coachNotes: 'Sami is a creative winger with good instincts. Working on defensive contribution and tracking back.' },
+}
+
+// ─── PLAYER WORKLOAD DATA (for Load & Injury Risk Dashboard) ────
+export const playerWorkloads: PlayerWorkload[] = [
+  { playerId: 'player_001', weeklyLoads: [420, 480, 510, 450, 520, 490, 530, 500], minutesLast7: 210, minutesLast28: 840, intensityAvg: 7.2, restDaysLast7: 2, injuryHistory: [] },
+  { playerId: 'player_002', weeklyLoads: [380, 410, 390, 450, 480, 520, 550, 580], minutesLast7: 240, minutesLast28: 880, intensityAvg: 8.1, restDaysLast7: 1, injuryHistory: [{ date: '2025-11-15', type: 'Ankle Sprain', daysOut: 14 }] },
+  { playerId: 'player_003', weeklyLoads: [400, 420, 440, 430, 410, 420, 430, 420], minutesLast7: 180, minutesLast28: 720, intensityAvg: 6.5, restDaysLast7: 3, injuryHistory: [] },
+  { playerId: 'player_004', weeklyLoads: [350, 380, 420, 460, 500, 530, 560, 590], minutesLast7: 250, minutesLast28: 920, intensityAvg: 8.5, restDaysLast7: 1, injuryHistory: [{ date: '2026-01-10', type: 'Hamstring Strain', daysOut: 10 }] },
+  { playerId: 'player_005', weeklyLoads: [380, 400, 390, 410, 400, 420, 410, 400], minutesLast7: 170, minutesLast28: 680, intensityAvg: 6.0, restDaysLast7: 3, injuryHistory: [] },
+  { playerId: 'player_006', weeklyLoads: [400, 430, 450, 440, 460, 470, 480, 470], minutesLast7: 200, minutesLast28: 780, intensityAvg: 7.0, restDaysLast7: 2, injuryHistory: [] },
+  { playerId: 'player_007', weeklyLoads: [500, 520, 480, 550, 580, 600, 620, 640], minutesLast7: 270, minutesLast28: 960, intensityAvg: 8.8, restDaysLast7: 0, injuryHistory: [{ date: '2025-12-01', type: 'Knee Contusion', daysOut: 7 }, { date: '2026-02-01', type: 'Muscle Fatigue', daysOut: 5 }] },
+  { playerId: 'player_008', weeklyLoads: [360, 380, 400, 410, 420, 430, 440, 430], minutesLast7: 190, minutesLast28: 740, intensityAvg: 6.8, restDaysLast7: 2, injuryHistory: [] },
+]
+
+// ─── CONTRACT RATE HISTORY ──────────────────────────────────
+export const contractRateHistory: Record<string, RateChange[]> = {
+  contract_001: [
+    { date: '2025-07-01', rate: 150, currency: 'AED', reason: 'Initial contract' },
+    { date: '2025-10-01', rate: 160, currency: 'AED', reason: 'Mid-term adjustment' },
+    { date: '2026-01-01', rate: 180, currency: 'AED', reason: 'Term renewal — peak hours' },
+  ],
+  contract_002: [
+    { date: '2025-07-01', rate: 200, currency: 'AED', reason: 'Initial contract — Pitch 1 premium' },
+    { date: '2026-01-01', rate: 220, currency: 'AED', reason: 'Annual rate increase' },
+  ],
+}
+
+// ─── BENCHMARKING COMPARISON DATA ───────────────────────────
+export const benchmarkData: Record<string, BenchmarkAverage[]> = {
+  academy: [
+    { metric: 'Sprint Speed', playerValue: 84, groupAverage: 72, groupLabel: 'MAK Academy Avg' },
+    { metric: 'Distance Covered', playerValue: 79, groupAverage: 68, groupLabel: 'MAK Academy Avg' },
+    { metric: 'Pass Completion', playerValue: 61, groupAverage: 65, groupLabel: 'MAK Academy Avg' },
+    { metric: 'Dribble Success', playerValue: 67, groupAverage: 62, groupLabel: 'MAK Academy Avg' },
+    { metric: 'Defensive Actions', playerValue: 55, groupAverage: 58, groupLabel: 'MAK Academy Avg' },
+    { metric: 'Goals + Assists', playerValue: 88, groupAverage: 64, groupLabel: 'MAK Academy Avg' },
+  ],
+  position: [
+    { metric: 'Sprint Speed', playerValue: 84, groupAverage: 78, groupLabel: 'CM Average (U12)' },
+    { metric: 'Distance Covered', playerValue: 79, groupAverage: 82, groupLabel: 'CM Average (U12)' },
+    { metric: 'Pass Completion', playerValue: 61, groupAverage: 70, groupLabel: 'CM Average (U12)' },
+    { metric: 'Dribble Success', playerValue: 67, groupAverage: 64, groupLabel: 'CM Average (U12)' },
+    { metric: 'Defensive Actions', playerValue: 55, groupAverage: 62, groupLabel: 'CM Average (U12)' },
+    { metric: 'Goals + Assists', playerValue: 88, groupAverage: 58, groupLabel: 'CM Average (U12)' },
+  ],
+  age_group: [
+    { metric: 'Sprint Speed', playerValue: 84, groupAverage: 70, groupLabel: 'U12 National Avg' },
+    { metric: 'Distance Covered', playerValue: 79, groupAverage: 65, groupLabel: 'U12 National Avg' },
+    { metric: 'Pass Completion', playerValue: 61, groupAverage: 60, groupLabel: 'U12 National Avg' },
+    { metric: 'Dribble Success', playerValue: 67, groupAverage: 55, groupLabel: 'U12 National Avg' },
+    { metric: 'Defensive Actions', playerValue: 55, groupAverage: 52, groupLabel: 'U12 National Avg' },
+    { metric: 'Goals + Assists', playerValue: 88, groupAverage: 48, groupLabel: 'U12 National Avg' },
+  ],
+}
+
+// ─── SEASON REVIEW DATA ─────────────────────────────────────
+export const seasonReviews: SeasonReviewData[] = [
+  { playerId: 'player_001', seasonLabel: 'Spring 2026', matchesPlayed: 8, totalMinutes: 680, avgScore: 74, peakScore: 81, goalsAndAssists: 6, bestMatch: { opponent: 'Al Wasl Academy', score: 81, date: '2026-02-24' }, improvementAreas: ['Pass Completion', 'Defensive Actions', 'Ball Control'], strengthAreas: ['Sprint Speed', 'Goals + Assists', 'Physical Output'], highlightCount: 5 },
+  { playerId: 'player_002', seasonLabel: 'Spring 2026', matchesPlayed: 7, totalMinutes: 590, avgScore: 76, peakScore: 85, goalsAndAssists: 12, bestMatch: { opponent: 'Ajman FC', score: 85, date: '2026-01-31' }, improvementAreas: ['Consistency', 'Effort Levels', 'Defensive Contribution'], strengthAreas: ['Goals', 'Shot Accuracy', 'Dribbling'], highlightCount: 4 },
+  { playerId: 'player_003', seasonLabel: 'Spring 2026', matchesPlayed: 8, totalMinutes: 710, avgScore: 72, peakScore: 79, goalsAndAssists: 1, bestMatch: { opponent: 'Al Ain FC', score: 79, date: '2026-02-14' }, improvementAreas: ['Passing Range', 'Aerial Duels', 'Build-up Play'], strengthAreas: ['Defensive Solidity', 'Interceptions', 'Positioning'], highlightCount: 3 },
+  { playerId: 'player_004', seasonLabel: 'Spring 2026', matchesPlayed: 6, totalMinutes: 480, avgScore: 74, peakScore: 82, goalsAndAssists: 12, bestMatch: { opponent: 'Al Wasl Academy', score: 82, date: '2026-02-24' }, improvementAreas: ['Sportsmanship', 'Decision Making', 'Consistency'], strengthAreas: ['Pace', 'Dribbling', 'Crossing'], highlightCount: 3 },
+  { playerId: 'player_005', seasonLabel: 'Spring 2026', matchesPlayed: 7, totalMinutes: 630, avgScore: 74, peakScore: 80, goalsAndAssists: 0, bestMatch: { opponent: 'Baniyas SC', score: 80, date: '2026-02-07' }, improvementAreas: ['Distribution', 'Communication', 'Sweeping'], strengthAreas: ['Shot Stopping', 'Save Rate', 'Positioning'], highlightCount: 2 },
+  { playerId: 'player_006', seasonLabel: 'Spring 2026', matchesPlayed: 8, totalMinutes: 720, avgScore: 68, peakScore: 75, goalsAndAssists: 2, bestMatch: { opponent: 'Sharjah FC', score: 75, date: '2026-01-24' }, improvementAreas: ['Attacking Contribution', 'Crossing', 'Pace'], strengthAreas: ['Attitude', 'Work Rate', 'Tackling'], highlightCount: 2 },
+  { playerId: 'player_007', seasonLabel: 'Spring 2026', matchesPlayed: 6, totalMinutes: 510, avgScore: 70, peakScore: 78, goalsAndAssists: 4, bestMatch: { opponent: 'Al Ain FC', score: 78, date: '2026-02-14' }, improvementAreas: ['Effort Consistency', 'Attitude', 'Defensive Tracking'], strengthAreas: ['Technical Ability', 'Key Passes', 'Vision'], highlightCount: 2 },
+  { playerId: 'player_008', seasonLabel: 'Spring 2026', matchesPlayed: 7, totalMinutes: 610, avgScore: 66, peakScore: 74, goalsAndAssists: 0, bestMatch: { opponent: 'Baniyas SC', score: 74, date: '2026-02-07' }, improvementAreas: ['Communication', 'Aerial Duels', 'Attacking Overlap'], strengthAreas: ['Consistency', 'Positioning', 'Tackling'], highlightCount: 1 },
+]
+
+// ─── EXPIRED CONTRACT (for market slot) ─────────────────────
+export const expiredContracts: LeaseContract[] = [
+  {
+    id: 'contract_003',
+    facilityId: 'facility_001',
+    academyId: 'academy_002',
+    pitchId: 'pitch_003',
+    dayOfWeek: [1, 3],
+    startTime: '16:00',
+    endTime: '17:30',
+    startDate: '2025-07-01',
+    endDate: '2025-12-31',
+    ratePerSession: 140,
+    currency: 'AED',
+    status: 'expired',
+  },
+]
+
+// ─── PLAYER RADAR DATA (per player, for comparison) ────────
+export const playerRadarData: Record<string, RadarDataItem[]> = {
+  player_001: [{ category: 'Physical', score: 82, avg: 76 }, { category: 'Positional', score: 74, avg: 70 }, { category: 'Passing', score: 68, avg: 65 }, { category: 'Dribbling', score: 71, avg: 68 }, { category: 'Control', score: 65, avg: 62 }, { category: 'Defending', score: 70, avg: 67 }],
+  player_002: [{ category: 'Physical', score: 78, avg: 76 }, { category: 'Positional', score: 68, avg: 70 }, { category: 'Passing', score: 60, avg: 65 }, { category: 'Dribbling', score: 76, avg: 68 }, { category: 'Control', score: 72, avg: 62 }, { category: 'Defending', score: 45, avg: 67 }],
+  player_003: [{ category: 'Physical', score: 75, avg: 76 }, { category: 'Positional', score: 80, avg: 70 }, { category: 'Passing', score: 72, avg: 65 }, { category: 'Dribbling', score: 55, avg: 68 }, { category: 'Control', score: 60, avg: 62 }, { category: 'Defending', score: 85, avg: 67 }],
+  player_004: [{ category: 'Physical', score: 88, avg: 76 }, { category: 'Positional', score: 65, avg: 70 }, { category: 'Passing', score: 58, avg: 65 }, { category: 'Dribbling', score: 82, avg: 68 }, { category: 'Control', score: 70, avg: 62 }, { category: 'Defending', score: 48, avg: 67 }],
+  player_005: [{ category: 'Physical', score: 70, avg: 76 }, { category: 'Positional', score: 78, avg: 70 }, { category: 'Passing', score: 65, avg: 65 }, { category: 'Dribbling', score: 45, avg: 68 }, { category: 'Control', score: 68, avg: 62 }, { category: 'Defending', score: 75, avg: 67 }],
+  player_006: [{ category: 'Physical', score: 72, avg: 76 }, { category: 'Positional', score: 70, avg: 70 }, { category: 'Passing', score: 64, avg: 65 }, { category: 'Dribbling', score: 58, avg: 68 }, { category: 'Control', score: 55, avg: 62 }, { category: 'Defending', score: 78, avg: 67 }],
+  player_007: [{ category: 'Physical', score: 76, avg: 76 }, { category: 'Positional', score: 72, avg: 70 }, { category: 'Passing', score: 74, avg: 65 }, { category: 'Dribbling', score: 68, avg: 68 }, { category: 'Control', score: 62, avg: 62 }, { category: 'Defending', score: 65, avg: 67 }],
+  player_008: [{ category: 'Physical', score: 74, avg: 76 }, { category: 'Positional', score: 75, avg: 70 }, { category: 'Passing', score: 62, avg: 65 }, { category: 'Dribbling', score: 50, avg: 68 }, { category: 'Control', score: 58, avg: 62 }, { category: 'Defending', score: 80, avg: 67 }],
+}
+
+// ─── PROCESSING STATUS DATA ──────────────────────────────
+export const processingStatuses: Record<string, ProcessingStatus> = {
+  proc_001: {
+    sessionId: 'session_019',
+    stage: 'event_detection',
+    progress: 58,
+    eta: '~12 min remaining',
+    startedAt: '2026-03-05T17:02:00Z',
+    stages: [
+      { name: 'nvr_capture', label: 'NVR Capture', status: 'complete', duration: '1m 12s' },
+      { name: 'ingestion', label: 'Ingestion', status: 'complete', duration: '2m 34s' },
+      { name: 'calibration', label: 'Calibration', status: 'complete', duration: '1m 48s' },
+      { name: 'player_tracking', label: 'Player Tracking', status: 'complete', duration: '4m 21s' },
+      { name: 'ball_tracking', label: 'Ball Tracking', status: 'complete', duration: '3m 56s' },
+      { name: 'event_detection', label: 'Event Detection', status: 'in_progress', startedAt: '2026-03-05T17:15:51Z' },
+      { name: 'metric_computation', label: 'Metric Computation', status: 'pending' },
+      { name: 'highlights', label: 'Highlights', status: 'pending' },
+      { name: 'composite_score', label: 'Composite Score', status: 'pending' },
+      { name: 'delivery', label: 'Delivery', status: 'pending' },
+    ],
+  },
+  proc_002: {
+    sessionId: 'session_020',
+    stage: 'calibration',
+    progress: 18,
+    eta: '~28 min remaining',
+    startedAt: '2026-03-04T19:10:00Z',
+    stages: [
+      { name: 'nvr_capture', label: 'NVR Capture', status: 'complete', duration: '1m 08s' },
+      { name: 'ingestion', label: 'Ingestion', status: 'complete', duration: '2m 12s' },
+      { name: 'calibration', label: 'Calibration', status: 'in_progress', startedAt: '2026-03-04T19:13:20Z' },
+      { name: 'player_tracking', label: 'Player Tracking', status: 'pending' },
+      { name: 'ball_tracking', label: 'Ball Tracking', status: 'pending' },
+      { name: 'event_detection', label: 'Event Detection', status: 'pending' },
+      { name: 'metric_computation', label: 'Metric Computation', status: 'pending' },
+      { name: 'highlights', label: 'Highlights', status: 'pending' },
+      { name: 'composite_score', label: 'Composite Score', status: 'pending' },
+      { name: 'delivery', label: 'Delivery', status: 'pending' },
+    ],
+  },
+}
+
+// ─── PLAYER HEATMAP DATA ─────────────────────────────────
+export const playerHeatmaps: Record<string, PlayerHeatmapData> = {
+  // Kiyan (CM) on session_007 — clustered around center midfield
+  'session_007_player_001': {
+    sessionId: 'session_007', playerId: 'player_001', positionLabel: 'Central Midfielder',
+    averagePosition: { x: 48, y: 42 },
+    points: [
+      { x: 45, y: 40, intensity: 0.95 }, { x: 50, y: 38, intensity: 0.88 },
+      { x: 42, y: 45, intensity: 0.82 }, { x: 55, y: 35, intensity: 0.75 },
+      { x: 38, y: 50, intensity: 0.70 }, { x: 60, y: 42, intensity: 0.65 },
+      { x: 35, y: 55, intensity: 0.55 }, { x: 48, y: 30, intensity: 0.60 },
+      { x: 52, y: 48, intensity: 0.78 }, { x: 44, y: 36, intensity: 0.85 },
+      { x: 65, y: 38, intensity: 0.40 }, { x: 30, y: 52, intensity: 0.35 },
+      { x: 47, y: 43, intensity: 0.92 }, { x: 53, y: 40, intensity: 0.80 },
+      { x: 40, y: 48, intensity: 0.68 }, { x: 58, y: 36, intensity: 0.55 },
+      { x: 50, y: 45, intensity: 0.90 }, { x: 46, y: 38, intensity: 0.87 },
+    ],
+  },
+  // Ahmed (ST) on session_007 — clustered in final third
+  'session_007_player_002': {
+    sessionId: 'session_007', playerId: 'player_002', positionLabel: 'Striker',
+    averagePosition: { x: 72, y: 48 },
+    points: [
+      { x: 75, y: 45, intensity: 0.95 }, { x: 80, y: 50, intensity: 0.90 },
+      { x: 70, y: 42, intensity: 0.85 }, { x: 85, y: 48, intensity: 0.78 },
+      { x: 68, y: 55, intensity: 0.65 }, { x: 78, y: 38, intensity: 0.72 },
+      { x: 82, y: 52, intensity: 0.82 }, { x: 65, y: 45, intensity: 0.55 },
+      { x: 73, y: 50, intensity: 0.88 }, { x: 77, y: 42, intensity: 0.80 },
+      { x: 88, y: 46, intensity: 0.60 }, { x: 60, y: 48, intensity: 0.40 },
+      { x: 76, y: 47, intensity: 0.92 }, { x: 72, y: 52, intensity: 0.75 },
+    ],
+  },
+  // Omar (CB) on session_007 — defensive half
+  'session_007_player_003': {
+    sessionId: 'session_007', playerId: 'player_003', positionLabel: 'Centre Back',
+    averagePosition: { x: 25, y: 48 },
+    points: [
+      { x: 22, y: 45, intensity: 0.95 }, { x: 28, y: 50, intensity: 0.90 },
+      { x: 20, y: 42, intensity: 0.85 }, { x: 25, y: 55, intensity: 0.78 },
+      { x: 30, y: 48, intensity: 0.72 }, { x: 18, y: 50, intensity: 0.68 },
+      { x: 26, y: 40, intensity: 0.82 }, { x: 24, y: 52, intensity: 0.80 },
+      { x: 32, y: 45, intensity: 0.55 }, { x: 15, y: 48, intensity: 0.50 },
+      { x: 28, y: 42, intensity: 0.88 }, { x: 22, y: 55, intensity: 0.65 },
+      { x: 35, y: 50, intensity: 0.40 }, { x: 20, y: 48, intensity: 0.92 },
+    ],
+  },
+  // Hamdan (GK) on session_007 — in the goal area
+  'session_007_player_005': {
+    sessionId: 'session_007', playerId: 'player_005', positionLabel: 'Goalkeeper',
+    averagePosition: { x: 6, y: 50 },
+    points: [
+      { x: 5, y: 48, intensity: 0.98 }, { x: 7, y: 52, intensity: 0.95 },
+      { x: 4, y: 50, intensity: 0.92 }, { x: 8, y: 46, intensity: 0.85 },
+      { x: 6, y: 54, intensity: 0.88 }, { x: 3, y: 50, intensity: 0.80 },
+      { x: 9, y: 48, intensity: 0.75 }, { x: 5, y: 52, intensity: 0.90 },
+      { x: 12, y: 50, intensity: 0.45 }, { x: 7, y: 50, intensity: 0.95 },
+      { x: 6, y: 46, intensity: 0.82 }, { x: 10, y: 52, intensity: 0.55 },
+    ],
+  },
+  // Kiyan (CM) on session_006 — slightly different pattern
+  'session_006_player_001': {
+    sessionId: 'session_006', playerId: 'player_001', positionLabel: 'Central Midfielder',
+    averagePosition: { x: 50, y: 45 },
+    points: [
+      { x: 48, y: 42, intensity: 0.90 }, { x: 52, y: 40, intensity: 0.85 },
+      { x: 45, y: 48, intensity: 0.80 }, { x: 55, y: 38, intensity: 0.72 },
+      { x: 40, y: 52, intensity: 0.65 }, { x: 58, y: 44, intensity: 0.60 },
+      { x: 50, y: 35, intensity: 0.55 }, { x: 42, y: 50, intensity: 0.75 },
+      { x: 54, y: 46, intensity: 0.82 }, { x: 46, y: 40, intensity: 0.88 },
+      { x: 62, y: 40, intensity: 0.42 }, { x: 35, y: 55, intensity: 0.38 },
+      { x: 50, y: 44, intensity: 0.92 }, { x: 48, y: 48, intensity: 0.78 },
+      { x: 52, y: 42, intensity: 0.86 }, { x: 44, y: 38, intensity: 0.70 },
+    ],
+  },
+  // Saeed (RW) on session_007 — right wing area
+  'session_007_player_004': {
+    sessionId: 'session_007', playerId: 'player_004', positionLabel: 'Right Winger',
+    averagePosition: { x: 65, y: 22 },
+    points: [
+      { x: 68, y: 18, intensity: 0.95 }, { x: 72, y: 22, intensity: 0.88 },
+      { x: 65, y: 15, intensity: 0.82 }, { x: 75, y: 20, intensity: 0.75 },
+      { x: 60, y: 25, intensity: 0.70 }, { x: 70, y: 28, intensity: 0.62 },
+      { x: 78, y: 18, intensity: 0.60 }, { x: 55, y: 22, intensity: 0.50 },
+      { x: 66, y: 20, intensity: 0.90 }, { x: 70, y: 16, intensity: 0.85 },
+      { x: 62, y: 28, intensity: 0.55 }, { x: 80, y: 24, intensity: 0.45 },
+      { x: 67, y: 22, intensity: 0.92 }, { x: 72, y: 18, intensity: 0.78 },
+    ],
+  },
+}
+
+// ─── HIGHLIGHT PITCH LOCATIONS ──────────────────────────────
+export const highlightLocations: Record<string, { pitchX: number; pitchY: number }> = {
+  // Session 007 — vs Al Wasl Academy
+  highlight_001: { pitchX: 82, pitchY: 45 },   // Kiyan goal — in the box
+  highlight_002: { pitchX: 55, pitchY: 38 },   // Kiyan key pass — midfield
+  highlight_003: { pitchX: 35, pitchY: 60 },   // Kiyan sprint recovery — own half
+  highlight_004: { pitchX: 85, pitchY: 50 },   // Ahmed goal — penalty area
+  highlight_005: { pitchX: 28, pitchY: 42 },   // Omar tackle — defensive third
+  highlight_006: { pitchX: 70, pitchY: 18 },   // Saeed sprint — right wing
+  highlight_007: { pitchX: 50, pitchY: 35 },   // Zayed key pass — center
+  highlight_008: { pitchX: 6, pitchY: 50 },    // Hamdan save — in goal
+  highlight_009: { pitchX: 22, pitchY: 75 },   // Rashid tackle — right-back area
+  // Session 005 — vs Baniyas SC
+  highlight_010: { pitchX: 52, pitchY: 42 },   // Kiyan key pass
+  highlight_011: { pitchX: 78, pitchY: 48 },   // Ahmed goal
+  highlight_012: { pitchX: 65, pitchY: 18 },   // Saeed sprint
+  highlight_013: { pitchX: 25, pitchY: 55 },   // Omar tackle
+  // Session 006 — vs Al Ain FC
+  highlight_014: { pitchX: 80, pitchY: 52 },   // Kiyan goal
+  highlight_015: { pitchX: 48, pitchY: 40 },   // Zayed key pass
+  highlight_016: { pitchX: 5, pitchY: 48 },    // Hamdan save
+  highlight_017: { pitchX: 20, pitchY: 65 },   // Faisal tackle
+}
+
+// ─── DRILL LIBRARY ──────────────────────────────────────────
+export const drillLibrary: DrillInfo[] = [
+  {
+    id: 'drill_001', name: 'Rondo 4v2', category: 'Passing', duration: '10 min', difficulty: 'Easy',
+    players: '6', setup: '15×15m grid',
+    description: 'Four players keep possession against two defenders in a tight space. Develops quick passing, movement off the ball, and pressing when defending.',
+    coachingPoints: ['First touch away from pressure', 'Body shape open to receive', 'Defenders work as a pair to cut passing lanes', 'Rotate defenders every 2 minutes'],
+    variations: ['Increase to 5v2 for easier possession', 'Shrink grid to 12×12m for more pressure', 'Add "two-touch only" constraint'],
+    targetSkills: ['passing', 'control'],
+  },
+  {
+    id: 'drill_002', name: '1v1 Wing Play', category: 'Dribbling', duration: '15 min', difficulty: 'Medium',
+    players: '2 per station', setup: 'Sideline channel 10×30m',
+    description: 'Attacker receives on the wing and must beat the defender 1v1 to deliver a cross.',
+    coachingPoints: ['Attack the defender at pace', 'Use feints before committing', 'Cross early if defender drops off', 'Defender: stay on feet, show inside'],
+    variations: ['Add a second attacker for overlap', 'Timed rounds — 30 seconds', 'Defender starts 5m back'],
+    targetSkills: ['dribbling', 'crossing'],
+  },
+  {
+    id: 'drill_003', name: 'Pressing Triggers', category: 'Tactical', duration: '20 min', difficulty: 'Hard',
+    players: '11 vs 6', setup: 'Half pitch',
+    description: 'Team of 11 practices coordinated pressing against 6 opposition players.',
+    coachingPoints: ['Press as a unit — not individually', 'First player sets the press angle', 'Cut off the easy pass before engaging', 'Transition immediately on turnover'],
+    variations: ['Must win ball in 8 seconds', 'Opposition scores by passing through pressing line', 'Vary starting position'],
+    targetSkills: ['defending', 'positional'],
+  },
+  {
+    id: 'drill_004', name: 'Finishing Circuit', category: 'Shooting', duration: '15 min', difficulty: 'Medium',
+    players: '4-6', setup: 'Penalty area + 2 goals',
+    description: 'Rotating stations around the box for different finishing scenarios: volleys, 1v1, cutbacks, first-time finishes.',
+    coachingPoints: ['Hit the target — power comes second', 'Approach at an angle for side-foot finish', 'Stay composed', 'Follow up every shot for rebounds'],
+    variations: ['Finish within 3 seconds', 'Defender closes in from behind', 'Weak foot only station'],
+    targetSkills: ['shooting', 'composure'],
+  },
+  {
+    id: 'drill_005', name: 'Defensive Shape', category: 'Tactical', duration: '20 min', difficulty: 'Medium',
+    players: '8 vs 4', setup: 'Half pitch',
+    description: 'Back four plus two midfielders maintain defensive shape against four attackers.',
+    coachingPoints: ['Slide together — keep distances tight', 'CB talks and organises the line', 'No one gets drawn out of position', 'Spring the offside trap on signal'],
+    variations: ['Add a striker to test depth', 'Play from goal kicks', 'Allow attackers to switch play'],
+    targetSkills: ['defending', 'positional'],
+  },
+  {
+    id: 'drill_006', name: 'GK Distribution', category: 'Goalkeeping', duration: '10 min', difficulty: 'Easy',
+    players: '1 GK + 3 targets', setup: 'Full pitch length',
+    description: 'Goalkeeper practices distribution to three target players at varying distances.',
+    coachingPoints: ['Pick the pass before receiving', 'Goal kicks: strike through the ball', 'Short distribution: play to the safer foot', 'Communication with centre-backs'],
+    variations: ['Add a pressing player on the GK', 'Distribute within 4 seconds', 'Vary target positions'],
+    targetSkills: ['passing', 'composure'],
+  },
+  {
+    id: 'drill_007', name: 'Counter-Attack 3v2', category: 'Tactical', duration: '15 min', difficulty: 'Hard',
+    players: '5 (3 att + 2 def)', setup: 'Half pitch',
+    description: 'Three attackers break against two defenders from the halfway line.',
+    coachingPoints: ['Carry the ball fast — don\'t over-pass', 'Wide players stay wide', 'Ball carrier decides early', 'Attack the rebound'],
+    variations: ['Add a third defender 10m behind', 'Score within 10 seconds', 'Start from a turnover'],
+    targetSkills: ['dribbling', 'shooting', 'positional'],
+  },
+]
+
+// ─── SESSION PREPS ──────────────────────────────────────────
+export const sessionPreps: Record<string, SessionPrep> = {
+  // Upcoming match vs Dubai SC
+  session_012: {
+    sessionId: 'session_012',
+    squadSize: 7,
+    formationId: '7v7_2-3-1',
+    lineup: {
+      0: 'player_005', // GK — Hamdan
+      1: 'player_003', // LB — Omar
+      2: 'player_008', // RB — Rashid
+      3: 'player_006', // LM — Faisal
+      4: 'player_001', // CM — Kiyan
+      5: 'player_004', // RM — Saeed
+      6: 'player_002', // ST — Ahmed
+    },
+    playingStyle: 'Play out from the back through midfield. Kiyan to dictate tempo from CM. Wide players push high to stretch their defence. Press high when they have the ball in their defensive third.',
+    setPieces: 'Corners: Kiyan takes, near post run from Ahmed. Free kicks within 25m: Kiyan direct. Goal kicks: short to Omar or Rashid.',
+    tacticalNotes: 'Dubai SC play a compact 3-2-1. Their weakness is the channels between CB and full-back. Saeed and Faisal should look to run in behind. Their GK is strong on crosses but weaker on shots from distance.',
+    drillIds: [],
+    createdAt: '2026-03-06T10:00:00',
+  },
+  // Upcoming training session
+  session_011: {
+    sessionId: 'session_011',
+    squadSize: 7,
+    formationId: '',
+    lineup: {},
+    playingStyle: '',
+    setPieces: '',
+    tacticalNotes: 'Focus on pressing triggers and finishing ahead of the Dubai SC match. Start with rondo to warm up, then pressing drill, finish with shooting circuit.',
+    drillIds: ['drill_001', 'drill_003', 'drill_004'],
+    createdAt: '2026-03-02T09:00:00',
+  },
+  // Past match — Al Wasl Academy (already analysed)
+  session_007: {
+    sessionId: 'session_007',
+    squadSize: 7,
+    formationId: '7v7_2-3-1',
+    lineup: {
+      0: 'player_005',
+      1: 'player_003',
+      2: 'player_008',
+      3: 'player_006',
+      4: 'player_001',
+      5: 'player_004',
+      6: 'player_002',
+    },
+    playingStyle: 'Possession-based, play through midfield. High press on their goal kicks.',
+    setPieces: 'Standard set piece routines. Kiyan on corners.',
+    tacticalNotes: 'Al Wasl like to play long balls. Keep a compact shape and win second balls.',
+    drillIds: [],
+    createdAt: '2026-02-23T14:00:00',
+  },
 }

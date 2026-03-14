@@ -2,10 +2,11 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { AlertTriangle } from 'lucide-react'
+import { GitCompare, Activity } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { COLORS } from '@/lib/constants'
-import { players, rosters, squadScores, playerStandoutMetrics } from '@/lib/mockData'
+import { players, rosters, squadScores, playerStandoutMetrics, playerWorkloads, playerKeyMetrics } from '@/lib/mockData'
+import { calculateACWR, getRiskLevel, getRiskLabel, RISK_COLORS } from '@/lib/riskUtils'
 import PlayerAvatar from '@/components/coach/PlayerAvatar'
 import { motion } from 'framer-motion'
 import type { Player } from '@/lib/types'
@@ -15,8 +16,7 @@ const rosterPlayerMap: Record<string, string[]> = {
   roster_002: ['player_009', 'player_010', 'player_011', 'player_012', 'player_013', 'player_014', 'player_015', 'player_016'],
 }
 
-type Timeframe = 'last_session' | 'last_5' | 'season'
-type SortKey = 'score' | 'distance' | 'sprints' | 'position'
+type SortKey = 'score' | 'position'
 
 function getPositionColor(position: string): string {
   if (position === 'GK') return '#D97706'
@@ -42,10 +42,9 @@ function getScoreColor(score: number): string {
 
 export default function SquadPage() {
   const router = useRouter()
-  const { selectedRosterId } = useTeam()
-  const [timeframe, setTimeframe] = useState<Timeframe>('last_session')
-  const [sortBy, setSortBy] = useState<SortKey>('score')
-  const [alertDismissed, setAlertDismissed] = useState(false)
+  const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
+  const [sortBy] = useState<SortKey>('score')
+  const [riskView, setRiskView] = useState(false)
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
   const handleImgError = useCallback((playerId: string) => {
     setImgErrors(prev => ({ ...prev, [playerId]: true }))
@@ -61,19 +60,22 @@ export default function SquadPage() {
 
   const sortedPlayers = useMemo(() => {
     const arr = [...rosterPlayers]
-    switch (sortBy) {
-      case 'score':
-        return arr.sort((a, b) => (squadScores[b.id]?.compositeScore ?? 0) - (squadScores[a.id]?.compositeScore ?? 0))
-      case 'distance':
-        return arr.sort((a, b) => (squadScores[b.id]?.compositeScore ?? 0) - (squadScores[a.id]?.compositeScore ?? 0))
-      case 'sprints':
-        return arr.sort((a, b) => (squadScores[b.id]?.compositeScore ?? 0) - (squadScores[a.id]?.compositeScore ?? 0))
-      case 'position':
-        return arr.sort((a, b) => (a.position[0] || '').localeCompare(b.position[0] || ''))
-      default:
-        return arr
+    return arr.sort((a, b) => (squadScores[b.id]?.compositeScore ?? 0) - (squadScores[a.id]?.compositeScore ?? 0))
+  }, [rosterPlayers])
+
+  const playerRiskMap = useMemo(() => {
+    const map: Record<string, { acwr: number; riskLevel: string; riskLabel: string; strain: string }> = {}
+    for (const p of rosterPlayers) {
+      const workload = playerWorkloads.find(w => w.playerId === p.id)
+      if (!workload) continue
+      const acwr = calculateACWR(workload.weeklyLoads)
+      const riskLevel = getRiskLevel(acwr)
+      const riskLabel = getRiskLabel(acwr)
+      const strain = playerKeyMetrics[p.id]?.strain ?? 'low'
+      map[p.id] = { acwr, riskLevel, riskLabel, strain }
     }
-  }, [rosterPlayers, sortBy])
+    return map
+  }, [rosterPlayers])
 
   useEffect(() => {
     const targets: Record<string, number> = {}
@@ -103,33 +105,8 @@ export default function SquadPage() {
 
     rafId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(rafId)
-  }, [timeframe, sortedPlayers])
+  }, [sortedPlayers])
 
-  // Find flagged player (avgScore - compositeScore > 15)
-  const flaggedPlayer = useMemo(() => {
-    for (const p of rosterPlayers) {
-      const s = squadScores[p.id]
-      if (s && s.avgScore - s.compositeScore > 15) return p
-    }
-    return null
-  }, [rosterPlayers])
-
-  const flaggedDiff = flaggedPlayer
-    ? (squadScores[flaggedPlayer.id]?.avgScore ?? 0) - (squadScores[flaggedPlayer.id]?.compositeScore ?? 0)
-    : 0
-
-  const timeframes: { key: Timeframe; label: string }[] = [
-    { key: 'last_session', label: 'Last Session' },
-    { key: 'last_5', label: 'Last 5' },
-    { key: 'season', label: 'Season' },
-  ]
-
-  const sortOptions: { key: SortKey; label: string }[] = [
-    { key: 'score', label: 'Score' },
-    { key: 'distance', label: 'Distance' },
-    { key: 'sprints', label: 'Sprints' },
-    { key: 'position', label: 'Position' },
-  ]
 
   return (
     <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
@@ -141,112 +118,69 @@ export default function SquadPage() {
 
       {/* HEADER */}
       <div style={{ background: '#0A0E1A', padding: '48px 20px 20px' }}>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF' }}>Squad</h1>
-        <p style={{ margin: '2px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{selectedRoster.name}</p>
-
-        {/* TOGGLE ROW */}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 8, marginTop: 16 }}>
-          {timeframes.map(tf => {
-            const isActive = tf.key === timeframe
-            return (
-              <button
-                key={tf.key}
-                onClick={() => setTimeframe(tf.key)}
-                style={{
-                  padding: '8px 20px',
-                  borderRadius: 20,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  border: isActive ? 'none' : '1px solid rgba(255,255,255,0.12)',
-                  background: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
-                  color: isActive ? '#0A0E1A' : 'rgba(255,255,255,0.5)',
-                }}
-              >
-                {tf.label}
-              </button>
-            )
-          })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF' }}>Squad</h1>
+            <p style={{ margin: '2px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{selectedRoster.name}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setRiskView(v => !v)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: riskView ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.1)',
+                border: `1px solid ${riskView ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.2)'}`,
+                borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+                color: riskView ? '#EF4444' : '#fff', fontSize: 13, fontWeight: 600,
+              }}
+            >
+              <Activity size={14} /> Risk
+            </button>
+            <button
+              onClick={() => router.push('/coach/squad/compare')}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+                color: '#fff', fontSize: 13, fontWeight: 600,
+              }}
+            >
+              <GitCompare size={14} /> Compare
+            </button>
+          </div>
         </div>
+
+        {/* Team toggle */}
+        {availableRosters.length > 1 && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            {availableRosters.map(r => {
+              const isActive = r.id === selectedRosterId
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => setSelectedRosterId(r.id)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 20, fontSize: 12,
+                    fontWeight: isActive ? 700 : 500,
+                    background: isActive ? '#fff' : 'rgba(255,255,255,0.1)',
+                    color: isActive ? '#0A0E1A' : 'rgba(255,255,255,0.5)',
+                    border: isActive ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {r.name}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
       </div>
 
-      {/* ALERT STRIP */}
-      {flaggedPlayer && !alertDismissed && (
-        <div
-          style={{
-            background: '#FFFBEB',
-            borderLeft: '4px solid #F59E0B',
-            borderRadius: 0,
-            padding: '12px 16px',
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 8,
-            alignItems: 'flex-start',
-          }}
-        >
-          <AlertTriangle size={16} color="#92400E" style={{ flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontSize: 14, color: '#92400E', flex: 1 }}>
-            {flaggedPlayer.firstName} {flaggedPlayer.lastName} — performance down {flaggedDiff}% vs average. Review recommended.
-          </span>
-          <button
-            onClick={() => setAlertDismissed(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 16,
-              color: '#92400E',
-              padding: 0,
-              lineHeight: 1,
-              flexShrink: 0,
-            }}
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
-      {/* SORT ROW */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          padding: '12px 16px',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: '#FFFFFF',
-          borderBottom: '1px solid #E2E8F0',
-        }}
-      >
-        <span style={{ fontSize: 12, color: '#64748B' }}>Sort by</span>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 6 }}>
-          {sortOptions.map(opt => {
-            const isActive = opt.key === sortBy
-            return (
-              <button
-                key={opt.key}
-                onClick={() => setSortBy(opt.key)}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: isActive ? 700 : 400,
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: isActive ? '#4A4AFF' : 'transparent',
-                  color: isActive ? '#FFFFFF' : '#64748B',
-                }}
-              >
-                {opt.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
 
       {/* SQUAD GRID */}
       <div
-        key={timeframe}
+        key={selectedRosterId}
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
@@ -380,8 +314,8 @@ export default function SquadPage() {
                 {position}
               </div>
 
-              {/* ALERT DOT */}
-              {isFlagged && (
+              {/* ALERT DOT (performance) */}
+              {isFlagged && !riskView && (
                 <div
                   style={{
                     position: 'absolute',
@@ -395,6 +329,38 @@ export default function SquadPage() {
                     animation: 'pulse-dot 1.5s infinite',
                   }}
                 />
+              )}
+
+              {/* RISK DOT */}
+              {playerRiskMap[player.id] && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: riskView ? 10 : 36,
+                    left: riskView ? 'auto' : 10,
+                    right: riskView ? 44 : 'auto',
+                    zIndex: 3,
+                    width: riskView ? 'auto' : 8,
+                    height: riskView ? 'auto' : 8,
+                    borderRadius: riskView ? 6 : '50%',
+                    padding: riskView ? '3px 8px' : 0,
+                    background: riskView
+                      ? `${RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS]}30`
+                      : RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS],
+                    display: riskView ? 'flex' : (playerRiskMap[player.id].riskLevel === 'low' ? 'none' : 'block'),
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  {riskView && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700,
+                      color: RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS],
+                    }}>
+                      {playerRiskMap[player.id].riskLabel}
+                    </span>
+                  )}
+                </div>
               )}
 
               {/* BOTTOM CONTENT */}
@@ -455,9 +421,24 @@ export default function SquadPage() {
                 <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 2 }}>
                   Avg: {avgScore}
                 </div>
-                {playerStandoutMetrics[player.id] && (
+                {!riskView && playerStandoutMetrics[player.id] && (
                   <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 3 }}>
                     {playerStandoutMetrics[player.id]}
+                  </div>
+                )}
+                {riskView && playerRiskMap[player.id] && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS] }}>
+                      ACWR {playerRiskMap[player.id].acwr.toFixed(2)}
+                    </span>
+                    <span style={{
+                      fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                      background: playerRiskMap[player.id].strain === 'high' ? 'rgba(239,68,68,0.2)' : playerRiskMap[player.id].strain === 'moderate' ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)',
+                      color: playerRiskMap[player.id].strain === 'high' ? '#EF4444' : playerRiskMap[player.id].strain === 'moderate' ? '#F59E0B' : '#10B981',
+                      textTransform: 'capitalize',
+                    }}>
+                      {playerRiskMap[player.id].strain} strain
+                    </span>
                   </div>
                 )}
               </div>

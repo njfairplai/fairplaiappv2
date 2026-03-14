@@ -4,21 +4,37 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { COLORS, DEMO_ACCOUNTS, ROLE_PATHS } from '@/lib/constants'
+import { useAuth } from '@/contexts/AuthContext'
+import type { UserRole } from '@/lib/types'
 import Button from '@/components/ui/Button'
+import { Check } from 'lucide-react'
+
+const CURRENT_POLICY_VERSION = '2.0'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [magicLink, setMagicLink] = useState(false)
   const [magicSent, setMagicSent] = useState(false)
   const [error, setError] = useState('')
 
+  const isDemoAccount = DEMO_ACCOUNTS.some(a => a.email === email)
+  const hasMinLength = password.length >= 8
+  const hasNumber = /\d/.test(password)
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+  const showValidation = password.length > 0 && !isDemoAccount
+
   function redirectAfterAuth(role?: string) {
-    const consented = localStorage.getItem('fairplai_consented')
-    if (!consented) {
-      router.push('/consent')
-      return
+    // Consent screen is only required for parent/player role
+    if (role === 'parent') {
+      const consented = localStorage.getItem('fairplai_consented')
+      const storedVersion = localStorage.getItem('policy_version')
+      if (!consented || (storedVersion && storedVersion < CURRENT_POLICY_VERSION)) {
+        router.push('/consent')
+        return
+      }
     }
     const path = role ? ROLE_PATHS[role] : '/'
     router.push(path || '/')
@@ -29,7 +45,7 @@ export default function LoginPage() {
     setError('')
     const account = DEMO_ACCOUNTS.find((a) => a.email === email)
     if (account && password === 'demo1234') {
-      localStorage.setItem('fairplai_role', account.role)
+      login(account.email, account.role as UserRole)
       redirectAfterAuth(account.role)
     } else {
       setError('Invalid email or password. Try a demo account below.')
@@ -299,13 +315,40 @@ export default function LoginPage() {
                 />
               </div>
 
+              {showValidation && (
+                <div style={{ marginBottom: 8, marginTop: 4 }}>
+                  {[
+                    { label: '8+ characters', ok: hasMinLength },
+                    { label: '1 number', ok: hasNumber },
+                    { label: '1 special character', ok: hasSpecial },
+                  ].map((rule) => (
+                    <div key={rule.label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', background: rule.ok ? `${COLORS.success}20` : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {rule.ok && <Check size={8} color={COLORS.success} />}
+                      </div>
+                      <span style={{ fontSize: 11, color: rule.ok ? COLORS.success : '#9DA2B3' }}>{rule.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {error && (
                 <p style={{ fontSize: 13, color: COLORS.error, margin: '8px 0', textAlign: 'center' }}>
                   {error}
                 </p>
               )}
 
-              <div style={{ marginTop: 20 }}>
+              <div style={{ textAlign: 'right', marginTop: 4, marginBottom: 12 }}>
+                <button
+                  onClick={() => router.push('/forgot-password')}
+                  type="button"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9DA2B3', fontSize: 13 }}
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <div>
                 <Button fullWidth type="submit">
                   Sign In
                 </Button>

@@ -37,6 +37,7 @@ export const DEMO_ACCOUNTS = [
   { email: 'coach@makacademy.com', password: 'demo1234', role: 'coach' as const, label: 'Coach Portal' },
   { email: 'admin@makacademy.com', password: 'demo1234', role: 'academy_admin' as const, label: 'Academy Admin Portal' },
   { email: 'parent@makacademy.com', password: 'demo1234', role: 'parent' as const, label: 'Parent Portal' },
+  { email: 'player@makacademy.com', password: 'demo1234', role: 'player' as const, label: 'Player Portal' },
   { email: 'facility@sportplex.com', password: 'demo1234', role: 'facility_admin' as const, label: 'Facility Admin Portal' },
 ] as const
 
@@ -45,4 +46,5 @@ export const ROLE_PATHS: Record<string, string> = {
   academy_admin: '/admin/dashboard',
   coach: '/coach/home',
   parent: '/parent/home',
+  player: '/player/home',
 }

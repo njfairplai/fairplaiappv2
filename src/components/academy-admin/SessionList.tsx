@@ -9,6 +9,7 @@ function statusBadge(status: Session['status']) {
   const map: Record<Session['status'], { variant: 'success' | 'warning' | 'info' | 'neutral'; label: string }> = {
     scheduled: { variant: 'neutral', label: 'Scheduled' },
     in_progress: { variant: 'warning', label: 'In Progress' },
+    processing: { variant: 'info', label: 'Processing' },
     complete: { variant: 'info', label: 'Complete' },
     analysed: { variant: 'success', label: 'Analysed' },
     playback_ready: { variant: 'success', label: 'Playback Ready' },

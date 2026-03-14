@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { pendingReviewItems, players } from '@/lib/mockData'
 import type { PendingReviewItem } from '@/lib/types'
-import { CheckCircle, AlertTriangle, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { CheckCircle, AlertTriangle, ChevronDown, ChevronUp, ChevronLeft, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const positionColors: Record<string, string> = {
@@ -26,6 +27,7 @@ function getInitials(firstName: string, lastName: string) {
 }
 
 export default function ReviewPage() {
+  const router = useRouter()
   const [items, setItems] = useState<PendingReviewItem[]>([...pendingReviewItems])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [segmentConfirmations, setSegmentConfirmations] = useState<Record<string, string>>({})
@@ -81,6 +83,16 @@ export default function ReviewPage() {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 80px)' }}>
         {/* Page Header */}
         <div style={{ background: '#0A0E1A', padding: '48px 20px 20px' }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4, background: 'none',
+              border: 'none', cursor: 'pointer', color: '#4A4AFF', fontSize: 14,
+              fontWeight: 600, padding: 0, marginBottom: 8,
+            }}
+          >
+            <ChevronLeft size={18} /> Back
+          </button>
           <div style={{ fontSize: 28, fontWeight: 800, color: '#FFFFFF' }}>Session Review</div>
           <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>All caught up</div>
         </div>
@@ -133,6 +145,16 @@ export default function ReviewPage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 80px)' }}>
       {/* Page Header */}
       <div style={{ background: '#0A0E1A', padding: '48px 20px 20px' }}>
+        <button
+          onClick={() => router.back()}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4, background: 'none',
+            border: 'none', cursor: 'pointer', color: '#4A4AFF', fontSize: 14,
+            fontWeight: 600, padding: 0, marginBottom: 8,
+          }}
+        >
+          <ChevronLeft size={18} /> Back
+        </button>
         <div style={{ fontSize: 28, fontWeight: 800, color: '#FFFFFF' }}>Session Review</div>
         <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
           {items.length} item{items.length !== 1 ? 's' : ''} need{items.length === 1 ? 's' : ''} your input

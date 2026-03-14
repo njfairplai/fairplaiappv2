@@ -1,16 +1,17 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import Image from 'next/image'
-import RoleSwitcher from '@/components/ui/RoleSwitcher'
-import { LayoutDashboard, Users, ClipboardList, UserCheck, Calendar, CreditCard, FileText } from 'lucide-react'
+import { MessageSquare, Users, ClipboardList, UserCheck, BookOpen, Calendar, CreditCard, FileText } from 'lucide-react'
 
 const COLORS = { primary: '#4A4AFF', muted: '#6E7180', border: '#E8EAED' }
 const navItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/rosters', label: 'Rosters', icon: ClipboardList },
+  { href: '/admin/dashboard', label: 'Command Centre', icon: MessageSquare },
+  { href: '/admin/rosters', label: 'Squads', icon: ClipboardList },
   { href: '/admin/players', label: 'Players', icon: Users },
   { href: '/admin/coaches', label: 'Coaches', icon: UserCheck },
+  { href: '/admin/programs', label: 'Programs', icon: BookOpen },
   { href: '/admin/sessions', label: 'Sessions', icon: Calendar },
   { href: '/admin/credits', label: 'Credits', icon: CreditCard },
   { href: '/admin/reports', label: 'Reports', icon: FileText },
@@ -19,6 +20,9 @@ const navItems = [
 export default function AcademyAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const role = typeof window !== 'undefined' ? localStorage.getItem('fairplai_role') : null
+  useEffect(() => { if (role && role !== 'academy_admin') router.replace('/login') }, [role, router])
+  if (role && role !== 'academy_admin') return null
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <aside style={{ width: 240, background: '#fff', borderRight: `1px solid ${COLORS.border}`, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 40 }}>
@@ -33,7 +37,6 @@ export default function AcademyAdminLayout({ children }: { children: React.React
         <div style={{ padding: '16px 20px', borderTop: `1px solid ${COLORS.border}` }}><p style={{ fontSize: 12, color: COLORS.muted }}>MAK Academy</p><p style={{ fontSize: 11, color: '#9DA2B3' }}>admin@makacademy.com</p></div>
       </aside>
       <main style={{ marginLeft: 240, flex: 1, background: '#F5F6FC', minHeight: '100vh' }}>{children}</main>
-      <RoleSwitcher />
     </div>
   )
 }
