@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  ChevronRight, ChevronLeft, Clock, Users as UsersIcon,
+  ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Clock, Users as UsersIcon,
   Dumbbell, X, Play, Plus, Check, MapPin, TrendingDown, TrendingUp,
   AlertTriangle, Target, Zap,
 } from 'lucide-react'
@@ -176,6 +176,7 @@ export default function PrepPage() {
   const [sessionPlan, setSessionPlan] = useState<string[]>([])
   const [openDrillId, setOpenDrillId] = useState<string | null>(null)
   const [savedPlans, setSavedPlans] = useState<Set<string>>(new Set(preppedSessions))
+  const [showAllPrepPlayers, setShowAllPrepPlayers] = useState(false)
 
   /* ── Upcoming sessions ── */
   const upcomingSessions = useMemo(() => {
@@ -280,7 +281,14 @@ export default function PrepPage() {
         players={matchPlayers}
         roster={matchRoster}
         onBack={() => setMatchPrepSessionId(null)}
-        onSave={() => {
+        onSave={(prep) => {
+          try {
+            localStorage.setItem(`fairplai_session_prep_${matchPrepSessionId}`, JSON.stringify({
+              sessionId: matchPrepSessionId,
+              ...prep,
+              createdAt: new Date().toISOString(),
+            }))
+          } catch { /* quota exceeded */ }
           setSavedPlans(prev => new Set([...prev, matchPrepSessionId]))
           setMatchPrepSessionId(null)
         }}
@@ -418,33 +426,55 @@ export default function PrepPage() {
           <span style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Players to Watch
           </span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-            {playerInsights.filter(p => Math.abs(p.diff) > 3).map(player => {
-              const isDecline = player.diff < 0
-              const trendColor = isDecline ? '#EF4444' : '#10B981'
-              const trendBg = isDecline ? '#FEF2F2' : '#ECFDF5'
-              const TrendIcon = isDecline ? TrendingDown : TrendingUp
+          {(() => {
+            const allPlayers = playerInsights.sort((a, b) => a.diff - b.diff)
+            const visiblePlayers = showAllPrepPlayers ? allPlayers : allPlayers.slice(0, 3)
+            return (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                  {visiblePlayers.map(player => {
+                    const isDecline = player.diff < 0
+                    const trendColor = isDecline ? '#EF4444' : '#10B981'
+                    const trendBg = isDecline ? '#FEF2F2' : '#ECFDF5'
+                    const TrendIcon = isDecline ? TrendingDown : TrendingUp
 
-              return (
-                <div key={player.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  background: '#fff', borderRadius: 12, padding: '12px 14px',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                }}>
-                  <div style={{ width: 3, height: 32, borderRadius: 2, background: trendColor, flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{player.firstName} {player.lastName}</div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>{player.position[0]} · #{player.jerseyNumber}</div>
-                  </div>
-                  <span style={{ fontSize: 20, fontWeight: 800, color: getScoreColor(player.compositeScore) }}>{player.compositeScore}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '2px 6px', borderRadius: 12, background: trendBg }}>
-                    <TrendIcon size={11} color={trendColor} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: trendColor }}>{isDecline ? '' : '+'}{player.diff}</span>
-                  </div>
+                    return (
+                      <div key={player.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        background: '#fff', borderRadius: 12, padding: '12px 14px',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                      }}>
+                        <div style={{ width: 3, height: 32, borderRadius: 2, background: trendColor, flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{player.firstName} {player.lastName}</div>
+                          <div style={{ fontSize: 11, color: '#64748B' }}>{player.position[0]} · #{player.jerseyNumber}</div>
+                        </div>
+                        <span style={{ fontSize: 20, fontWeight: 800, color: getScoreColor(player.compositeScore) }}>{player.compositeScore}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '2px 6px', borderRadius: 12, background: trendBg }}>
+                          <TrendIcon size={11} color={trendColor} />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: trendColor }}>{isDecline ? '' : '+'}{player.diff}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
-          </div>
+                {allPlayers.length > 3 && (
+                  <button
+                    onClick={() => setShowAllPrepPlayers(!showAllPrepPlayers)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                      width: '100%', padding: '10px 0', marginTop: 8,
+                      background: 'none', border: '1px solid #E2E8F0', borderRadius: 10,
+                      cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#64748B',
+                    }}
+                  >
+                    {showAllPrepPlayers ? 'Show less' : `See ${allPlayers.length - 3} more`}
+                    {showAllPrepPlayers ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                )}
+              </>
+            )
+          })()}
         </div>
 
         {/* Weak Areas */}

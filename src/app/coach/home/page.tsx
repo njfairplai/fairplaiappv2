@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   Bell, ChevronDown, ChevronUp, ChevronRight, Clock, MapPin,
-  TrendingUp, TrendingDown, X, Activity, Brain, Zap, ExternalLink,
+  TrendingUp, TrendingDown, X, Activity, Brain, Zap, ExternalLink, Monitor,
 } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import {
   sessions, players, rosters, pendingReviewItems, pitches,
-  squadScores, sessionTeamScores, playerKeyMetrics,
+  squadScores, sessionTeamScores, playerKeyMetrics, playerRadarData,
 } from '@/lib/mockData'
 import NotificationCentre from '@/components/shared/NotificationCentre'
 
@@ -49,6 +49,11 @@ export default function CoachHomePage() {
   const [showAllSessions, setShowAllSessions] = useState(false)
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null) // null = All Teams
   const [playerSnapshotId, setPlayerSnapshotId] = useState<string | null>(null)
+  const [showAllPlayers, setShowAllPlayers] = useState(false)
+  const [desktopBannerDismissed, setDesktopBannerDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('fairplai_desktop_banner_dismissed') === 'true'
+  })
 
   const todayStr = new Date().toISOString().slice(0, 10)
   const teamPhotoRoster = rosters.find(r => r.teamPhoto)
@@ -103,9 +108,7 @@ export default function CoachHomePage() {
         return { ...p, compositeScore: score.compositeScore, avgScore: score.avgScore, diff }
       })
       .filter((p): p is NonNullable<typeof p> => p !== null)
-      .filter(p => Math.abs(p.diff) > 3)
       .sort((a, b) => a.diff - b.diff)
-      .slice(0, 4)
   }, [selectedRosterId])
 
   /* ── Player snapshot data ── */
@@ -196,6 +199,55 @@ export default function CoachHomePage() {
                 {r.name}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* ═══════════ DESKTOP BANNER ═══════════ */}
+        {!desktopBannerDismissed && (
+          <div style={{
+            margin: '12px 16px 0',
+            padding: '14px 16px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, rgba(74,74,255,0.08) 0%, rgba(117,127,255,0.06) 100%)',
+            border: '1px solid rgba(74,74,255,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+              background: 'rgba(74,74,255,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Monitor size={18} color="#4A4AFF" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                Web Portal available
+              </p>
+              <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0', lineHeight: 1.3 }}>
+                Review matches & analytics on the big screen
+              </p>
+            </div>
+            <button
+              onClick={() => router.push('/coach/web')}
+              style={{
+                padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: '#4A4AFF', color: '#fff', fontSize: 12, fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              Open
+            </button>
+            <button
+              onClick={() => {
+                setDesktopBannerDismissed(true)
+                localStorage.setItem('fairplai_desktop_banner_dismissed', 'true')
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}
+            >
+              <X size={14} color="#94a3b8" />
+            </button>
           </div>
         )}
 
@@ -376,7 +428,7 @@ export default function CoachHomePage() {
             </span>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-              {playersToWatch.map(player => {
+              {(showAllPlayers ? playersToWatch : playersToWatch.slice(0, 3)).map(player => {
                 const isDecline = player.diff < 0
                 const TrendIcon = isDecline ? TrendingDown : TrendingUp
                 const trendColor = isDecline ? '#EF4444' : '#10B981'
@@ -427,6 +479,21 @@ export default function CoachHomePage() {
                 )
               })}
             </div>
+
+            {playersToWatch.length > 3 && (
+              <button
+                onClick={() => setShowAllPlayers(!showAllPlayers)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  width: '100%', padding: '10px 0', marginTop: 8,
+                  background: 'none', border: '1px solid #E2E8F0', borderRadius: 10,
+                  cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#64748B',
+                }}
+              >
+                {showAllPlayers ? 'Show less' : `See ${playersToWatch.length - 3} more`}
+                {showAllPlayers ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            )}
           </div>
         )}
 
@@ -501,68 +568,53 @@ export default function CoachHomePage() {
                     </div>
                   </div>
 
-                  {/* Key Areas */}
-                  {metrics && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-                      {/* Technical */}
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Activity size={14} color="#4A4AFF" />
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Technical</span>
-                          </div>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: getScoreColor(metrics.technical) }}>
-                            {metrics.technical}
-                          </span>
-                        </div>
-                        <div style={{ height: 6, borderRadius: 3, background: '#F1F5F9' }}>
-                          <div style={{
-                            height: '100%', borderRadius: 3, width: `${metrics.technical}%`,
-                            background: getScoreColor(metrics.technical),
-                            transition: 'width 0.5s ease',
-                          }} />
-                        </div>
+                  {/* Technical Categories — dual bars */}
+                  {(() => {
+                    const radarData = playerRadarData[snapshotPlayer.id]
+                    if (!radarData) return null
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
+                        {radarData.map(item => {
+                          const diff = item.score - item.avg
+                          const diffColor = diff >= 0 ? '#10B981' : '#EF4444'
+                          return (
+                            <div key={item.category}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>{item.category}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: 14, fontWeight: 800, color: getScoreColor(item.score) }}>
+                                    {item.score}
+                                  </span>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: diffColor }}>
+                                    {diff >= 0 ? '+' : ''}{diff}
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Player bar */}
+                              <div style={{ height: 6, borderRadius: 3, background: '#F1F5F9', marginBottom: 3 }}>
+                                <div style={{
+                                  height: '100%', borderRadius: 3, width: `${item.score}%`,
+                                  background: getScoreColor(item.score),
+                                  transition: 'width 0.5s ease',
+                                }} />
+                              </div>
+                              {/* Team avg bar */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <div style={{ height: 4, borderRadius: 2, background: '#F1F5F9', flex: 1 }}>
+                                  <div style={{
+                                    height: '100%', borderRadius: 2, width: `${item.avg}%`,
+                                    background: '#CBD5E1',
+                                    transition: 'width 0.5s ease',
+                                  }} />
+                                </div>
+                                <span style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, whiteSpace: 'nowrap' }}>Avg {item.avg}</span>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
-
-                      {/* Temperament */}
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Brain size={14} color="#8B5CF6" />
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Temperament</span>
-                          </div>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: getScoreColor(metrics.temperament) }}>
-                            {metrics.temperament}
-                          </span>
-                        </div>
-                        <div style={{ height: 6, borderRadius: 3, background: '#F1F5F9' }}>
-                          <div style={{
-                            height: '100%', borderRadius: 3, width: `${metrics.temperament}%`,
-                            background: getScoreColor(metrics.temperament),
-                            transition: 'width 0.5s ease',
-                          }} />
-                        </div>
-                      </div>
-
-                      {/* Strain */}
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Zap size={14} color="#F59E0B" />
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Strain</span>
-                          </div>
-                          <span style={{
-                            fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                            background: metrics.strain === 'high' ? '#FEF2F2' : metrics.strain === 'moderate' ? '#FEF3C7' : '#ECFDF5',
-                            color: metrics.strain === 'high' ? '#EF4444' : metrics.strain === 'moderate' ? '#D97706' : '#059669',
-                            textTransform: 'capitalize',
-                          }}>
-                            {metrics.strain}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })()}
 
                   {/* Quick Insight */}
                   <div style={{
@@ -575,8 +627,8 @@ export default function CoachHomePage() {
                     </div>
                     <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
                       {isDecline
-                        ? `Score dropped ${Math.abs(diff)} pts from season average. ${metrics && metrics.temperament < 75 ? 'Temperament may be a factor — consider a 1-on-1 check-in.' : 'Review recent sessions for patterns.'}`
-                        : `Up ${diff} pts vs season average. ${metrics && metrics.temperament >= 80 ? 'Great attitude and coachability.' : 'Keep momentum going with targeted challenges.'}`
+                        ? `Score dropped ${Math.abs(diff)} pts from season average. Review recent sessions for patterns and consider a 1-on-1 check-in.`
+                        : `Up ${diff} pts vs season average. Keep momentum going with targeted challenges.`
                       }
                     </div>
                   </div>

@@ -45,6 +45,24 @@ export function percentileColor(pct: number): string {
   return COLORS.error
 }
 
+export function getSessionPrep(sessionId: string) {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem(`fairplai_session_prep_${sessionId}`)
+    if (stored) {
+      try { return JSON.parse(stored) } catch { /* fall through */ }
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { sessionPreps } = require('./mockData')
+  return sessionPreps[sessionId] || null
+}
+
+export function saveSessionPrep(sessionId: string, prep: Record<string, unknown>) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(`fairplai_session_prep_${sessionId}`, JSON.stringify(prep))
+  }
+}
+
 export function gradeFromScore(score: number): string {
   if (score >= 90) return 'A+'
   if (score >= 85) return 'A'

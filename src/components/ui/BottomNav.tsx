@@ -22,9 +22,9 @@ const parentNav: NavItem[] = [
 
 const playerNav: NavItem[] = [
   { id: 'home', label: 'Home', href: '/player/home', icon: Home },
-  { id: 'sessions', label: 'Sessions', href: '/player/sessions', icon: Calendar },
+  { id: 'development', label: 'Progress', href: '/player/development', icon: TrendingUp },
   { id: 'highlights', label: 'Highlights', href: '/player/highlights', icon: Play },
-  { id: 'profile', label: 'Profile', href: '/player/profile', icon: User },
+  { id: 'sessions', label: 'Sessions', href: '/player/sessions', icon: Calendar },
 ]
 
 const coachNav: NavItem[] = [

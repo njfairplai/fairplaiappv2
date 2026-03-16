@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Sparkles, Film, Users, FileText, ChevronDown } from 'lucide-react'
+import { Sparkles, Film, Users, FileText, ChevronDown, Smartphone } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 
@@ -52,6 +52,31 @@ export default function CoachWebLayout({ children }: { children: React.ReactNode
             </select>
             <ChevronDown size={13} color="rgba(248,250,252,0.4)" style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
           </div>
+
+          {/* Switch to Mobile */}
+          <button
+            onClick={() => {
+              localStorage.setItem('fairplai_switch_from', pathname)
+              router.push('/coach/home')
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 8,
+              background: 'rgba(74,74,255,0.12)', border: '1px solid rgba(74,74,255,0.25)',
+              cursor: 'pointer', transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(74,74,255,0.2)'
+              e.currentTarget.style.borderColor = 'rgba(74,74,255,0.4)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(74,74,255,0.12)'
+              e.currentTarget.style.borderColor = 'rgba(74,74,255,0.25)'
+            }}
+          >
+            <Smartphone size={14} color="#4A4AFF" />
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#4A4AFF' }}>Mobile</span>
+          </button>
 
           {/* Coach label */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

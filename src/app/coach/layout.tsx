@@ -7,9 +7,9 @@ import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 
 const tabs = [
   { id: 'home', label: 'Home', href: '/coach/home', icon: Home },
-  { id: 'squad', label: 'Squad', href: '/coach/squad', icon: Users },
   { id: 'prep', label: 'Prep', href: '/coach/insights', icon: ClipboardList },
   { id: 'record', label: 'Record', href: '/coach/record', icon: Circle },
+  { id: 'squad', label: 'Squad', href: '/coach/squad', icon: Users },
   { id: 'settings', label: 'Settings', href: '/coach/settings', icon: Settings },
 ]
 
@@ -79,6 +79,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
             {tabs.map(tab => {
               const isActive = pathname.startsWith(tab.href)
               const Icon = tab.icon
+              const isRecord = tab.id === 'record'
               return (
                 <button
                   key={tab.id}
@@ -104,21 +105,22 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
                     gap: 2,
                     padding: '4px 16px',
                     borderRadius: 12,
-                    background: isActive ? 'rgba(74,74,255,0.12)' : 'transparent',
+                    background: isActive ? (isRecord ? 'rgba(239,68,68,0.12)' : 'rgba(74,74,255,0.12)') : 'transparent',
                     position: 'relative',
                   }}>
                     {/* Icon wrapper for badge positioning */}
                     <div style={{ position: 'relative', lineHeight: 0 }}>
                       <Icon
                         size={22}
-                        color={isActive ? '#4A4AFF' : '#64748B'}
+                        color={isRecord ? '#EF4444' : (isActive ? '#4A4AFF' : '#64748B')}
                         strokeWidth={isActive ? 2.2 : 1.7}
+                        fill={isRecord ? '#EF4444' : 'none'}
                       />
                     </div>
                     <span style={{
                       fontSize: 10,
                       fontWeight: isActive ? 700 : 500,
-                      color: isActive ? '#4A4AFF' : '#64748B',
+                      color: isRecord ? '#EF4444' : (isActive ? '#4A4AFF' : '#64748B'),
                     }}>
                       {tab.label}
                     </span>

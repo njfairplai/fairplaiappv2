@@ -2,13 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { playerProfile } from '@/lib/mockData'
+import { playerProfile, sessions, highlights, coachFeedbackHistory } from '@/lib/mockData'
 import ScoreArc from '@/components/charts/ScoreArc'
 import KeyMetricsBlock from '@/components/shared/KeyMetricsBlock'
 import NotificationBell from '@/components/shared/NotificationBell'
 import NotificationCentre from '@/components/shared/NotificationCentre'
 import PlayerCardShareModal from '@/components/shared/PlayerCardShareModal'
-import { Share2 } from 'lucide-react'
+import { Share2, Calendar, Trophy, Play, MessageSquare } from 'lucide-react'
 
 type Period = 'last-match' | 'last-5' | 'season'
 
@@ -131,6 +131,60 @@ export default function HeroSection() {
 
         <div className="fade-up-5" style={{ width: '100%', marginTop: 16 }}>
           <KeyMetricsBlock playerId="player_001" dark={true} />
+        </div>
+
+        {/* Next Session */}
+        {(() => {
+          const nextSession = sessions
+            .filter(s => s.status === 'scheduled' && s.participatingPlayerIds?.includes('player_001'))
+            .sort((a, b) => a.date.localeCompare(b.date))[0]
+          if (!nextSession) return null
+          const d = new Date(nextSession.date + 'T' + nextSession.startTime)
+          return (
+            <div style={{ width: '100%', marginTop: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#4A4AFF', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Next Session</p>
+              <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: nextSession.type === 'match' ? 'rgba(74,74,255,0.15)' : 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {nextSession.type === 'match' ? <Trophy size={20} color="#4A4AFF" /> : <Calendar size={20} color="#F59E0B" />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>
+                    {nextSession.type === 'match' ? `vs ${nextSession.opponent}` : 'Training Session'}
+                  </p>
+                  <p style={{ fontSize: 12, color: '#9DA2B3', margin: '2px 0 0' }}>
+                    {d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} · {nextSession.startTime}
+                    {nextSession.competition ? ` · ${nextSession.competition}` : ''}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Recent Activity */}
+        <div style={{ width: '100%', marginTop: 20 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#4A4AFF', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Recent Activity</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { icon: Play, color: '#10B981', label: 'New highlight generated', sub: 'Goal vs Al Wasl Academy', time: '2d ago' },
+              { icon: Trophy, color: '#4A4AFF', label: 'Match analysed', sub: 'Score: 81 vs Al Wasl Academy', time: '3d ago' },
+              { icon: MessageSquare, color: '#F59E0B', label: 'Coach feedback received', sub: coachFeedbackHistory[0]?.summary?.slice(0, 40) + '...' || 'Great performance', time: '3d ago' },
+            ].map((item, i) => {
+              const Icon = item.icon
+              return (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: `${item.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={16} color={item.color} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: 0 }}>{item.label}</p>
+                    <p style={{ fontSize: 11, color: '#6E7180', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.sub}</p>
+                  </div>
+                  <span style={{ fontSize: 11, color: '#6E7180', flexShrink: 0 }}>{item.time}</span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
 

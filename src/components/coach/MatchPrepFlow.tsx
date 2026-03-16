@@ -12,7 +12,7 @@ interface MatchPrepFlowProps {
   players: Player[]
   roster: Roster | undefined
   onBack: () => void
-  onSave: () => void
+  onSave: (prep: { squadSize: SquadSize | null; formationId: string | null; lineup: Record<number, string>; playingStyle: string; setPieces: string; tacticalNotes: string }) => void
 }
 
 const STEP_LABELS: Record<MatchStep, string> = {
@@ -523,7 +523,7 @@ export default function MatchPrepFlow({ session, players, roster, onBack, onSave
 
         {/* Save button */}
         <button
-          onClick={onSave}
+          onClick={() => onSave({ squadSize, formationId: selectedFormation?.id ?? null, lineup, playingStyle, setPieces, tacticalNotes })}
           style={{
             width: '100%', padding: '16px 0', borderRadius: 14,
             background: '#10B981', color: '#fff', border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer',
