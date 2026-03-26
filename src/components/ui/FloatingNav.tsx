@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { COLORS, RADIUS, ROLE_PATHS } from '@/lib/constants'
 import type { UserRole } from '@/lib/types'
-import { Building2, GraduationCap, Trophy, Heart, Zap, ArrowRightLeft, X, Video, Home, Monitor } from 'lucide-react'
+import { Building2, GraduationCap, Trophy, Heart, Zap, ArrowRightLeft, X, Video, Home, Monitor, Shield } from 'lucide-react'
 
-const roles: { role: UserRole; label: string; icon: React.ElementType; description: string }[] = [
+const roles: { role: UserRole; label: string; icon: React.ElementType; description: string; color?: string }[] = [
+  { role: 'super_admin', label: 'Super Admin', icon: Shield, description: 'Platform management & client operations', color: '#DC2626' },
   { role: 'facility_admin', label: 'Facility Admin', icon: Building2, description: 'Manage pitches & contracts' },
   { role: 'academy_admin', label: 'Academy Admin', icon: GraduationCap, description: 'Manage squads, players & credits' },
   { role: 'coach', label: 'Coach (Mobile)', icon: Trophy, description: 'Pitch-side: record, attendance & squad' },
@@ -119,8 +120,9 @@ export default function FloatingNav() {
             <h3 style={{ fontSize: 18, fontWeight: 800, color: COLORS.navy, margin: '0 0 4px' }}>Switch Portal</h3>
             <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px' }}>Select a role to explore</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {roles.map(({ role, label, icon: Icon, description }) => {
+              {roles.map(({ role, label, icon: Icon, description, color }) => {
                 const isActive = currentRole === role
+                const accent = color || COLORS.primary
                 return (
                   <button
                     key={role}
@@ -131,8 +133,8 @@ export default function FloatingNav() {
                       gap: 12,
                       padding: '14px 16px',
                       borderRadius: RADIUS.card,
-                      background: isActive ? `${COLORS.primary}10` : '#F5F6FC',
-                      border: isActive ? `2px solid ${COLORS.primary}` : '2px solid transparent',
+                      background: isActive ? `${accent}10` : '#F5F6FC',
+                      border: isActive ? `2px solid ${accent}` : '2px solid transparent',
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'background 0.15s',
@@ -140,10 +142,10 @@ export default function FloatingNav() {
                   >
                     <div style={{
                       width: 40, height: 40, borderRadius: 10,
-                      background: `${COLORS.primary}15`,
+                      background: `${accent}15`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
-                      <Icon size={20} color={COLORS.primary} />
+                      <Icon size={20} color={accent} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, margin: 0 }}>{label}</p>

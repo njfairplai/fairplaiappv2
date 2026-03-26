@@ -7,6 +7,7 @@ import { academies, pitches } from '@/lib/mockData'
 
 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+/** Recurring Booking card (formerly "ContractCard") */
 export default function ContractCard({ contract }: { contract: LeaseContract }) {
   const academy = academies.find((a) => a.id === contract.academyId)
   const pitch = pitches.find((p) => p.id === contract.pitchId)

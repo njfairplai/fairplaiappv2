@@ -310,7 +310,7 @@ export function CommandCentreProvider({ children }: { children: React.ReactNode 
         break
       }
       case 'add_program': {
-        const prog = data as { name: string; rosterId: string; daysOfWeek: string[]; startTime: string; sessionLength: string; termStart: string; termEnd: string }
+        const prog = data as { name: string; rosterId: string; facilityId?: string; pitchId?: string; daysOfWeek: string[]; startTime: string; sessionLength: string; termStart: string; termEnd: string }
         // Generate sessions from program
         const generatedSessions: Record<string, unknown>[] = []
         const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
@@ -329,6 +329,8 @@ export function CommandCentreProvider({ children }: { children: React.ReactNode 
               id: `session_prog_${Date.now()}_${generatedSessions.length}`,
               academyId: ACADEMY_ID,
               rosterId: prog.rosterId,
+              facilityId: prog.facilityId || '',
+              pitchId: prog.pitchId || '',
               date: d.toISOString().split('T')[0],
               startTime: prog.startTime,
               endTime: `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
@@ -346,6 +348,8 @@ export function CommandCentreProvider({ children }: { children: React.ReactNode 
             academyId: ACADEMY_ID,
             name: prog.name,
             rosterId: prog.rosterId,
+            facilityId: prog.facilityId || '',
+            pitchId: prog.pitchId || '',
             daysOfWeek: prog.daysOfWeek,
             startTime: prog.startTime,
             sessionLengthMinutes: lengthMinutes,

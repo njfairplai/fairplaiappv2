@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { COLORS, RADIUS, SHADOWS } from '@/lib/constants'
 import { useCommandCentre } from '@/contexts/CommandCentreContext'
-import { rosters } from '@/lib/mockData'
+import { rosters, facilities, pitches, leaseContracts } from '@/lib/mockData'
 import type { AgentAction } from '@/lib/types'
 
 const ACADEMY_ID = 'academy_001'
@@ -153,6 +153,8 @@ function AddProgramForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>
   const [form, setForm] = useState({
     name: '',
     rosterId: academyRosters[0]?.id || '',
+    facilityId: '',
+    pitchId: '',
     daysOfWeek: [] as string[],
     startTime: '17:00',
     sessionLength: '90',
@@ -160,7 +162,29 @@ function AddProgramForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>
     termEnd: '',
   })
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const canSubmit = form.name && form.rosterId && form.daysOfWeek.length > 0 && form.termStart && form.termEnd
+  const dayToNum: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
+
+  const facilityPitches = form.facilityId ? pitches.filter(p => p.facilityId === form.facilityId) : []
+
+  // Booking validation
+  const bookingCheck = (() => {
+    if (!form.facilityId || !form.pitchId || form.daysOfWeek.length === 0) return null
+    const matchingBookings = leaseContracts.filter(c =>
+      c.facilityId === form.facilityId && c.pitchId === form.pitchId && c.status !== 'expired'
+    )
+    if (matchingBookings.length === 0) {
+      return { valid: false, msg: 'No active recurring bookings for this pitch.' }
+    }
+    const selectedDayNums = form.daysOfWeek.map(d => dayToNum[d])
+    const uncovered = selectedDayNums.filter(d => !matchingBookings.some(b => b.dayOfWeek.includes(d)))
+    if (uncovered.length > 0) {
+      const names = uncovered.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
+      return { valid: false, msg: `No booking covers: ${names.join(', ')}` }
+    }
+    return { valid: true, msg: 'Matches active booking.' }
+  })()
+
+  const canSubmit = form.name && form.rosterId && form.facilityId && form.pitchId && form.daysOfWeek.length > 0 && form.termStart && form.termEnd && (!bookingCheck || bookingCheck.valid)
 
   const toggleDay = (d: string) => {
     setForm(p => ({
@@ -174,8 +198,7 @@ function AddProgramForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>
   if (form.termStart && form.termEnd && form.daysOfWeek.length > 0) {
     const start = new Date(form.termStart)
     const end = new Date(form.termEnd)
-    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
-    const selectedDayNums = form.daysOfWeek.map(d => dayMap[d])
+    const selectedDayNums = form.daysOfWeek.map(d => dayToNum[d])
     const d = new Date(start)
     while (d <= end) {
       if (selectedDayNums.includes(d.getDay())) sessionCount++
@@ -193,6 +216,20 @@ function AddProgramForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>
         <label style={labelStyle}>Team <span style={{ color: COLORS.error }}>*</span></label>
         <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.rosterId} onChange={e => setForm(p => ({ ...p, rosterId: e.target.value }))}>
           {academyRosters.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </select>
+      </div>
+      <div>
+        <label style={labelStyle}>Facility <span style={{ color: COLORS.error }}>*</span></label>
+        <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.facilityId} onChange={e => setForm(p => ({ ...p, facilityId: e.target.value, pitchId: '' }))}>
+          <option value="">Select facility...</option>
+          {facilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+        </select>
+      </div>
+      <div>
+        <label style={labelStyle}>Pitch <span style={{ color: COLORS.error }}>*</span></label>
+        <select style={{ ...inputStyle, cursor: form.facilityId ? 'pointer' : 'not-allowed', background: form.facilityId ? '#fff' : '#F5F6FC' }} disabled={!form.facilityId} value={form.pitchId} onChange={e => setForm(p => ({ ...p, pitchId: e.target.value }))}>
+          <option value="">{form.facilityId ? 'Select pitch...' : 'Select facility first'}</option>
+          {facilityPitches.map(p => <option key={p.id} value={p.id}>{p.name} ({p.type})</option>)}
         </select>
       </div>
       <div>
@@ -219,6 +256,15 @@ function AddProgramForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>
           })}
         </div>
       </div>
+      {bookingCheck && (
+        <div style={{
+          fontSize: 11, fontWeight: 600, padding: '6px 10px', borderRadius: 8,
+          background: bookingCheck.valid ? `${COLORS.success}10` : '#FEF2F2',
+          color: bookingCheck.valid ? COLORS.success : '#DC2626',
+        }}>
+          {bookingCheck.msg}
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div>
           <label style={labelStyle}>Start Time</label>

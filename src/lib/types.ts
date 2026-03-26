@@ -1,4 +1,4 @@
-export type UserRole = 'facility_admin' | 'academy_admin' | 'coach' | 'parent' | 'player'
+export type UserRole = 'super_admin' | 'facility_admin' | 'academy_admin' | 'coach' | 'parent' | 'player'
 
 export interface User {
   id: string

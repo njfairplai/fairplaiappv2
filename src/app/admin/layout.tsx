@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Image from 'next/image'
-import { MessageSquare, Users, ClipboardList, UserCheck, BookOpen, Calendar, CreditCard, FileText } from 'lucide-react'
+import { MessageSquare, Users, ClipboardList, UserCheck, BookOpen, Calendar, BarChart3, CreditCard, FileText } from 'lucide-react'
 
 const COLORS = { primary: '#4A4AFF', muted: '#6E7180', border: '#E8EAED' }
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin/coaches', label: 'Coaches', icon: UserCheck },
   { href: '/admin/programs', label: 'Programs', icon: BookOpen },
   { href: '/admin/sessions', label: 'Sessions', icon: Calendar },
+  { href: '/admin/team-stats', label: 'Team Stats', icon: BarChart3 },
   { href: '/admin/credits', label: 'Credits', icon: CreditCard },
   { href: '/admin/reports', label: 'Reports', icon: FileText },
 ]

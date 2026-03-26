@@ -6,7 +6,7 @@ import { COLORS, ROLE_PATHS } from '@/lib/constants'
 import type { UserRole } from '@/lib/types'
 import {
   Building2, GraduationCap, Trophy, Heart, ChevronRight,
-  Film, Eye, Monitor, Zap,
+  Film, Eye, Monitor, Shield,
 } from 'lucide-react'
 
 export default function SplashPage() {
@@ -50,27 +50,27 @@ export default function SplashPage() {
         Sign in with credentials &rarr;
       </button>
 
+      {/* ── Platform ─────────────────────────────── */}
+      <SectionHeader label="Platform" icon={Shield} />
+
+      <RoleCard
+        icon={Shield}
+        title="Super Admin"
+        description="Platform management & client operations"
+        color="#DC2626"
+        onClick={() => selectRole('super_admin')}
+      />
+
       {/* ── Player & Parent ─────────────────────── */}
       <SectionHeader label="Player & Parent" icon={Heart} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%', maxWidth: 520 }}>
-        <RoleCard
-          icon={Zap}
-          title="Player App"
-          description="Your game plan, highlights & stats"
-          color="#00C9A7"
-          onClick={() => selectRole('player')}
-          compact
-        />
-        <RoleCard
-          icon={Heart}
-          title="Parent App"
-          description="Track your child's development"
-          color={COLORS.primary}
-          onClick={() => selectRole('parent')}
-          compact
-        />
-      </div>
+      <RoleCard
+        icon={Heart}
+        title="Player & Parent"
+        description="Follow development, highlights & match performance"
+        color={COLORS.primary}
+        onClick={() => selectRole('parent')}
+      />
 
       {/* ── Coach ───────────────────────────────── */}
       <SectionHeader label="Coach" icon={Trophy} />

@@ -183,9 +183,9 @@ export default function ContractsPage() {
   return (
     <div style={{ padding: 32, position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Contracts</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Recurring Bookings</h1>
         <button onClick={() => setShowNewPanel(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: COLORS.primary, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-          <Plus size={16} /> New Contract
+          <Plus size={16} /> New Booking
         </button>
       </div>
 
@@ -261,14 +261,14 @@ export default function ContractsPage() {
           <div onClick={() => { setShowNewPanel(false); setNcSuccess(false); resetNewForm() }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 199 }} />
           <div style={{ position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: '#fff', zIndex: 200, boxShadow: SHADOWS.elevated, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}` }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>New Contract</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>New Recurring Booking</h2>
               <button onClick={() => { setShowNewPanel(false); setNcSuccess(false); resetNewForm() }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} color={COLORS.muted} /></button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
               {ncSuccess ? (
                 <div style={{ background: `${COLORS.success}15`, border: `1px solid ${COLORS.success}40`, borderRadius: RADIUS.card, padding: 20, textAlign: 'center' }}>
                   <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.success, margin: 0 }}>
-                    Contract created. {previewCount} sessions generated for {ncAcademy?.name || 'academy'} on {ncPitch?.name || 'pitch'}.
+                    Recurring booking created. {previewCount} sessions generated for {ncAcademy?.name || 'academy'} on {ncPitch?.name || 'pitch'}.
                   </p>
                 </div>
               ) : (
@@ -396,7 +396,7 @@ export default function ContractsPage() {
                   </div>
 
                   <button onClick={handleCreateContract} style={{ width: '100%', padding: '12px 0', background: COLORS.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
-                    Create Contract
+                    Create Booking
                   </button>
                 </>
               )}
@@ -411,13 +411,13 @@ export default function ContractsPage() {
           <div onClick={() => setRenewContract(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 199 }} />
           <div style={{ position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: '#fff', zIndex: 200, boxShadow: SHADOWS.elevated, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}` }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Renew Contract</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Renew Booking</h2>
               <button onClick={() => setRenewContract(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} color={COLORS.muted} /></button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
               {renewSuccess ? (
                 <div style={{ background: `${COLORS.success}15`, border: `1px solid ${COLORS.success}40`, borderRadius: RADIUS.card, padding: 20, textAlign: 'center' }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.success, margin: 0 }}>Contract renewed. 24 additional sessions generated.</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.success, margin: 0 }}>Booking renewed. 24 additional sessions generated.</p>
                 </div>
               ) : (
                 <>
@@ -446,7 +446,7 @@ export default function ContractsPage() {
                     <input type="number" value={renewRate} onChange={e => setRenewRate(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 14, color: COLORS.navy, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                   <button onClick={handleRenewSubmit} style={{ width: '100%', padding: '12px 0', background: COLORS.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
-                    Renew Contract
+                    Renew Booking
                   </button>
                 </>
               )}
@@ -533,11 +533,11 @@ export default function ContractsPage() {
       <div style={{ marginTop: 32, background: '#fff', borderRadius: RADIUS.card, boxShadow: SHADOWS.card, overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}` }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Available Slots</h2>
-          <p style={{ fontSize: 13, color: COLORS.muted, margin: '4px 0 0' }}>Expired contracts with open time slots</p>
+          <p style={{ fontSize: 13, color: COLORS.muted, margin: '4px 0 0' }}>Expired bookings with open time slots</p>
         </div>
         {expiredContracts.filter(c => c.status === 'expired').length === 0 ? (
           <div style={{ padding: '32px 24px', textAlign: 'center' }}>
-            <p style={{ fontSize: 14, color: COLORS.muted, margin: 0 }}>No expired contracts with available slots.</p>
+            <p style={{ fontSize: 14, color: COLORS.muted, margin: 0 }}>No expired bookings with available slots.</p>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>

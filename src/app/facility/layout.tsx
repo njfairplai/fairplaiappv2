@@ -11,7 +11,7 @@ const navItems = [
   { href: '/facility/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/facility/pitches', label: 'Pitches', icon: MapPin },
   { href: '/facility/sessions', label: 'Sessions', icon: Calendar },
-  { href: '/facility/contracts', label: 'Contracts', icon: FileText },
+  { href: '/facility/contracts', label: 'Recurring Bookings', icon: FileText },
 ]
 
 export default function FacilityAdminLayout({ children }: { children: React.ReactNode }) {

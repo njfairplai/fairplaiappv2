@@ -124,7 +124,7 @@ export default function FacilityDashboard() {
         <div style={{ flex: 1, background: '#fff', borderRadius: RADIUS.card, padding: 20, boxShadow: SHADOWS.card, display: 'flex', flexDirection: 'column' }}>
           <FileText size={22} color={COLORS.primary} style={{ marginBottom: 8 }} />
           <p style={{ fontSize: 32, fontWeight: 900, color: COLORS.navy, margin: 0 }}>{activeAndExpiring.length}</p>
-          <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 4 }}>Active Contracts</p>
+          <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 4 }}>Active Bookings</p>
         </div>
 
         {/* Sessions This Week */}
@@ -284,7 +284,7 @@ export default function FacilityDashboard() {
         <div ref={expiringRef}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <AlertTriangle size={18} color="#92400E" />
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#92400E', margin: 0 }}>Contracts Requiring Attention</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#92400E', margin: 0 }}>Bookings Requiring Attention</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {expiringContracts.map(c => {
@@ -332,13 +332,13 @@ export default function FacilityDashboard() {
           <div onClick={() => setRenewContract(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 199 }} />
           <div style={{ position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: '#fff', zIndex: 200, boxShadow: SHADOWS.elevated, display: 'flex', flexDirection: 'column', animation: 'slideInRight 0.25s ease' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}` }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Renew Contract</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Renew Booking</h2>
               <button onClick={() => setRenewContract(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} color={COLORS.muted} /></button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
               {renewSuccess ? (
                 <div style={{ background: `${COLORS.success}15`, border: `1px solid ${COLORS.success}40`, borderRadius: RADIUS.card, padding: 20, textAlign: 'center' }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.success, margin: 0 }}>Contract renewed. 24 additional sessions generated.</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.success, margin: 0 }}>Booking renewed. 24 additional sessions generated.</p>
                 </div>
               ) : (
                 <>
@@ -369,7 +369,7 @@ export default function FacilityDashboard() {
                     <input type="number" value={renewRate} onChange={e => setRenewRate(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 14, color: COLORS.navy, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                   <button onClick={handleRenewSubmit} style={{ width: '100%', padding: '12px 0', background: COLORS.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
-                    Renew Contract
+                    Renew Booking
                   </button>
                 </>
               )}

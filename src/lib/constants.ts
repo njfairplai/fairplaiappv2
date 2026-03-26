@@ -34,6 +34,7 @@ export const SHADOWS = {
 export const NAV_HEIGHT = 80
 
 export const DEMO_ACCOUNTS = [
+  { email: 'super@fairplai.com', password: 'demo1234', role: 'super_admin' as const, label: 'Super Admin Portal' },
   { email: 'coach@makacademy.com', password: 'demo1234', role: 'coach' as const, label: 'Coach Portal' },
   { email: 'admin@makacademy.com', password: 'demo1234', role: 'academy_admin' as const, label: 'Academy Admin Portal' },
   { email: 'parent@makacademy.com', password: 'demo1234', role: 'parent' as const, label: 'Parent Portal' },
@@ -42,6 +43,7 @@ export const DEMO_ACCOUNTS = [
 ] as const
 
 export const ROLE_PATHS: Record<string, string> = {
+  super_admin: '/super-admin/dashboard',
   facility_admin: '/facility/dashboard',
   academy_admin: '/admin/dashboard',
   coach: '/coach/home',
