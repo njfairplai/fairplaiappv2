@@ -137,6 +137,8 @@ export interface MatchAnalysis {
   passCompletion: number
   dribbleSuccess: number
   highlights: Highlight[]
+  teamAssignment?: 'A' | 'B'
+  minutesPlayed?: number
 }
 
 export type HighlightPrivacy = 'parent_visible' | 'team_only' | 'coach_only'

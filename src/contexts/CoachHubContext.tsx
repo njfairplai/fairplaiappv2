@@ -71,15 +71,15 @@ export function CoachHubProvider({ children }: { children: React.ReactNode }) {
   }, [messages, initialized])
 
   function getCoachContext() {
-    const ids = rosterPlayerMap[selectedRosterId] || []
+    const ids = selectedRosterId === 'all' ? Object.values(rosterPlayerMap).flat() : (rosterPlayerMap[selectedRosterId] || [])
     const rosterPlayers = players.filter(p => ids.includes(p.id))
-    const roster = rosters.find(r => r.id === selectedRosterId)
-    const rosterSessions = sessions.filter(s => s.rosterId === selectedRosterId)
+    const roster = rosters.find(r => r.id === (selectedRosterId === 'all' ? rosters[0]?.id : selectedRosterId)) || rosters[0]
+    const rosterSessions = sessions.filter(s => selectedRosterId === 'all' || s.rosterId === selectedRosterId)
     const upcomingSessions = rosterSessions.filter(s => s.status === 'scheduled')
     const completedSessions = rosterSessions.filter(s => ['analysed', 'playback_ready', 'complete'].includes(s.status))
     const pendingReviews = pendingReviewItems.filter(item => {
       const s = sessions.find(ss => ss.id === item.sessionId)
-      return s && s.rosterId === selectedRosterId
+      return s && (selectedRosterId === 'all' || s.rosterId === selectedRosterId)
     })
     const feedbackDue = rosterPlayers.filter(p => {
       const status = playerFeedbackStatus[p.id]

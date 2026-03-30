@@ -22,6 +22,7 @@ import EventTimeline from '@/components/coach/EventTimeline'
 import PitchEventMap from '@/components/coach/PitchEventMap'
 import PitchHeatmap from '@/components/coach/PitchHeatmap'
 import WhatsAppDeliveryPanel from '@/components/shared/WhatsAppDeliveryPanel'
+import HighlightsGenerator from '@/components/coach/HighlightsGenerator'
 import type { Session, Highlight, TimelineEvent, PendingReviewItem } from '@/lib/types'
 import { COLORS } from '@/lib/constants'
 
@@ -100,7 +101,7 @@ const EVENT_META: Record<string, { color: string; icon: React.ElementType; label
   save: { color: '#8B5CF6', icon: Hand, label: 'Save' },
 }
 
-type Tab = 'training' | 'matches' | 'highlights' | 'review'
+type Tab = 'training' | 'matches' | 'highlights' | 'generator'
 
 // ─── REVIEW EMBEDDED ────────────────────────────────────────
 function ReviewEmbedded({ items }: { items: PendingReviewItem[] }) {
@@ -1153,6 +1154,323 @@ function ReelsView({ allHighlights }: { allHighlights: Highlight[] }) {
   )
 }
 
+// ─── STITCHED HIGHLIGHTS VIEW ──────────────────────────────────
+function getHighlightBadge(type: string) {
+  switch (type) {
+    case 'goal': return { emoji: '⚽', label: 'Goal', color: '#F59E0B' }
+    case 'key_pass': return { emoji: '🎯', label: 'Key Pass', color: '#3B82F6' }
+    case 'sprint_recovery': return { emoji: '⚡', label: 'Sprint', color: '#10B981' }
+    case 'tackle': return { emoji: '🛡', label: 'Tackle', color: '#8B5CF6' }
+    case 'save': return { emoji: '🧤', label: 'Save', color: '#F97316' }
+    case 'dribble': return { emoji: '💨', label: 'Dribble', color: '#06B6D4' }
+    default: return { emoji: '🔥', label: type, color: '#94a3b8' }
+  }
+}
+
+// ─── STITCHED REEL PLAYER (for a single session's highlights) ─────
+function StitchedReelPlayer({ highlights: sessionHighlights, session, onBack }: {
+  highlights: Highlight[]
+  session: Session
+  onBack: () => void
+}) {
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const sorted = [...sessionHighlights].sort((a, b) => a.timestampSeconds - b.timestampSeconds)
+  const current = sorted[currentIdx]
+  const currentPlayer = current ? players.find(p => p.id === current.playerId) : null
+  const badge = current ? getHighlightBadge(current.eventType) : null
+  const roster = rosters.find(r => r.id === session.rosterId)
+
+  if (sorted.length === 0) return null
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Back bar */}
+      <div style={{
+        padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
+        background: 'rgba(0,0,0,0.6)',
+      }}>
+        <button onClick={onBack} style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer',
+          fontSize: 13, fontWeight: 600, padding: 0,
+        }}>
+          <ArrowLeft size={16} /> Back to matches
+        </button>
+        <div style={{ flex: 1 }} />
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+          {session.opponent ? `vs ${session.opponent}` : `${roster?.name || 'Training'}`}
+        </div>
+        <div style={{ fontSize: 12, color: '#64748B' }}>
+          {formatDateShort(session.date)} · {sorted.length} highlight{sorted.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+
+      {/* Video Player Area */}
+      <div style={{ flex: 1, background: '#000', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+        {/* Placeholder for stitched video */}
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)' }}>
+          <div style={{ textAlign: 'center' }}>
+            <Play size={48} color="rgba(255,255,255,0.3)" style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>
+              {badge?.emoji} {currentPlayer?.firstName} {currentPlayer?.lastName}
+            </div>
+            <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>
+              {badge?.label} · {current?.timestampSeconds ? `${Math.floor(current.timestampSeconds / 60)}'` : ''}
+            </div>
+          </div>
+        </div>
+
+        {/* Event badge overlay */}
+        {badge && (
+          <div style={{
+            position: 'absolute', top: 16, left: 16,
+            padding: '6px 12px', borderRadius: 8,
+            background: `${badge.color}20`, border: `1px solid ${badge.color}40`,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 14 }}>{badge.emoji}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: badge.color }}>{badge.label}</span>
+          </div>
+        )}
+
+        {/* Nav arrows */}
+        {currentIdx > 0 && (
+          <button onClick={() => setCurrentIdx(currentIdx - 1)} style={{
+            position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+            width: 36, height: 36, borderRadius: '50%', border: 'none',
+            background: 'rgba(0,0,0,0.5)', color: '#fff', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <ChevronLeft size={18} />
+          </button>
+        )}
+        {currentIdx < sorted.length - 1 && (
+          <button onClick={() => setCurrentIdx(currentIdx + 1)} style={{
+            position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+            width: 36, height: 36, borderRadius: '50%', border: 'none',
+            background: 'rgba(0,0,0,0.5)', color: '#fff', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <ChevronRight size={18} />
+          </button>
+        )}
+      </div>
+
+      {/* Info bar + Dot Timeline */}
+      <div style={{ background: 'rgba(0,0,0,0.9)', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        {/* Now playing info */}
+        <div style={{
+          padding: '10px 20px 6px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {badge && <span style={{ fontSize: 18 }}>{badge.emoji}</span>}
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                {currentPlayer?.firstName} {currentPlayer?.lastName}
+                <span style={{ fontSize: 12, fontWeight: 500, color: '#64748B', marginLeft: 8 }}>
+                  {currentPlayer?.position?.[0]}
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>
+                {badge?.label} · {current?.timestampSeconds ? `${Math.floor(current.timestampSeconds / 60)}'` : ''}
+                {current?.durationSeconds ? ` · ${current.durationSeconds}s clip` : ''}
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+            {currentIdx + 1} / {sorted.length}
+          </div>
+        </div>
+
+        {/* Dot navigation */}
+        <div style={{ padding: '6px 20px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center', overflowX: 'auto', padding: '4px 0' }}>
+            {sorted.map((h, i) => {
+              const b = getHighlightBadge(h.eventType)
+              const isActive = i === currentIdx
+              return (
+                <button
+                  key={h.id}
+                  onClick={() => setCurrentIdx(i)}
+                  title={`${b.label} — ${players.find(p => p.id === h.playerId)?.firstName || ''} · ${Math.floor(h.timestampSeconds / 60)}'`}
+                  style={{
+                    width: isActive ? 14 : 8,
+                    height: isActive ? 14 : 8,
+                    borderRadius: '50%',
+                    border: isActive ? `2px solid ${b.color}` : 'none',
+                    background: isActive ? '#fff' : `${b.color}80`,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0,
+                  }}
+                />
+              )
+            })}
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 10, color: '#475569', marginTop: 4 }}>
+            Click dots to jump between highlights
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── HIGHLIGHTS TAB (Match list → Stitched reel) ──────────────────
+function HighlightsTab({ allHighlights, matchSessions }: {
+  allHighlights: Highlight[]
+  matchSessions: Session[]
+}) {
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+
+  // Get sessions that have highlights, sorted by date desc
+  const sessionsWithHighlights = useMemo(() => {
+    const sessionIds = [...new Set(allHighlights.map(h => h.sessionId))]
+    return matchSessions
+      .filter(s => sessionIds.includes(s.id))
+      .sort((a, b) => b.date.localeCompare(a.date))
+  }, [allHighlights, matchSessions])
+
+  const selectedSession = selectedSessionId ? sessions.find(s => s.id === selectedSessionId) : null
+  const sessionHighlights = selectedSessionId ? allHighlights.filter(h => h.sessionId === selectedSessionId) : []
+
+  // If a session is selected, show the stitched reel
+  if (selectedSession && sessionHighlights.length > 0) {
+    return (
+      <StitchedReelPlayer
+        highlights={sessionHighlights}
+        session={selectedSession}
+        onBack={() => setSelectedSessionId(null)}
+      />
+    )
+  }
+
+  // Otherwise show match list
+  if (sessionsWithHighlights.length === 0) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+        <div style={{ textAlign: 'center' }}>
+          <Sparkles size={48} color="#64748B" style={{ marginBottom: 16 }} />
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>No Highlights Yet</h2>
+          <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>Highlights will appear here after sessions are analysed.</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>Match Highlights</h2>
+          <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>Select a match to view its highlight reel</p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {sessionsWithHighlights.map(s => {
+            const sHighlights = allHighlights.filter(h => h.sessionId === s.id)
+            const roster = rosters.find(r => r.id === s.rosterId)
+            const isMatch = s.type === 'match'
+
+            // Count by event type
+            const eventCounts: Record<string, number> = {}
+            sHighlights.forEach(h => {
+              eventCounts[h.eventType] = (eventCounts[h.eventType] || 0) + 1
+            })
+
+            return (
+              <button
+                key={s.id}
+                onClick={() => setSelectedSessionId(s.id)}
+                style={{
+                  width: '100%', textAlign: 'left', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 16,
+                  padding: '16px 20px', borderRadius: 12,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+              >
+                {/* Date block */}
+                <div style={{
+                  width: 52, height: 52, borderRadius: 10, flexShrink: 0,
+                  background: isMatch ? 'rgba(74,74,255,0.12)' : 'rgba(16,185,129,0.12)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: isMatch ? COLORS.primary : '#10B981', lineHeight: 1 }}>
+                    {new Date(s.date + 'T00:00:00').getDate()}
+                  </div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: isMatch ? COLORS.primary : '#10B981', textTransform: 'uppercase', marginTop: 1 }}>
+                    {monthAbbr[new Date(s.date + 'T00:00:00').getMonth()]}
+                  </div>
+                </div>
+
+                {/* Match info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                      {s.opponent ? `vs ${s.opponent}` : `${roster?.name || 'Training Session'}`}
+                    </span>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                      background: isMatch ? 'rgba(74,74,255,0.15)' : 'rgba(16,185,129,0.15)',
+                      color: isMatch ? COLORS.primary : '#10B981',
+                      textTransform: 'uppercase', letterSpacing: '0.04em',
+                    }}>
+                      {isMatch ? 'Match' : 'Training'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>
+                    {roster?.name} · {s.competition || formatDateShort(s.date)}
+                  </div>
+                  {/* Event type pills */}
+                  <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+                    {Object.entries(eventCounts).map(([type, count]) => {
+                      const b = getHighlightBadge(type)
+                      return (
+                        <span key={type} style={{
+                          fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6,
+                          background: `${b.color}15`, color: b.color,
+                          display: 'flex', alignItems: 'center', gap: 3,
+                        }}>
+                          <span style={{ fontSize: 12 }}>{b.emoji}</span> {count}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Highlight count + play */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                      {sHighlights.length}
+                    </div>
+                    <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginTop: 2 }}>
+                      clip{sHighlights.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Play size={16} color="#fff" fill="#fff" style={{ marginLeft: 2 }} />
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN PAGE ───────────────────────────────────────────────
 export default function VideoPortalPage() {
   const router = useRouter()
@@ -1165,18 +1483,18 @@ export default function VideoPortalPage() {
   const [highlightView, setHighlightView] = useState<'by_game' | 'reels'>('by_game')
   const [whatsAppOpen, setWhatsAppOpen] = useState(false)
 
-  const rosterFilter = selectedRosterId || 'roster_001'
+  const rosterFilter = selectedRosterId === 'all' ? null : (selectedRosterId || 'roster_001')
 
   const trainingSessions = useMemo(() =>
-    sessions.filter(s => s.academyId === ACADEMY_ID && s.rosterId === rosterFilter && s.status === 'playback_ready')
+    sessions.filter(s => s.academyId === ACADEMY_ID && (!rosterFilter || s.rosterId === rosterFilter) && s.status === 'playback_ready')
       .sort((a, b) => b.date.localeCompare(a.date)), [rosterFilter])
 
   const matchSessions = useMemo(() =>
-    sessions.filter(s => s.academyId === ACADEMY_ID && s.rosterId === rosterFilter && (s.type === 'match' || s.type === 'training_match') && ['analysed', 'complete'].includes(s.status))
+    sessions.filter(s => s.academyId === ACADEMY_ID && (!rosterFilter || s.rosterId === rosterFilter) && (s.type === 'match' || s.type === 'training_match') && ['analysed', 'complete'].includes(s.status))
       .sort((a, b) => b.date.localeCompare(a.date)), [rosterFilter])
 
   const rosterHighlights = useMemo(() => {
-    const rosterSessionIds = sessions.filter(s => s.academyId === ACADEMY_ID && s.rosterId === rosterFilter).map(s => s.id)
+    const rosterSessionIds = sessions.filter(s => s.academyId === ACADEMY_ID && (!rosterFilter || s.rosterId === rosterFilter)).map(s => s.id)
     return highlights.filter(h => rosterSessionIds.includes(h.sessionId)).sort((a, b) => b.timestampSeconds - a.timestampSeconds)
   }, [rosterFilter])
 
@@ -1197,14 +1515,14 @@ export default function VideoPortalPage() {
 
   const rosterReviewItems = pendingReviewItems.filter(item => {
     const s = sessions.find(ss => ss.id === item.sessionId)
-    return s && s.rosterId === selectedRosterId
+    return s && (!rosterFilter || s.rosterId === rosterFilter)
   })
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode; count: number }[] = [
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
     { id: 'training', label: 'Training Footage', icon: <Film size={16} />, count: trainingSessions.length },
     { id: 'matches', label: 'Match Footage', icon: <Clapperboard size={16} />, count: matchSessions.length },
     { id: 'highlights', label: 'Highlights', icon: <Sparkles size={16} />, count: rosterHighlights.length },
-    ...(rosterReviewItems.length > 0 ? [{ id: 'review' as Tab, label: 'Review', icon: <ClipboardList size={16} />, count: rosterReviewItems.length }] : []),
+    { id: 'generator', label: 'Generator', icon: <Search size={16} /> },
   ]
 
   const roster = rosters.find(r => r.id === rosterFilter)
@@ -1245,12 +1563,14 @@ export default function VideoPortalPage() {
           >
             {tab.icon}
             <span>{tab.label}</span>
-            <span style={{
-              fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-              background: activeTab === tab.id ? `${COLORS.primary}20` : 'rgba(255,255,255,0.06)',
-            }}>
-              {tab.count}
-            </span>
+            {tab.count !== undefined && (
+              <span style={{
+                fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                background: activeTab === tab.id ? `${COLORS.primary}20` : 'rgba(255,255,255,0.06)',
+              }}>
+                {tab.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -1317,37 +1637,23 @@ export default function VideoPortalPage() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {selectedSession ? (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <div style={{ padding: '16px 24px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <PillToggle options={[{ id: 'watch' as const, label: 'Watch' }, { id: 'analysis' as const, label: 'Analysis' }]} value={matchView} onChange={setMatchView} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    <div style={{ padding: '0 24px', flexShrink: 0 }}>
+                      <DvrPlayer session={selectedSession} />
+                      <ActionBar />
+                    </div>
+                    <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '0 24px 16px' }}>
+                      <StatsRow session={selectedSession} />
+                      <TimelineEventsPanel session={selectedSession} />
+                    </div>
                   </div>
-                  {matchView === 'watch' && (
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      <div style={{ padding: '0 24px', flexShrink: 0 }}>
-                        <DvrPlayer session={selectedSession} />
-                        <ActionBar />
-                      </div>
-                      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '0 24px 16px' }}>
-                        <StatsRow session={selectedSession} />
-                        <TimelineEventsPanel session={selectedSession} />
-                      </div>
-                    </div>
-                  )}
-                  {matchView === 'analysis' && (
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px' }}>
-                      <MatchAnalysisPanel
-                        session={selectedSession}
-                        onWhatsAppOpen={() => setWhatsAppOpen(true)}
-                        onNavigatePlayer={(playerId) => router.push(`/coach/squad/${playerId}`)}
-                      />
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
                   <div style={{ textAlign: 'center', maxWidth: 400 }}>
                     <Clapperboard size={48} color="#64748B" style={{ marginBottom: 16 }} />
                     <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Match Footage</h2>
-                    <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>Select a match to watch footage or view the full analysis with player scores, heatmaps, and event timeline.</p>
+                    <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>Select a match to watch footage.</p>
                   </div>
                 </div>
               )}
@@ -1355,32 +1661,15 @@ export default function VideoPortalPage() {
           </>
         )}
 
-        {/* ─── HIGHLIGHTS TAB (Full width, no session list) ─── */}
+        {/* ─── HIGHLIGHTS TAB (Match list → Stitched reel) ─── */}
         {activeTab === 'highlights' && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 24px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 16 }}>
-              <PillToggle options={[{ id: 'by_game' as const, label: 'By Game' }, { id: 'reels' as const, label: 'Reels' }]} value={highlightView} onChange={setHighlightView} />
-              <span style={{ fontSize: 12, color: '#64748B' }}>{filteredHighlights.length} highlights</span>
-              <div style={{ flex: 1 }} />
-              <div style={{ position: 'relative' }}>
-                <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 10 }} />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search highlights..."
-                  style={{ padding: '8px 10px 8px 32px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontSize: 12, outline: 'none', width: 220, boxSizing: 'border-box' }} />
-              </div>
-            </div>
-            {highlightView === 'by_game' && (
-              <HighlightsByGame sessionList={highlightSessions} allHighlights={filteredHighlights} onClipClick={setSelectedClip} />
-            )}
-            {highlightView === 'reels' && (
-              <ReelsView allHighlights={filteredHighlights} />
-            )}
-          </div>
+          <HighlightsTab allHighlights={filteredHighlights} matchSessions={highlightSessions} />
         )}
 
-        {/* ─── REVIEW TAB ─── */}
-        {activeTab === 'review' && (
-          <div style={{ flex: 1, overflow: 'auto' }}>
-            <ReviewEmbedded items={rosterReviewItems} />
+        {/* ─── GENERATOR TAB (Full width) ─── */}
+        {activeTab === 'generator' && (
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <HighlightsGenerator darkMode />
           </div>
         )}
       </div>

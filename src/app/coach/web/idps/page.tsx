@@ -140,11 +140,15 @@ export default function IDPsPage() {
   }, [])
 
   const rosterPlayers = useMemo(() => {
+    if (selectedRosterId === 'all') {
+      const allIds = Object.values(rosterPlayerMap).flat()
+      return players.filter(p => allIds.includes(p.id))
+    }
     const ids = rosterPlayerMap[selectedRosterId] || []
     return players.filter(p => ids.includes(p.id))
   }, [selectedRosterId])
 
-  const selectedRoster = rosters.find(r => r.id === selectedRosterId)
+  const selectedRoster = rosters.find(r => r.id === (selectedRosterId === 'all' ? rosters[0]?.id : selectedRosterId))
 
   const getStatus = (playerId: string): IDPStatus => {
     if (sentIds.has(playerId)) return 'sent'
@@ -168,7 +172,9 @@ export default function IDPsPage() {
     const stats = playerSeasonStats.find(s => s.playerId === selectedPlayerId)
     const radar = playerRadarData[selectedPlayerId] || []
     const devData = developmentReportData[selectedPlayerId]
-    const attendance = attendanceData[selectedRosterId]?.find(a => a.playerId === selectedPlayerId)
+    const attendance = selectedRosterId === 'all'
+      ? Object.values(attendanceData).flat().find(a => a.playerId === selectedPlayerId)
+      : attendanceData[selectedRosterId]?.find(a => a.playerId === selectedPlayerId)
     const playerHighlights = highlights.filter(h => h.playerId === selectedPlayerId)
     const latestFeedback = coachFeedbackHistory.filter(f => f.playerId === selectedPlayerId).sort((a, b) => b.date.localeCompare(a.date))[0]
 

@@ -18,7 +18,7 @@ export default function CoachChatContainer() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: 'calc(100vh - 108px)',
+      height: '100%',
       background: '#fff', overflow: 'hidden',
     }}>
       {/* Header */}

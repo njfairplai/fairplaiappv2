@@ -2,13 +2,14 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Sparkles, Film, Users, FileText, ChevronDown, Smartphone } from 'lucide-react'
+import { Sparkles, Film, Users, FileText, ChevronDown, Smartphone, BarChart3 } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 
 const tabs = [
   { href: '/coach/web', label: "Coach's Hub", icon: Sparkles, exact: true },
   { href: '/coach/web/video', label: 'Video', icon: Film },
+  { href: '/coach/web/analysis', label: 'Analysis', icon: BarChart3 },
   { href: '/coach/web/squad', label: 'Squad', icon: Users },
   { href: '/coach/web/idps', label: 'IDPs', icon: FileText },
 ]
@@ -19,7 +20,7 @@ export default function CoachWebLayout({ children }: { children: React.ReactNode
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6FC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6FC', maxWidth: '100vw', overflowX: 'hidden' }}>
       {/* Header bar */}
       <header style={{
         height: 60, flexShrink: 0,
@@ -44,6 +45,7 @@ export default function CoachWebLayout({ children }: { children: React.ReactNode
                 appearance: 'none', WebkitAppearance: 'none',
               }}
             >
+              <option value="all" style={{ background: '#0A0E1A', color: '#F8FAFC' }}>All Teams</option>
               {availableRosters.map(r => (
                 <option key={r.id} value={r.id} style={{ background: '#0A0E1A', color: '#F8FAFC' }}>
                   {r.name}

@@ -13,7 +13,7 @@ const TeamContext = createContext<TeamContextType | null>(null)
 export function TeamProvider({ children }: { children: ReactNode }) {
   const coach = coaches[0]
   const available = rosters.filter(r => coach.rosterIds.includes(r.id))
-  const [selectedRosterId, setSelected] = useState(available[0]?.id || '')
+  const [selectedRosterId, setSelected] = useState('all')
 
   useEffect(() => {
     const stored = localStorage.getItem('fairplai_coach_team')

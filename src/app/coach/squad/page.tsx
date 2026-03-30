@@ -1,8 +1,8 @@
 'use client'
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { GitCompare, Activity } from 'lucide-react'
+import { GitCompare, ArrowUpDown, Filter } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { COLORS } from '@/lib/constants'
 import { players, rosters, squadScores, playerStandoutMetrics, playerWorkloads, playerKeyMetrics } from '@/lib/mockData'
@@ -16,7 +16,33 @@ const rosterPlayerMap: Record<string, string[]> = {
   roster_002: ['player_009', 'player_010', 'player_011', 'player_012', 'player_013', 'player_014', 'player_015', 'player_016'],
 }
 
-type SortKey = 'score' | 'position'
+type SortKey = 'score' | 'name' | 'position' | 'jersey'
+type PositionFilter = 'all' | 'GK' | 'DEF' | 'MID' | 'FWD'
+
+const POSITION_FILTERS: { key: PositionFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'GK', label: 'GK' },
+  { key: 'DEF', label: 'DEF' },
+  { key: 'MID', label: 'MID' },
+  { key: 'FWD', label: 'FWD' },
+]
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'score', label: 'Score' },
+  { key: 'name', label: 'Name' },
+  { key: 'position', label: 'Position' },
+  { key: 'jersey', label: 'Jersey #' },
+]
+
+function matchesPositionFilter(player: Player, filter: PositionFilter): boolean {
+  if (filter === 'all') return true
+  const pos = player.position[0] || ''
+  if (filter === 'GK') return pos === 'GK'
+  if (filter === 'DEF') return ['CB', 'LB', 'RB'].includes(pos)
+  if (filter === 'MID') return ['CM', 'AM', 'DM', 'CDM', 'CAM', 'LM', 'RM'].includes(pos)
+  if (filter === 'FWD') return ['ST', 'CF', 'LW', 'RW'].includes(pos)
+  return true
+}
 
 function getPositionColor(position: string): string {
   if (position === 'GK') return '#D97706'
@@ -42,26 +68,50 @@ function getScoreColor(score: number): string {
 
 export default function SquadPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const isWeb = pathname.startsWith('/coach/web')
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
-  const [sortBy] = useState<SortKey>('score')
-  const [riskView, setRiskView] = useState(false)
+  const [sortBy, setSortBy] = useState<SortKey>('score')
+  const [posFilter, setPosFilter] = useState<PositionFilter>('all')
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
   const handleImgError = useCallback((playerId: string) => {
     setImgErrors(prev => ({ ...prev, [playerId]: true }))
   }, [])
   const [animatedScores, setAnimatedScores] = useState<Record<string, number>>({})
 
-  const selectedRoster = rosters.find(r => r.id === selectedRosterId) || rosters[0]
+  const effectiveRosterId = selectedRosterId === 'all' ? rosters[0]?.id : selectedRosterId
+  const selectedRoster = rosters.find(r => r.id === effectiveRosterId) || rosters[0]
 
   const rosterPlayers = useMemo(() => {
+    if (selectedRosterId === 'all') {
+      const allIds = Object.values(rosterPlayerMap).flat()
+      return players.filter(p => allIds.includes(p.id))
+    }
     const ids = rosterPlayerMap[selectedRosterId] || []
     return players.filter(p => ids.includes(p.id))
   }, [selectedRosterId])
 
+  const filteredPlayers = useMemo(() => {
+    return rosterPlayers.filter(p => matchesPositionFilter(p, posFilter))
+  }, [rosterPlayers, posFilter])
+
   const sortedPlayers = useMemo(() => {
-    const arr = [...rosterPlayers]
-    return arr.sort((a, b) => (squadScores[b.id]?.compositeScore ?? 0) - (squadScores[a.id]?.compositeScore ?? 0))
-  }, [rosterPlayers])
+    const arr = [...filteredPlayers]
+    switch (sortBy) {
+      case 'score':
+        return arr.sort((a, b) => (squadScores[b.id]?.compositeScore ?? 0) - (squadScores[a.id]?.compositeScore ?? 0))
+      case 'name':
+        return arr.sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`))
+      case 'position': {
+        const posOrder: Record<string, number> = { GK: 0, CB: 1, LB: 1, RB: 1, CDM: 2, CM: 2, DM: 2, AM: 3, CAM: 3, LM: 3, RM: 3, LW: 4, RW: 4, ST: 4, CF: 4 }
+        return arr.sort((a, b) => (posOrder[a.position[0]] ?? 5) - (posOrder[b.position[0]] ?? 5))
+      }
+      case 'jersey':
+        return arr.sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+      default:
+        return arr
+    }
+  }, [filteredPlayers, sortBy])
 
   const playerRiskMap = useMemo(() => {
     const map: Record<string, { acwr: number; riskLevel: string; riskLabel: string; strain: string }> = {}
@@ -121,62 +171,72 @@ export default function SquadPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF' }}>Squad</h1>
-            <p style={{ margin: '2px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{selectedRoster.name}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{selectedRosterId === 'all' ? 'All Teams' : selectedRoster.name}</p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setRiskView(v => !v)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: riskView ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.1)',
-                border: `1px solid ${riskView ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.2)'}`,
-                borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
-                color: riskView ? '#EF4444' : '#fff', fontSize: 13, fontWeight: 600,
-              }}
-            >
-              <Activity size={14} /> Risk
-            </button>
-            <button
-              onClick={() => router.push('/coach/squad/compare')}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
-                color: '#fff', fontSize: 13, fontWeight: 600,
-              }}
-            >
-              <GitCompare size={14} /> Compare
-            </button>
-          </div>
+          <button
+            onClick={() => router.push(isWeb ? '/coach/web/squad/compare' : '/coach/squad/compare')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+              color: '#fff', fontSize: 13, fontWeight: 600,
+            }}
+          >
+            <GitCompare size={14} /> Compare
+          </button>
         </div>
+      </div>
 
-        {/* Team toggle */}
-        {availableRosters.length > 1 && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            {availableRosters.map(r => {
-              const isActive = r.id === selectedRosterId
+      {/* SORT & FILTER BAR */}
+      <div style={{ padding: '12px 16px 4px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Position filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Filter size={14} color="#94a3b8" />
+          <div style={{ display: 'flex', gap: 4 }}>
+            {POSITION_FILTERS.map(f => {
+              const isActive = f.key === posFilter
               return (
                 <button
-                  key={r.id}
-                  onClick={() => setSelectedRosterId(r.id)}
+                  key={f.key}
+                  onClick={() => setPosFilter(f.key)}
                   style={{
-                    padding: '6px 14px', borderRadius: 20, fontSize: 12,
-                    fontWeight: isActive ? 700 : 500,
-                    background: isActive ? '#fff' : 'rgba(255,255,255,0.1)',
-                    color: isActive ? '#0A0E1A' : 'rgba(255,255,255,0.5)',
-                    border: isActive ? 'none' : '1px solid rgba(255,255,255,0.12)',
-                    cursor: 'pointer',
+                    padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                    border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                    background: isActive ? COLORS.primary : '#E8EAF0',
+                    color: isActive ? '#fff' : '#64748B',
                   }}
                 >
-                  {r.name}
+                  {f.label}
                 </button>
               )
             })}
           </div>
-        )}
+        </div>
 
+        {/* Sort options */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ArrowUpDown size={14} color="#94a3b8" />
+          <div style={{ display: 'flex', gap: 4 }}>
+            {SORT_OPTIONS.map(s => {
+              const isActive = s.key === sortBy
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setSortBy(s.key)}
+                  style={{
+                    padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                    border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                    background: isActive ? '#1E293B' : '#E8EAF0',
+                    color: isActive ? '#fff' : '#64748B',
+                  }}
+                >
+                  {s.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
-
 
       {/* SQUAD GRID */}
       <div
@@ -217,7 +277,7 @@ export default function SquadPage() {
             >
             <div
               className="squad-card-tap"
-              onClick={() => router.push(`/coach/squad/${player.id}`)}
+              onClick={() => router.push(isWeb ? `/coach/web/player/${player.id}` : `/coach/squad/${player.id}`)}
               style={{
                 height: 230,
                 borderRadius: 16,
@@ -315,7 +375,7 @@ export default function SquadPage() {
               </div>
 
               {/* ALERT DOT (performance) */}
-              {isFlagged && !riskView && (
+              {isFlagged && (
                 <div
                   style={{
                     position: 'absolute',
@@ -332,35 +392,19 @@ export default function SquadPage() {
               )}
 
               {/* RISK DOT */}
-              {playerRiskMap[player.id] && (
+              {playerRiskMap[player.id] && playerRiskMap[player.id].riskLevel !== 'low' && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: riskView ? 10 : 36,
-                    left: riskView ? 'auto' : 10,
-                    right: riskView ? 44 : 'auto',
+                    top: 36,
+                    left: 10,
                     zIndex: 3,
-                    width: riskView ? 'auto' : 8,
-                    height: riskView ? 'auto' : 8,
-                    borderRadius: riskView ? 6 : '50%',
-                    padding: riskView ? '3px 8px' : 0,
-                    background: riskView
-                      ? `${RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS]}30`
-                      : RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS],
-                    display: riskView ? 'flex' : (playerRiskMap[player.id].riskLevel === 'low' ? 'none' : 'block'),
-                    alignItems: 'center',
-                    gap: 4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS],
                   }}
-                >
-                  {riskView && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 700,
-                      color: RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS],
-                    }}>
-                      {playerRiskMap[player.id].riskLabel}
-                    </span>
-                  )}
-                </div>
+                />
               )}
 
               {/* BOTTOM CONTENT */}
@@ -421,24 +465,9 @@ export default function SquadPage() {
                 <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 2 }}>
                   Avg: {avgScore}
                 </div>
-                {!riskView && playerStandoutMetrics[player.id] && (
+                {playerStandoutMetrics[player.id] && (
                   <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 3 }}>
                     {playerStandoutMetrics[player.id]}
-                  </div>
-                )}
-                {riskView && playerRiskMap[player.id] && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: RISK_COLORS[playerRiskMap[player.id].riskLevel as keyof typeof RISK_COLORS] }}>
-                      ACWR {playerRiskMap[player.id].acwr.toFixed(2)}
-                    </span>
-                    <span style={{
-                      fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
-                      background: playerRiskMap[player.id].strain === 'high' ? 'rgba(239,68,68,0.2)' : playerRiskMap[player.id].strain === 'moderate' ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)',
-                      color: playerRiskMap[player.id].strain === 'high' ? '#EF4444' : playerRiskMap[player.id].strain === 'moderate' ? '#F59E0B' : '#10B981',
-                      textTransform: 'capitalize',
-                    }}>
-                      {playerRiskMap[player.id].strain} strain
-                    </span>
                   </div>
                 )}
               </div>

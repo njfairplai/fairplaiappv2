@@ -52,9 +52,13 @@ export default function ComparePlayersPage() {
   const [modalSearch, setModalSearch] = useState('')
   const modalRef = useRef<HTMLDivElement>(null)
 
-  const selectedRoster = rosters.find(r => r.id === selectedRosterId) || rosters[0]
+  const selectedRoster = rosters.find(r => r.id === (selectedRosterId === 'all' ? rosters[0]?.id : selectedRosterId)) || rosters[0]
 
   const rosterPlayers = useMemo(() => {
+    if (selectedRosterId === 'all') {
+      const allIds = Object.values(rosterPlayerMap).flat()
+      return players.filter(p => allIds.includes(p.id))
+    }
     const ids = rosterPlayerMap[selectedRosterId] || []
     return players.filter(p => ids.includes(p.id))
   }, [selectedRosterId])

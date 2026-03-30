@@ -37,8 +37,8 @@ export default function CoachHubPage() {
     setAttendanceMarked(marked)
   }, [])
 
-  const roster = rosters.find(r => r.id === selectedRosterId)
-  const rosterSessions = sessions.filter(s => s.rosterId === selectedRosterId)
+  const roster = rosters.find(r => r.id === (selectedRosterId === 'all' ? rosters[0]?.id : selectedRosterId)) || rosters[0]
+  const rosterSessions = sessions.filter(s => selectedRosterId === 'all' || s.rosterId === selectedRosterId)
 
   // Sessions tab: upcoming + recent sessions
   const upcomingSessions = rosterSessions
