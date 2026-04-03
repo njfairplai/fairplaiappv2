@@ -111,7 +111,7 @@ function buildWelcomeMessages(progress: SetupProgress): ChatMessage[] {
             { label: 'Add a coach', action: 'add_coach' },
             { label: 'Add players', action: 'add_player' },
             { label: 'Schedule a session', action: 'schedule_session' },
-            { label: 'Create program', action: 'add_program' },
+            { label: 'Create recurring schedule', action: 'add_program' },
             { label: 'View stats', action: 'view_stats' },
           ],
         },
@@ -362,7 +362,7 @@ export function CommandCentreProvider({ children }: { children: React.ReactNode 
           existingSessions.push(...generatedSessions)
           localStorage.setItem('fairplai_adhoc_sessions', JSON.stringify(existingSessions))
         } catch { /* ignore */ }
-        confirmText = `Program "${prog.name}" created with ${generatedSessions.length} sessions generated.`
+        confirmText = `Recurring schedule "${prog.name}" created with ${generatedSessions.length} sessions generated.`
         break
       }
       default:
@@ -397,7 +397,7 @@ export function CommandCentreProvider({ children }: { children: React.ReactNode 
       add_coach: "I'd like to add a coach",
       create_roster: "I want to create a squad",
       schedule_session: "I'd like to schedule a session",
-      add_program: "I want to create a training program",
+      add_program: "I want to create a recurring schedule",
       import_csv: "I want to import players from CSV",
       view_stats: "Show me the academy stats",
       check_credits: "What's my credit balance?",
@@ -405,7 +405,7 @@ export function CommandCentreProvider({ children }: { children: React.ReactNode 
       list_rosters: "Show me the squads",
       list_coaches: "Show me the coaches",
       list_sessions: "Show me upcoming sessions",
-      list_programs: "Show me the programs",
+      list_programs: "Show me the recurring schedules",
     }
     const text = actionLabels[action] || action
     sendMessage(text)

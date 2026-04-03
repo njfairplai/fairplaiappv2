@@ -7,6 +7,7 @@ import {
   Search, Shirt,
 } from 'lucide-react'
 import { COLORS } from '@/lib/constants'
+import { useCoachTheme } from '@/contexts/CoachThemeContext'
 
 // ─── MOCK DATA (static for layout purposes) ──────────────────
 const upcoming = [
@@ -74,14 +75,15 @@ type Concept = 'hybrid' | 'A' | 'C' | 'D'
 
 export default function ConceptsPage() {
   const [active, setActive] = useState<Concept>('hybrid')
+  const { colors } = useCoachTheme()
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#0A0E1A', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: colors.pageBg, overflow: 'hidden' }}>
       {/* Concept Switcher */}
       <div style={{
         padding: '16px 28px', flexShrink: 0,
         display: 'flex', alignItems: 'center', gap: 8,
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: `1px solid ${colors.cardBorder}`,
       }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginRight: 8 }}>CONCEPT:</span>
         {(['hybrid', 'A', 'C', 'D'] as Concept[]).map(c => (
@@ -117,6 +119,7 @@ export default function ConceptsPage() {
 // HYBRID: Dashboard Stats + Hero + Clean Table (Training-first)
 // ═══════════════════════════════════════════════════════════════
 function ConceptHybrid() {
+  const { colors } = useCoachTheme()
   const [selectedTeam, setSelectedTeam] = useState('all')
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date')
   const [filterType, setFilterType] = useState<'all' | 'training' | 'competitive'>('all')
@@ -168,7 +171,7 @@ function ConceptHybrid() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
         <div style={{
           padding: '16px 20px', borderRadius: 14,
-          background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+          background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
           display: 'flex', alignItems: 'center', gap: 14,
         }}>
           <div style={{
@@ -178,14 +181,14 @@ function ConceptHybrid() {
             <Target size={18} color={COLORS.primary} />
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC' }}>{totalSessions}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary }}>{totalSessions}</div>
             <div style={{ fontSize: 11, color: '#64748B' }}>Sessions This Month</div>
           </div>
         </div>
 
         <div style={{
           padding: '16px 20px', borderRadius: 14,
-          background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+          background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
           display: 'flex', alignItems: 'center', gap: 14,
         }}>
           <div style={{
@@ -195,14 +198,14 @@ function ConceptHybrid() {
             <BarChart3 size={18} color="#10B981" />
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC' }}>{avgScore}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary }}>{avgScore}</div>
             <div style={{ fontSize: 11, color: '#64748B' }}>Avg Squad Score</div>
           </div>
         </div>
 
         <div style={{
           padding: '16px 20px', borderRadius: 14,
-          background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+          background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
           display: 'flex', alignItems: 'center', gap: 14,
         }}>
           <div style={{
@@ -212,7 +215,7 @@ function ConceptHybrid() {
             <TrendingUp size={18} color="#8B5CF6" />
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC' }}>+3.2</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary }}>+3.2</div>
             <div style={{ fontSize: 11, color: '#64748B' }}>Score Trend (30d)</div>
           </div>
         </div>
@@ -221,7 +224,7 @@ function ConceptHybrid() {
       {/* ── HERO: NEXT SESSION ── */}
       {nextSession && (
         <div style={{
-          background: 'linear-gradient(135deg, #1a1f3a 0%, #0F1629 50%, #1a1230 100%)',
+          background: colors.heroBg,
           borderRadius: 16, padding: '24px 28px', marginBottom: 28,
           border: `1px solid ${nextSession.type === 'competitive' ? `${COLORS.primary}20` : 'rgba(16,185,129,0.15)'}`,
           position: 'relative', overflow: 'hidden',
@@ -248,7 +251,7 @@ function ConceptHybrid() {
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <h2 style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC', margin: '0 0 6px' }}>
+                <h2 style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary, margin: '0 0 6px' }}>
                   {nextSession.type === 'competitive'
                     ? `vs ${(nextSession as any).opponent}`
                     : `${nextSession.team} — Training Match`
@@ -290,7 +293,7 @@ function ConceptHybrid() {
       {/* ── SESSIONS TABLE ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         {/* History / Upcoming Toggle (left) */}
-        <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3 }}>
+        <div style={{ display: 'flex', gap: 2, background: colors.controlBg, borderRadius: 8, padding: 3 }}>
           {[
             { id: 'history' as const, label: 'History', count: historySessions.length },
             { id: 'upcoming' as const, label: 'Upcoming', count: upcomingSessions.length },
@@ -322,7 +325,7 @@ function ConceptHybrid() {
         {/* Filter / Sort Bar (right) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Type Filter */}
-          <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: 2 }}>
+          <div style={{ display: 'flex', gap: 2, background: colors.controlBg, borderRadius: 6, padding: 2 }}>
             {[
               { id: 'all' as const, label: 'All' },
               { id: 'training' as const, label: 'Training' },
@@ -349,7 +352,7 @@ function ConceptHybrid() {
               onClick={() => setSortBy(sortBy === 'date' ? 'score' : 'date')}
               style={{
                 padding: '5px 10px', borderRadius: 6, border: 'none',
-                background: 'rgba(255,255,255,0.04)', color: '#94a3b8',
+                background: colors.controlBg, color: '#94a3b8',
                 fontSize: 11, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 4,
               }}
@@ -362,13 +365,13 @@ function ConceptHybrid() {
 
       <div style={{
         borderRadius: 12, overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: `1px solid ${colors.cardBorder}`,
       }}>
         {/* Table Header */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: tableView === 'history' ? '60px 80px 1fr 100px 60px 70px' : '60px 80px 1fr 100px 100px',
-          padding: '10px 16px', background: 'rgba(255,255,255,0.03)',
+          padding: '10px 16px', background: colors.tableHeaderBg,
           fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5,
         }}>
           <span>Date</span>
@@ -393,8 +396,8 @@ function ConceptHybrid() {
           <div key={s.id} style={{
             display: 'grid', gridTemplateColumns: '60px 80px 1fr 100px 60px 70px',
             padding: '12px 16px', alignItems: 'center',
-            background: i % 2 === 0 ? '#0F1629' : 'rgba(255,255,255,0.015)',
-            borderTop: '1px solid rgba(255,255,255,0.04)',
+            background: i % 2 === 0 ? colors.tableRowEven : colors.tableRowOdd,
+            borderTop: `1px solid ${colors.tableBorder}`,
             cursor: s.status === 'analysed' ? 'pointer' : 'default',
           }}>
             <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{s.date}</span>
@@ -409,7 +412,7 @@ function ConceptHybrid() {
               </span>
             </div>
             <div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>
                 {s.type === 'competitive' ? `vs ${(s as any).opponent}` : `${s.team} — Team A vs Team B`}
               </span>
               {s.type === 'competitive' && (s as any).comp && (
@@ -431,7 +434,7 @@ function ConceptHybrid() {
             <div style={{ textAlign: 'right' }}>
               {s.top ? (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#F8FAFC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.top}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: colors.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.top}</div>
                   {(s as any).topScore && <div style={{ fontSize: 10, color: '#64748B' }}>{(s as any).topScore}</div>}
                 </div>
               ) : (
@@ -446,8 +449,8 @@ function ConceptHybrid() {
           <div key={s.id} style={{
             display: 'grid', gridTemplateColumns: '60px 80px 1fr 100px 100px',
             padding: '12px 16px', alignItems: 'center',
-            background: i % 2 === 0 ? '#0F1629' : 'rgba(255,255,255,0.015)',
-            borderTop: '1px solid rgba(255,255,255,0.04)',
+            background: i % 2 === 0 ? colors.tableRowEven : colors.tableRowOdd,
+            borderTop: `1px solid ${colors.tableBorder}`,
           }}>
             <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{s.date}</span>
             <div>
@@ -461,7 +464,7 @@ function ConceptHybrid() {
               </span>
             </div>
             <div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>
                 {s.type === 'competitive' ? `vs ${(s as any).opponent}` : `${s.team} — Training Match`}
               </span>
               {s.type === 'competitive' && (s as any).comp && (
@@ -504,11 +507,12 @@ function ConceptHybrid() {
 // CONCEPT A: "Next Match" Hero + Results Board
 // ═══════════════════════════════════════════════════════════════
 function ConceptA() {
+  const { colors } = useCoachTheme()
   return (
     <div style={{ padding: '24px 28px' }}>
       {/* ── NEXT MATCH HERO ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #1a1f3a 0%, #0F1629 50%, #1a1230 100%)',
+        background: colors.heroBg,
         borderRadius: 18,
         padding: '28px 32px',
         marginBottom: 24,
@@ -535,7 +539,7 @@ function ConceptA() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: '#F8FAFC', margin: '0 0 6px' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: colors.textPrimary, margin: '0 0 6px' }}>
                 vs Al Wahda FC
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, color: '#94a3b8' }}>
@@ -577,9 +581,9 @@ function ConceptA() {
             {upcoming.slice(1).map(m => (
               <div key={m.id} style={{
                 flex: 1, padding: '14px 16px', borderRadius: 12,
-                background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+                background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
               }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC', marginBottom: 4 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: colors.textPrimary, marginBottom: 4 }}>
                   vs {m.opponent}
                 </div>
                 <div style={{ fontSize: 12, color: '#64748B' }}>
@@ -598,12 +602,12 @@ function ConceptA() {
 
       <div style={{
         borderRadius: 14, overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: `1px solid ${colors.cardBorder}`,
       }}>
         {/* Header */}
         <div style={{
           display: 'grid', gridTemplateColumns: '60px 1fr 100px 60px 60px',
-          padding: '10px 16px', background: 'rgba(255,255,255,0.03)',
+          padding: '10px 16px', background: colors.tableHeaderBg,
           fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5,
         }}>
           <span>Date</span>
@@ -617,12 +621,12 @@ function ConceptA() {
           <div key={m.id} style={{
             display: 'grid', gridTemplateColumns: '60px 1fr 100px 60px 60px',
             padding: '12px 16px', alignItems: 'center',
-            background: i % 2 === 0 ? '#0F1629' : 'rgba(255,255,255,0.015)',
-            borderTop: '1px solid rgba(255,255,255,0.04)',
+            background: i % 2 === 0 ? colors.tableRowEven : colors.tableRowOdd,
+            borderTop: `1px solid ${colors.tableBorder}`,
             cursor: m.status === 'analysed' ? 'pointer' : 'default',
           }}>
             <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{m.date}</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#F8FAFC' }}>vs {m.opponent}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>vs {m.opponent}</span>
             <div style={{ textAlign: 'center' }}>
               {m.status === 'analysed' && (
                 <span style={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>Analysed</span>
@@ -667,6 +671,7 @@ function ConceptA() {
 // CONCEPT C: Dashboard Stats + Card Grid
 // ═══════════════════════════════════════════════════════════════
 function ConceptC() {
+  const { colors } = useCoachTheme()
   const analysed = history.filter(h => h.status === 'analysed')
   const wins = analysed.filter(h => h.result === 'W').length
   const avgScore = analysed.length > 0 ? Math.round(analysed.reduce((s, h) => s + (h.score || 0), 0) / analysed.length) : 0
@@ -683,7 +688,7 @@ function ConceptC() {
         ].map((stat, i) => (
           <div key={i} style={{
             padding: '18px 20px', borderRadius: 14,
-            background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+            background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <div style={{
@@ -695,7 +700,7 @@ function ConceptC() {
               </div>
               <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</span>
             </div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#F8FAFC' }}>{stat.value}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: colors.textPrimary }}>{stat.value}</div>
           </div>
         ))}
       </div>
@@ -709,14 +714,14 @@ function ConceptC() {
           {upcoming.map((m, i) => (
             <div key={m.id} style={{
               minWidth: 240, padding: '18px 20px', borderRadius: 14,
-              background: i === 0 ? 'linear-gradient(135deg, #1a1f3a, #0F1629)' : '#0F1629',
+              background: i === 0 ? colors.heroBg : colors.cardBg,
               border: `1px solid ${i === 0 ? `${COLORS.primary}30` : 'rgba(255,255,255,0.06)'}`,
               flexShrink: 0,
             }}>
               <div style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>
                 {m.date} at {m.time}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#F8FAFC', marginBottom: 4 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, marginBottom: 4 }}>
                 vs {m.opponent}
               </div>
               <div style={{ fontSize: 11, color: '#475569' }}>
@@ -739,7 +744,7 @@ function ConceptC() {
         {history.map(m => (
           <div key={m.id} style={{
             padding: '18px 20px', borderRadius: 14,
-            background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+            background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
             cursor: m.status === 'analysed' ? 'pointer' : 'default',
             opacity: m.status === 'analysed' ? 1 : 0.6,
           }}>
@@ -763,7 +768,7 @@ function ConceptC() {
               )}
             </div>
 
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#F8FAFC', marginBottom: 8 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, marginBottom: 8 }}>
               vs {m.opponent}
             </div>
 
@@ -776,14 +781,14 @@ function ConceptC() {
                 {m.top && (
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 10, color: '#475569', marginBottom: 2 }}>Top Performer</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>{m.top}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>{m.top}</div>
                   </div>
                 )}
               </div>
             ) : (
               <div style={{
                 height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                borderRadius: 8, background: 'rgba(255,255,255,0.03)',
+                borderRadius: 8, background: colors.tableHeaderBg,
                 fontSize: 12, color: '#475569',
               }}>
                 {m.status === 'processing' ? 'Analysis in progress...' : 'Tap to analyse'}
@@ -800,6 +805,7 @@ function ConceptC() {
 // CONCEPT D: Calendar View
 // ═══════════════════════════════════════════════════════════════
 function ConceptD() {
+  const { colors } = useCoachTheme()
   const [selectedMonth] = useState('March 2026')
 
   // Build a proper calendar grid for March 2026 (starts on Sunday)
@@ -844,7 +850,7 @@ function ConceptD() {
             }}>
               <ChevronLeft size={16} color="#94a3b8" />
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#F8FAFC', margin: 0 }}>{selectedMonth}</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: colors.textPrimary, margin: 0 }}>{selectedMonth}</h2>
             <div style={{
               width: 32, height: 32, borderRadius: 8,
               background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -887,7 +893,7 @@ function ConceptD() {
         {/* Calendar Grid */}
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1,
-          background: 'rgba(255,255,255,0.03)', borderRadius: 14, overflow: 'hidden',
+          background: colors.tableHeaderBg, borderRadius: 14, overflow: 'hidden',
         }}>
           {cells.map((cell, i) => {
             const hasMatch = cell.match
@@ -900,7 +906,7 @@ function ConceptD() {
             return (
               <div key={i} style={{
                 minHeight: 80, padding: '6px 8px',
-                background: cell.day ? '#0F1629' : 'rgba(255,255,255,0.01)',
+                background: cell.day ? colors.cardBg : colors.cardBgAlt,
                 cursor: hasMatch ? 'pointer' : 'default',
                 borderBottom: '1px solid rgba(255,255,255,0.04)',
                 borderRight: '1px solid rgba(255,255,255,0.04)',
@@ -943,13 +949,13 @@ function ConceptD() {
         {/* Next Match */}
         <div style={{
           padding: '18px 20px', borderRadius: 14, marginBottom: 16,
-          background: 'linear-gradient(135deg, #1a1f3a, #0F1629)',
+          background: colors.heroBg,
           border: `1px solid ${COLORS.primary}20`,
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: COLORS.primary, textTransform: 'uppercase', marginBottom: 8 }}>
             Next Match
           </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#F8FAFC', marginBottom: 4 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, marginBottom: 4 }}>
             vs Al Wahda FC
           </div>
           <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>
@@ -967,7 +973,7 @@ function ConceptD() {
         {/* Recent Form */}
         <div style={{
           padding: '18px 20px', borderRadius: 14,
-          background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+          background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
           marginBottom: 16,
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 12 }}>
@@ -993,7 +999,7 @@ function ConceptD() {
         {/* Score Trend */}
         <div style={{
           padding: '18px 20px', borderRadius: 14,
-          background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+          background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 12 }}>
             Score Trend

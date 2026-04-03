@@ -54,11 +54,11 @@ function countSessionsBetween(days: number[], start: string, end: string): numbe
 }
 
 /* ─── component ───────────────────────────────────────────── */
-export default function ProgramsPage() {
+export default function RecurringSessionsPage() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [customPrograms, setCustomPrograms] = useState<any[]>([])
 
-  /* ── Create Program form state ── */
+  /* ── Create Recurring Schedule form state ── */
   const [formName, setFormName] = useState('')
   const [formRoster, setFormRoster] = useState('')
   const [formDays, setFormDays] = useState<number[]>([])
@@ -93,7 +93,7 @@ export default function ProgramsPage() {
     )
 
     if (matchingBookings.length === 0) {
-      return { valid: false, message: 'No active recurring bookings found for this facility and pitch. Please ensure a booking exists before creating a program.' }
+      return { valid: false, message: 'No active recurring bookings found for this facility and pitch. Please ensure a booking exists before creating a schedule.' }
     }
 
     // Check if the selected days overlap with any booking's days
@@ -162,7 +162,7 @@ export default function ProgramsPage() {
   useEffect(() => {
     if (formRoster) {
       const r = rosters.find((r) => r.id === formRoster)
-      if (r) setFormName(`${r.name} — Program`)
+      if (r) setFormName(`${r.name} — Schedule`)
     }
   }, [formRoster])
 
@@ -180,9 +180,9 @@ export default function ProgramsPage() {
     <div style={{ padding: 32 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Programs</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: COLORS.navy, margin: 0 }}>Recurring Sessions</h1>
         <button onClick={() => setPanelOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: COLORS.primary, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-          <Plus size={16} /> Create Program
+          <Plus size={16} /> Create Recurring Schedule
         </button>
       </div>
 
@@ -193,7 +193,7 @@ export default function ProgramsPage() {
       }}>
         <Info size={20} color="#3B82F6" style={{ flexShrink: 0, marginTop: 2 }} />
         <p style={{ fontSize: 14, color: '#1E40AF', margin: 0, lineHeight: 1.5 }}>
-          Programs define your recurring schedule. Sessions are automatically generated from your programs and your facility&apos;s recurring bookings.
+          Recurring sessions define your weekly schedule. Sessions are automatically generated from your schedules and your facility&apos;s bookings.
         </p>
       </div>
 
@@ -278,7 +278,7 @@ export default function ProgramsPage() {
         })}
         {allPrograms.length === 0 && (
           <div style={{ textAlign: 'center', padding: 40, color: COLORS.muted, fontSize: 14 }}>
-            No programs yet. Create one to generate your training schedule.
+            No recurring sessions yet. Create one to generate your training schedule.
           </div>
         )}
       </div>
@@ -289,13 +289,13 @@ export default function ProgramsPage() {
           <div onClick={() => setPanelOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 199 }} />
           <div style={{ position: 'fixed', top: 0, right: 0, width: 440, height: '100vh', background: '#fff', zIndex: 200, boxShadow: SHADOWS.elevated, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: `1px solid #E2E8F0` }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Create Program</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Create Recurring Schedule</h2>
               <button onClick={() => setPanelOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} color={COLORS.muted} /></button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
               {/* Program Name */}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.muted, display: 'block', marginBottom: 6 }}>Program Name <span style={{ color: '#EF4444' }}>*</span></label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.muted, display: 'block', marginBottom: 6 }}>Schedule Name <span style={{ color: '#EF4444' }}>*</span></label>
                 <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="e.g. U12 Red — Spring Term" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, color: COLORS.navy, outline: 'none', boxSizing: 'border-box' }} />
               </div>
 
@@ -453,7 +453,7 @@ export default function ProgramsPage() {
                         localStorage.setItem('fairplai_custom_programs', JSON.stringify(existingPrograms))
                         setCustomPrograms(existingPrograms)
                       } catch { /* ignore */ }
-                      setToast(`Program "${formName}" created with ${previewCount} sessions.`)
+                      setToast(`Recurring schedule "${formName}" created with ${previewCount} sessions.`)
                       setPanelOpen(false)
                       // Reset form
                       setFormName(''); setFormRoster(''); setFormFacilityId(''); setFormPitchId('')
@@ -468,7 +468,7 @@ export default function ProgramsPage() {
                       border: 'none',
                     }}
                   >
-                    Create Program
+                    Create Schedule
                   </button>
                 )
               })()}

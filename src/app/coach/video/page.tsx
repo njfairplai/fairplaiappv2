@@ -3,7 +3,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   Search, Play, Pause, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   Film, Clapperboard, Sparkles, ArrowLeft, MessageCircle,
@@ -25,8 +25,58 @@ import WhatsAppDeliveryPanel from '@/components/shared/WhatsAppDeliveryPanel'
 import HighlightsGenerator from '@/components/coach/HighlightsGenerator'
 import type { Session, Highlight, TimelineEvent, PendingReviewItem } from '@/lib/types'
 import { COLORS } from '@/lib/constants'
+import { useCoachTheme } from '@/contexts/CoachThemeContext'
 
 const ACADEMY_ID = 'academy_001'
+
+// ─── VIDEO THEME (light chrome for web, dark for mobile) ────
+interface VideoThemeColors {
+  chromeBg: string
+  chromeText: string
+  chromeTextMuted: string
+  chromeBorder: string
+  sidebarBg: string
+  cardBg: string
+  cardBgActive: string
+  cardBorder: string
+  cardBorderActive: string
+  tabBg: string
+  tabActiveBorder: string
+  countBg: string
+}
+
+const darkVideoTheme: VideoThemeColors = {
+  chromeBg: COLORS.darkBg,
+  chromeText: '#fff',
+  chromeTextMuted: '#94a3b8',
+  chromeBorder: 'rgba(255,255,255,0.06)',
+  sidebarBg: 'transparent',
+  cardBg: 'rgba(255,255,255,0.04)',
+  cardBgActive: `${COLORS.primary}15`,
+  cardBorder: 'rgba(255,255,255,0.06)',
+  cardBorderActive: `${COLORS.primary}40`,
+  tabBg: 'transparent',
+  tabActiveBorder: COLORS.primary,
+  countBg: 'rgba(255,255,255,0.06)',
+}
+
+const lightVideoTheme: VideoThemeColors = {
+  chromeBg: '#F5F6FC',
+  chromeText: '#0F172A',
+  chromeTextMuted: '#64748B',
+  chromeBorder: '#E8EAED',
+  sidebarBg: '#FFFFFF',
+  cardBg: '#FFFFFF',
+  cardBgActive: `${COLORS.primary}08`,
+  cardBorder: '#E8EAED',
+  cardBorderActive: `${COLORS.primary}40`,
+  tabBg: 'transparent',
+  tabActiveBorder: COLORS.primary,
+  countBg: '#F1F5F9',
+}
+
+const VideoThemeContext = React.createContext<VideoThemeColors>(darkVideoTheme)
+const useVideoTheme = () => React.useContext(VideoThemeContext)
 
 // ─── HELPERS ─────────────────────────────────────────────────
 const monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -105,6 +155,7 @@ type Tab = 'training' | 'matches' | 'highlights' | 'generator'
 
 // ─── REVIEW EMBEDDED ────────────────────────────────────────
 function ReviewEmbedded({ items }: { items: PendingReviewItem[] }) {
+  const vt = useVideoTheme()
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set())
 
   if (items.length === 0) {
@@ -113,8 +164,8 @@ function ReviewEmbedded({ items }: { items: PendingReviewItem[] }) {
         <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
-        <p style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>All caught up</p>
-        <p style={{ fontSize: 13, color: '#94a3b8' }}>No sessions need review right now.</p>
+        <p style={{ fontSize: 16, fontWeight: 700, color: vt.chromeText }}>All caught up</p>
+        <p style={{ fontSize: 13, color: vt.chromeTextMuted }}>No sessions need review right now.</p>
       </div>
     )
   }
@@ -128,8 +179,8 @@ function ReviewEmbedded({ items }: { items: PendingReviewItem[] }) {
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ marginBottom: 8 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Session Review</h3>
-        <p style={{ fontSize: 13, color: '#94a3b8', margin: '4px 0 0' }}>{activeItems.length} item{activeItems.length !== 1 ? 's' : ''} need{activeItems.length === 1 ? 's' : ''} your attention</p>
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: vt.chromeText, margin: 0 }}>Session Review</h3>
+        <p style={{ fontSize: 13, color: vt.chromeTextMuted, margin: '4px 0 0' }}>{activeItems.length} item{activeItems.length !== 1 ? 's' : ''} need{activeItems.length === 1 ? 's' : ''} your attention</p>
       </div>
 
       {activeItems.map(item => {
@@ -139,12 +190,12 @@ function ReviewEmbedded({ items }: { items: PendingReviewItem[] }) {
 
         return (
           <div key={item.id} style={{
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+            background: vt.cardBg, border: `1px solid ${vt.cardBorder}`,
             borderRadius: 12, padding: 16,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: vt.chromeText }}>
                   {roster?.name}{session?.opponent ? ` vs ${session.opponent}` : ''}
                 </span>
                 <span style={{
@@ -237,6 +288,7 @@ function PillToggle<T extends string>({ options, value, onChange }: { options: {
 
 // ─── SIDEBAR SESSION CARD ────────────────────────────────────
 function SessionCard({ session, active, onClick }: { session: Session; active: boolean; onClick: () => void }) {
+  const vt = useVideoTheme()
   const roster = rosters.find(r => r.id === session.rosterId)
   const pitch = pitches.find(p => p.id === session.pitchId)
   const typeColors: Record<string, string> = { match: '#EF4444', drill: '#10B981', training_match: '#F59E0B' }
@@ -246,13 +298,13 @@ function SessionCard({ session, active, onClick }: { session: Session; active: b
       onClick={onClick}
       style={{
         width: '100%', padding: '12px 14px', borderRadius: 10,
-        background: active ? `${COLORS.primary}15` : 'rgba(255,255,255,0.04)',
-        border: `1px solid ${active ? COLORS.primary + '40' : 'rgba(255,255,255,0.06)'}`,
+        background: active ? vt.cardBgActive : vt.cardBg,
+        border: `1px solid ${active ? vt.cardBorderActive : vt.cardBorder}`,
         cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: vt.chromeText }}>
           {roster?.name}{session.opponent ? ` vs ${session.opponent}` : ''}
         </span>
         <span style={{
@@ -264,10 +316,10 @@ function SessionCard({ session, active, onClick }: { session: Session; active: b
           {session.type === 'training_match' ? 'Training Match' : session.type}
         </span>
       </div>
-      <div style={{ fontSize: 11, color: '#94a3b8' }}>
+      <div style={{ fontSize: 11, color: vt.chromeTextMuted }}>
         {formatDateShort(session.date)} · {session.startTime} · {formatDuration(session.startTime, session.endTime)}
       </div>
-      {pitch && <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{pitch.name}</div>}
+      {pitch && <div style={{ fontSize: 11, color: vt.chromeTextMuted, marginTop: 2 }}>{pitch.name}</div>}
     </button>
   )
 }
@@ -1323,6 +1375,7 @@ function HighlightsTab({ allHighlights, matchSessions }: {
   allHighlights: Highlight[]
   matchSessions: Session[]
 }) {
+  const vt = useVideoTheme()
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
 
   // Get sessions that have highlights, sorted by date desc
@@ -1353,8 +1406,8 @@ function HighlightsTab({ allHighlights, matchSessions }: {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
         <div style={{ textAlign: 'center' }}>
           <Sparkles size={48} color="#64748B" style={{ marginBottom: 16 }} />
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>No Highlights Yet</h2>
-          <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>Highlights will appear here after sessions are analysed.</p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: vt.chromeText, margin: '0 0 8px' }}>No Highlights Yet</h2>
+          <p style={{ fontSize: 14, color: vt.chromeTextMuted, margin: 0 }}>Highlights will appear here after sessions are analysed.</p>
         </div>
       </div>
     )
@@ -1364,8 +1417,8 @@ function HighlightsTab({ allHighlights, matchSessions }: {
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <div style={{ marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>Match Highlights</h2>
-          <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>Select a match to view its highlight reel</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: vt.chromeText, margin: '0 0 4px' }}>Match Highlights</h2>
+          <p style={{ fontSize: 13, color: vt.chromeTextMuted, margin: 0 }}>Select a match to view its highlight reel</p>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1388,12 +1441,12 @@ function HighlightsTab({ allHighlights, matchSessions }: {
                   width: '100%', textAlign: 'left', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 16,
                   padding: '16px 20px', borderRadius: 12,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: vt.cardBg,
+                  border: `1px solid ${vt.cardBorder}`,
                   transition: 'all 0.15s ease',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = COLORS.primary + '40' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = vt.cardBorder }}
               >
                 {/* Date block */}
                 <div style={{
@@ -1412,7 +1465,7 @@ function HighlightsTab({ allHighlights, matchSessions }: {
                 {/* Match info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: vt.chromeText }}>
                       {s.opponent ? `vs ${s.opponent}` : `${roster?.name || 'Training Session'}`}
                     </span>
                     <span style={{
@@ -1447,19 +1500,19 @@ function HighlightsTab({ allHighlights, matchSessions }: {
                 {/* Highlight count + play */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: vt.chromeText, lineHeight: 1 }}>
                       {sHighlights.length}
                     </div>
-                    <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginTop: 2 }}>
+                    <div style={{ fontSize: 10, color: vt.chromeTextMuted, fontWeight: 600, marginTop: 2 }}>
                       clip{sHighlights.length !== 1 ? 's' : ''}
                     </div>
                   </div>
                   <div style={{
                     width: 40, height: 40, borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                    background: `${COLORS.primary}12`, border: `1px solid ${COLORS.primary}30`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <Play size={16} color="#fff" fill="#fff" style={{ marginLeft: 2 }} />
+                    <Play size={16} color={COLORS.primary} fill={COLORS.primary} style={{ marginLeft: 2 }} />
                   </div>
                 </div>
               </button>
@@ -1474,6 +1527,10 @@ function HighlightsTab({ allHighlights, matchSessions }: {
 // ─── MAIN PAGE ───────────────────────────────────────────────
 export default function VideoPortalPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const isWeb = pathname.startsWith('/coach/web')
+  const { mode: themeMode } = useCoachTheme()
+  const videoTheme = isWeb && themeMode === 'light' ? lightVideoTheme : darkVideoTheme
   const { selectedRosterId } = useTeam()
   const [activeTab, setActiveTab] = useState<Tab>('training')
   const [search, setSearch] = useState('')
@@ -1531,19 +1588,22 @@ export default function VideoPortalPage() {
   const whatsAppSession = selectedSession ? { id: selectedSession.id, rosterId: selectedSession.rosterId, opponent: selectedSession.opponent, date: selectedSession.date, type: selectedSession.type } : null
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: COLORS.darkBg, color: '#fff', overflow: 'hidden' }}>
+    <VideoThemeContext.Provider value={videoTheme}>
+    <div style={{ height: isWeb ? 'calc(100vh - 108px)' : '100vh', display: 'flex', flexDirection: 'column', background: videoTheme.chromeBg, color: videoTheme.chromeText, overflow: 'hidden' }}>
 
-      {/* ── Top Header ── */}
-      <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 16 }}>
-        <Link href="/coach/home" style={{ color: '#94a3b8', display: 'flex' }}><ArrowLeft size={18} /></Link>
-        <Image src="/logo-white.png" alt="FairplAI" width={90} height={28} style={{ height: 28, width: 'auto', objectFit: 'contain' }} />
-        <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{roster?.name || 'Video Portal'}</div>
-        <div style={{ fontSize: 12, color: '#94a3b8' }}>Coach Video Portal</div>
-      </div>
+      {/* ── Top Header (hidden in web mode — layout provides it) ── */}
+      {!isWeb && (
+        <div style={{ padding: '16px 24px', borderBottom: `1px solid ${videoTheme.chromeBorder}`, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link href="/coach/home" style={{ color: '#94a3b8', display: 'flex' }}><ArrowLeft size={18} /></Link>
+          <Image src="/logo-white.png" alt="FairplAI" width={90} height={28} style={{ height: 28, width: 'auto', objectFit: 'contain' }} />
+          <div style={{ flex: 1 }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: videoTheme.chromeText }}>{roster?.name || 'Video Portal'}</div>
+          <div style={{ fontSize: 12, color: videoTheme.chromeTextMuted }}>Coach Video Portal</div>
+        </div>
+      )}
 
       {/* ── Top Tabs ── */}
-      <div style={{ padding: '0 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, display: 'flex', gap: 0 }}>
+      <div style={{ padding: '0 24px', borderBottom: `1px solid ${videoTheme.chromeBorder}`, flexShrink: 0, display: 'flex', gap: 0, background: videoTheme.sidebarBg }}>
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -1553,9 +1613,9 @@ export default function VideoPortalPage() {
               padding: '14px 20px',
               background: 'transparent',
               border: 'none',
-              borderBottom: activeTab === tab.id ? `2px solid ${COLORS.primary}` : '2px solid transparent',
+              borderBottom: activeTab === tab.id ? `2px solid ${videoTheme.tabActiveBorder}` : '2px solid transparent',
               cursor: 'pointer',
-              color: activeTab === tab.id ? COLORS.primary : '#94a3b8',
+              color: activeTab === tab.id ? COLORS.primary : videoTheme.chromeTextMuted,
               fontSize: 13,
               fontWeight: activeTab === tab.id ? 700 : 500,
               transition: 'all 0.15s',
@@ -1566,7 +1626,7 @@ export default function VideoPortalPage() {
             {tab.count !== undefined && (
               <span style={{
                 fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                background: activeTab === tab.id ? `${COLORS.primary}20` : 'rgba(255,255,255,0.06)',
+                background: activeTab === tab.id ? `${COLORS.primary}20` : videoTheme.countBg,
               }}>
                 {tab.count}
               </span>
@@ -1582,13 +1642,13 @@ export default function VideoPortalPage() {
         {activeTab === 'training' && (
           <>
             {/* Session list sidebar */}
-            <div style={{ width: 280, borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+            <div style={{ width: 280, borderRight: `1px solid ${videoTheme.chromeBorder}`, display: 'flex', flexDirection: 'column', flexShrink: 0, background: videoTheme.sidebarBg }}>
               <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {trainingSessions.map(s => (
                     <SessionCard key={s.id} session={s} active={selectedSession?.id === s.id} onClick={() => setSelectedSession(s)} />
                   ))}
-                  {trainingSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: '#64748B', fontSize: 12 }}>No training sessions</div>}
+                  {trainingSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: videoTheme.chromeTextMuted, fontSize: 12 }}>No training sessions</div>}
                 </div>
               </div>
             </div>
@@ -1608,9 +1668,9 @@ export default function VideoPortalPage() {
               ) : (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
                   <div style={{ textAlign: 'center', maxWidth: 400 }}>
-                    <Film size={48} color="#64748B" style={{ marginBottom: 16 }} />
-                    <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Training Footage</h2>
-                    <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>Select a training session to watch footage, add bookmarks, and write notes for your players.</p>
+                    <Film size={48} color={videoTheme.chromeTextMuted} style={{ marginBottom: 16 }} />
+                    <h2 style={{ fontSize: 20, fontWeight: 700, color: videoTheme.chromeText, margin: '0 0 8px' }}>Training Footage</h2>
+                    <p style={{ fontSize: 14, color: videoTheme.chromeTextMuted, margin: 0 }}>Select a training session to watch footage, add bookmarks, and write notes for your players.</p>
                   </div>
                 </div>
               )}
@@ -1622,13 +1682,13 @@ export default function VideoPortalPage() {
         {activeTab === 'matches' && (
           <>
             {/* Session list sidebar */}
-            <div style={{ width: 280, borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+            <div style={{ width: 280, borderRight: `1px solid ${videoTheme.chromeBorder}`, display: 'flex', flexDirection: 'column', flexShrink: 0, background: videoTheme.sidebarBg }}>
               <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {matchSessions.map(s => (
                     <SessionCard key={s.id} session={s} active={selectedSession?.id === s.id} onClick={() => { setSelectedSession(s); setMatchView('watch') }} />
                   ))}
-                  {matchSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: '#64748B', fontSize: 12 }}>No match sessions</div>}
+                  {matchSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: videoTheme.chromeTextMuted, fontSize: 12 }}>No match sessions</div>}
                 </div>
               </div>
             </div>
@@ -1651,9 +1711,9 @@ export default function VideoPortalPage() {
               ) : (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
                   <div style={{ textAlign: 'center', maxWidth: 400 }}>
-                    <Clapperboard size={48} color="#64748B" style={{ marginBottom: 16 }} />
-                    <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Match Footage</h2>
-                    <p style={{ fontSize: 14, color: '#94a3b8', margin: 0 }}>Select a match to watch footage.</p>
+                    <Clapperboard size={48} color={videoTheme.chromeTextMuted} style={{ marginBottom: 16 }} />
+                    <h2 style={{ fontSize: 20, fontWeight: 700, color: videoTheme.chromeText, margin: '0 0 8px' }}>Match Footage</h2>
+                    <p style={{ fontSize: 14, color: videoTheme.chromeTextMuted, margin: 0 }}>Select a match to watch footage.</p>
                   </div>
                 </div>
               )}
@@ -1712,5 +1772,6 @@ export default function VideoPortalPage() {
         session={whatsAppSession}
       />
     </div>
+    </VideoThemeContext.Provider>
   )
 }

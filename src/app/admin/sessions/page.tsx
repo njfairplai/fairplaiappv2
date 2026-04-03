@@ -96,7 +96,7 @@ export default function SessionsPage() {
       }}>
         <Info size={20} color="#3B82F6" style={{ flexShrink: 0, marginTop: 2 }} />
         <p style={{ fontSize: 14, color: '#1E40AF', margin: 0, lineHeight: 1.5 }}>
-          Sessions are automatically generated from your Programs and facility contracts. To change a recurring schedule, edit the Program or contact your facility admin.
+          Sessions are automatically generated from your Recurring Sessions and facility contracts. To change a recurring schedule, edit it in Recurring Sessions or contact your facility admin.
         </p>
       </div>
 

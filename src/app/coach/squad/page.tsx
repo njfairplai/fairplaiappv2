@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { GitCompare, ArrowUpDown, Filter } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
+import { useCoachTheme } from '@/contexts/CoachThemeContext'
 import { COLORS } from '@/lib/constants'
 import { players, rosters, squadScores, playerStandoutMetrics, playerWorkloads, playerKeyMetrics } from '@/lib/mockData'
 import { calculateACWR, getRiskLevel, getRiskLabel, RISK_COLORS } from '@/lib/riskUtils'
@@ -71,6 +72,7 @@ export default function SquadPage() {
   const pathname = usePathname()
   const isWeb = pathname.startsWith('/coach/web')
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
+  const { colors: themeColors, mode: themeMode } = useCoachTheme()
   const [sortBy, setSortBy] = useState<SortKey>('score')
   const [posFilter, setPosFilter] = useState<PositionFilter>('all')
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
@@ -159,7 +161,7 @@ export default function SquadPage() {
 
 
   return (
-    <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
+    <div style={{ background: isWeb ? themeColors.pageBg : '#F8F9FC', minHeight: '100vh' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes pulse-dot { 0%,100% { transform: scale(1); } 50% { transform: scale(1.4); } }
         .squad-card-tap { transition: transform 100ms ease; }
@@ -167,19 +169,20 @@ export default function SquadPage() {
       ` }} />
 
       {/* HEADER */}
-      <div style={{ background: '#0A0E1A', padding: '48px 20px 20px' }}>
+      <div style={{ background: isWeb ? themeColors.cardBg : '#0A0E1A', padding: isWeb ? '20px 20px' : '48px 20px 20px', borderBottom: isWeb ? `1px solid ${themeColors.cardBorder}` : 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF' }}>Squad</h1>
-            <p style={{ margin: '2px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{selectedRosterId === 'all' ? 'All Teams' : selectedRoster.name}</p>
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: isWeb ? themeColors.textPrimary : '#FFFFFF' }}>Squad</h1>
+            <p style={{ margin: '2px 0 0', fontSize: 14, color: isWeb ? themeColors.textMuted : 'rgba(255,255,255,0.5)' }}>{selectedRosterId === 'all' ? 'All Teams' : selectedRoster.name}</p>
           </div>
           <button
             onClick={() => router.push(isWeb ? '/coach/web/squad/compare' : '/coach/squad/compare')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+              background: isWeb ? `${COLORS.primary}08` : 'rgba(255,255,255,0.1)',
+              border: `1px solid ${isWeb ? `${COLORS.primary}20` : 'rgba(255,255,255,0.2)'}`,
               borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
-              color: '#fff', fontSize: 13, fontWeight: 600,
+              color: isWeb ? COLORS.primary : '#fff', fontSize: 13, fontWeight: 600,
             }}
           >
             <GitCompare size={14} /> Compare

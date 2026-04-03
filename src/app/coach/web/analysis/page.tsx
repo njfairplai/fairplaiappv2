@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { COLORS } from '@/lib/constants'
 import { useTeam } from '@/contexts/TeamContext'
+import { useCoachTheme } from '@/contexts/CoachThemeContext'
 import { sessions, matchAnalyses, rosters, players } from '@/lib/mockData'
 
 // ─── GAME SCORE LOOKUP (hardcoded per session) ─────────────
@@ -41,16 +42,15 @@ function formatTime(timeStr: string): string {
 export default function AnalysisPage() {
   const router = useRouter()
   const { selectedRosterId } = useTeam()
+  const { colors } = useCoachTheme()
 
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date')
   const [filterType, setFilterType] = useState<'all' | 'training' | 'competitive'>('all')
   const [tableView, setTableView] = useState<'history' | 'upcoming'>('history')
 
-  // Derive display type from session type
   const getDisplayType = (type: string) =>
     type === 'match' ? 'competitive' : 'training'
 
-  // Compute average composite score per session from matchAnalyses
   const sessionScores = useMemo(() => {
     const map: Record<string, number> = {}
     const grouped: Record<string, number[]> = {}
@@ -64,7 +64,6 @@ export default function AnalysisPage() {
     return map
   }, [])
 
-  // Find top player per session from matchAnalyses
   const sessionTopPlayers = useMemo(() => {
     const map: Record<string, { name: string; score: number }> = {}
     const best: Record<string, { playerId: string; score: number }> = {}
@@ -82,7 +81,6 @@ export default function AnalysisPage() {
     return map
   }, [])
 
-  // Get pitch name from pitchId (simple lookup)
   const getPitchName = (pitchId: string) => {
     const pitchNames: Record<string, string> = {
       pitch_001: 'Pitch 1',
@@ -95,9 +93,7 @@ export default function AnalysisPage() {
 
   const filtered = useMemo(() => {
     return sessions.filter(s => {
-      // Global team filter from header
       if (selectedRosterId !== 'all' && s.rosterId !== selectedRosterId) return false
-      // Type filter
       const displayType = getDisplayType(s.type)
       if (filterType !== 'all' && displayType !== filterType) return false
       return true
@@ -126,20 +122,19 @@ export default function AnalysisPage() {
     : 0
   const totalSessions = historySessions.length
 
-  // Next session (first upcoming)
   const nextSession = upcomingSessions[0]
   const nextSessionRoster = nextSession ? rosters.find(r => r.id === nextSession.rosterId) : null
   const nextDisplayType = nextSession ? getDisplayType(nextSession.type) : 'training'
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#0A0E1A', minHeight: '100%' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: colors.pageBg, minHeight: '100%' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', width: '100%', boxSizing: 'border-box' }}>
 
         {/* ── STAT CARDS (3) ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
           <div style={{
             padding: '16px 20px', borderRadius: 14,
-            background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+            background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
             display: 'flex', alignItems: 'center', gap: 14,
           }}>
             <div style={{
@@ -149,14 +144,14 @@ export default function AnalysisPage() {
               <Target size={18} color={COLORS.primary} />
             </div>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC' }}>{totalSessions}</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>Sessions This Month</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary }}>{totalSessions}</div>
+              <div style={{ fontSize: 11, color: colors.textMuted }}>Sessions This Month</div>
             </div>
           </div>
 
           <div style={{
             padding: '16px 20px', borderRadius: 14,
-            background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+            background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
             display: 'flex', alignItems: 'center', gap: 14,
           }}>
             <div style={{
@@ -166,14 +161,14 @@ export default function AnalysisPage() {
               <BarChart3 size={18} color="#10B981" />
             </div>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC' }}>{avgScore}</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>Avg Squad Score</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary }}>{avgScore}</div>
+              <div style={{ fontSize: 11, color: colors.textMuted }}>Avg Squad Score</div>
             </div>
           </div>
 
           <div style={{
             padding: '16px 20px', borderRadius: 14,
-            background: '#0F1629', border: '1px solid rgba(255,255,255,0.06)',
+            background: colors.cardBg, border: `1px solid ${colors.cardBorder}`,
             display: 'flex', alignItems: 'center', gap: 14,
           }}>
             <div style={{
@@ -183,8 +178,8 @@ export default function AnalysisPage() {
               <TrendingUp size={18} color="#8B5CF6" />
             </div>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC' }}>+3.2</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>Score Trend (30d)</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary }}>+3.2</div>
+              <div style={{ fontSize: 11, color: colors.textMuted }}>Score Trend (30d)</div>
             </div>
           </div>
         </div>
@@ -192,14 +187,14 @@ export default function AnalysisPage() {
         {/* ── HERO: NEXT SESSION ── */}
         {nextSession && (
           <div style={{
-            background: 'linear-gradient(135deg, #1a1f3a 0%, #0F1629 50%, #1a1230 100%)',
+            background: colors.heroBg,
             borderRadius: 16, padding: '24px 24px', marginBottom: 28,
             border: `1px solid ${nextDisplayType === 'competitive' ? `${COLORS.primary}20` : 'rgba(16,185,129,0.15)'}`,
             position: 'relative', overflow: 'hidden',
           }}>
             <div style={{
               position: 'absolute', top: -30, right: -30, width: 160, height: 160,
-              borderRadius: '50%', background: nextDisplayType === 'competitive' ? `${COLORS.primary}06` : 'rgba(16,185,129,0.04)',
+              borderRadius: '50%', background: colors.heroGlow,
               filter: 'blur(50px)',
             }} />
             <div style={{ position: 'relative', zIndex: 1 }}>
@@ -212,20 +207,20 @@ export default function AnalysisPage() {
                 }}>
                   {nextDisplayType === 'competitive' ? 'Competitive Match' : 'Training Match'}
                 </span>
-                <span style={{ fontSize: 12, color: '#64748B' }}>
+                <span style={{ fontSize: 12, color: colors.textMuted }}>
                   Next session — {formatDate(nextSession.date)}
                 </span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <h2 style={{ fontSize: 22, fontWeight: 800, color: '#F8FAFC', margin: '0 0 6px' }}>
+                  <h2 style={{ fontSize: 22, fontWeight: 800, color: colors.textPrimary, margin: '0 0 6px' }}>
                     {nextDisplayType === 'competitive'
                       ? `vs ${nextSession.opponent}`
                       : `${nextSessionRoster?.name || 'Team'} — Training Match`
                     }
                   </h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 13, color: '#94a3b8' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 13, color: colors.textSecondary }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <Clock size={13} /> {formatTime(nextSession.startTime)}
                     </span>
@@ -264,7 +259,7 @@ export default function AnalysisPage() {
         {/* ── SESSIONS TABLE ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
           {/* History / Upcoming Toggle (left) */}
-          <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3 }}>
+          <div style={{ display: 'flex', gap: 2, background: colors.controlBg, borderRadius: 8, padding: 3 }}>
             {[
               { id: 'history' as const, label: 'History', count: historySessions.length },
               { id: 'upcoming' as const, label: 'Upcoming', count: upcomingSessions.length },
@@ -274,8 +269,8 @@ export default function AnalysisPage() {
                 onClick={() => setTableView(tab.id)}
                 style={{
                   padding: '6px 14px', borderRadius: 6, border: 'none',
-                  background: tableView === tab.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  color: tableView === tab.id ? '#F8FAFC' : '#64748B',
+                  background: tableView === tab.id ? colors.controlBgActive : 'transparent',
+                  color: tableView === tab.id ? colors.textPrimary : colors.textMuted,
                   fontSize: 12, fontWeight: tableView === tab.id ? 700 : 500, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 6,
                 }}
@@ -283,8 +278,8 @@ export default function AnalysisPage() {
                 {tab.label}
                 <span style={{
                   padding: '1px 6px', borderRadius: 10,
-                  background: tableView === tab.id ? `${COLORS.primary}30` : 'rgba(255,255,255,0.06)',
-                  color: tableView === tab.id ? COLORS.primary : '#475569',
+                  background: tableView === tab.id ? `${COLORS.primary}20` : colors.controlBg,
+                  color: tableView === tab.id ? COLORS.primary : colors.textFaint,
                   fontSize: 10, fontWeight: 700,
                 }}>
                   {tab.count}
@@ -295,8 +290,7 @@ export default function AnalysisPage() {
 
           {/* Filter / Sort Bar (right) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Type Filter */}
-            <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: 2 }}>
+            <div style={{ display: 'flex', gap: 2, background: colors.controlBg, borderRadius: 6, padding: 2 }}>
               {[
                 { id: 'all' as const, label: 'All' },
                 { id: 'training' as const, label: 'Training' },
@@ -307,8 +301,8 @@ export default function AnalysisPage() {
                   onClick={() => setFilterType(f.id)}
                   style={{
                     padding: '5px 10px', borderRadius: 4, border: 'none',
-                    background: filterType === f.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    color: filterType === f.id ? '#F8FAFC' : '#64748B',
+                    background: filterType === f.id ? colors.controlBgActive : 'transparent',
+                    color: filterType === f.id ? colors.textPrimary : colors.textMuted,
                     fontSize: 11, fontWeight: 600, cursor: 'pointer',
                   }}
                 >
@@ -317,13 +311,12 @@ export default function AnalysisPage() {
               ))}
             </div>
 
-            {/* Sort (history only) */}
             {tableView === 'history' && (
               <button
                 onClick={() => setSortBy(sortBy === 'date' ? 'score' : 'date')}
                 style={{
                   padding: '5px 10px', borderRadius: 6, border: 'none',
-                  background: 'rgba(255,255,255,0.04)', color: '#94a3b8',
+                  background: colors.controlBg, color: colors.textSecondary,
                   fontSize: 11, fontWeight: 600, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}
@@ -336,15 +329,15 @@ export default function AnalysisPage() {
 
         <div style={{
           borderRadius: 12, overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: `1px solid ${colors.cardBorder}`,
         }}>
           {/* Table Header */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: tableView === 'history' ? '62px 72px 1fr 80px 48px 100px' : '62px 72px 1fr 80px 100px',
             minWidth: 0,
-            padding: '10px 16px', background: 'rgba(255,255,255,0.03)',
-            fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5,
+            padding: '10px 16px', background: colors.tableHeaderBg,
+            fontSize: 10, fontWeight: 700, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: 0.5,
           }}>
             <span>Date</span>
             <span>Type</span>
@@ -377,11 +370,11 @@ export default function AnalysisPage() {
               }} style={{
                 display: 'grid', gridTemplateColumns: '60px 80px 1fr 100px 60px 70px',
                 padding: '12px 16px', alignItems: 'center',
-                background: i % 2 === 0 ? '#0F1629' : 'rgba(255,255,255,0.015)',
-                borderTop: '1px solid rgba(255,255,255,0.04)',
+                background: i % 2 === 0 ? colors.tableRowEven : colors.tableRowOdd,
+                borderTop: `1px solid ${colors.tableBorder}`,
                 cursor: s.status === 'analysed' ? 'pointer' : 'default',
               }}>
-                <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{formatDate(s.date)}</span>
+                <span style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 600 }}>{formatDate(s.date)}</span>
                 <div>
                   <span style={{
                     padding: '3px 8px', borderRadius: 4,
@@ -393,11 +386,11 @@ export default function AnalysisPage() {
                   </span>
                 </div>
                 <div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>
                     {displayType === 'competitive' ? `vs ${s.opponent}` : `${rosterName} — Team A vs Team B`}
                   </span>
                   {displayType === 'competitive' && s.competition && (
-                    <span style={{ fontSize: 11, color: '#475569', marginLeft: 8 }}>{s.competition}</span>
+                    <span style={{ fontSize: 11, color: colors.textFaint, marginLeft: 8 }}>{s.competition}</span>
                   )}
                 </div>
                 <div style={{ textAlign: 'center' }}>
@@ -413,24 +406,24 @@ export default function AnalysisPage() {
                       <span style={{ fontSize: 14, fontWeight: 800, color: game.result === 'W' ? '#10B981' : game.result === 'L' ? '#EF4444' : '#F59E0B' }}>
                         {game.score}
                       </span>
-                      <div style={{ fontSize: 9, color: '#64748B', fontWeight: 600 }}>
+                      <div style={{ fontSize: 9, color: colors.textMuted, fontWeight: 600 }}>
                         {game.result === 'W' ? 'Won' : game.result === 'L' ? 'Lost' : 'Draw'}
                       </div>
                     </div>
                   ) : score ? (
                     <span style={{ fontSize: 16, fontWeight: 800, color: getScoreColor(score) }}>{score}</span>
                   ) : (
-                    <span style={{ fontSize: 12, color: '#334155' }}>--</span>
+                    <span style={{ fontSize: 12, color: colors.textFaint }}>--</span>
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   {topPlayer ? (
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#F8FAFC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topPlayer.name}</div>
-                      <div style={{ fontSize: 10, color: '#64748B' }}>{topPlayer.score}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: colors.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topPlayer.name}</div>
+                      <div style={{ fontSize: 10, color: colors.textMuted }}>{topPlayer.score}</div>
                     </div>
                   ) : (
-                    <span style={{ fontSize: 11, color: '#334155' }}>--</span>
+                    <span style={{ fontSize: 11, color: colors.textFaint }}>--</span>
                   )}
                 </div>
               </div>
@@ -446,10 +439,10 @@ export default function AnalysisPage() {
               <div key={s.id} style={{
                 display: 'grid', gridTemplateColumns: '60px 80px 1fr 100px 100px',
                 padding: '12px 16px', alignItems: 'center',
-                background: i % 2 === 0 ? '#0F1629' : 'rgba(255,255,255,0.015)',
-                borderTop: '1px solid rgba(255,255,255,0.04)',
+                background: i % 2 === 0 ? colors.tableRowEven : colors.tableRowOdd,
+                borderTop: `1px solid ${colors.tableBorder}`,
               }}>
-                <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{formatDate(s.date)}</span>
+                <span style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 600 }}>{formatDate(s.date)}</span>
                 <div>
                   <span style={{
                     padding: '3px 8px', borderRadius: 4,
@@ -461,14 +454,14 @@ export default function AnalysisPage() {
                   </span>
                 </div>
                 <div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>
                     {displayType === 'competitive' ? `vs ${s.opponent}` : `${rosterName} — Training Match`}
                   </span>
                   {displayType === 'competitive' && s.competition && (
-                    <span style={{ fontSize: 11, color: '#475569', marginLeft: 8 }}>{s.competition}</span>
+                    <span style={{ fontSize: 11, color: colors.textFaint, marginLeft: 8 }}>{s.competition}</span>
                   )}
                 </div>
-                <div style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>
+                <div style={{ textAlign: 'center', fontSize: 12, color: colors.textSecondary }}>
                   {formatTime(s.startTime)}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -490,12 +483,12 @@ export default function AnalysisPage() {
 
           {/* Empty states */}
           {tableView === 'history' && historySessions.length === 0 && (
-            <div style={{ padding: '32px 16px', textAlign: 'center', color: '#475569', fontSize: 13 }}>
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: colors.textFaint, fontSize: 13 }}>
               No sessions match your filters
             </div>
           )}
           {tableView === 'upcoming' && upcomingSessions.length === 0 && (
-            <div style={{ padding: '32px 16px', textAlign: 'center', color: '#475569', fontSize: 13 }}>
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: colors.textFaint, fontSize: 13 }}>
               No upcoming sessions
             </div>
           )}

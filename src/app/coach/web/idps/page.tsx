@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { ArrowLeft, Star, Send, Download, Save, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
+import { useCoachTheme } from '@/contexts/CoachThemeContext'
 import { COLORS } from '@/lib/constants'
 import {
   players, rosters, squadScores, seasonReviews, playerSeasonStats,
@@ -124,6 +125,7 @@ function MiniRadar({ data }: { data: Array<{ category: string; value: number; av
 
 export default function IDPsPage() {
   const { selectedRosterId } = useTeam()
+  const { colors: themeColors } = useCoachTheme()
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Record<string, IDPDraft>>({})
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
@@ -212,9 +214,9 @@ export default function IDPsPage() {
     const position = player.position[0] || 'CM'
 
     return (
-      <div style={{ background: '#F8F9FC', minHeight: '100%' }}>
+      <div style={{ background: themeColors.pageBg, minHeight: '100%' }}>
         {/* Editor Header */}
-        <div style={{ background: '#0A0E1A', padding: '20px 24px' }}>
+        <div style={{ background: themeColors.cardBg, padding: '20px 24px', borderBottom: `1px solid ${themeColors.cardBorder}` }}>
           <button
             onClick={() => setSelectedPlayerId(null)}
             style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#4A4AFF', fontSize: 13, fontWeight: 600, padding: 0, marginBottom: 12 }}
@@ -224,10 +226,10 @@ export default function IDPsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <PlayerAvatar player={player} size="md" />
             <div>
-              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#fff' }}>{player.firstName} {player.lastName}</h2>
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: themeColors.textPrimary }}>{player.firstName} {player.lastName}</h2>
               <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: `${getPositionColor(position)}30`, color: getPositionColor(position) }}>{position}</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>#{player.jerseyNumber}</span>
+                <span style={{ fontSize: 11, color: themeColors.textMuted }}>#{player.jerseyNumber}</span>
               </div>
             </div>
           </div>
@@ -441,12 +443,12 @@ export default function IDPsPage() {
   const dueCount = rosterPlayers.filter(p => getStatus(p.id) === 'due').length
 
   return (
-    <div style={{ background: '#F8F9FC', minHeight: '100%' }}>
+    <div style={{ background: themeColors.pageBg, minHeight: '100%' }}>
       {/* Header */}
-      <div style={{ background: '#0A0E1A', padding: '20px 24px' }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#fff' }}>Individual Development Plans</h1>
+      <div style={{ background: themeColors.cardBg, padding: '20px 24px', borderBottom: `1px solid ${themeColors.cardBorder}` }}>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: themeColors.textPrimary }}>Individual Development Plans</h1>
         <div style={{ display: 'flex', gap: 16, marginTop: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{selectedRoster?.name}</span>
+          <span style={{ fontSize: 13, color: themeColors.textMuted }}>{selectedRoster?.name}</span>
           <span style={{ fontSize: 12, color: '#F59E0B', fontWeight: 600 }}>
             {dueCount > 0 ? `${dueCount} report${dueCount > 1 ? 's' : ''} due` : 'All up to date'}
           </span>

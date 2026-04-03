@@ -11,7 +11,7 @@ const navItems = [
   { href: '/admin/rosters', label: 'Squads', icon: ClipboardList },
   { href: '/admin/players', label: 'Players', icon: Users },
   { href: '/admin/coaches', label: 'Coaches', icon: UserCheck },
-  { href: '/admin/programs', label: 'Programs', icon: BookOpen },
+  { href: '/admin/recurring-sessions', label: 'Recurring Sessions', icon: BookOpen },
   { href: '/admin/sessions', label: 'Sessions', icon: Calendar },
   { href: '/admin/team-stats', label: 'Team Stats', icon: BarChart3 },
   { href: '/admin/credits', label: 'Credits', icon: CreditCard },
