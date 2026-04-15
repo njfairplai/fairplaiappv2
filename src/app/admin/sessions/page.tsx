@@ -161,7 +161,7 @@ export default function SessionsPage() {
             scheduled: { bg: '#F3F4F6', color: '#6B7280' },
             in_progress: { bg: `${COLORS.warning}1A`, color: COLORS.warning },
             processing: { bg: `${COLORS.primary}1A`, color: COLORS.primary },
-            analysed: { bg: '#7C3AED1A', color: '#7C3AED' },
+            analysed: { bg: `${COLORS.success}1A`, color: COLORS.success },
             complete: { bg: `${COLORS.success}1A`, color: COLORS.success },
             playback_ready: { bg: `${COLORS.success}1A`, color: COLORS.success },
           }

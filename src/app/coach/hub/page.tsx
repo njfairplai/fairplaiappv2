@@ -198,8 +198,8 @@ export default function CoachHubPage() {
                     </div>
                     <span style={{
                       fontSize: 10, fontWeight: 600, borderRadius: 20, padding: '3px 8px',
-                      background: s.status === 'analysed' ? 'rgba(74,74,255,0.15)' : 'rgba(255,255,255,0.08)',
-                      color: s.status === 'analysed' ? '#757FFF' : 'rgba(245,246,252,0.4)',
+                      background: s.status === 'analysed' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.08)',
+                      color: s.status === 'analysed' ? '#10B981' : 'rgba(245,246,252,0.4)',
                     }}>
                       {s.status === 'analysed' ? 'Analysed' : s.status === 'playback_ready' ? 'Ready' : 'Complete'}
                     </span>

@@ -6,7 +6,7 @@ import { COLORS, ROLE_PATHS } from '@/lib/constants'
 import type { UserRole } from '@/lib/types'
 import {
   Building2, GraduationCap, Trophy, Heart, ChevronRight,
-  Film, Eye, Monitor, Shield,
+  Film, Eye, Monitor, Shield, Share2,
 } from 'lucide-react'
 
 export default function SplashPage() {
@@ -132,6 +132,17 @@ export default function SplashPage() {
           compact
         />
       </div>
+
+      {/* ── Shared Experiences ──────────────────── */}
+      <SectionHeader label="Shared Experiences" icon={Share2} />
+
+      <RoleCard
+        icon={Share2}
+        title="WhatsApp Share"
+        description="See how highlights & stats look when shared via WhatsApp"
+        color="#25D366"
+        onClick={() => router.push('/share/demo')}
+      />
 
       <div style={{ height: 32 }} />
     </div>

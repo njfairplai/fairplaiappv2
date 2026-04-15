@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { COLORS, RADIUS, ROLE_PATHS } from '@/lib/constants'
 import type { UserRole } from '@/lib/types'
-import { Building2, GraduationCap, Trophy, Heart, Zap, ArrowRightLeft, X, Video, Home, Monitor, Shield } from 'lucide-react'
+import { Building2, GraduationCap, Trophy, Heart, Zap, ArrowRightLeft, X, Video, Home, Monitor, Shield, Share2 } from 'lucide-react'
 
 const roles: { role: UserRole; label: string; icon: React.ElementType; description: string; color?: string }[] = [
   { role: 'super_admin', label: 'Super Admin', icon: Shield, description: 'Platform management & client operations', color: '#DC2626' },
@@ -20,8 +20,8 @@ export default function FloatingNav() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Don't show on the home page itself
-  const isHome = pathname === '/'
+  // Don't show on public pages (home, shared links, guest footage)
+  const isPublicPage = pathname === '/' || pathname.startsWith('/share/') || pathname.startsWith('/guest/')
 
   function selectRole(role: UserRole) {
     if (typeof window !== 'undefined') {
@@ -34,10 +34,12 @@ export default function FloatingNav() {
   const currentRole = typeof window !== 'undefined' ? localStorage.getItem('fairplai_role') : null
   const currentLabel = roles.find(r => r.role === currentRole)?.label || 'Switch'
 
+  if (isPublicPage) return null
+
   return (
     <>
       {/* Home button */}
-      {!isHome && (
+      {pathname !== '/' && (
         <button
           onClick={() => router.push('/')}
           style={{
@@ -183,7 +185,7 @@ export default function FloatingNav() {
                 </div>
               </button>
 
-              <div style={{ borderTop: `1px solid ${COLORS.border}`, marginTop: 8, paddingTop: 8 }}>
+              <div style={{ borderTop: `1px solid ${COLORS.border}`, marginTop: 8, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <button
                   onClick={() => { setOpen(false); router.push('/guest/demo-session_007') }}
                   style={{
@@ -203,6 +205,27 @@ export default function FloatingNav() {
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Guest Footage</p>
                     <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>View match footage as a guest</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setOpen(false); router.push('/share/demo') }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '14px 16px', borderRadius: RADIUS.card,
+                    background: '#F5F6FC', border: '2px solid transparent',
+                    cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', width: '100%',
+                  }}
+                >
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    background: '#25D36615',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <Share2 size={20} color="#25D366" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, margin: 0 }}>WhatsApp Share</p>
+                    <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>See the shared link experience</p>
                   </div>
                 </button>
               </div>

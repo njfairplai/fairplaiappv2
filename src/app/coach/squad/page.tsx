@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { GitCompare, ArrowUpDown, Filter } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { useCoachTheme } from '@/contexts/CoachThemeContext'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { COLORS } from '@/lib/constants'
 import { players, rosters, squadScores, playerStandoutMetrics, playerWorkloads, playerKeyMetrics } from '@/lib/mockData'
 import { calculateACWR, getRiskLevel, getRiskLabel, RISK_COLORS } from '@/lib/riskUtils'
@@ -73,6 +74,7 @@ export default function SquadPage() {
   const isWeb = pathname.startsWith('/coach/web')
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
   const { colors: themeColors, mode: themeMode } = useCoachTheme()
+  const isMobile = useIsMobile()
   const [sortBy, setSortBy] = useState<SortKey>('score')
   const [posFilter, setPosFilter] = useState<PositionFilter>('all')
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
@@ -169,29 +171,36 @@ export default function SquadPage() {
       ` }} />
 
       {/* HEADER */}
-      <div style={{ background: isWeb ? themeColors.cardBg : '#0A0E1A', padding: isWeb ? '20px 20px' : '48px 20px 20px', borderBottom: isWeb ? `1px solid ${themeColors.cardBorder}` : 'none' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: isWeb ? themeColors.textPrimary : '#FFFFFF' }}>Squad</h1>
-            <p style={{ margin: '2px 0 0', fontSize: 14, color: isWeb ? themeColors.textMuted : 'rgba(255,255,255,0.5)' }}>{selectedRosterId === 'all' ? 'All Teams' : selectedRoster.name}</p>
+      <div style={{
+        background: isWeb ? themeColors.cardBg : '#0A0E1A',
+        padding: isWeb ? (isMobile ? '14px 12px' : '20px 20px') : '48px 20px 20px',
+        borderBottom: isWeb ? `1px solid ${themeColors.cardBorder}` : 'none',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ margin: 0, fontSize: isWeb && isMobile ? 22 : 28, fontWeight: 800, color: isWeb ? themeColors.textPrimary : '#FFFFFF' }}>Squad</h1>
+            <p style={{ margin: '2px 0 0', fontSize: isWeb && isMobile ? 12 : 14, color: isWeb ? themeColors.textMuted : 'rgba(255,255,255,0.5)' }}>{selectedRosterId === 'all' ? 'All Teams' : selectedRoster.name}</p>
           </div>
           <button
             onClick={() => router.push(isWeb ? '/coach/web/squad/compare' : '/coach/squad/compare')}
+            title="Compare players"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: isWeb ? `${COLORS.primary}08` : 'rgba(255,255,255,0.1)',
               border: `1px solid ${isWeb ? `${COLORS.primary}20` : 'rgba(255,255,255,0.2)'}`,
-              borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
-              color: isWeb ? COLORS.primary : '#fff', fontSize: 13, fontWeight: 600,
+              borderRadius: 8,
+              padding: isWeb && isMobile ? '6px 10px' : '8px 14px',
+              cursor: 'pointer',
+              color: isWeb ? COLORS.primary : '#fff', fontSize: 13, fontWeight: 600, flexShrink: 0,
             }}
           >
-            <GitCompare size={14} /> Compare
+            <GitCompare size={14} /> {!(isWeb && isMobile) && 'Compare'}
           </button>
         </div>
       </div>
 
       {/* SORT & FILTER BAR */}
-      <div style={{ padding: '12px 16px 4px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: isWeb && isMobile ? '10px 12px 4px' : '12px 16px 4px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* Position filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Filter size={14} color="#94a3b8" />
@@ -246,9 +255,11 @@ export default function SquadPage() {
         key={selectedRosterId}
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 10,
-          padding: 16,
+          gridTemplateColumns: isWeb
+            ? (isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(180px, 1fr))')
+            : '1fr 1fr',
+          gap: isWeb && isMobile ? 8 : 10,
+          padding: isWeb && isMobile ? 12 : 16,
         }}
       >
         {sortedPlayers.map((player, index) => {

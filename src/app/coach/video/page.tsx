@@ -12,6 +12,7 @@ import {
   Target, Footprints, ShieldCheck, Zap, Hand, User, Share2, TrendingUp, TrendingDown, Minus, ClipboardList,
 } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   sessions, highlights, players, pitches, rosters, bookmarks, sessionSegments,
   squadScores, matchAnalyses, sessionTeamScores, playerHeatmaps, highlightLocations,
@@ -421,9 +422,12 @@ function ActionBar() {
     { icon: MessageSquare, label: 'Add Note', color: '#10B981' },
   ]
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0' }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0',
+      overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+    }}>
       {actions.map(({ icon: Icon, label, color }) => (
-        <button key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, background: `${color}15`, border: `1px solid ${color}30`, color, fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s' }}
+        <button key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, background: `${color}15`, border: `1px solid ${color}30`, color, fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0, whiteSpace: 'nowrap' }}
           onMouseEnter={e => { e.currentTarget.style.background = `${color}25` }}
           onMouseLeave={e => { e.currentTarget.style.background = `${color}15` }}>
           <Icon size={15} />{label}
@@ -1376,6 +1380,7 @@ function HighlightsTab({ allHighlights, matchSessions }: {
   matchSessions: Session[]
 }) {
   const vt = useVideoTheme()
+  const isMobile = useIsMobile()
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
 
   // Get sessions that have highlights, sorted by date desc
@@ -1414,7 +1419,7 @@ function HighlightsTab({ allHighlights, matchSessions }: {
   }
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+    <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '14px 12px' : '24px 32px' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <div style={{ marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: vt.chromeText, margin: '0 0 4px' }}>Match Highlights</h2>
@@ -1439,8 +1444,8 @@ function HighlightsTab({ allHighlights, matchSessions }: {
                 onClick={() => setSelectedSessionId(s.id)}
                 style={{
                   width: '100%', textAlign: 'left', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '16px 20px', borderRadius: 12,
+                  display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16,
+                  padding: isMobile ? '12px 14px' : '16px 20px', borderRadius: 12,
                   background: vt.cardBg,
                   border: `1px solid ${vt.cardBorder}`,
                   transition: 'all 0.15s ease',
@@ -1529,6 +1534,8 @@ export default function VideoPortalPage() {
   const router = useRouter()
   const pathname = usePathname()
   const isWeb = pathname.startsWith('/coach/web')
+  const isMobile = useIsMobile()
+  const isWebMobile = isWeb && isMobile
   const { mode: themeMode } = useCoachTheme()
   const videoTheme = isWeb && themeMode === 'light' ? lightVideoTheme : darkVideoTheme
   const { selectedRosterId } = useTeam()
@@ -1589,7 +1596,7 @@ export default function VideoPortalPage() {
 
   return (
     <VideoThemeContext.Provider value={videoTheme}>
-    <div style={{ height: isWeb ? 'calc(100vh - 108px)' : '100vh', display: 'flex', flexDirection: 'column', background: videoTheme.chromeBg, color: videoTheme.chromeText, overflow: 'hidden' }}>
+    <div style={{ height: isWeb ? (isWebMobile ? 'calc(100vh - 96px)' : 'calc(100vh - 108px)') : '100vh', display: 'flex', flexDirection: 'column', background: videoTheme.chromeBg, color: videoTheme.chromeText, overflow: 'hidden' }}>
 
       {/* ── Top Header (hidden in web mode — layout provides it) ── */}
       {!isWeb && (
@@ -1603,22 +1610,29 @@ export default function VideoPortalPage() {
       )}
 
       {/* ── Top Tabs ── */}
-      <div style={{ padding: '0 24px', borderBottom: `1px solid ${videoTheme.chromeBorder}`, flexShrink: 0, display: 'flex', gap: 0, background: videoTheme.sidebarBg }}>
+      <div style={{
+        padding: isWebMobile ? '0 8px' : '0 24px',
+        borderBottom: `1px solid ${videoTheme.chromeBorder}`,
+        flexShrink: 0, display: 'flex', gap: 0, background: videoTheme.sidebarBg,
+        overflowX: isWebMobile ? 'auto' : 'visible',
+        WebkitOverflowScrolling: 'touch',
+      }}>
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => { setActiveTab(tab.id); setSelectedSession(null); setSelectedClip(null); setMatchView('watch') }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '14px 20px',
+              display: 'flex', alignItems: 'center', gap: isWebMobile ? 5 : 8,
+              padding: isWebMobile ? '10px 12px' : '14px 20px',
               background: 'transparent',
               border: 'none',
               borderBottom: activeTab === tab.id ? `2px solid ${videoTheme.tabActiveBorder}` : '2px solid transparent',
               cursor: 'pointer',
               color: activeTab === tab.id ? COLORS.primary : videoTheme.chromeTextMuted,
-              fontSize: 13,
+              fontSize: isWebMobile ? 12 : 13,
               fontWeight: activeTab === tab.id ? 700 : 500,
               transition: 'all 0.15s',
+              flexShrink: 0, whiteSpace: 'nowrap',
             }}
           >
             {tab.icon}
@@ -1641,83 +1655,127 @@ export default function VideoPortalPage() {
         {/* ─── TRAINING TAB ─── */}
         {activeTab === 'training' && (
           <>
-            {/* Session list sidebar */}
-            <div style={{ width: 280, borderRight: `1px solid ${videoTheme.chromeBorder}`, display: 'flex', flexDirection: 'column', flexShrink: 0, background: videoTheme.sidebarBg }}>
-              <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {trainingSessions.map(s => (
-                    <SessionCard key={s.id} session={s} active={selectedSession?.id === s.id} onClick={() => setSelectedSession(s)} />
-                  ))}
-                  {trainingSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: videoTheme.chromeTextMuted, fontSize: 12 }}>No training sessions</div>}
+            {/* Session list sidebar — full width on mobile when no session selected, hidden when session selected */}
+            {(!isWebMobile || !selectedSession) && (
+              <div style={{
+                width: isWebMobile ? '100%' : 280,
+                borderRight: isWebMobile ? 'none' : `1px solid ${videoTheme.chromeBorder}`,
+                display: 'flex', flexDirection: 'column', flexShrink: 0, background: videoTheme.sidebarBg,
+              }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: isWebMobile ? '10px 12px' : '12px 16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {trainingSessions.map(s => (
+                      <SessionCard key={s.id} session={s} active={selectedSession?.id === s.id} onClick={() => setSelectedSession(s)} />
+                    ))}
+                    {trainingSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: videoTheme.chromeTextMuted, fontSize: 12 }}>No training sessions</div>}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Main content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              {selectedSession ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <div style={{ padding: '16px 24px 0', flexShrink: 0 }}>
-                    <DvrPlayer session={selectedSession} />
-                    <ActionBar />
+            {/* Main content — only show on desktop, OR on mobile when session selected */}
+            {(!isWebMobile || selectedSession) && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {selectedSession ? (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    {isWebMobile && (
+                      <button
+                        onClick={() => setSelectedSession(null)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '8px 12px', margin: '8px 12px 0',
+                          background: 'transparent', border: 'none', cursor: 'pointer',
+                          color: COLORS.primary, fontSize: 13, fontWeight: 600,
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        <ArrowLeft size={14} /> Back to sessions
+                      </button>
+                    )}
+                    <div style={{ padding: isWebMobile ? '8px 12px 0' : '16px 24px 0', flexShrink: 0 }}>
+                      <DvrPlayer session={selectedSession} />
+                      <ActionBar />
+                    </div>
+                    <div style={{ flex: 1, overflow: 'hidden', padding: isWebMobile ? '0 12px 12px' : '0 24px 16px' }}>
+                      <CoachToolsPanel session={selectedSession} />
+                    </div>
                   </div>
-                  <div style={{ flex: 1, overflow: 'hidden', padding: '0 24px 16px' }}>
-                    <CoachToolsPanel session={selectedSession} />
+                ) : (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+                    <div style={{ textAlign: 'center', maxWidth: 400 }}>
+                      <Film size={48} color={videoTheme.chromeTextMuted} style={{ marginBottom: 16 }} />
+                      <h2 style={{ fontSize: 20, fontWeight: 700, color: videoTheme.chromeText, margin: '0 0 8px' }}>Training Footage</h2>
+                      <p style={{ fontSize: 14, color: videoTheme.chromeTextMuted, margin: 0 }}>Select a training session to watch footage, add bookmarks, and write notes for your players.</p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-                  <div style={{ textAlign: 'center', maxWidth: 400 }}>
-                    <Film size={48} color={videoTheme.chromeTextMuted} style={{ marginBottom: 16 }} />
-                    <h2 style={{ fontSize: 20, fontWeight: 700, color: videoTheme.chromeText, margin: '0 0 8px' }}>Training Footage</h2>
-                    <p style={{ fontSize: 14, color: videoTheme.chromeTextMuted, margin: 0 }}>Select a training session to watch footage, add bookmarks, and write notes for your players.</p>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
         {/* ─── MATCHES TAB ─── */}
         {activeTab === 'matches' && (
           <>
-            {/* Session list sidebar */}
-            <div style={{ width: 280, borderRight: `1px solid ${videoTheme.chromeBorder}`, display: 'flex', flexDirection: 'column', flexShrink: 0, background: videoTheme.sidebarBg }}>
-              <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {matchSessions.map(s => (
-                    <SessionCard key={s.id} session={s} active={selectedSession?.id === s.id} onClick={() => { setSelectedSession(s); setMatchView('watch') }} />
-                  ))}
-                  {matchSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: videoTheme.chromeTextMuted, fontSize: 12 }}>No match sessions</div>}
+            {/* Session list sidebar — full width on mobile when no session selected, hidden when session selected */}
+            {(!isWebMobile || !selectedSession) && (
+              <div style={{
+                width: isWebMobile ? '100%' : 280,
+                borderRight: isWebMobile ? 'none' : `1px solid ${videoTheme.chromeBorder}`,
+                display: 'flex', flexDirection: 'column', flexShrink: 0, background: videoTheme.sidebarBg,
+              }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: isWebMobile ? '10px 12px' : '12px 16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {matchSessions.map(s => (
+                      <SessionCard key={s.id} session={s} active={selectedSession?.id === s.id} onClick={() => { setSelectedSession(s); setMatchView('watch') }} />
+                    ))}
+                    {matchSessions.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: videoTheme.chromeTextMuted, fontSize: 12 }}>No match sessions</div>}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Main content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              {selectedSession ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Main content — only show on desktop, OR on mobile when session selected */}
+            {(!isWebMobile || selectedSession) && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {selectedSession ? (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <div style={{ padding: '0 24px', flexShrink: 0 }}>
-                      <DvrPlayer session={selectedSession} />
-                      <ActionBar />
-                    </div>
-                    <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '0 24px 16px' }}>
-                      <StatsRow session={selectedSession} />
-                      <TimelineEventsPanel session={selectedSession} />
+                    {isWebMobile && (
+                      <button
+                        onClick={() => setSelectedSession(null)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '8px 12px', margin: '8px 12px 0',
+                          background: 'transparent', border: 'none', cursor: 'pointer',
+                          color: COLORS.primary, fontSize: 13, fontWeight: 600,
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        <ArrowLeft size={14} /> Back to matches
+                      </button>
+                    )}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <div style={{ padding: isWebMobile ? '0 12px' : '0 24px', flexShrink: 0 }}>
+                        <DvrPlayer session={selectedSession} />
+                        <ActionBar />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: isWebMobile ? '0 12px 12px' : '0 24px 16px' }}>
+                        <StatsRow session={selectedSession} />
+                        <TimelineEventsPanel session={selectedSession} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-                  <div style={{ textAlign: 'center', maxWidth: 400 }}>
-                    <Clapperboard size={48} color={videoTheme.chromeTextMuted} style={{ marginBottom: 16 }} />
-                    <h2 style={{ fontSize: 20, fontWeight: 700, color: videoTheme.chromeText, margin: '0 0 8px' }}>Match Footage</h2>
-                    <p style={{ fontSize: 14, color: videoTheme.chromeTextMuted, margin: 0 }}>Select a match to watch footage.</p>
+                ) : (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+                    <div style={{ textAlign: 'center', maxWidth: 400 }}>
+                      <Clapperboard size={48} color={videoTheme.chromeTextMuted} style={{ marginBottom: 16 }} />
+                      <h2 style={{ fontSize: 20, fontWeight: 700, color: videoTheme.chromeText, margin: '0 0 8px' }}>Match Footage</h2>
+                      <p style={{ fontSize: 14, color: videoTheme.chromeTextMuted, margin: 0 }}>Select a match to watch footage.</p>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
