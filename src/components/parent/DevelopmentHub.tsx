@@ -7,6 +7,7 @@ import { categoryGrades, percentileData, coachFlaggedClips, highlights, coachFee
 import CategoryGrade from './CategoryGrade'
 import PercentileBar from '@/components/charts/PercentileBar'
 import BenchmarkComparison from './BenchmarkComparison'
+import AttendanceCard from './AttendanceCard'
 import SkeletonLoader from '@/components/ui/SkeletonLoader'
 import { SHADOWS, COLORS } from '@/lib/constants'
 
@@ -192,6 +193,9 @@ export default function DevelopmentHub() {
 
         <SectionLabel text="Coach's Analysis" />
         <CoachMessageCard />
+
+        <SectionLabel text="Attendance" />
+        <AttendanceCard playerId="player_001" />
 
         <SectionLabel text="How I Played" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

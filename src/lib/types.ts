@@ -592,3 +592,18 @@ export interface DrillInfo {
   variations: string[]
   targetSkills: string[]
 }
+
+export interface Term {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+}
+
+export interface PlayerSessionAttendanceEntry {
+  sessionId: string
+  date: string
+  termId: string
+  status: 'present' | 'absent'
+  sessionType: 'training' | 'match'
+}

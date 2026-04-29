@@ -14,6 +14,8 @@ import type {
   PlayerHeatmapData,
   SessionPrep,
   DrillInfo,
+  Term,
+  PlayerSessionAttendanceEntry,
 } from './types'
 
 // ─── FACILITIES ────────────────────────────────────────────
@@ -1392,5 +1394,46 @@ export const leagueStandings: Record<string, { position: number; team: string; p
     { position: 8, team: 'Taif Youth', played: 14, won: 3, drawn: 5, lost: 6, gd: -7, points: 14, isUs: false },
     { position: 9, team: 'Al-Batin Youth B', played: 14, won: 3, drawn: 2, lost: 9, gd: -12, points: 11, isUs: false },
     { position: 10, team: 'Yanbu FC Youth', played: 14, won: 2, drawn: 1, lost: 11, gd: -17, points: 7, isUs: false },
+  ],
+}
+
+// ─── ACADEMY TERMS ─────────────────────────────────────────
+// Three terms per season. Term 3 is the current term (today: 2026-04-21).
+export const terms: Term[] = [
+  { id: 'term_1', name: 'Term 1',  startDate: '2025-08-15', endDate: '2025-11-30' },
+  { id: 'term_2', name: 'Term 2',  startDate: '2025-12-01', endDate: '2026-03-31' },
+  { id: 'term_3', name: 'Term 3',  startDate: '2026-04-01', endDate: '2026-07-31' },
+]
+
+// ─── PER-SESSION ATTENDANCE LOG ────────────────────────────
+// Deterministic per-session entries that aggregate to attendanceData totals.
+// Currently only player_001 (Kiyan) is wired into the parent portal — adding
+// the others' aggregate splits would be speculative work.
+//
+// player_001 historical aggregate = 16 / 18 across all terms.
+// Split: Term 1 = 6/6, Term 2 = 7/8, Term 3 = 3/4 (in progress) → 16/18 ✓
+export const playerSessionAttendance: Record<string, PlayerSessionAttendanceEntry[]> = {
+  player_001: [
+    // Term 1 — 6/6 (perfect attendance)
+    { sessionId: 'sa_t1_01', date: '2025-08-26', termId: 'term_1', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t1_02', date: '2025-09-09', termId: 'term_1', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t1_03', date: '2025-09-23', termId: 'term_1', status: 'present', sessionType: 'match' },
+    { sessionId: 'sa_t1_04', date: '2025-10-07', termId: 'term_1', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t1_05', date: '2025-10-28', termId: 'term_1', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t1_06', date: '2025-11-18', termId: 'term_1', status: 'present', sessionType: 'match' },
+    // Term 2 — 7/8 (one missed)
+    { sessionId: 'sa_t2_01', date: '2025-12-09', termId: 'term_2', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t2_02', date: '2025-12-23', termId: 'term_2', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t2_03', date: '2026-01-13', termId: 'term_2', status: 'absent',  sessionType: 'training' },
+    { sessionId: 'sa_t2_04', date: '2026-01-27', termId: 'term_2', status: 'present', sessionType: 'match' },
+    { sessionId: 'sa_t2_05', date: '2026-02-10', termId: 'term_2', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t2_06', date: '2026-02-24', termId: 'term_2', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t2_07', date: '2026-03-10', termId: 'term_2', status: 'present', sessionType: 'match' },
+    { sessionId: 'sa_t2_08', date: '2026-03-24', termId: 'term_2', status: 'present', sessionType: 'training' },
+    // Term 3 — 3/4 so far (current term, in progress)
+    { sessionId: 'sa_t3_01', date: '2026-04-07', termId: 'term_3', status: 'present', sessionType: 'training' },
+    { sessionId: 'sa_t3_02', date: '2026-04-10', termId: 'term_3', status: 'present', sessionType: 'match' },
+    { sessionId: 'sa_t3_03', date: '2026-04-14', termId: 'term_3', status: 'absent',  sessionType: 'training' },
+    { sessionId: 'sa_t3_04', date: '2026-04-18', termId: 'term_3', status: 'present', sessionType: 'training' },
   ],
 }

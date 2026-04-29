@@ -10,6 +10,7 @@ import {
   Bookmark as BookmarkIcon, SkipBack, SkipForward, Rewind, FastForward,
   Eye, Shield, Lock, Star, Flag, MessageSquare, BarChart3,
   Target, Footprints, ShieldCheck, Zap, Hand, User, Share2, TrendingUp, TrendingDown, Minus, ClipboardList,
+  Map as MapIcon,
 } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -22,6 +23,7 @@ import PlayerAvatar from '@/components/coach/PlayerAvatar'
 import EventTimeline from '@/components/coach/EventTimeline'
 import PitchEventMap from '@/components/coach/PitchEventMap'
 import PitchHeatmap from '@/components/coach/PitchHeatmap'
+import PitchMinimap, { type MinimapMode } from '@/components/coach/PitchMinimap'
 import WhatsAppDeliveryPanel from '@/components/shared/WhatsAppDeliveryPanel'
 import HighlightsGenerator from '@/components/coach/HighlightsGenerator'
 import type { Session, Highlight, TimelineEvent, PendingReviewItem } from '@/lib/types'
@@ -326,6 +328,8 @@ function SessionCard({ session, active, onClick }: { session: Session; active: b
 }
 
 // ─── DVR PLAYER ─────────────────────────────────────────────
+const MINIMAP_MODE_KEY = 'fairplai_minimap_mode'
+
 function DvrPlayer({ session }: { session: Session }) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -338,6 +342,36 @@ function DvrPlayer({ session }: { session: Session }) {
   const segments = sessionSegments.filter(s => s.sessionId === session.id)
   const roster = rosters.find(r => r.id === session.rosterId)
   const speeds = [0.5, 1, 1.5, 2]
+
+  // Minimap state — mode persists in localStorage (lazy hydration in initial state)
+  const [minimapMode, setMinimapMode] = useState<MinimapMode>(() => {
+    if (typeof window === 'undefined') return 'docked'
+    try {
+      const stored = window.localStorage.getItem(MINIMAP_MODE_KEY)
+      if (stored === 'docked' || stored === 'floating' || stored === 'hidden') return stored
+    } catch { /* ignore */ }
+    return 'docked'
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try { window.localStorage.setItem(MINIMAP_MODE_KEY, minimapMode) } catch { /* ignore */ }
+  }, [minimapMode])
+
+  // Build minimap events from session highlights joined with their pitch coordinates.
+  const minimapEvents: TimelineEvent[] = useMemo(() => {
+    return sessionHighlights.map(h => {
+      const loc = highlightLocations[h.id]
+      return {
+        highlightId: h.id,
+        playerId: h.playerId,
+        eventType: h.eventType,
+        timestampSeconds: h.timestampSeconds,
+        confidence: h.aiConfidence,
+        pitchX: loc?.pitchX,
+        pitchY: loc?.pitchY,
+      }
+    })
+  }, [sessionHighlights])
 
   function handleScrub(e: React.MouseEvent) {
     if (!scrubRef.current) return
@@ -404,11 +438,29 @@ function DvrPlayer({ session }: { session: Session }) {
             <button onClick={() => setProgress(Math.min(1, progress + 10 / totalSeconds))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><SkipForward size={16} color="#fff" /></button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setMinimapMode(m => m === 'hidden' ? 'docked' : 'hidden')}
+              title={minimapMode === 'hidden' ? 'Show pitch map' : 'Hide pitch map'}
+              style={{
+                padding: '4px 8px', borderRadius: 6,
+                background: minimapMode === 'hidden' ? 'rgba(255,255,255,0.1)' : `${COLORS.primary}40`,
+                border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                color: '#fff',
+              }}
+            >
+              <MapIcon size={14} />
+            </button>
             <button onClick={() => { const i = speeds.indexOf(speed); setSpeed(speeds[(i + 1) % speeds.length]) }} style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{speed}x</button>
             <span style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'monospace' }}>{formatTime(totalSeconds)}</span>
           </div>
         </div>
       </div>
+      <PitchMinimap
+        events={minimapEvents}
+        currentSeconds={currentSeconds}
+        mode={minimapMode}
+        onModeChange={setMinimapMode}
+      />
     </div>
   )
 }
