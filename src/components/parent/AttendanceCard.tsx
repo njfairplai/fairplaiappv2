@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { terms, playerSessionAttendance } from '@/lib/mockData'
+import type { PlayerSessionAttendanceEntry } from '@/lib/types'
 import { SHADOWS, COLORS } from '@/lib/constants'
 
 interface AttendanceCardProps {
@@ -16,9 +17,18 @@ function attendanceColor(pct: number): string {
   return COLORS.error
 }
 
-function formatShortDate(dateStr: string): string {
+function formatLongDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+function monthKey(dateStr: string): string {
+  return dateStr.slice(0, 7) // YYYY-MM
+}
+
+function monthLabel(key: string): string {
+  const d = new Date(key + '-01T00:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short' })
 }
 
 function ScoreArc({ pct, size = 90, color }: { pct: number; size?: number; color: string }) {
@@ -44,24 +54,55 @@ function ScoreArc({ pct, size = 90, color }: { pct: number; size?: number; color
   )
 }
 
+function StatusDot({ attended, isMatch, selected }: { attended: boolean; isMatch: boolean; selected: boolean }) {
+  // 18px outer canvas; 14px visible dot.
+  const SIZE = 18
+  const cx = SIZE / 2
+  const cy = SIZE / 2
+  const r = 7
+  return (
+    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ display: 'block' }}>
+      {/* Selected halo */}
+      {selected && (
+        <circle cx={cx} cy={cy} r={r + 2} fill="none" stroke={COLORS.navy} strokeOpacity={0.55} strokeWidth={1.5} />
+      )}
+      {attended ? (
+        <circle cx={cx} cy={cy} r={r} fill={COLORS.success} />
+      ) : (
+        <>
+          <circle cx={cx} cy={cy} r={r} fill="#FFFFFF" stroke={COLORS.error} strokeWidth={1.5} />
+          {/* Diagonal slash for shape-distinct missed state (colorblind safe) */}
+          <line x1={cx - 3} y1={cy - 3} x2={cx + 3} y2={cy + 3} stroke={COLORS.error} strokeWidth={1.5} strokeLinecap="round" />
+          <line x1={cx + 3} y1={cy - 3} x2={cx - 3} y2={cy + 3} stroke={COLORS.error} strokeWidth={1.5} strokeLinecap="round" />
+        </>
+      )}
+      {/* Match indicator: extra outer ring */}
+      {isMatch && (
+        <circle cx={cx} cy={cy} r={r + 1} fill="none" stroke={COLORS.navy} strokeOpacity={0.85} strokeWidth={1} />
+      )}
+    </svg>
+  )
+}
+
 export default function AttendanceCard({ playerId }: AttendanceCardProps) {
   const log = useMemo(() => playerSessionAttendance[playerId] ?? [], [playerId])
 
-  // Default to the term that contains today's date, fall back to most recent term that has data
   const currentTermFromDate = useMemo(() => {
     const today = TODAY.toISOString().slice(0, 10)
     return terms.find(t => today >= t.startDate && today <= t.endDate)?.id ?? terms[terms.length - 1].id
   }, [])
 
   const [selectedTermId, setSelectedTermId] = useState<string>(currentTermFromDate)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
 
   const termSessions = useMemo(() => log.filter(s => s.termId === selectedTermId), [log, selectedTermId])
+  const sortedAsc = useMemo(() => [...termSessions].sort((a, b) => a.date.localeCompare(b.date)), [termSessions])
+
   const total = termSessions.length
   const present = termSessions.filter(s => s.status === 'present').length
   const missed = total - present
   const pct = total === 0 ? 0 : Math.round((present / total) * 100)
 
-  // Streak — count consecutive most-recent presents
   const sortedDesc = useMemo(() => [...termSessions].sort((a, b) => b.date.localeCompare(a.date)), [termSessions])
   const streak = useMemo(() => {
     let n = 0
@@ -72,8 +113,30 @@ export default function AttendanceCard({ playerId }: AttendanceCardProps) {
     return n
   }, [sortedDesc])
 
-  // Sessions in chronological order for the dot strip
-  const sortedAsc = useMemo(() => [...termSessions].sort((a, b) => a.date.localeCompare(b.date)), [termSessions])
+  // Default the highlighted session to the most recent one whenever the term changes.
+  useEffect(() => {
+    setSelectedSessionId(sortedDesc[0]?.sessionId ?? null)
+  }, [selectedTermId, sortedDesc])
+
+  // Group by month preserving chronological order.
+  const monthGroups = useMemo(() => {
+    const groups: { key: string; label: string; sessions: PlayerSessionAttendanceEntry[] }[] = []
+    const map = new Map<string, PlayerSessionAttendanceEntry[]>()
+    for (const s of sortedAsc) {
+      const k = monthKey(s.date)
+      if (!map.has(k)) map.set(k, [])
+      map.get(k)!.push(s)
+    }
+    for (const [k, sessions] of map) {
+      groups.push({ key: k, label: monthLabel(k), sessions })
+    }
+    return groups
+  }, [sortedAsc])
+
+  const selectedSession = useMemo(
+    () => termSessions.find(s => s.sessionId === selectedSessionId) ?? null,
+    [termSessions, selectedSessionId],
+  )
 
   const arcColor = attendanceColor(pct)
   const hasData = total > 0
@@ -116,7 +179,7 @@ export default function AttendanceCard({ playerId }: AttendanceCardProps) {
       {hasData ? (
         <>
           {/* Headline row: arc + breakdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
             <div style={{ position: 'relative', width: 90, height: 90, flexShrink: 0 }}>
               <ScoreArc pct={pct} color={arcColor} />
               <div style={{
@@ -146,39 +209,105 @@ export default function AttendanceCard({ playerId }: AttendanceCardProps) {
             </div>
           </div>
 
-          {/* Dot strip */}
+          {/* Month rows */}
           <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: 6,
-            paddingTop: 10, borderTop: '1px solid #F1F5F9',
+            paddingTop: 12,
+            borderTop: '1px solid #F1F5F9',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
           }}>
-            {sortedAsc.map(s => (
-              <div
-                key={s.sessionId}
-                title={`${formatShortDate(s.date)} · ${s.sessionType} · ${s.status}`}
-                style={{
-                  width: 14, height: 14, borderRadius: '50%',
-                  background: s.status === 'present' ? COLORS.success : COLORS.error,
-                  border: s.sessionType === 'match' ? `2px solid ${COLORS.navy}40` : 'none',
-                  boxSizing: 'border-box',
-                  cursor: 'help',
-                }}
-              />
+            {monthGroups.map(group => (
+              <div key={group.key} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 32,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#9DA2B3',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.4,
+                  flexShrink: 0,
+                }}>
+                  {group.label}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+                  {group.sessions.map(s => {
+                    const isSelected = s.sessionId === selectedSessionId
+                    const attended = s.status === 'present'
+                    const isMatch = s.sessionType === 'match'
+                    return (
+                      <button
+                        key={s.sessionId}
+                        onClick={() => setSelectedSessionId(s.sessionId)}
+                        aria-label={`${formatLongDate(s.date)} · ${s.sessionType} · ${attended ? 'attended' : 'missed'}`}
+                        aria-pressed={isSelected}
+                        style={{
+                          width: 30,
+                          height: 30,
+                          padding: 0,
+                          border: 'none',
+                          background: 'transparent',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          borderRadius: 8,
+                        }}
+                      >
+                        <StatusDot attended={attended} isMatch={isMatch} selected={isSelected} />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             ))}
           </div>
-          {sortedAsc.length > 0 && (
+
+          {/* Inline detail caption */}
+          {selectedSession && (
             <div style={{
-              display: 'flex', justifyContent: 'space-between',
-              fontSize: 10, color: '#9DA2B3', marginTop: 6,
+              marginTop: 10,
+              padding: '8px 12px',
+              background: '#F8FAFC',
+              borderRadius: 8,
+              fontSize: 12,
+              color: COLORS.navy,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              flexWrap: 'wrap',
             }}>
-              <span>{formatShortDate(sortedAsc[0].date)}</span>
-              <span>{formatShortDate(sortedAsc[sortedAsc.length - 1].date)}</span>
+              <span>{formatLongDate(selectedSession.date)}</span>
+              <span style={{ color: '#9DA2B3' }}>·</span>
+              <span style={{ textTransform: 'capitalize' }}>{selectedSession.sessionType}</span>
+              <span style={{ color: '#9DA2B3' }}>·</span>
+              <span style={{
+                color: selectedSession.status === 'present' ? COLORS.success : COLORS.error,
+                fontWeight: 700,
+              }}>
+                {selectedSession.status === 'present' ? 'Attended' : 'Missed'}
+              </span>
             </div>
           )}
-          <p style={{ fontSize: 11, color: '#9DA2B3', margin: '10px 0 0' }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: COLORS.success, marginRight: 4 }} /> Attended
-            <span style={{ marginLeft: 12, display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: COLORS.error, marginRight: 4 }} /> Missed
-            <span style={{ marginLeft: 12, display: 'inline-block', width: 8, height: 8, borderRadius: '50%', border: `2px solid ${COLORS.navy}40`, boxSizing: 'border-box', marginRight: 4 }} /> Match
-          </p>
+
+          {/* Legend */}
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '6px 16px',
+            fontSize: 11, color: '#9DA2B3', marginTop: 10,
+            alignItems: 'center',
+          }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <StatusDot attended={true} isMatch={false} selected={false} /> Attended
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <StatusDot attended={false} isMatch={false} selected={false} /> Missed
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <StatusDot attended={true} isMatch={true} selected={false} /> Match
+            </span>
+            <span style={{ color: '#CBD5E1' }}>· Tap any session for details</span>
+          </div>
         </>
       ) : (
         <div style={{ padding: '20px 0', textAlign: 'center' }}>
