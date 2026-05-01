@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { sessions, players, matchAnalyses, highlights, pitches } from '@/lib/mockData'
 import type { MatchAnalysis, Player, Highlight } from '@/lib/types'
 import { BRAND, TYPE, COLORS } from '@/lib/constants'
+
+const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
 
 /* ──────────────────────────────────────────────────────────────────
    Direction C v3 — Coach Match Analysis (parallel route)
@@ -73,6 +76,9 @@ const v3Motion = `
 @keyframes v3-row-rise   { from { opacity:0; transform: translateY(8px) } to { opacity:1; transform: translateY(0) } }
 @keyframes v3-pulse-ring { 0% { transform: translate(-50%,-50%) scale(0.6); opacity:0.6 } 100% { transform: translate(-50%,-50%) scale(2.2); opacity:0 } }
 @keyframes v3-playhead   { 0%,100% { opacity:0.55 } 50% { opacity:1 } }
+@keyframes v3-panel-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes v3-panel-up    { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes v3-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 .v3-row { animation: v3-row-rise .42s cubic-bezier(.2,.7,.2,1) both; }
 .v3-pin { animation: v3-pin-pop .38s cubic-bezier(.2,1.4,.4,1) both; }
 .v3-track-line { stroke-dasharray: 1200; animation: v3-track-draw 900ms cubic-bezier(.6,0,.2,1) 80ms both; }
@@ -466,19 +472,29 @@ function V3ClipPanel({ event, player, totalMin }: {
 /* ─────────────────── Roster row ─────────────────── */
 type PlayerRow = { player: Player; analysis: MatchAnalysis; events: TLEvent[] }
 
-function V3RosterRow({ row, idx, totalMin }: { row: PlayerRow; idx: number; totalMin: number }) {
+function V3RosterRow({ row, idx, totalMin, onSelect }: {
+  row: PlayerRow; idx: number; totalMin: number;
+  onSelect: (playerId: string) => void;
+}) {
   const { player: p, analysis: a, events } = row
   const c = scoreValueColor(a.compositeScore)
   const exceptional = isExceptional(a.compositeScore)
   return (
-    <div className="v3-row" style={{
-      animationDelay: `${100 + idx * 35}ms`,
-      display: 'grid',
-      gridTemplateColumns: '46px 170px 1fr 100px 70px 24px',
-      alignItems: 'center', gap: 16, padding: '14px 4px',
-      borderBottom: `1px solid ${BRAND.line}`, cursor: 'pointer',
-      position: 'relative',
-    }}>
+    <div
+      className="v3-row"
+      onClick={() => onSelect(p.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(p.id) } }}
+      style={{
+        animationDelay: `${100 + idx * 35}ms`,
+        display: 'grid',
+        gridTemplateColumns: '46px 170px 1fr 100px 70px 24px',
+        alignItems: 'center', gap: 16, padding: '14px 4px',
+        borderBottom: `1px solid ${BRAND.line}`, cursor: 'pointer',
+        position: 'relative',
+      }}
+    >
       <div className="v3-num" style={{
         width: 36, height: 36, borderRadius: 8,
         background: exceptional ? BRAND.yellow : BRAND.paper,
@@ -545,6 +561,256 @@ function V3RosterRow({ row, idx, totalMin }: { row: PlayerRow; idx: number; tota
   )
 }
 
+/* ─────────────────── Player detail panel ─────────────────── */
+/** Letter grade + colour band for a category score (0–100). */
+function getGrade(score: number): { grade: string; color: string } {
+  if (score >= 85) return { grade: 'A', color: COLORS.success }
+  if (score >= 70) return { grade: 'B', color: COLORS.success }
+  if (score >= 60) return { grade: 'C', color: COLORS.warning }
+  if (score >= 50) return { grade: 'D', color: COLORS.warning }
+  return { grade: 'F', color: COLORS.error }
+}
+
+/** Mobile detection — full-page takeover on phones, slide-in on desktop. */
+function useIsMobile(breakpoint = 768): boolean {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const m = window.matchMedia(`(max-width: ${breakpoint}px)`)
+    const handler = () => setIsMobile(m.matches)
+    handler()
+    m.addEventListener('change', handler)
+    return () => m.removeEventListener('change', handler)
+  }, [breakpoint])
+  return isMobile
+}
+
+function V3PlayerDetail({ row, onClose }: { row: PlayerRow; onClose: () => void }) {
+  const { player: p, analysis: a } = row
+  const isMobile = useIsMobile()
+  const compositeColor = scoreValueColor(a.compositeScore)
+  const exceptional = isExceptional(a.compositeScore)
+
+  // Season average not tracked per-match in mock data — use composite as a placeholder.
+  // Real implementation will pull this from PlayerSeasonStats.
+  const radarData = [
+    { category: 'Physical',   score: a.physicalScore,   avg: a.compositeScore },
+    { category: 'Passing',    score: a.passingScore,    avg: a.compositeScore },
+    { category: 'Dribbling',  score: a.dribblingScore,  avg: a.compositeScore },
+    { category: 'Defending',  score: a.defendingScore,  avg: a.compositeScore },
+    { category: 'Control',    score: a.controlScore,    avg: a.compositeScore },
+    { category: 'Positional', score: a.positionalScore, avg: a.compositeScore },
+  ]
+
+  const grades = [
+    { label: 'Physical', score: a.physicalScore },
+    { label: 'Passing', score: a.passingScore },
+    { label: 'Dribbling', score: a.dribblingScore },
+    { label: 'Defending', score: a.defendingScore },
+    { label: 'Control', score: a.controlScore },
+    { label: 'Positional', score: a.positionalScore },
+  ]
+
+  // Persisted per-session, per-player coach notes (mirrors the existing match page pattern).
+  const noteKey = `fairplai_player_session_note_${a.sessionId}_${p.id}`
+  const [note, setNote] = useState<string>('')
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setNote(window.localStorage.getItem(noteKey) ?? '')
+  }, [noteKey])
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (note) window.localStorage.setItem(noteKey, note)
+  }, [note, noteKey])
+
+  // Common panel content (header + score + radar + grades + physical + notes)
+  const content = (
+    <div style={{
+      height: '100%',
+      overflowY: 'auto',
+      background: BRAND.sand,
+      color: BRAND.indigo,
+      fontFamily: TYPE.body,
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '20px 24px',
+        background: BRAND.indigo, color: BRAND.sand,
+        position: 'sticky', top: 0, zIndex: 2,
+      }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: '50%',
+          background: BRAND.sand, color: BRAND.indigo,
+          fontFamily: TYPE.display, fontSize: 18, fontWeight: 700,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: exceptional ? `0 0 0 2px ${BRAND.yellow}` : 'none',
+          flexShrink: 0,
+        }}>{p.jerseyNumber}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: TYPE.display, fontSize: 22, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
+            {p.firstName} {p.lastName}
+          </div>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', color: 'rgba(238,228,200,0.7)', marginTop: 4 }}>
+            #{p.jerseyNumber} · {(p.position[0] || '').toUpperCase()} · {a.minutesPlayed ?? '—'}'
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="v3-cta"
+          style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(238,228,200,0.10)', color: BRAND.sand,
+            border: `1px solid rgba(238,228,200,0.2)`,
+            fontSize: 16, cursor: 'pointer', flexShrink: 0,
+          }}
+        >×</button>
+      </div>
+
+      {/* Composite score band */}
+      <div style={{
+        padding: '24px',
+        display: 'flex', alignItems: 'center', gap: 18,
+        borderBottom: `1px solid ${BRAND.line}`,
+      }}>
+        <div style={{
+          width: 96, height: 96, borderRadius: '50%',
+          border: `4px solid ${compositeColor}`,
+          background: BRAND.paper,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <div style={{ fontFamily: TYPE.display, fontSize: 34, lineHeight: 1, letterSpacing: '-0.02em', color: compositeColor }}>{a.compositeScore}</div>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 8.5, letterSpacing: '0.2em', color: BRAND.indigoMute, marginTop: 4 }}>SCORE</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>SESSION SCORE</div>
+          <div style={{ fontFamily: TYPE.display, fontSize: 24, marginTop: 4, letterSpacing: '-0.01em' }}>
+            {a.compositeScore >= 85 ? 'Exceptional.' : a.compositeScore >= 75 ? 'Strong session.' : a.compositeScore >= 60 ? 'Solid.' : 'Room to grow.'}
+          </div>
+          {exceptional && (
+            <div style={{
+              display: 'inline-block',
+              marginTop: 8,
+              padding: '4px 10px',
+              background: BRAND.yellow, color: BRAND.indigo,
+              fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.18em', fontWeight: 700,
+              borderRadius: 4,
+            }}>★ MOTM</div>
+          )}
+        </div>
+      </div>
+
+      {/* Performance Radar */}
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 8 }}>PERFORMANCE RADAR</div>
+        <div style={{ background: BRAND.paper, borderRadius: 12, padding: 12, border: `1px solid ${BRAND.line}` }}>
+          <RadarChartDynamic data={radarData} height={isMobile ? 240 : 280} />
+        </div>
+      </div>
+
+      {/* Category Grades */}
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 10 }}>CATEGORY GRADES</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {grades.map(({ label, score }) => {
+            const { grade, color } = getGrade(score)
+            return (
+              <div key={label} style={{
+                background: BRAND.paper, border: `1px solid ${BRAND.line}`,
+                borderRadius: 10, padding: '12px 14px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+              }}>
+                <div>
+                  <div style={{ fontSize: 12, color: BRAND.indigoMute, fontFamily: TYPE.mono, letterSpacing: '0.12em' }}>{label.toUpperCase()}</div>
+                  <div style={{ fontFamily: TYPE.display, fontSize: 22, color: BRAND.indigo, marginTop: 2, letterSpacing: '-0.01em' }}>{score}</div>
+                </div>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: `${color}1A`, color, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: TYPE.display, fontSize: 16, fontWeight: 800,
+                }}>{grade}</div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Physical Details */}
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 10 }}>PHYSICAL</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          {[
+            { label: 'Distance', value: `${a.distanceCovered.toFixed(1)} km` },
+            { label: 'Top Speed', value: `${a.topSpeed.toFixed(1)} km/h` },
+            { label: 'Sprints', value: `${a.sprintCount}` },
+          ].map(({ label, value }) => (
+            <div key={label} style={{
+              background: BRAND.paper, border: `1px solid ${BRAND.line}`, borderRadius: 10,
+              padding: '12px 8px', textAlign: 'center',
+            }}>
+              <div style={{ fontFamily: TYPE.display, fontSize: 18, fontWeight: 700, color: BRAND.indigo, letterSpacing: '-0.01em' }}>{value}</div>
+              <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 4 }}>{label.toUpperCase()}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Coach notes */}
+      <div style={{ padding: '20px 24px 32px' }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 8 }}>SESSION NOTES</div>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder={`Add notes about ${p.firstName}...`}
+          style={{
+            width: '100%', minHeight: 90,
+            border: `1px solid ${BRAND.line}`, background: BRAND.paper,
+            borderRadius: 10, padding: 12,
+            fontSize: 14, color: BRAND.indigo,
+            resize: 'vertical', fontFamily: TYPE.body, boxSizing: 'border-box',
+          }}
+        />
+      </div>
+    </div>
+  )
+
+  return (
+    <>
+      {/* backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(11,8,40,0.45)',
+          zIndex: 90,
+          animation: 'v3-backdrop-in 180ms ease-out both',
+        }}
+      />
+      {/* panel: takeover on mobile, slide-in 460px on desktop */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: isMobile ? '100vw' : 460,
+          background: BRAND.sand,
+          boxShadow: '-8px 0 32px rgba(11,8,40,0.18)',
+          zIndex: 100,
+          animation: isMobile
+            ? 'v3-panel-up 280ms cubic-bezier(.2,.7,.2,1) both'
+            : 'v3-panel-right 280ms cubic-bezier(.2,.7,.2,1) both',
+        }}
+      >
+        {content}
+      </div>
+    </>
+  )
+}
+
 /* ─────────────────── Page ─────────────────── */
 export default function V3MatchAnalysisPage() {
   const params = useParams<{ sessionId: string }>()
@@ -602,6 +868,7 @@ export default function V3MatchAnalysisPage() {
 
   const [activeEventId, setActiveEventId] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterKey>('all')
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
 
   // Apply the active filter to the events list
   const filterDef = FILTER_DEFS.find(f => f.key === filter) ?? FILTER_DEFS[0]
@@ -728,9 +995,16 @@ export default function V3MatchAnalysisPage() {
         </div>
 
         {visiblePlayerRows.map((r, i) => (
-          <V3RosterRow key={r.player.id} row={r} idx={i} totalMin={totalMin} />
+          <V3RosterRow key={r.player.id} row={r} idx={i} totalMin={totalMin} onSelect={setSelectedPlayerId} />
         ))}
       </div>
+
+      {/* Player detail panel (slide-in on desktop, takeover on mobile) */}
+      {selectedPlayerId && (() => {
+        const row = playerRows.find(r => r.player.id === selectedPlayerId)
+        if (!row) return null
+        return <V3PlayerDetail row={row} onClose={() => setSelectedPlayerId(null)} />
+      })()}
     </div>
   )
 }
