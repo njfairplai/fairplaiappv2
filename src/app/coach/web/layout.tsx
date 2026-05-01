@@ -7,6 +7,29 @@ import { useTeam } from '@/contexts/TeamContext'
 import { CoachThemeProvider, useCoachTheme } from '@/contexts/CoachThemeContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { BRAND, TYPE } from '@/lib/constants'
+
+/**
+ * v3 chrome override. When a route opts into the brand v3 design language
+ * (e.g. /coach/web/match/[id]/v3), the existing coach header + tab bar adopt
+ * the sand surface, indigo structure, Clash Display + Satoshi typography
+ * so the chrome and the page read as one designed system. All other routes
+ * keep the existing CoachThemeContext-driven look untouched.
+ */
+const V3_CHROME = {
+  headerBg: BRAND.sand,
+  headerBorder: BRAND.line,
+  headerText: BRAND.indigo,
+  headerTextMuted: BRAND.indigoMute,
+  textMuted: BRAND.indigoMute,
+  textSecondary: BRAND.indigo,
+  tabBarBg: BRAND.sand,
+  tabBarBorder: BRAND.line,
+  tabText: BRAND.indigoMute,
+  tabTextActive: BRAND.indigo,
+  tabIndicator: BRAND.yellow,
+  pageBg: BRAND.sand,
+} as const
 
 const tabs = [
   { href: '/coach/web', label: "Coach's Hub", icon: Sparkles, exact: true },
@@ -20,11 +43,17 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
-  const { mode, colors, toggleTheme } = useCoachTheme()
+  const { mode, colors: themeColors, toggleTheme } = useCoachTheme()
   const isMobile = useIsMobile()
 
+  // Routes ending in /v3 (or with /v3/ segment) opt into the brand v3 chrome.
+  const isV3Route = pathname.includes('/v3')
+  const colors = isV3Route ? { ...themeColors, ...V3_CHROME } : themeColors
+  const fontFamilyBody = isV3Route ? TYPE.body : 'inherit'
+  const tabFontWeight = isV3Route ? 600 : undefined
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', overflowX: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', overflowX: 'hidden', fontFamily: fontFamilyBody }}>
       {/* Header bar */}
       <header style={{
         height: isMobile ? 52 : 60, flexShrink: 0,
@@ -34,13 +63,26 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
         borderBottom: `1px solid ${colors.headerBorder}`,
         gap: 8,
       }}>
-        <Image
-          src={mode === 'light' ? '/logo-black.png' : '/logo-white.png'}
-          alt="FairplAI"
-          width={100}
-          height={28}
-          style={{ height: isMobile ? 24 : 28, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
-        />
+        {isV3Route ? (
+          /* On v3 routes, render the wordmark in Clash Display so the brand
+             logo matches the typographic system of the page itself. */
+          <div style={{
+            fontFamily: TYPE.display,
+            fontSize: isMobile ? 18 : 22,
+            letterSpacing: '0.04em',
+            fontWeight: 700,
+            color: BRAND.indigo,
+            flexShrink: 0,
+          }}>FAIRPL.AI</div>
+        ) : (
+          <Image
+            src={mode === 'light' ? '/logo-black.png' : '/logo-white.png'}
+            alt="FairplAI"
+            width={100}
+            height={28}
+            style={{ height: isMobile ? 24 : 28, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+          />
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 16, minWidth: 0 }}>
           {/* Team selector */}
@@ -51,9 +93,10 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
               style={{
                 padding: isMobile ? '6px 22px 6px 8px' : '7px 30px 7px 12px',
                 borderRadius: 8,
-                background: mode === 'light' ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
-                border: `1px solid ${mode === 'light' ? '#E2E8F0' : 'rgba(255,255,255,0.1)'}`,
+                background: isV3Route ? BRAND.paper : (mode === 'light' ? '#F1F5F9' : 'rgba(255,255,255,0.06)'),
+                border: `1px solid ${isV3Route ? BRAND.line : (mode === 'light' ? '#E2E8F0' : 'rgba(255,255,255,0.1)')}`,
                 color: colors.headerText, fontSize: isMobile ? 11 : 13, fontWeight: 600,
+                fontFamily: isV3Route ? TYPE.body : 'inherit',
                 cursor: 'pointer', outline: 'none',
                 appearance: 'none', WebkitAppearance: 'none',
                 maxWidth: isMobile ? 110 : 'none',
@@ -76,13 +119,13 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: 8,
-              background: mode === 'light' ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
-              border: `1px solid ${mode === 'light' ? '#E2E8F0' : 'rgba(255,255,255,0.1)'}`,
+              background: isV3Route ? BRAND.paper : (mode === 'light' ? '#F1F5F9' : 'rgba(255,255,255,0.06)'),
+              border: `1px solid ${isV3Route ? BRAND.line : (mode === 'light' ? '#E2E8F0' : 'rgba(255,255,255,0.1)')}`,
               cursor: 'pointer', transition: 'all 0.15s ease', flexShrink: 0,
             }}
           >
             {mode === 'light'
-              ? <Moon size={isMobile ? 14 : 16} color="#64748B" />
+              ? <Moon size={isMobile ? 14 : 16} color={isV3Route ? BRAND.indigoMid : '#64748B'} />
               : <Sun size={isMobile ? 14 : 16} color="#F59E0B" />
             }
           </button>
@@ -100,22 +143,35 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
               width: isMobile ? 32 : 'auto', height: isMobile ? 32 : 'auto',
               justifyContent: 'center',
               borderRadius: 8,
-              background: mode === 'light' ? 'rgba(74,74,255,0.06)' : 'rgba(74,74,255,0.12)',
-              border: `1px solid ${mode === 'light' ? 'rgba(74,74,255,0.15)' : 'rgba(74,74,255,0.25)'}`,
+              background: isV3Route ? BRAND.indigoSoft : (mode === 'light' ? 'rgba(74,74,255,0.06)' : 'rgba(74,74,255,0.12)'),
+              border: `1px solid ${isV3Route ? 'rgba(27,21,80,0.18)' : (mode === 'light' ? 'rgba(74,74,255,0.15)' : 'rgba(74,74,255,0.25)')}`,
               cursor: 'pointer', transition: 'all 0.15s ease', flexShrink: 0,
+              fontFamily: isV3Route ? TYPE.body : 'inherit',
             }}
           >
-            <Smartphone size={isMobile ? 14 : 14} color="#4A4AFF" />
-            {!isMobile && <span style={{ fontSize: 12, fontWeight: 600, color: '#4A4AFF' }}>Mobile</span>}
+            <Smartphone size={isMobile ? 14 : 14} color={isV3Route ? BRAND.indigo : '#4A4AFF'} />
+            {!isMobile && <span style={{ fontSize: 12, fontWeight: 600, color: isV3Route ? BRAND.indigo : '#4A4AFF' }}>Mobile</span>}
           </button>
 
           {/* Coach label (avatar only on mobile) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <div style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: '50%', background: 'rgba(74,74,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: isMobile ? 11 : 13, fontWeight: 700, color: '#4A4AFF' }}>CA</span>
+            <div style={{
+              width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: '50%',
+              background: isV3Route ? BRAND.indigo : 'rgba(74,74,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{
+                fontSize: isMobile ? 11 : 13, fontWeight: 700,
+                color: isV3Route ? BRAND.sand : '#4A4AFF',
+                fontFamily: isV3Route ? TYPE.display : 'inherit',
+              }}>CA</span>
             </div>
             {!isMobile && (
-              <span style={{ fontSize: 13, fontWeight: 600, color: colors.headerTextMuted }}>Coach Ali</span>
+              <span style={{
+                fontSize: 13, fontWeight: 600,
+                color: colors.headerTextMuted,
+                fontFamily: isV3Route ? TYPE.body : 'inherit',
+              }}>Coach Ali</span>
             )}
           </div>
         </div>
@@ -148,7 +204,11 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
                 border: 'none', cursor: 'pointer',
                 background: 'transparent',
                 color: isActive ? colors.tabTextActive : colors.tabText,
-                fontSize: isMobile ? 12 : 14, fontWeight: isActive ? 700 : 500,
+                fontSize: isMobile ? 12 : (isV3Route ? 12.5 : 14),
+                fontWeight: isActive ? (isV3Route ? 700 : 700) : (tabFontWeight ?? 500),
+                fontFamily: isV3Route ? TYPE.body : 'inherit',
+                letterSpacing: isV3Route ? '0.06em' : 'normal',
+                textTransform: isV3Route ? ('uppercase' as const) : ('none' as const),
                 borderBottom: isActive ? `3px solid ${colors.tabIndicator}` : '3px solid transparent',
                 transition: 'all 0.15s ease',
                 marginBottom: -1, flexShrink: 0,

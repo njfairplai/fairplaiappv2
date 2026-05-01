@@ -261,54 +261,71 @@ function V3Timeline({ events, totalMin, activeId, onSelect }: {
         {/* HT marker */}
         <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, borderLeft: `1px dashed ${BRAND.line}` }} />
 
+        {/* Pins are positioned relative to the timeline container directly so the
+           pin button and the vertical connector never overlap. Above pins sit at
+           y=14 (pin top y=3, bottom y=25); below pins sit at y=64 (top y=53,
+           bottom y=75). Track line is at y=39. Connectors fill the gap between
+           pin edge and track. */}
         {events.map((e, i) => {
           const meta = eventMeta[e.type] || { letter: '·', label: e.type.toUpperCase() }
           const left = (e.t / totalMin) * 100
           const above = i % 2 === 0
           const isActive = e.id === activeId
+          const pinSize = isActive ? 28 : 22
+          const pinCenterY = above ? 14 : 64
+          const pinTopY = pinCenterY - pinSize / 2
+          const pinBottomY = pinCenterY + pinSize / 2
+          // Connector spans from pin edge to track line (y=39).
+          const connectorTop = above ? pinBottomY : 39
+          const connectorBottom = above ? 39 : pinTopY
+          const connectorHeight = connectorBottom - connectorTop
           return (
-            <div
-              key={e.id}
-              className={i < 12 ? 'v3-pin' : ''}
-              style={{
+            <div key={e.id} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+              {/* Connector — drawn first so the pin button sits on top */}
+              <div style={{
                 position: 'absolute',
                 left: `${left}%`,
-                top: above ? 6 : 50,
-                animationDelay: `${80 + i * 60}ms`,
-              }}
-            >
+                top: connectorTop,
+                width: 1,
+                height: connectorHeight,
+                background: isActive ? BRAND.indigo : BRAND.line,
+                transform: 'translateX(-50%)',
+              }} />
+              {/* Pulse ring (active) — drawn before pin so the pin button sits on top */}
               {isActive && (
                 <div className="v3-pulse-ring" style={{
-                  position: 'absolute', left: '50%', top: '50%',
+                  position: 'absolute',
+                  left: `${left}%`, top: pinCenterY,
                   width: 26, height: 26, borderRadius: '50%',
                   border: `2px solid ${e.isGoal ? BRAND.yellow : BRAND.indigo}`,
                   pointerEvents: 'none',
                 }} />
               )}
+              {/* Pin button — last in the stack, with class for the pop-in animation */}
               <button
+                className={i < 12 ? 'v3-pin' : ''}
                 onClick={() => onSelect(e.id)}
                 aria-label={meta.label}
                 style={{
-                  position: 'absolute', left: '50%', top: '50%',
+                  position: 'absolute',
+                  left: `${left}%`, top: pinCenterY,
                   transform: 'translate(-50%,-50%)',
-                  width: isActive ? 30 : 22, height: isActive ? 30 : 22,
+                  width: pinSize, height: pinSize,
                   borderRadius: '50%',
                   background: e.isGoal ? BRAND.yellow : (isActive ? BRAND.indigo : BRAND.sand),
                   border: `2px solid ${BRAND.indigo}`,
                   color: e.isGoal ? BRAND.indigo : (isActive ? BRAND.sand : BRAND.indigo),
-                  fontFamily: TYPE.display, fontSize: isActive ? 13 : 11,
+                  fontFamily: TYPE.display, fontSize: isActive ? 13 : 11, fontWeight: 700,
                   cursor: 'pointer', padding: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   boxShadow: isActive
                     ? `0 0 0 5px ${e.isGoal ? BRAND.yellowSoft : BRAND.indigoSoft}, 0 4px 8px rgba(27,21,80,0.15)`
                     : '0 1px 3px rgba(27,21,80,0.18)',
                   transition: 'all 180ms cubic-bezier(.2,1.4,.4,1)',
+                  pointerEvents: 'auto',
+                  animationDelay: `${80 + i * 60}ms`,
                 }}
               >{meta.letter}</button>
-              <div style={{
-                position: 'absolute', left: '50%', top: above ? 16 : -16, width: 1,
-                height: 22, background: isActive ? BRAND.indigo : BRAND.line,
-              }} />
             </div>
           )
         })}
