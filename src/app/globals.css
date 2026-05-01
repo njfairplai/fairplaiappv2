@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
+/* Note: Brand v3 fonts (Satoshi + Clash Display via Fontshare, Fragment Mono via Google Fonts)
+   are loaded as <link> tags in src/app/layout.tsx because Tailwind 4's PostCSS pipeline
+   intercepts CSS @import rules at build time. */
+
 @theme {
   --font-inter: 'Inter', sans-serif;
-  --color-deep-indigo: #1B1650;
+  --font-satoshi: 'Satoshi', system-ui, sans-serif;
+  --font-clash: 'Clash Display', 'Satoshi', system-ui, sans-serif;
+  --font-fragment: 'Fragment Mono', ui-monospace, 'SF Mono', monospace;
+  /* legacy navy kept for back-compat; brand-aligned navy lives in BRAND.indigo (#1B1550) */
+  --color-deep-indigo: #1B1550;
   --color-electric-navy: #282689;
   --color-ahoy-blue: #4A4AFF;
   --color-active-blue: #4536F5;
@@ -12,6 +20,17 @@
   --color-phantom: #1E1E24;
   --color-arsenic: #40424D;
   --color-graphite: #6E7180;
+  /* ── Brand v3 (Direction C) tokens ── */
+  --color-brand-sand:        #EEE4C8;
+  --color-brand-sand-deep:   #E0D2A8;
+  --color-brand-sand-deeper: #D4C290;
+  --color-brand-paper:       #F8F2DE;
+  --color-brand-paper-hi:    #FBF6E6;
+  --color-brand-indigo:      #1B1550;
+  --color-brand-indigo-mid:  #2E2674;
+  --color-brand-yellow:      #FCD718;
+  --color-brand-coral:       #EB4D6D;
+  --color-brand-ink:         #0B0828;
 }
 
 * {

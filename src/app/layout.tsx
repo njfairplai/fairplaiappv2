@@ -28,7 +28,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={inter.variable}>
       <head>
-        <meta name="theme-color" content="#1B1650" />
+        <meta name="theme-color" content="#1B1550" />
+        {/* Brand v3 typefaces — Satoshi (body) + Clash Display (display headlines) via Fontshare */}
+        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=clash-display@500,600,700&display=swap"
+        />
+        {/* Fragment Mono — used for timestamps / eyebrows / metadata in Direction C v3 */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap"
+        />
       </head>
       <body className="antialiased" style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}>
         <AuthProvider><FeedbackProvider>{children}<FloatingNav /></FeedbackProvider></AuthProvider>

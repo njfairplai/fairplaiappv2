@@ -1,9 +1,11 @@
 export const COLORS = {
+  // ─── Existing tokens (kept for back-compat across non-redesigned screens) ───
   primary: '#4A4AFF',
   primaryDark: '#4536F5',
   periwinkle: '#757FFF',
   darkBg: '#0D1020',
-  navy: '#1B1650',
+  // navy now aligned to landing-page brand (#1B1550, not #1B1650 — 1-digit fix)
+  navy: '#1B1550',
   electricNavy: '#282689',
   white: '#F5F6FC',
   lightBg: '#F5F6FC',
@@ -11,12 +13,66 @@ export const COLORS = {
   muted: '#6E7180',
   cloud: '#EDEFF7',
   border: '#E8EAED',
+  // Score-band semantics — kept traffic-light for clarity (red/yellow/green per the locked plan)
   success: '#27AE60',
   warning: '#F39C12',
   error: '#E74C3C',
   phantom: '#1E1E24',
   arsenic: '#40424D',
   graphite: '#6E7180',
+} as const
+
+/**
+ * BRAND v3 — Direction C palette from the landing-page-aligned redesign.
+ *
+ * Discipline: three colors, one job each.
+ *   sand   = surface
+ *   indigo = everything readable / clickable / structural
+ *   yellow = the ONE thing you should look at first (≤6% of screen)
+ *
+ * Sand depth (sand → paper → paperHi) provides structural variety without new hues.
+ * Indigo is paired with tonal variants (Mid / Soft / Mute) for hierarchy.
+ * Yellow appears at most once per visual unit on the most important affordance.
+ */
+export const BRAND = {
+  // sand surface family
+  sand:        '#EEE4C8',                  // primary background
+  sandDeep:    '#E0D2A8',                  // dividers / second-step shading
+  sandDeeper:  '#D4C290',                  // bands / strips
+  paper:       '#F8F2DE',                  // raised card
+  paperHi:     '#FBF6E6',                  // top-of-stack card
+
+  // indigo family
+  indigo:      '#1B1550',                  // primary text + structure + CTAs
+  indigoMid:   '#2E2674',                  // hover / secondary
+  indigoSoft:  'rgba(27,21,80,0.10)',      // hairline / chip wash
+  indigoMute:  'rgba(27,21,80,0.55)',      // muted body text
+  ink:         '#0B0828',                  // deepest contrast (rare)
+
+  // yellow accents — surface area kept tiny
+  yellow:      '#FCD718',                  // emphasis only (MOTM, playhead, "why this matters", goal pin)
+  yellowSoft:  'rgba(252,215,24,0.18)',    // ambient halo
+
+  // dividers
+  line:        'rgba(27,21,80,0.12)',
+  lineSoft:    'rgba(27,21,80,0.06)',
+
+  // optional: coral kept for warning/alert badges separate from the score-band error red
+  coral:       '#EB4D6D',
+} as const
+
+/**
+ * Type fields to use across the brand-aligned redesign.
+ * Display = Clash Display (loud uppercase headlines, hero numerics).
+ * Body    = Satoshi (UI copy, body, nav, buttons).
+ * Mono    = Fragment Mono (timestamps, eyebrows, metadata).
+ *
+ * Wire actual font loading via next/font in src/app/layout.tsx (slice will follow).
+ */
+export const TYPE = {
+  display: '"Clash Display", "Satoshi", system-ui, sans-serif',
+  body:    '"Satoshi", system-ui, sans-serif',
+  mono:    '"Fragment Mono", ui-monospace, "SF Mono", monospace',
 } as const
 
 export const RADIUS = {
