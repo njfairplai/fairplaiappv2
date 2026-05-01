@@ -90,39 +90,33 @@ const v3Motion = `
 .v3-pill:hover { background: rgba(27,21,80,0.06); }
 `
 
-/* ─────────────────── Header ─────────────────── */
-function V3Header({ highlights, durationMin, onBack }: { highlights: number; durationMin: number; onBack: () => void }) {
-  const mins = Math.floor(durationMin)
-  const secs = Math.round((durationMin - mins) * 60)
+/* ─────────────────── Back row ───────────────────
+ * Replaces the redundant V3Header band. The existing coach layout
+ * already provides the brand mark and the Coach's Hub / Video /
+ * Analysis / Squad / IDPs nav. We just need a back-link + a place
+ * for the "Share recap" CTA, both on the sand surface so they
+ * read as part of the v3 page, not the platform chrome.
+ */
+function V3BackRow({ onBack }: { onBack: () => void }) {
   return (
     <div style={{
       background: BRAND.sand,
-      color: BRAND.indigo,
-      borderBottom: `1px solid ${BRAND.line}`,
-      padding: '14px 28px',
+      padding: '14px 28px 4px',
       display: 'flex',
       alignItems: 'center',
-      gap: 20,
+      gap: 14,
       fontFamily: TYPE.body,
     }}>
       <button onClick={onBack} className="v3-cta" style={{
         background: 'transparent', border: 'none', cursor: 'pointer',
-        color: BRAND.indigoMute, fontSize: 18, padding: '4px 6px',
-      }} aria-label="Back">←</button>
-      <div style={{ fontFamily: TYPE.display, fontSize: 22, letterSpacing: '0.04em', fontWeight: 700, color: BRAND.indigo }}>FAIRPL.AI</div>
-      <div style={{ width: 1, height: 18, background: BRAND.line }} />
-      <div style={{ display: 'flex', gap: 18, fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em' }}>
-        <span style={{ color: BRAND.indigo, fontWeight: 700, position: 'relative' }}>
-          THE REEL
-          <span style={{ position: 'absolute', left: 0, right: 0, bottom: -18, height: 2, background: BRAND.yellow }} />
-        </span>
-        <span style={{ color: BRAND.indigoMute, cursor: 'pointer' }}>SQUAD</span>
-        <span style={{ color: BRAND.indigoMute, cursor: 'pointer' }}>NOTES</span>
-      </div>
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', color: BRAND.indigoMute }}>
-          {highlights} MOMENTS · {mins}:{String(secs).padStart(2, '0')} FOOTAGE
-        </div>
+        color: BRAND.indigo, fontSize: 14,
+        fontFamily: TYPE.mono, letterSpacing: '0.16em', fontWeight: 600,
+        padding: '4px 0',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }} aria-label="Back to matches">
+        ← BACK TO MATCHES
+      </button>
+      <div style={{ marginLeft: 'auto' }}>
         <button className="v3-cta" style={{
           background: BRAND.indigo, color: BRAND.sand, border: 'none',
           padding: '9px 16px', fontFamily: TYPE.body, fontWeight: 600, fontSize: 13,
@@ -134,22 +128,33 @@ function V3Header({ highlights, durationMin, onBack }: { highlights: number; dur
   )
 }
 
+/** Available filter keys — each maps to a subset of event types in the data. */
+type FilterKey = 'all' | 'goal' | 'key_pass' | 'tackle' | 'save'
+
+const FILTER_DEFS: { key: FilterKey; label: string; matches: (eventType: string) => boolean }[] = [
+  { key: 'all',      label: 'All',         matches: () => true },
+  { key: 'goal',     label: 'Goals',       matches: t => t === 'goal' },
+  { key: 'key_pass', label: 'Key passes',  matches: t => t === 'key_pass' },
+  { key: 'tackle',   label: 'Tackles',     matches: t => t === 'tackle' },
+  { key: 'save',     label: 'Saves',       matches: t => t === 'save' },
+]
+
 /* ─────────────────── Score strip ─────────────────── */
 function V3ScoreStrip({
   homeName, awayName, homeGoals, awayGoals, dateLabel, venue,
-  filter, setFilter, counts,
+  filter, setFilter, countsByKey,
 }: {
   homeName: string; awayName: string;
   homeGoals: number; awayGoals: number;
   dateLabel: string; venue: string;
-  filter: string; setFilter: (s: string) => void;
-  counts: { all: number; goals: number; concessions: number };
+  filter: FilterKey; setFilter: (s: FilterKey) => void;
+  countsByKey: Record<FilterKey, number>;
 }) {
   const homeWon = homeGoals > awayGoals
   const drew = homeGoals === awayGoals
   return (
     <div style={{
-      padding: '22px 28px',
+      padding: '14px 28px 22px',
       borderBottom: `1px solid ${BRAND.line}`,
       display: 'flex',
       alignItems: 'center',
@@ -168,7 +173,7 @@ function V3ScoreStrip({
         </span>
         <span style={{ color: BRAND.indigoMute, fontSize: 24 }}>—</span>
         <span style={{ position: 'relative', display: 'inline-block', color: homeWon ? BRAND.indigoMid : BRAND.indigo }}>
-          {(!homeWon || drew) && !homeWon && (
+          {(drew || (!homeWon && homeGoals !== awayGoals)) && (
             <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
           )}
           <span style={{ position: 'relative', zIndex: 1 }}>{awayGoals}</span>
@@ -181,18 +186,15 @@ function V3ScoreStrip({
       </div>
 
       <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {[
-          { l: `All (${counts.all})`, key: 'all' },
-          { l: `Goals (${counts.goals})`, key: 'goals' },
-          { l: `Concessions (${counts.concessions})`, key: 'concessions' },
-          { l: 'Highlights', key: 'highlights' },
-          { l: 'Worries', key: 'worries' },
-        ].map(s => {
-          const active = filter === s.key
+        {FILTER_DEFS.map(f => {
+          const active = filter === f.key
+          const n = countsByKey[f.key]
+          // Hide pills that match nothing (e.g. no saves in this match)
+          if (f.key !== 'all' && n === 0) return null
           return (
             <button
-              key={s.key}
-              onClick={() => setFilter(s.key)}
+              key={f.key}
+              onClick={() => setFilter(f.key)}
               className={active ? '' : 'v3-pill'}
               style={{
                 background: active ? BRAND.indigo : 'transparent',
@@ -203,7 +205,7 @@ function V3ScoreStrip({
                 letterSpacing: '0.02em', cursor: 'pointer',
                 transition: 'all 160ms ease',
               }}
-            >{s.l}</button>
+            >{f.label} ({n})</button>
           )
         })}
       </div>
@@ -572,17 +574,24 @@ export default function V3MatchAnalysisPage() {
     [sessionHighlights],
   )
 
-  const playerRows: PlayerRow[] = useMemo(() => {
+  // Player rows always show all players; their per-row event ticks/tags filter
+  // along with the timeline so the page reads as one coordinated filter state.
+  const buildPlayerRows = (events: TLEvent[]): PlayerRow[] => {
     return sessionAnalyses
       .map(a => {
         const p = players.find(pl => pl.id === a.playerId)
         if (!p) return null
-        const evs: TLEvent[] = allEvents.filter(e => e.playerId === a.playerId)
+        const evs: TLEvent[] = events.filter(e => e.playerId === a.playerId)
         return { player: p, analysis: a, events: evs }
       })
       .filter((r): r is PlayerRow => r !== null)
       .sort((a, b) => b.analysis.compositeScore - a.analysis.compositeScore)
-  }, [sessionAnalyses, allEvents])
+  }
+  const playerRows: PlayerRow[] = useMemo(
+    () => buildPlayerRows(allEvents),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessionAnalyses, allEvents],
+  )
 
   const totalMin = useMemo(() => {
     if (!session) return 70
@@ -592,24 +601,48 @@ export default function V3MatchAnalysisPage() {
   }, [session])
 
   const [activeEventId, setActiveEventId] = useState<string | null>(null)
-  const [filter, setFilter] = useState<string>('all')
+  const [filter, setFilter] = useState<FilterKey>('all')
 
-  // Default-select the most "interesting" event when data is ready
+  // Apply the active filter to the events list
+  const filterDef = FILTER_DEFS.find(f => f.key === filter) ?? FILTER_DEFS[0]
+  const visibleEvents = useMemo(
+    () => allEvents.filter(e => filterDef.matches(e.type)),
+    [allEvents, filterDef],
+  )
+
+  // Per-row events respect the current filter so the page reads as one
+  // coordinated state (timeline + roster ticks + roster tags all filter together).
+  const visiblePlayerRows: PlayerRow[] = useMemo(() => {
+    if (filter === 'all') return playerRows
+    return playerRows.map(r => ({ ...r, events: r.events.filter(e => filterDef.matches(e.type)) }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerRows, filter])
+
+  // Default-select the most "interesting" visible event when data/filter changes.
+  // If the current selection isn't in the filtered set, fall back to the first goal,
+  // then to the first visible event.
   useMemo(() => {
-    if (activeEventId || allEvents.length === 0) return
-    const goal = allEvents.find(e => e.isGoal)
-    setActiveEventId((goal ?? allEvents[0]).id)
-  }, [allEvents, activeEventId])
+    if (visibleEvents.length === 0) {
+      setActiveEventId(null)
+      return
+    }
+    if (activeEventId && visibleEvents.some(e => e.id === activeEventId)) return
+    const goal = visibleEvents.find(e => e.isGoal)
+    setActiveEventId((goal ?? visibleEvents[0]).id)
+  }, [visibleEvents, activeEventId])
 
-  const activeEvent = allEvents.find(e => e.id === activeEventId) ?? null
+  const activeEvent = visibleEvents.find(e => e.id === activeEventId) ?? null
   const activePlayer = activeEvent ? players.find(p => p.id === activeEvent.playerId) : undefined
 
-  // Counts for the filter pills
-  const counts = useMemo(() => ({
-    all: allEvents.length,
-    goals: allEvents.filter(e => e.isGoal).length,
-    concessions: 0, // we don't have a "concede" event type today; placeholder
-  }), [allEvents])
+  // Counts per filter key for the pill labels (total set, regardless of current selection)
+  const countsByKey = useMemo(() => {
+    const out: Record<FilterKey, number> = { all: 0, goal: 0, key_pass: 0, tackle: 0, save: 0 }
+    out.all = allEvents.length
+    for (const e of allEvents) {
+      if (e.type in out) (out as Record<string, number>)[e.type]++
+    }
+    return out
+  }, [allEvents])
 
   if (!session) {
     return (
@@ -629,7 +662,6 @@ export default function V3MatchAnalysisPage() {
   const venue = pitches.find(p => p.id === session.pitchId)?.name ?? 'Academy Pitch'
   const homeGoals = score?.homeGoals ?? 0
   const awayGoals = score?.awayGoals ?? 0
-  const totalDuration = totalMin // for header
 
   return (
     <div style={{
@@ -643,11 +675,7 @@ export default function V3MatchAnalysisPage() {
     }}>
       <style dangerouslySetInnerHTML={{ __html: v3Motion }} />
 
-      <V3Header
-        highlights={allEvents.length}
-        durationMin={totalDuration}
-        onBack={() => router.back()}
-      />
+      <V3BackRow onBack={() => router.back()} />
 
       <V3ScoreStrip
         homeName={homeName}
@@ -658,11 +686,11 @@ export default function V3MatchAnalysisPage() {
         venue={venue}
         filter={filter}
         setFilter={setFilter}
-        counts={counts}
+        countsByKey={countsByKey}
       />
 
       <V3Timeline
-        events={allEvents}
+        events={visibleEvents}
         totalMin={totalMin}
         activeId={activeEventId}
         onSelect={setActiveEventId}
@@ -699,7 +727,7 @@ export default function V3MatchAnalysisPage() {
           <div>#</div><div>NAME</div><div>SCORE STRIPE · MOMENTS</div><div style={{ textAlign: 'right' }}>TAGS</div><div style={{ textAlign: 'right' }}>SCORE</div><div></div>
         </div>
 
-        {playerRows.map((r, i) => (
+        {visiblePlayerRows.map((r, i) => (
           <V3RosterRow key={r.player.id} row={r} idx={i} totalMin={totalMin} />
         ))}
       </div>
