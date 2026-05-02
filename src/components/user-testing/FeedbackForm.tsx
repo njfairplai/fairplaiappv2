@@ -105,49 +105,85 @@ const inputStyle = {
   outline: 'none',
 }
 
-/** Single-row Likert scale: a label, then 5 round buttons with end-tags. */
-function LikertRow({ label, value, onChange, ends }: {
+/** Once-per-section scale header that names the 1-5 anchors. Saves us
+ *  repeating the end-tags on every row, which keeps the rows tight. */
+function ScaleHeader({ leftLabel, rightLabel }: { leftLabel: string; rightLabel: string }) {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      fontFamily: 'var(--font-fragment)',
+      fontSize: 9.5,
+      letterSpacing: '0.18em',
+      color: 'var(--brand-indigo-mute)',
+      fontWeight: 700,
+      marginBottom: 8,
+      paddingLeft: 4,
+      paddingRight: 4,
+    }}>
+      <span>1 · {leftLabel.toUpperCase()}</span>
+      <span>{rightLabel.toUpperCase()} · 5</span>
+    </div>
+  )
+}
+
+/** Single-row Likert scale: a label, then 5 round buttons with end-tags.
+ *  Tight vertical rhythm so the rows read as a connected list rather than
+ *  a wall of equal-weight items. */
+function LikertRow({ label, value, onChange, ends, showEnds }: {
   label: string
   value: number | null
   onChange: (v: number) => void
   ends: [string, string]
+  showEnds: boolean
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 0', borderBottom: '1px solid var(--brand-line)' }}>
-      <div style={{ fontSize: 14.5, color: 'var(--brand-indigo)', lineHeight: 1.4 }}>{label}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-        <span style={{ fontFamily: 'var(--font-fragment)', fontSize: 9, letterSpacing: '0.14em', color: 'var(--brand-indigo-mute)', minWidth: 80 }}>
-          {ends[0].toUpperCase()}
-        </span>
-        <div style={{ display: 'flex', gap: 6, flex: 1, justifyContent: 'center' }}>
-          {[1, 2, 3, 4, 5].map(n => {
-            const active = value === n
-            return (
-              <button
-                key={n}
-                type="button"
-                onClick={() => onChange(n)}
-                aria-label={`Rate ${n} out of 5`}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: active ? 'var(--brand-indigo)' : 'var(--brand-paper)',
-                  color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-                  border: `1px solid ${active ? 'var(--brand-indigo)' : 'var(--brand-line)'}`,
-                  fontFamily: 'var(--font-clash)',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 140ms ease',
-                }}
-              >{n}</button>
-            )
-          })}
-        </div>
-        <span style={{ fontFamily: 'var(--font-fragment)', fontSize: 9, letterSpacing: '0.14em', color: 'var(--brand-indigo-mute)', minWidth: 80, textAlign: 'right' }}>
-          {ends[1].toUpperCase()}
-        </span>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr auto',
+      alignItems: 'center',
+      gap: 16,
+      padding: '10px 0',
+      borderBottom: '1px solid var(--brand-line-soft)',
+    }}>
+      <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--brand-indigo)', lineHeight: 1.35 }}>
+        {label}
+      </div>
+      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+        {showEnds && (
+          <span style={{ fontFamily: 'var(--font-fragment)', fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--brand-indigo-mute)', marginRight: 6, fontWeight: 700 }}>
+            {ends[0].toUpperCase()}
+          </span>
+        )}
+        {[1, 2, 3, 4, 5].map(n => {
+          const active = value === n
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onChange(n)}
+              aria-label={`Rate ${n} out of 5`}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: active ? 'var(--brand-indigo)' : 'var(--brand-paper)',
+                color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+                border: `1px solid ${active ? 'var(--brand-indigo)' : 'var(--brand-line)'}`,
+                fontFamily: 'var(--font-clash)',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 140ms ease',
+              }}
+            >{n}</button>
+          )
+        })}
+        {showEnds && (
+          <span style={{ fontFamily: 'var(--font-fragment)', fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--brand-indigo-mute)', marginLeft: 6, fontWeight: 700 }}>
+            {ends[1].toUpperCase()}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -291,7 +327,7 @@ export function FeedbackForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
+    <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
       {/* ────────── Section A: palette vote ────────── */}
       <section>
         <div style={sectionEyebrow}>SECTION A · THE PALETTE</div>
@@ -381,7 +417,8 @@ export function FeedbackForm() {
       <section>
         <div style={sectionEyebrow}>SECTION C · USEFULNESS BY FEATURE</div>
         <h2 style={sectionHeadline}>How useful is each part of the page?</h2>
-        <div>
+        <ScaleHeader leftLabel={USEFUL_LABELS[0]} rightLabel={USEFUL_LABELS[4]} />
+        <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
           {SECTION_LABELS.map(s => (
             <LikertRow
               key={s.key}
@@ -389,6 +426,7 @@ export function FeedbackForm() {
               value={usefulness[s.key]}
               onChange={v => setUseful(s.key, v)}
               ends={[USEFUL_LABELS[0], USEFUL_LABELS[4]]}
+              showEnds={false}
             />
           ))}
         </div>
@@ -398,7 +436,8 @@ export function FeedbackForm() {
       <section>
         <div style={sectionEyebrow}>SECTION D · OVERALL FEEL</div>
         <h2 style={sectionHeadline}>How much do you agree?</h2>
-        <div>
+        <ScaleHeader leftLabel={LIKERT_LABELS[0]} rightLabel={LIKERT_LABELS[4]} />
+        <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
           {FEEL_STATEMENTS.map(s => (
             <LikertRow
               key={s.key}
@@ -406,6 +445,7 @@ export function FeedbackForm() {
               value={feel[s.key]}
               onChange={v => setFeelKey(s.key, v)}
               ends={[LIKERT_LABELS[0], LIKERT_LABELS[4]]}
+              showEnds={false}
             />
           ))}
         </div>
