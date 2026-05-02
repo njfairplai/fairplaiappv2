@@ -3,18 +3,33 @@
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { applyTheme } from '@/lib/themes'
-import { FeedbackForm } from '@/components/user-testing/FeedbackForm'
+import { applyTheme, readStoredTheme } from '@/lib/themes'
+import { PortalFeedbackForm } from '@/components/user-testing/PortalFeedbackForm'
 
+/**
+ * /user-testing/feedback — Phase 2B (Slice 4.5).
+ *
+ * Final feedback after the user has explored the app in their chosen palette.
+ * Renders <PortalFeedbackForm /> which reads palette + words from
+ * localStorage and submits everything in one POST.
+ *
+ * After submission, ?submitted=1 query param flips us into the thank-you
+ * state.
+ */
 export default function FeedbackPage() {
   const search = useSearchParams()
   const submitted = search?.get('submitted') === '1'
 
-  // Reset to default sand for the feedback screen so the form is on a
-  // calm surface regardless of which palette they were last in.
+  // Keep their chosen theme applied on this page (so the form lives in the
+  // same palette they just explored). Falls back to sand on the thank-you
+  // screen for a calm finish.
   useEffect(() => {
-    applyTheme('sand')
-  }, [])
+    if (submitted) {
+      applyTheme('sand')
+    } else {
+      applyTheme(readStoredTheme())
+    }
+  }, [submitted])
 
   if (submitted) {
     return (
@@ -51,8 +66,8 @@ export default function FeedbackPage() {
             Got it. Your feedback is in.
           </h1>
           <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 32 }}>
-            That&apos;s exactly what we needed. We&apos;ll factor your vote and notes
-            into the next design pass.
+            That&apos;s exactly what we needed. We&apos;ll factor your vote and
+            notes into the next design pass.
           </p>
           <Link
             href="/user-testing"
@@ -84,7 +99,6 @@ export default function FeedbackPage() {
       padding: '40px 20px',
     }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        {/* Header */}
         <Link href="/user-testing" style={{
           fontFamily: 'var(--font-clash)',
           fontSize: 24,
@@ -103,7 +117,7 @@ export default function FeedbackPage() {
           color: 'var(--brand-indigo-mute)',
           fontWeight: 700,
           marginBottom: 12,
-        }}>STEP 6 OF 6 · YOUR PALETTE VOTE</div>
+        }}>PHASE 2 OF 2 · APP FEEDBACK</div>
         <h1 style={{
           fontFamily: 'var(--font-clash)',
           fontSize: 44,
@@ -111,15 +125,15 @@ export default function FeedbackPage() {
           letterSpacing: '-0.02em',
           margin: '0 0 16px',
         }}>
-          Pick the palette<br />that felt right.
+          Tell us about<br />the app.
         </h1>
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 36, maxWidth: 560 }}>
-          A few short questions on the colours only — features and the coach
-          experience get their own test later. Most questions are one click,
-          should take 2 to 3 minutes.
+          Now that you&apos;ve used Fairplai in your chosen palette, what
+          worked, what didn&apos;t, and what would you change? Most questions
+          are one click — about 3 minutes.
         </p>
 
-        <FeedbackForm />
+        <PortalFeedbackForm />
       </div>
     </main>
   )

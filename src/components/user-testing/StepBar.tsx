@@ -137,7 +137,7 @@ export function StepBar({
         </button>
         {atEnd ? (
           <button
-            onClick={() => router.push('/user-testing/feedback')}
+            onClick={() => router.push('/user-testing/vote')}
             style={{
               background: 'var(--brand-yellow)',
               color: 'var(--brand-indigo)',
@@ -151,7 +151,7 @@ export function StepBar({
               boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
             }}
           >
-            Done → Give feedback →
+            Done → Vote on palette →
           </button>
         ) : (
           <button

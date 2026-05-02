@@ -1,32 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { THEMES } from '@/lib/themes'
 
 /**
- * Feedback form for /user-testing/feedback.
+ * Phase 2B form (Slice 4.5): app feedback after the user has explored the
+ * portal in their chosen palette.
  *
- * **PALETTE TEST ONLY.** This form gathers feedback on the colour palettes,
- * not on features or usability. Per-feature usefulness ratings have been
- * removed — they belong in the future portal-usability test (separate route)
- * once the rest of the coach portal is redesigned and a winning palette is
- * picked.
+ * Reads palette + words from localStorage (set by PaletteVoteForm in Phase 1B)
+ * and bundles them with the new answers into ONE submission to /api/feedback.
  *
  * Sections:
- *   A. Palette vote (single-select)
- *   B. Three-word descriptor (chip multi-select, max 3)
- *   C. Overall feel (3× Likert 1–5)
- *   D. NPS 0–10
- *   E. One open textarea (optional)
- *   F. Role + email (optional)
- *
- * Click-heavy by design: only one optional textarea so submission isn't
- * blocked on writing. ~2-3 min to complete.
- *
- * The whole structured payload posts as JSONB in `responses`, plus the
- * palette vote denormalised at the top level for easy filtering.
+ *   C. Overall feel (3 Likerts about the APP — professional / scan / trust)
+ *   D. Favourite features (multi-select chips, max 3)
+ *   E. Kill-list features (multi-select chips, no max)
+ *   F. NPS 0-10
+ *   G. Optional open textarea
+ *   H. Role + email
  */
+
+const FEATURES = [
+  { key: 'match_in_numbers', label: 'Match in Numbers (stat bars)' },
+  { key: 'timeline',         label: 'Timeline of moments' },
+  { key: 'clip',             label: 'Clip + Key Stats panel' },
+  { key: 'squad',            label: 'Squad table' },
+  { key: 'player_detail',    label: 'Per-player detail panel' },
+  { key: 'recap',            label: 'Match recap (WhatsApp share)' },
+  { key: 'watch_match',      label: 'Watch full match link' },
+] as const
+
+const FEEL_STATEMENTS = [
+  { key: 'professional', label: 'The design looks professional.' },
+  { key: 'scan',         label: 'The page is easy to scan at a glance.' },
+  { key: 'trust',        label: "I'd trust this with my squad's data." },
+] as const
+
+const LIKERT_LABELS = ['Strongly disagree', 'Strongly agree']
 
 const ROLES = [
   { value: '', label: 'Pick one (optional)' },
@@ -38,23 +48,6 @@ const ROLES = [
   { value: 'tech', label: 'Tech / engineering' },
   { value: 'other', label: 'Other' },
 ]
-
-const DESCRIPTOR_WORDS = [
-  // positive
-  'Modern', 'Calm', 'Premium', 'Trustworthy', 'Clear', 'Bold', 'Professional', 'Playful',
-  // neutral
-  'Different',
-  // negative
-  'Cluttered', 'Confusing', 'Busy', 'Cold', 'Outdated', 'Cheap', 'Generic',
-] as const
-
-const FEEL_STATEMENTS = [
-  { key: 'professional', label: 'This palette looks professional.' },
-  { key: 'scan',         label: 'The page is easy to scan in this palette.' },
-  { key: 'trust',        label: "I'd trust a coach product that looked like this." },
-] as const
-
-const LIKERT_LABELS = ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree']
 
 const labelStyle = {
   fontFamily: 'var(--font-fragment)',
@@ -97,8 +90,6 @@ const inputStyle = {
   outline: 'none',
 }
 
-/** Once-per-section scale header that names the 1-5 anchors. Saves us
- *  repeating the end-tags on every row, which keeps the rows tight. */
 function ScaleHeader({ leftLabel, rightLabel }: { leftLabel: string; rightLabel: string }) {
   return (
     <div style={{
@@ -119,15 +110,10 @@ function ScaleHeader({ leftLabel, rightLabel }: { leftLabel: string; rightLabel:
   )
 }
 
-/** Single-row Likert scale: a label, then 5 round buttons with end-tags.
- *  Tight vertical rhythm so the rows read as a connected list rather than
- *  a wall of equal-weight items. */
-function LikertRow({ label, value, onChange, ends, showEnds }: {
+function LikertRow({ label, value, onChange }: {
   label: string
   value: number | null
   onChange: (v: number) => void
-  ends: [string, string]
-  showEnds: boolean
 }) {
   return (
     <div style={{
@@ -141,12 +127,7 @@ function LikertRow({ label, value, onChange, ends, showEnds }: {
       <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--brand-indigo)', lineHeight: 1.35 }}>
         {label}
       </div>
-      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-        {showEnds && (
-          <span style={{ fontFamily: 'var(--font-fragment)', fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--brand-indigo-mute)', marginRight: 6, fontWeight: 700 }}>
-            {ends[0].toUpperCase()}
-          </span>
-        )}
+      <div style={{ display: 'flex', gap: 5 }}>
         {[1, 2, 3, 4, 5].map(n => {
           const active = value === n
           return (
@@ -156,9 +137,7 @@ function LikertRow({ label, value, onChange, ends, showEnds }: {
               onClick={() => onChange(n)}
               aria-label={`Rate ${n} out of 5`}
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
+                width: 32, height: 32, borderRadius: '50%',
                 background: active ? 'var(--brand-indigo)' : 'var(--brand-paper)',
                 color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
                 border: `1px solid ${active ? 'var(--brand-indigo)' : 'var(--brand-line)'}`,
@@ -171,24 +150,17 @@ function LikertRow({ label, value, onChange, ends, showEnds }: {
             >{n}</button>
           )
         })}
-        {showEnds && (
-          <span style={{ fontFamily: 'var(--font-fragment)', fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--brand-indigo-mute)', marginLeft: 6, fontWeight: 700 }}>
-            {ends[1].toUpperCase()}
-          </span>
-        )}
       </div>
     </div>
   )
 }
 
-/** 0-10 NPS scale: 11 buttons in a row with low/high anchor labels. */
 function NPSScale({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         {Array.from({ length: 11 }).map((_, n) => {
           const active = value === n
-          // Tone: 0-6 detractor, 7-8 passive, 9-10 promoter
           const tone = n <= 6 ? 'var(--brand-coral)' : n <= 8 ? 'var(--brand-indigo-mid)' : 'var(--brand-yellow)'
           return (
             <button
@@ -197,9 +169,7 @@ function NPSScale({ value, onChange }: { value: number | null; onChange: (v: num
               onClick={() => onChange(n)}
               aria-label={`Score ${n} out of 10`}
               style={{
-                flex: 1,
-                minWidth: 38,
-                height: 44,
+                flex: 1, minWidth: 38, height: 44,
                 borderRadius: 7,
                 background: active ? tone : 'var(--brand-paper)',
                 color: active ? (n >= 9 ? 'var(--brand-indigo)' : 'var(--brand-sand)') : 'var(--brand-indigo)',
@@ -222,49 +192,75 @@ function NPSScale({ value, onChange }: { value: number | null; onChange: (v: num
   )
 }
 
-export function FeedbackForm() {
+export function PortalFeedbackForm() {
   const router = useRouter()
 
-  // Section A: palette
-  const [paletteVote, setPaletteVote] = useState<string>('')
+  // Phase 1 answers from localStorage
+  const [phase1, setPhase1] = useState<{ palette_vote: string; palette_words: string[] } | null>(null)
+  const [phase1Loaded, setPhase1Loaded] = useState(false)
 
-  // Section B: descriptor words (max 3)
-  const [words, setWords] = useState<string[]>([])
-  const toggleWord = (w: string) => {
-    setWords(prev => {
-      if (prev.includes(w)) return prev.filter(x => x !== w)
-      if (prev.length >= 3) return prev // cap at 3
-      return [...prev, w]
-    })
-  }
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('fairplai-testing-palette')
+      if (raw) setPhase1(JSON.parse(raw))
+    } catch { /* noop */ }
+    setPhase1Loaded(true)
+  }, [])
 
-  // Section C: overall feel (1-5 each)
+  // Phase 2 answers
   const [feel, setFeel] = useState<Record<string, number | null>>(
     Object.fromEntries(FEEL_STATEMENTS.map(s => [s.key, null]))
   )
-  const setFeelKey = (key: string, v: number) => setFeel(prev => ({ ...prev, [key]: v }))
+  const setFeelKey = (k: string, v: number) => setFeel(prev => ({ ...prev, [k]: v }))
 
-  // Section D: NPS
+  const [favouriteFeatures, setFavouriteFeatures] = useState<string[]>([])
+  const [killFeatures, setKillFeatures] = useState<string[]>([])
+  const toggleFav = (k: string) => {
+    setFavouriteFeatures(prev => {
+      if (prev.includes(k)) return prev.filter(x => x !== k)
+      if (prev.length >= 3) return prev
+      return [...prev, k]
+    })
+  }
+  const toggleKill = (k: string) => {
+    setKillFeatures(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k])
+  }
+
   const [nps, setNps] = useState<number | null>(null)
-
-  // Section E: open
   const [whatsMissing, setWhatsMissing] = useState('')
-
-  // Section F: about you
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Required: palette + words >= 1 + all feel + nps
   const allFeelAnswered = FEEL_STATEMENTS.every(s => feel[s.key] !== null)
-  const canSubmit =
-    !!paletteVote &&
-    words.length > 0 &&
-    allFeelAnswered &&
-    nps !== null &&
-    !submitting
+  const canSubmit = !!phase1?.palette_vote && allFeelAnswered && favouriteFeatures.length > 0 && nps !== null && !submitting
+
+  // If they got here without phase 1 data, send them back to /vote.
+  if (phase1Loaded && !phase1?.palette_vote) {
+    return (
+      <div style={{
+        padding: 24,
+        background: 'var(--brand-paper)',
+        border: '1px solid var(--brand-line)',
+        borderRadius: 10,
+      }}>
+        <div style={{ fontFamily: 'var(--font-fragment)', fontSize: 11, letterSpacing: '0.22em', color: 'var(--brand-indigo-mute)', fontWeight: 700, marginBottom: 6 }}>
+          MISSING PHASE 1
+        </div>
+        <h2 style={{ fontFamily: 'var(--font-clash)', fontSize: 24, margin: '0 0 12px' }}>You skipped a step.</h2>
+        <p style={{ marginBottom: 18 }}>Please go back and pick a palette before giving app feedback.</p>
+        <button
+          onClick={() => router.push('/user-testing')}
+          style={{
+            background: 'var(--brand-indigo)', color: 'var(--brand-sand)', border: 'none',
+            padding: '10px 18px', borderRadius: 7, fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          }}
+        >← Start over</button>
+      </div>
+    )
+  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -278,30 +274,35 @@ export function FeedbackForm() {
       if (raw) dwell = JSON.parse(raw)
     } catch { /* noop */ }
 
-    const responses = {
-      palette_words: words,
-      feel,
-      nps,
+    const payload = {
+      palette_vote: phase1!.palette_vote,
+      responses: {
+        palette_words: phase1!.palette_words,
+        feel,
+        favourite_features: favouriteFeatures,
+        kill_features: killFeatures,
+        nps,
+      },
+      whats_missing: whatsMissing,
+      role: role || null,
+      email: email || null,
+      dwell_seconds: dwell,
     }
 
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          palette_vote: paletteVote,
-          responses,
-          whats_missing: whatsMissing,
-          role: role || null,
-          email: email || null,
-          dwell_seconds: dwell,
-        }),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) {
         const j = await res.json().catch(() => ({}))
         throw new Error(j.error || `Server returned ${res.status}`)
       }
-      try { localStorage.removeItem('fairplai-testing-dwell') } catch { /* noop */ }
+      try {
+        localStorage.removeItem('fairplai-testing-dwell')
+        localStorage.removeItem('fairplai-testing-palette')
+      } catch { /* noop */ }
       router.push('/user-testing/feedback?submitted=1')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Submission failed')
@@ -309,74 +310,95 @@ export function FeedbackForm() {
     }
   }
 
+  if (!phase1Loaded) {
+    return <div style={{ padding: 40, textAlign: 'center', color: 'var(--brand-indigo-mute)' }}>Loading…</div>
+  }
+
+  const chosen = THEMES.find(t => t.id === phase1!.palette_vote)
+
   return (
     <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-      {/* ────────── Section A: palette vote ────────── */}
+      {/* Phase 1 recap card */}
+      {chosen && (
+        <div style={{
+          padding: '12px 16px',
+          background: 'var(--brand-yellow-soft)',
+          border: '1px solid var(--brand-yellow)',
+          borderRadius: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          flexWrap: 'wrap',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-fragment)',
+            fontSize: 10,
+            letterSpacing: '0.22em',
+            fontWeight: 700,
+          }}>YOU PICKED</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 3 }}>
+              {chosen.swatches.map((c, i) => (
+                <span key={i} style={{ width: 14, height: 14, borderRadius: 3, background: c, border: '1px solid rgba(0,0,0,0.08)' }} />
+              ))}
+            </div>
+            <span style={{ fontFamily: 'var(--font-clash)', fontSize: 18, letterSpacing: '-0.01em' }}>{chosen.name}</span>
+          </div>
+          {phase1!.palette_words.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {phase1!.palette_words.map(w => (
+                <span key={w} style={{
+                  fontSize: 11, padding: '2px 8px',
+                  background: 'var(--brand-indigo)', color: 'var(--brand-sand)',
+                  borderRadius: 999, fontWeight: 600,
+                }}>{w}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Section C: feel about the app */}
       <section>
-        <div style={sectionEyebrow}>SECTION A · THE PALETTE</div>
-        <h2 style={sectionHeadline}>Which palette felt right?</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {THEMES.map(t => {
-            const active = paletteVote === t.id
-            return (
-              <label
-                key={t.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '12px 14px',
-                  background: active ? 'var(--brand-yellow-soft)' : 'var(--brand-paper)',
-                  border: `1px solid ${active ? 'var(--brand-yellow)' : 'var(--brand-line)'}`,
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  transition: 'all 160ms ease',
-                }}
-              >
-                <input
-                  type="radio"
-                  name="palette"
-                  value={t.id}
-                  checked={active}
-                  onChange={() => setPaletteVote(t.id)}
-                  style={{ accentColor: 'var(--brand-indigo)' }}
-                />
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {t.swatches.map((c, i) => (
-                    <span key={i} style={{ width: 18, height: 18, borderRadius: 3, background: c, border: '1px solid rgba(0,0,0,0.08)' }} />
-                  ))}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 15 }}>{t.name}</div>
-                  <div style={{ fontFamily: 'var(--font-fragment)', fontSize: 10, letterSpacing: '0.16em', color: 'var(--brand-indigo-mute)' }}>
-                    {t.tagline.toUpperCase()}
-                  </div>
-                </div>
-              </label>
-            )
-          })}
+        <div style={sectionEyebrow}>SECTION C · OVERALL FEEL</div>
+        <h2 style={sectionHeadline}>How much do you agree about the app you just used?</h2>
+        <ScaleHeader leftLabel={LIKERT_LABELS[0]} rightLabel={LIKERT_LABELS[1]} />
+        <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
+          {FEEL_STATEMENTS.map(s => (
+            <LikertRow
+              key={s.key}
+              label={s.label}
+              value={feel[s.key]}
+              onChange={v => setFeelKey(s.key, v)}
+            />
+          ))}
         </div>
       </section>
 
-      {/* ────────── Section B: three words ────────── */}
+      {/* Section D: favourite features */}
       <section>
-        <div style={sectionEyebrow}>SECTION B · GUT REACTION</div>
-        <h2 style={sectionHeadline}>Pick up to three words that describe the design.</h2>
-        <div style={{ ...labelStyle, marginBottom: 14 }}>
-          {words.length}/3 SELECTED
-        </div>
+        <div style={sectionEyebrow}>SECTION D · FAVOURITES</div>
+        <h2 style={sectionHeadline}>Which features would you actually use?</h2>
+        <div style={{
+          fontFamily: 'var(--font-fragment)',
+          fontSize: 11,
+          letterSpacing: '0.2em',
+          color: 'var(--brand-indigo-mute)',
+          fontWeight: 700,
+          marginBottom: 12,
+        }}>PICK UP TO 3 · {favouriteFeatures.length}/3 SELECTED</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {DESCRIPTOR_WORDS.map(w => {
-            const active = words.includes(w)
-            const disabled = !active && words.length >= 3
+          {FEATURES.map(f => {
+            const active = favouriteFeatures.includes(f.key)
+            const disabled = !active && favouriteFeatures.length >= 3
             return (
               <button
-                key={w}
+                key={f.key}
                 type="button"
-                onClick={() => toggleWord(w)}
+                onClick={() => toggleFav(f.key)}
                 disabled={disabled}
                 style={{
-                  padding: '8px 14px',
+                  padding: '10px 14px',
                   background: active ? 'var(--brand-indigo)' : 'var(--brand-paper)',
                   color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
                   border: `1px solid ${active ? 'var(--brand-indigo)' : 'var(--brand-line)'}`,
@@ -388,44 +410,61 @@ export function FeedbackForm() {
                   opacity: disabled ? 0.4 : 1,
                   transition: 'all 140ms ease',
                 }}
-              >
-                {w}
-              </button>
+              >{f.label}</button>
             )
           })}
         </div>
       </section>
 
-      {/* ────────── Section C: overall feel about the palette ────────── */}
+      {/* Section E: kill list */}
       <section>
-        <div style={sectionEyebrow}>SECTION C · OVERALL FEEL</div>
-        <h2 style={sectionHeadline}>How much do you agree about the palette you picked?</h2>
-        <ScaleHeader leftLabel={LIKERT_LABELS[0]} rightLabel={LIKERT_LABELS[4]} />
-        <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
-          {FEEL_STATEMENTS.map(s => (
-            <LikertRow
-              key={s.key}
-              label={s.label}
-              value={feel[s.key]}
-              onChange={v => setFeelKey(s.key, v)}
-              ends={[LIKERT_LABELS[0], LIKERT_LABELS[4]]}
-              showEnds={false}
-            />
-          ))}
+        <div style={sectionEyebrow}>SECTION E · KILL LIST</div>
+        <h2 style={sectionHeadline}>Which features felt unnecessary or confusing?</h2>
+        <div style={{
+          fontFamily: 'var(--font-fragment)',
+          fontSize: 11,
+          letterSpacing: '0.2em',
+          color: 'var(--brand-indigo-mute)',
+          fontWeight: 700,
+          marginBottom: 12,
+        }}>PICK ANY THAT APPLY (OR NONE)</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {FEATURES.map(f => {
+            const active = killFeatures.includes(f.key)
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => toggleKill(f.key)}
+                style={{
+                  padding: '10px 14px',
+                  background: active ? 'var(--brand-coral)' : 'var(--brand-paper)',
+                  color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+                  border: `1px solid ${active ? 'var(--brand-coral)' : 'var(--brand-line)'}`,
+                  borderRadius: 999,
+                  fontFamily: 'var(--font-satoshi)',
+                  fontWeight: active ? 700 : 500,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  transition: 'all 140ms ease',
+                }}
+              >{f.label}</button>
+            )
+          })}
         </div>
       </section>
 
-      {/* ────────── Section D: NPS ────────── */}
+      {/* Section F: NPS */}
       <section>
-        <div style={sectionEyebrow}>SECTION D · RECOMMENDATION</div>
-        <h2 style={sectionHeadline}>If the design used your favourite palette, how likely would you recommend Fairplai to another coach?</h2>
+        <div style={sectionEyebrow}>SECTION F · RECOMMENDATION</div>
+        <h2 style={sectionHeadline}>How likely are you to recommend Fairplai to another coach?</h2>
         <NPSScale value={nps} onChange={setNps} />
       </section>
 
-      {/* ────────── Section E: open ────────── */}
+      {/* Section G: open */}
       <section>
-        <div style={sectionEyebrow}>SECTION E · ANYTHING ELSE</div>
-        <h2 style={sectionHeadline}>Anything else about the colours? (optional)</h2>
+        <div style={sectionEyebrow}>SECTION G · ANYTHING ELSE</div>
+        <h2 style={sectionHeadline}>What&apos;s missing or what would you change? (optional)</h2>
         <textarea
           value={whatsMissing}
           onChange={e => setWhatsMissing(e.target.value)}
@@ -435,10 +474,10 @@ export function FeedbackForm() {
         />
       </section>
 
-      {/* ────────── Section F: about you ────────── */}
+      {/* Section H: about you */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
-          <div style={sectionEyebrow}>SECTION F · ABOUT YOU</div>
+          <div style={sectionEyebrow}>SECTION H · ABOUT YOU</div>
           <h2 style={sectionHeadline}>Just two more.</h2>
         </div>
         <div>
@@ -467,7 +506,6 @@ export function FeedbackForm() {
         </div>
       </section>
 
-      {/* Submit */}
       {error && (
         <div style={{
           padding: '12px 14px',

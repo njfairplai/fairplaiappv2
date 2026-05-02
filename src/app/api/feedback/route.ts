@@ -48,8 +48,9 @@ export async function POST(req: NextRequest) {
     palette_vote?: string
     responses?: {
       palette_words?: string[]
-      usefulness?: Record<string, number | null>
       feel?: Record<string, number | null>
+      favourite_features?: string[]
+      kill_features?: string[]
       nps?: number | null
     }
     whats_missing?: string
@@ -63,15 +64,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Validate the required pieces. The form blocks submission until these
-  // are filled, but we re-check server-side as a contract guard.
+  // Validate the required pieces (Slice 4.5 two-phase form). The form blocks
+  // submission until these are filled, but we re-check server-side as a
+  // contract guard. `kill_features` is allowed to be empty (it's "or none").
   const r = body.responses
   if (
     !body.palette_vote ||
     !r ||
     !Array.isArray(r.palette_words) || r.palette_words.length === 0 ||
-    !r.usefulness || Object.values(r.usefulness).some(v => v === null) ||
     !r.feel || Object.values(r.feel).some(v => v === null) ||
+    !Array.isArray(r.favourite_features) || r.favourite_features.length === 0 ||
+    !Array.isArray(r.kill_features) ||
     r.nps === null || r.nps === undefined
   ) {
     return NextResponse.json(

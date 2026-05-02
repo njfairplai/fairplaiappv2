@@ -50,7 +50,7 @@ export default function UserTestingLandingPage() {
           fontWeight: 700,
           marginBottom: 14,
         }}>
-          USER TESTING · PALETTE COMPARISON
+          USER TESTING · TWO PHASES
         </div>
 
         {/* Headline */}
@@ -62,21 +62,23 @@ export default function UserTestingLandingPage() {
           margin: '0 0 24px',
           fontWeight: 700,
         }}>
-          Help us pick the<br />right colours.
+          Help us shape<br />the coach portal.
         </h1>
 
         {/* Body */}
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 16, maxWidth: 580 }}>
-          Fairplai is a sports-tech platform for football academies. We&apos;re
-          asking <strong>only about the colours</strong> in this round — not
-          about features, layout, or the coach experience. That comes later in
-          a separate test.
+          Fairplai is a sports-tech platform for football academies. This test
+          has <strong>two phases</strong>, takes about 5–7 minutes, and ends
+          with one short form.
         </p>
-        <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 32, maxWidth: 580 }}>
-          You&apos;ll see the same coach page rendered in five different colour
-          palettes, one at a time. At the end, vote for the one that felt right
-          and pick a few words to describe it. Most questions are one click.
-        </p>
+        <ol style={{ fontSize: 17, lineHeight: 1.6, marginBottom: 32, maxWidth: 580, paddingLeft: 22 }}>
+          <li><strong>Pick a palette.</strong> You&apos;ll see the same coach
+            page rendered in five colour palettes, one at a time. Vote for the
+            one that felt right.</li>
+          <li><strong>Try the app.</strong> We&apos;ll re-render the app in
+            your chosen palette and let you click around. Tell us which
+            features you&apos;d use and which feel unnecessary.</li>
+        </ol>
 
         {/* Palette swatches preview */}
         <div style={{
