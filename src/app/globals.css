@@ -22,23 +22,23 @@
  * [data-theme="name"] block, change the colour values. Done.
  */
 /*
- * The 5 palette + type directions for the user-testing flow (Slice 4.5).
- * Each palette overrides BOTH the colour vars AND the type vars so the
- * three font systems travel with their palettes. Switch via
- * `data-theme="<id>"` on any wrapper element.
+ * Palette directions for the user-testing flow (Slice 4.5).
+ * All palettes share the same type system (Clash Display + Satoshi +
+ * Fragment Mono) so the test isolates colour as the only variable.
+ * Switch via `data-theme="<id>"` on any wrapper element.
  *
- *   1. almanac    — incumbent — sand + indigo + yellow         (Type 1)
- *   2. cloudline  — brand     — cool light + AHOY blue          (Type 1)
- *   3. voltage    — brand     — Phantom dark + Active blue      (Type 2)
- *   4. stadia     — beyond    — warm off-white + ink + coral    (Type 3)
- *   5. meadow     — beyond    — bone-cream + pitch green        (Type 3)
+ *   1. almanac          — incumbent — sand + indigo + yellow
+ *   2. cloudline        — brand     — cool light + AHOY blue
+ *   3. voltage          — brand     — Phantom dark + Active blue
+ *   4. stadia           — beyond    — warm off-white + ink + coral
+ *   5. touchline-cards  — beyond    — sage cards on warm cream    ← review pair
+ *   6. touchline-page   — beyond    — sage page background + cream cards ← review pair
  *
- * Type System 1 — Clash Display + Satoshi + Fragment Mono
- * Type System 2 — Boldonse + Switzer + JetBrains Mono
- * Type System 3 — Instrument Serif + Inter Tight + JetBrains Mono
+ * Slots 5 + 6 are a temporary review pair: ship both, pick one in the
+ * visual review, then drop the loser and rename the winner to `touchline`.
  *
  * Note on var naming: --brand-yellow is the SEMANTIC accent slot, not
- * literally yellow. In Voltage it's blue; in Stadia it's coral; etc.
+ * literally yellow. In Voltage it's blue; in others it varies.
  * Renaming everywhere is a much larger refactor — for now the names are
  * legacy semantic anchors that just hold whatever colour the palette puts
  * there.
@@ -62,6 +62,10 @@
   --brand-ink:         #0B0828;
   --brand-line:        rgba(27, 21, 80, 0.12);
   --brand-line-soft:   rgba(27, 21, 80, 0.06);
+
+  /* Logo inversion: black wordmark renders as-is on light themes. Dark
+     themes (e.g. Voltage) override to invert(1) to render it white. */
+  --logo-invert: none;
 
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body:    "Satoshi", system-ui, sans-serif;
@@ -109,9 +113,12 @@
   --brand-line:        #40424D;
   --brand-line-soft:   rgba(245, 246, 252, 0.06);
 
-  --font-display: "Boldonse", "Satoshi", system-ui, sans-serif;
-  --font-body:    "Switzer", "Satoshi", system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  /* Dark theme — invert the black-on-transparent wordmark to render white. */
+  --logo-invert: invert(1);
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
 }
 
 /* Stadia — beyond brand. Warm off-white + ink + coral accent. */
@@ -132,32 +139,55 @@
   --brand-line:        rgba(12, 12, 16, 0.10);
   --brand-line-soft:   rgba(12, 12, 16, 0.05);
 
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-body:    "Inter Tight", system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
 }
 
-/* Meadow — beyond brand, pitch-green ink on bone cream. */
-[data-theme="meadow"] {
-  --brand-sand:        #F4F1E8;
-  --brand-sand-deep:   #E8E4D5;
-  --brand-sand-deeper: #D9D3BF;
-  --brand-paper:       #FBFAEF;
-  --brand-paper-hi:    #FFFFFF;
-  --brand-indigo:      #1F3026;  /* pitch-green ink as structure */
-  --brand-indigo-mid:  #2F6B47;
-  --brand-indigo-soft: rgba(31, 48, 38, 0.10);
-  --brand-indigo-mute: rgba(31, 48, 38, 0.55);
-  --brand-yellow:      #C84A2D;  /* Terracotta as the accent slot */
-  --brand-yellow-soft: rgba(200, 74, 45, 0.18);
-  --brand-coral:       #6FA77B;
-  --brand-ink:         #0F1A13;
-  --brand-line:        #D9D3BF;
-  --brand-line-soft:   rgba(31, 48, 38, 0.06);
+/* Touchline · Cards — beyond brand. Sage-tinted cards on warm cream. */
+[data-theme="touchline-cards"] {
+  --brand-sand:        #F1EFE4;  /* page base — warm cream */
+  --brand-sand-deep:   #E2DFCE;
+  --brand-sand-deeper: #C9C5AE;
+  --brand-paper:       #DCE8D4;  /* sage-tinted card surface (the move) */
+  --brand-paper-hi:    #ECF2E5;  /* lighter sage for raised/hover */
+  --brand-indigo:      #1E3527;  /* deep pitch-green for text/structure */
+  --brand-indigo-mid:  #6FA77B;  /* sage for secondary chips/sub-headers */
+  --brand-indigo-soft: rgba(30, 53, 39, 0.10);
+  --brand-indigo-mute: rgba(30, 53, 39, 0.55);
+  --brand-yellow:      #4F8C5A;  /* mid-sage as the accent (CTAs, active) */
+  --brand-yellow-soft: rgba(79, 140, 90, 0.18);
+  --brand-coral:       #C8482D;  /* terracotta retained for warnings */
+  --brand-ink:         #0E1A12;
+  --brand-line:        #C9D6BE;
+  --brand-line-soft:   rgba(30, 53, 39, 0.06);
 
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-body:    "Inter Tight", system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* Touchline · Page — beyond brand. Sage page background, cream cards float on top. */
+[data-theme="touchline-page"] {
+  --brand-sand:        #C8DCC8;  /* page base — sage ground */
+  --brand-sand-deep:   #B5CDB6;
+  --brand-sand-deeper: #9CBAA0;
+  --brand-paper:       #F4F1E4;  /* warm cream cards on sage */
+  --brand-paper-hi:    #FFFFFF;
+  --brand-indigo:      #1E3527;  /* deep pitch-green text */
+  --brand-indigo-mid:  #2F6B47;  /* medium green for sub-structure */
+  --brand-indigo-soft: rgba(30, 53, 39, 0.10);
+  --brand-indigo-mute: rgba(30, 53, 39, 0.55);
+  --brand-yellow:      #2F6B47;  /* deeper green CTAs to read on sage */
+  --brand-yellow-soft: rgba(47, 107, 71, 0.18);
+  --brand-coral:       #C8482D;
+  --brand-ink:         #0E1A12;
+  --brand-line:        #A8C2A8;
+  --brand-line-soft:   rgba(30, 53, 39, 0.06);
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
 }
 
 @theme {

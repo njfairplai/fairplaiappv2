@@ -46,11 +46,20 @@ export const THEMES: Theme[] = [
     tagline: 'The football monograph',
     swatches: ['#F6F3EC', '#0C0C10', '#EE5A36'],
   },
+  // Touchline review pair — slot 5 is split into two variants for visual
+  // comparison. After the visual review one will be dropped and the
+  // winner renamed to plain `touchline`.
   {
-    id: 'meadow',
-    name: 'Meadow',
-    tagline: 'Cream paper, pitch ink',
-    swatches: ['#F4F1E8', '#1F3026', '#C84A2D'],
+    id: 'touchline-cards',
+    name: 'Touchline · Cards',
+    tagline: 'Sage cards on cream',
+    swatches: ['#F1EFE4', '#1E3527', '#6FA77B'],
+  },
+  {
+    id: 'touchline-page',
+    name: 'Touchline · Page',
+    tagline: 'Sage ground, cream cards',
+    swatches: ['#C8DCC8', '#1E3527', '#2F6B47'],
   },
 ]
 

@@ -8,6 +8,7 @@ import { CoachThemeProvider, useCoachTheme } from '@/contexts/CoachThemeContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { BRAND, TYPE } from '@/lib/constants'
+import { Logo } from '@/components/shared/Logo'
 
 /**
  * Brand chrome override for the redesigned Coach Match Analysis route.
@@ -65,20 +66,11 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
         gap: 8,
       }}>
         {isBrandedRoute ? (
-          /* On the redesigned match route, render the wordmark in Clash Display
-             so the brand logo matches the page's typographic system. */
-          <div style={{
-            fontFamily: TYPE.display,
-            fontSize: isMobile ? 18 : 22,
-            letterSpacing: '0.04em',
-            fontWeight: 700,
-            color: BRAND.indigo,
-            flexShrink: 0,
-          }}>FAIRPL.AI</div>
+          <Logo height={isMobile ? 22 : 28} style={{ flexShrink: 0 }} />
         ) : (
           <Image
             src={mode === 'light' ? '/logo-black.png' : '/logo-white.png'}
-            alt="FairplAI"
+            alt="Fairplai"
             width={100}
             height={28}
             style={{ height: isMobile ? 24 : 28, width: 'auto', objectFit: 'contain', flexShrink: 0 }}

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { PaletteVoteForm } from '@/components/user-testing/PaletteVoteForm'
+import { Logo } from '@/components/shared/Logo'
 
 /**
  * /user-testing/vote — Phase 1B (Slice 4.5).
@@ -21,15 +22,11 @@ export default function PaletteVotePage() {
     }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <Link href="/user-testing" style={{
-          fontFamily: 'var(--font-clash)',
-          fontSize: 24,
-          letterSpacing: '0.04em',
-          fontWeight: 700,
-          color: 'var(--brand-indigo)',
-          textDecoration: 'none',
           display: 'inline-block',
           marginBottom: 36,
-        }}>FAIRPL.AI</Link>
+        }}>
+          <Logo height={28} />
+        </Link>
 
         <div style={{
           fontFamily: 'var(--font-fragment)',

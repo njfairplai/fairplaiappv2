@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { THEMES, applyTheme, type Theme } from '@/lib/themes'
+import { Logo } from '@/components/shared/Logo'
 
 /**
  * /user-testing/portal — Phase 2A (Slice 4.5).
@@ -69,15 +70,9 @@ export default function PortalExplorePage() {
         gap: 16,
         flexWrap: 'wrap',
       }}>
-        <Link href="/user-testing" style={{
-          fontFamily: 'var(--font-clash)',
-          fontSize: 18,
-          letterSpacing: '0.04em',
-          fontWeight: 700,
-          color: 'var(--brand-indigo)',
-          textDecoration: 'none',
-          flexShrink: 0,
-        }}>FAIRPL.AI</Link>
+        <Link href="/user-testing" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
+          <Logo height={20} />
+        </Link>
         <span style={{ width: 1, height: 18, background: 'var(--brand-line)' }} />
         <span style={{
           fontFamily: 'var(--font-fragment)',

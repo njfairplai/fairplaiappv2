@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { applyTheme, THEMES } from '@/lib/themes'
+import { Logo } from '@/components/shared/Logo'
 
 /**
  * /user-testing — landing screen.
@@ -31,14 +32,8 @@ export default function UserTestingLandingPage() {
     }}>
       <div style={{ maxWidth: 720, width: '100%' }}>
         {/* Wordmark */}
-        <div style={{
-          fontFamily: 'var(--font-clash)',
-          fontSize: 28,
-          letterSpacing: '0.04em',
-          fontWeight: 700,
-          marginBottom: 48,
-        }}>
-          FAIRPL.AI
+        <div style={{ marginBottom: 48 }}>
+          <Logo height={32} />
         </div>
 
         {/* Eyebrow */}
@@ -73,7 +68,7 @@ export default function UserTestingLandingPage() {
         </p>
         <ol style={{ fontSize: 17, lineHeight: 1.6, marginBottom: 32, maxWidth: 580, paddingLeft: 22 }}>
           <li><strong>Pick a palette.</strong> You&apos;ll see the same coach
-            page rendered in five colour palettes, one at a time. Vote for the
+            page rendered in {THEMES.length} colour palettes, one at a time. Vote for the
             one that felt right.</li>
           <li><strong>Try the app.</strong> We&apos;ll re-render the app in
             your chosen palette and let you click around. Tell us which
@@ -89,7 +84,7 @@ export default function UserTestingLandingPage() {
           fontWeight: 700,
           marginBottom: 12,
         }}>
-          THE 5 PALETTES
+          THE {THEMES.length} PALETTES
         </div>
         <div style={{
           display: 'flex',

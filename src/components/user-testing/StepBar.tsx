@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Theme } from '@/lib/themes'
+import { Logo } from '@/components/shared/Logo'
 
 /**
  * Top bar shown on every step of the sequential walkthrough.
  *
  * Anatomy:
- *   FAIRPL.AI · PALETTE 2 OF 5  [swatches]   [← Prev]  [Next →]
+ *   [Logo] · PALETTE 2 OF N  [swatches]   [← Prev]  [Next →]
  *
  * Sticky to top so it's always available; uses the active palette's
  * own colors (so it looks at home inside whatever theme is showing).
@@ -46,15 +47,11 @@ export function StepBar({
       {/* Brand mark + progress */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
         <Link href="/user-testing" style={{
-          fontFamily: 'var(--font-clash)',
-          fontSize: 18,
-          letterSpacing: '0.04em',
-          fontWeight: 700,
-          color: 'var(--brand-indigo)',
-          textDecoration: 'none',
           flexShrink: 0,
+          display: 'inline-flex',
+          alignItems: 'center',
         }}>
-          FAIRPL.AI
+          <Logo height={20} />
         </Link>
         <span style={{ width: 1, height: 18, background: 'var(--brand-line)' }} />
         <span style={{

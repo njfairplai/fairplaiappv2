@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { applyTheme, readStoredTheme } from '@/lib/themes'
 import { PortalFeedbackForm } from '@/components/user-testing/PortalFeedbackForm'
+import { Logo } from '@/components/shared/Logo'
 
 /**
  * /user-testing/feedback — Phase 2B (Slice 4.5).
@@ -100,15 +101,11 @@ export default function FeedbackPage() {
     }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <Link href="/user-testing" style={{
-          fontFamily: 'var(--font-clash)',
-          fontSize: 24,
-          letterSpacing: '0.04em',
-          fontWeight: 700,
-          color: 'var(--brand-indigo)',
-          textDecoration: 'none',
           display: 'inline-block',
           marginBottom: 36,
-        }}>FAIRPL.AI</Link>
+        }}>
+          <Logo height={28} />
+        </Link>
 
         <div style={{
           fontFamily: 'var(--font-fragment)',
