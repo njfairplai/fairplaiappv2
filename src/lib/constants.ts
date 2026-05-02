@@ -23,41 +23,68 @@ export const COLORS = {
 } as const
 
 /**
- * BRAND v3 — Direction C palette from the landing-page-aligned redesign.
+ * BRAND v3 — Direction C palette, themed via CSS variables.
  *
  * Discipline: three colors, one job each.
  *   sand   = surface
  *   indigo = everything readable / clickable / structural
  *   yellow = the ONE thing you should look at first (≤6% of screen)
  *
- * Sand depth (sand → paper → paperHi) provides structural variety without new hues.
- * Indigo is paired with tonal variants (Mid / Soft / Mute) for hierarchy.
- * Yellow appears at most once per visual unit on the most important affordance.
+ * Each value here is `var(--brand-*)`, defined in src/app/globals.css. That
+ * means inline-styled components (`style={{ background: BRAND.sand }}`) and
+ * Tailwind utilities (`className="bg-brand-sand"`) read from the SAME source
+ * of truth. To switch the entire app to a different palette, either:
+ *   1. Edit the :root values in globals.css (permanent)
+ *   2. Set `data-theme="<name>"` on a parent element to swap to a defined
+ *      [data-theme="..."] block in globals.css (runtime — used by /user-testing)
+ *
+ * BRAND_RAW (below) keeps literal hex values for cases where a CSS var()
+ * call isn't accepted (some SVG attributes in older renderers, gradient
+ * stops in canvas drawing, etc.).
  */
 export const BRAND = {
   // sand surface family
-  sand:        '#EEE4C8',                  // primary background
-  sandDeep:    '#E0D2A8',                  // dividers / second-step shading
-  sandDeeper:  '#D4C290',                  // bands / strips
-  paper:       '#F8F2DE',                  // raised card
-  paperHi:     '#FBF6E6',                  // top-of-stack card
+  sand:        'var(--brand-sand)',
+  sandDeep:    'var(--brand-sand-deep)',
+  sandDeeper:  'var(--brand-sand-deeper)',
+  paper:       'var(--brand-paper)',
+  paperHi:     'var(--brand-paper-hi)',
 
   // indigo family
-  indigo:      '#1B1550',                  // primary text + structure + CTAs
-  indigoMid:   '#2E2674',                  // hover / secondary
-  indigoSoft:  'rgba(27,21,80,0.10)',      // hairline / chip wash
-  indigoMute:  'rgba(27,21,80,0.55)',      // muted body text
-  ink:         '#0B0828',                  // deepest contrast (rare)
+  indigo:      'var(--brand-indigo)',
+  indigoMid:   'var(--brand-indigo-mid)',
+  indigoSoft:  'var(--brand-indigo-soft)',
+  indigoMute:  'var(--brand-indigo-mute)',
+  ink:         'var(--brand-ink)',
 
-  // yellow accents — surface area kept tiny
-  yellow:      '#FCD718',                  // emphasis only (MOTM, playhead, "why this matters", goal pin)
-  yellowSoft:  'rgba(252,215,24,0.18)',    // ambient halo
+  // yellow accents
+  yellow:      'var(--brand-yellow)',
+  yellowSoft:  'var(--brand-yellow-soft)',
 
   // dividers
+  line:        'var(--brand-line)',
+  lineSoft:    'var(--brand-line-soft)',
+
+  // coral for warnings / alerts
+  coral:       'var(--brand-coral)',
+} as const
+
+/** Literal hex/rgba values for cases where var() isn't supported. Mirror BRAND. */
+export const BRAND_RAW = {
+  sand:        '#EEE4C8',
+  sandDeep:    '#E0D2A8',
+  sandDeeper:  '#D4C290',
+  paper:       '#F8F2DE',
+  paperHi:     '#FBF6E6',
+  indigo:      '#1B1550',
+  indigoMid:   '#2E2674',
+  indigoSoft:  'rgba(27,21,80,0.10)',
+  indigoMute:  'rgba(27,21,80,0.55)',
+  ink:         '#0B0828',
+  yellow:      '#FCD718',
+  yellowSoft:  'rgba(252,215,24,0.18)',
   line:        'rgba(27,21,80,0.12)',
   lineSoft:    'rgba(27,21,80,0.06)',
-
-  // optional: coral kept for warning/alert badges separate from the score-band error red
   coral:       '#EB4D6D',
 } as const
 

@@ -4,6 +4,122 @@
    are loaded as <link> tags in src/app/layout.tsx because Tailwind 4's PostCSS pipeline
    intercepts CSS @import rules at build time. */
 
+/*
+ * ── Brand theme system (Path B from the redesign rollout plan) ──
+ *
+ * Single source of truth for colour tokens lives here as CSS variables on
+ * :root. Tailwind utilities (`bg-brand-sand`, `text-brand-indigo`, etc.)
+ * map to these vars via @theme. The TS `BRAND` const in src/lib/constants.ts
+ * also reads from these vars — so inline-styled components stay in sync
+ * with the var definitions.
+ *
+ * Theme switching at runtime: set `data-theme="<name>"` on <html> (or any
+ * wrapper). Each [data-theme="..."] block below overrides the --brand-*
+ * vars; everything that references them updates instantly without
+ * recompiling Tailwind.
+ *
+ * To add a new palette: copy the :root values, paste into a new
+ * [data-theme="name"] block, change the colour values. Done.
+ */
+:root,
+[data-theme="sand"] {
+  /* Sand palette — Direction C, the current default. */
+  --brand-sand:        #EEE4C8;
+  --brand-sand-deep:   #E0D2A8;
+  --brand-sand-deeper: #D4C290;
+  --brand-paper:       #F8F2DE;
+  --brand-paper-hi:    #FBF6E6;
+  --brand-indigo:      #1B1550;
+  --brand-indigo-mid:  #2E2674;
+  --brand-indigo-soft: rgba(27, 21, 80, 0.10);
+  --brand-indigo-mute: rgba(27, 21, 80, 0.55);
+  --brand-yellow:      #FCD718;
+  --brand-yellow-soft: rgba(252, 215, 24, 0.18);
+  --brand-coral:       #EB4D6D;
+  --brand-ink:         #0B0828;
+  --brand-line:        rgba(27, 21, 80, 0.12);
+  --brand-line-soft:   rgba(27, 21, 80, 0.06);
+}
+
+/* ── Classic palette: off-white surface, navy structure, red accent.
+      Match-day traditional. ── */
+[data-theme="classic"] {
+  --brand-sand:        #F5F5F0;
+  --brand-sand-deep:   #E8E8E0;
+  --brand-sand-deeper: #D8D8CC;
+  --brand-paper:       #FFFFFF;
+  --brand-paper-hi:    #FFFFFF;
+  --brand-indigo:      #0A1F44;
+  --brand-indigo-mid:  #1A2F5C;
+  --brand-indigo-soft: rgba(10, 31, 68, 0.10);
+  --brand-indigo-mute: rgba(10, 31, 68, 0.55);
+  --brand-yellow:      #C8102E; /* red as the headline accent */
+  --brand-yellow-soft: rgba(200, 16, 46, 0.18);
+  --brand-coral:       #FF6B6B;
+  --brand-ink:         #050E20;
+  --brand-line:        rgba(10, 31, 68, 0.14);
+  --brand-line-soft:   rgba(10, 31, 68, 0.06);
+}
+
+/* ── Modern palette: charcoal surface, electric blue, white text.
+      EA-Sports / Nike-broadcast modern sport. ── */
+[data-theme="modern"] {
+  --brand-sand:        #1A1D24;
+  --brand-sand-deep:   #14171D;
+  --brand-sand-deeper: #0E1116;
+  --brand-paper:       #232730;
+  --brand-paper-hi:    #2C313C;
+  --brand-indigo:      #F5F7FA;
+  --brand-indigo-mid:  #C9CFD9;
+  --brand-indigo-soft: rgba(245, 247, 250, 0.10);
+  --brand-indigo-mute: rgba(245, 247, 250, 0.55);
+  --brand-yellow:      #00D4FF;
+  --brand-yellow-soft: rgba(0, 212, 255, 0.18);
+  --brand-coral:       #FF4D6D;
+  --brand-ink:         #FFFFFF;
+  --brand-line:        rgba(245, 247, 250, 0.14);
+  --brand-line-soft:   rgba(245, 247, 250, 0.06);
+}
+
+/* ── Turf palette: forest green surface, cream paper, gold accent.
+      Pitch-inspired earthy. ── */
+[data-theme="turf"] {
+  --brand-sand:        #1F3A2E;
+  --brand-sand-deep:   #18302A;
+  --brand-sand-deeper: #122620;
+  --brand-paper:       #F4EBD3;
+  --brand-paper-hi:    #FBF5DD;
+  --brand-indigo:      #F4EBD3;
+  --brand-indigo-mid:  #D6C99B;
+  --brand-indigo-soft: rgba(244, 235, 211, 0.10);
+  --brand-indigo-mute: rgba(244, 235, 211, 0.60);
+  --brand-yellow:      #E0B43B;
+  --brand-yellow-soft: rgba(224, 180, 59, 0.20);
+  --brand-coral:       #E07B5B;
+  --brand-ink:         #FFFFFF;
+  --brand-line:        rgba(244, 235, 211, 0.14);
+  --brand-line-soft:   rgba(244, 235, 211, 0.06);
+}
+
+/* ── Bold palette: black surface, neon yellow, white. Young / loud. ── */
+[data-theme="bold"] {
+  --brand-sand:        #0A0A0A;
+  --brand-sand-deep:   #050505;
+  --brand-sand-deeper: #000000;
+  --brand-paper:       #1A1A1A;
+  --brand-paper-hi:    #2A2A2A;
+  --brand-indigo:      #FFFFFF;
+  --brand-indigo-mid:  #D4D4D4;
+  --brand-indigo-soft: rgba(255, 255, 255, 0.10);
+  --brand-indigo-mute: rgba(255, 255, 255, 0.55);
+  --brand-yellow:      #E1FF00;
+  --brand-yellow-soft: rgba(225, 255, 0, 0.20);
+  --brand-coral:       #FF4D4D;
+  --brand-ink:         #FFFFFF;
+  --brand-line:        rgba(255, 255, 255, 0.14);
+  --brand-line-soft:   rgba(255, 255, 255, 0.06);
+}
+
 @theme {
   --font-inter: 'Inter', sans-serif;
   --font-satoshi: 'Satoshi', system-ui, sans-serif;
@@ -20,17 +136,19 @@
   --color-phantom: #1E1E24;
   --color-arsenic: #40424D;
   --color-graphite: #6E7180;
-  /* ── Brand v3 (Direction C) tokens ── */
-  --color-brand-sand:        #EEE4C8;
-  --color-brand-sand-deep:   #E0D2A8;
-  --color-brand-sand-deeper: #D4C290;
-  --color-brand-paper:       #F8F2DE;
-  --color-brand-paper-hi:    #FBF6E6;
-  --color-brand-indigo:      #1B1550;
-  --color-brand-indigo-mid:  #2E2674;
-  --color-brand-yellow:      #FCD718;
-  --color-brand-coral:       #EB4D6D;
-  --color-brand-ink:         #0B0828;
+  /* ── Brand v3 (Direction C) tokens — point at the runtime CSS vars
+        so changing :root or a [data-theme="..."] block live-updates the
+        Tailwind utilities (bg-brand-sand, text-brand-indigo, etc.). ── */
+  --color-brand-sand:        var(--brand-sand);
+  --color-brand-sand-deep:   var(--brand-sand-deep);
+  --color-brand-sand-deeper: var(--brand-sand-deeper);
+  --color-brand-paper:       var(--brand-paper);
+  --color-brand-paper-hi:    var(--brand-paper-hi);
+  --color-brand-indigo:      var(--brand-indigo);
+  --color-brand-indigo-mid:  var(--brand-indigo-mid);
+  --color-brand-yellow:      var(--brand-yellow);
+  --color-brand-coral:       var(--brand-coral);
+  --color-brand-ink:         var(--brand-ink);
 }
 
 * {
