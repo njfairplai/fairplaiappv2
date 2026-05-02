@@ -7,32 +7,33 @@ import { NextRequest, NextResponse } from 'next/server'
  * Receives a feedback submission from /user-testing/feedback and inserts
  * it into the `feedback_responses` table on Vercel Postgres.
  *
- * Setup (one-time, in Vercel dashboard):
- * 1. Project: fairplaiappv2 → Storage tab → Create Database → Postgres.
- * 2. Once created, run this DDL in Vercel's SQL editor:
+ * Schema (versioned, JSONB-flexible so we can evolve the form without
+ * ALTER TABLE every time):
  *
- *    CREATE TABLE IF NOT EXISTS feedback_responses (
- *      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- *      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
- *      theme_chosen TEXT NOT NULL,
- *      what_worked TEXT,
- *      what_didnt TEXT,
- *      whats_missing TEXT,
- *      role TEXT,
- *      email TEXT,
- *      dwell_seconds JSONB,
- *      user_agent TEXT,
- *      referrer TEXT
- *    );
+ *   CREATE TABLE IF NOT EXISTS feedback_responses (
+ *     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ *     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+ *     palette_vote TEXT NOT NULL,    -- denormalized: which palette won
+ *     responses JSONB NOT NULL,       -- structured Q&A: words, usefulness, feel, nps
+ *     whats_missing TEXT,             -- the one open textarea
+ *     role TEXT,
+ *     email TEXT,
+ *     dwell_seconds JSONB,            -- per-palette dwell time from localStorage
+ *     user_agent TEXT,
+ *     referrer TEXT
+ *   );
  *
- * 3. For local dev, run `npx vercel env pull .env.local` to fetch the
- *    POSTGRES_URL into your local .env.local.
+ * Setup (one-time, in Vercel dashboard, on the fairplaiappv2 project):
+ *   1. Storage tab → Create Database → Postgres.
+ *   2. Run the DDL above in Vercel's SQL editor.
+ *   3. Redeploy so env vars (POSTGRES_URL etc.) are in scope.
  *
- * If the DB env vars aren't set, this route returns 503 with a helpful
- * message so local dev / preview deploys without the DB don't crash.
+ * Local dev: `npx vercel link` once, then `npx vercel env pull .env.local`.
+ *
+ * If POSTGRES_URL isn't set, the route returns 503 with a helpful message
+ * so local dev / preview deploys without the DB don't crash.
  */
 export async function POST(req: NextRequest) {
-  // Bail out gracefully if the DB isn't configured yet.
   if (!process.env.POSTGRES_URL) {
     return NextResponse.json(
       {
@@ -44,9 +45,13 @@ export async function POST(req: NextRequest) {
   }
 
   let body: {
-    theme_chosen?: string
-    what_worked?: string
-    what_didnt?: string
+    palette_vote?: string
+    responses?: {
+      palette_words?: string[]
+      usefulness?: Record<string, number | null>
+      feel?: Record<string, number | null>
+      nps?: number | null
+    }
     whats_missing?: string
     role?: string | null
     email?: string | null
@@ -58,9 +63,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 })
   }
 
-  if (!body.theme_chosen || !body.what_worked || !body.what_didnt) {
+  // Validate the required pieces. The form blocks submission until these
+  // are filled, but we re-check server-side as a contract guard.
+  const r = body.responses
+  if (
+    !body.palette_vote ||
+    !r ||
+    !Array.isArray(r.palette_words) || r.palette_words.length === 0 ||
+    !r.usefulness || Object.values(r.usefulness).some(v => v === null) ||
+    !r.feel || Object.values(r.feel).some(v => v === null) ||
+    r.nps === null || r.nps === undefined
+  ) {
     return NextResponse.json(
-      { ok: false, error: 'theme_chosen, what_worked, and what_didnt are required' },
+      { ok: false, error: 'Missing required answers' },
       { status: 400 },
     )
   }
@@ -68,12 +83,11 @@ export async function POST(req: NextRequest) {
   try {
     await sql`
       INSERT INTO feedback_responses (
-        theme_chosen, what_worked, what_didnt, whats_missing,
+        palette_vote, responses, whats_missing,
         role, email, dwell_seconds, user_agent, referrer
       ) VALUES (
-        ${body.theme_chosen},
-        ${body.what_worked},
-        ${body.what_didnt},
+        ${body.palette_vote},
+        ${JSON.stringify(body.responses)},
         ${body.whats_missing ?? null},
         ${body.role ?? null},
         ${body.email ?? null},

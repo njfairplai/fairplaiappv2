@@ -111,11 +111,11 @@ export default function FeedbackPage() {
           letterSpacing: '-0.02em',
           margin: '0 0 16px',
         }}>
-          Vote for the look<br />of the coach portal.
+          Rate what you saw.
         </h1>
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 36, maxWidth: 560 }}>
-          You&apos;ve seen all five palettes. Pick the one that felt right and
-          tell us why. Two short answers and a vote — that&apos;s it.
+          A few short questions on the palette and the coach experience.
+          Most are one click — should take 3 to 4 minutes.
         </p>
 
         <FeedbackForm />

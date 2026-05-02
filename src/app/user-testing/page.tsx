@@ -62,7 +62,7 @@ export default function UserTestingLandingPage() {
           margin: '0 0 24px',
           fontWeight: 700,
         }}>
-          Help us pick the look<br />of the coach portal.
+          Help us shape the<br />coach portal.
         </h1>
 
         {/* Body */}
@@ -72,10 +72,10 @@ export default function UserTestingLandingPage() {
           highlights with parents.
         </p>
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 32, maxWidth: 580 }}>
-          We&apos;re testing five different colour palettes for the redesign.
-          You&apos;ll see the same coach portal page in each palette, one at a time.
-          When you&apos;ve seen all five, you&apos;ll vote for the one that feels right
-          and tell us why.
+          We&apos;re testing five colour palettes for the redesign and gathering
+          feedback on the coach experience overall. You&apos;ll see the same
+          coach portal page in each palette, one at a time. At the end you&apos;ll
+          vote for a palette and rate the design — most questions are one click.
         </p>
 
         {/* Palette swatches preview */}
