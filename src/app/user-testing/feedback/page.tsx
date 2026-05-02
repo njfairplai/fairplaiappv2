@@ -25,7 +25,7 @@ export default function FeedbackPage() {
   // screen for a calm finish.
   useEffect(() => {
     if (submitted) {
-      applyTheme('sand')
+      applyTheme('almanac')
     } else {
       applyTheme(readStoredTheme())
     }

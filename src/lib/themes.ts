@@ -23,34 +23,34 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
-    id: 'sand',
-    name: 'Sand',
-    tagline: 'Editorial calm',
+    id: 'almanac',
+    name: 'Almanac',
+    tagline: 'The football reference',
     swatches: ['#EEE4C8', '#1B1550', '#FCD718'],
   },
   {
-    id: 'classic',
-    name: 'Classic',
-    tagline: 'Match-day traditional',
-    swatches: ['#F5F5F0', '#0A1F44', '#C8102E'],
+    id: 'cloudline',
+    name: 'Cloudline',
+    tagline: 'Brand at full sun',
+    swatches: ['#EDEFF7', '#1B1650', '#4A4AFF'],
   },
   {
-    id: 'modern',
-    name: 'Modern',
-    tagline: 'Broadcast sport',
-    swatches: ['#1A1D24', '#F5F7FA', '#00D4FF'],
+    id: 'voltage',
+    name: 'Voltage',
+    tagline: 'Stadium tunnel, kickoff',
+    swatches: ['#1E1E24', '#F5F6FC', '#4536F5'],
   },
   {
-    id: 'turf',
-    name: 'Turf',
-    tagline: 'Pitch-inspired',
-    swatches: ['#1F3A2E', '#F4EBD3', '#E0B43B'],
+    id: 'stadia',
+    name: 'Stadia',
+    tagline: 'The football monograph',
+    swatches: ['#F6F3EC', '#0C0C10', '#EE5A36'],
   },
   {
-    id: 'bold',
-    name: 'Bold',
-    tagline: 'Young and loud',
-    swatches: ['#0A0A0A', '#FFFFFF', '#E1FF00'],
+    id: 'meadow',
+    name: 'Meadow',
+    tagline: 'Cream paper, pitch ink',
+    swatches: ['#F4F1E8', '#1F3026', '#C84A2D'],
   },
 ]
 
@@ -66,12 +66,12 @@ export function applyTheme(themeId: string): void {
   }
 }
 
-/** Read the stored theme, falling back to the default 'sand'. */
+/** Read the stored theme, falling back to the default 'almanac'. */
 export function readStoredTheme(): string {
-  if (typeof window === 'undefined') return 'sand'
+  if (typeof window === 'undefined') return 'almanac'
   try {
-    return localStorage.getItem('fairplai-theme') ?? 'sand'
+    return localStorage.getItem('fairplai-theme') ?? 'almanac'
   } catch {
-    return 'sand'
+    return 'almanac'
   }
 }

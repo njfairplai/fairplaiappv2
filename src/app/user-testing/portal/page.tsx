@@ -27,7 +27,7 @@ export default function PortalExplorePage() {
   // outer document. If they landed here without going through /vote, fall
   // back to the default sand palette and let them keep going.
   useEffect(() => {
-    let pickedId = 'sand'
+    let pickedId = 'almanac'
     try {
       const raw = localStorage.getItem('fairplai-testing-palette')
       if (raw) {

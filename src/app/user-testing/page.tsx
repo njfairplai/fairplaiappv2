@@ -13,7 +13,7 @@ import { applyTheme, THEMES } from '@/lib/themes'
  */
 export default function UserTestingLandingPage() {
   useEffect(() => {
-    applyTheme('sand')
+    applyTheme('almanac')
     // Reset any prior dwell tracking from a previous session
     try { localStorage.removeItem('fairplai-testing-dwell') } catch { /* noop */ }
   }, [])

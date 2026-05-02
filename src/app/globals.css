@@ -21,110 +21,153 @@
  * To add a new palette: copy the :root values, paste into a new
  * [data-theme="name"] block, change the colour values. Done.
  */
+/*
+ * The 5 palette + type directions for the user-testing flow (Slice 4.5).
+ * Each palette overrides BOTH the colour vars AND the type vars so the
+ * three font systems travel with their palettes. Switch via
+ * `data-theme="<id>"` on any wrapper element.
+ *
+ *   1. almanac    — incumbent — sand + indigo + yellow         (Type 1)
+ *   2. cloudline  — brand     — cool light + AHOY blue          (Type 1)
+ *   3. voltage    — brand     — Phantom dark + Active blue      (Type 2)
+ *   4. stadia     — beyond    — warm off-white + ink + coral    (Type 3)
+ *   5. meadow     — beyond    — bone-cream + pitch green        (Type 3)
+ *
+ * Type System 1 — Clash Display + Satoshi + Fragment Mono
+ * Type System 2 — Boldonse + Switzer + JetBrains Mono
+ * Type System 3 — Instrument Serif + Inter Tight + JetBrains Mono
+ *
+ * Note on var naming: --brand-yellow is the SEMANTIC accent slot, not
+ * literally yellow. In Voltage it's blue; in Stadia it's coral; etc.
+ * Renaming everywhere is a much larger refactor — for now the names are
+ * legacy semantic anchors that just hold whatever colour the palette puts
+ * there.
+ */
+
 :root,
-[data-theme="sand"] {
-  /* Sand palette — Direction C, the current default. */
-  --brand-sand:        #EEE4C8;
+[data-theme="almanac"] {
+  /* Almanac — incumbent. Sand-first, indigo structure, yellow accent. */
+  --brand-sand:        #EEE4C8;  /* surface */
   --brand-sand-deep:   #E0D2A8;
   --brand-sand-deeper: #D4C290;
-  --brand-paper:       #F8F2DE;
+  --brand-paper:       #F8F2DE;  /* raised card */
   --brand-paper-hi:    #FBF6E6;
-  --brand-indigo:      #1B1550;
+  --brand-indigo:      #1B1550;  /* structure / text */
   --brand-indigo-mid:  #2E2674;
   --brand-indigo-soft: rgba(27, 21, 80, 0.10);
   --brand-indigo-mute: rgba(27, 21, 80, 0.55);
-  --brand-yellow:      #FCD718;
+  --brand-yellow:      #FCD718;  /* accent */
   --brand-yellow-soft: rgba(252, 215, 24, 0.18);
   --brand-coral:       #EB4D6D;
   --brand-ink:         #0B0828;
   --brand-line:        rgba(27, 21, 80, 0.12);
   --brand-line-soft:   rgba(27, 21, 80, 0.06);
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
 }
 
-/* ── Classic palette: off-white surface, navy structure, red accent.
-      Match-day traditional. ── */
-[data-theme="classic"] {
-  --brand-sand:        #F5F5F0;
-  --brand-sand-deep:   #E8E8E0;
-  --brand-sand-deeper: #D8D8CC;
+/* Cloudline — brand-anchored. Cool light surface, AHOY Blue lead. */
+[data-theme="cloudline"] {
+  --brand-sand:        #EDEFF7;
+  --brand-sand-deep:   #DDE0EC;
+  --brand-sand-deeper: #CED2E2;
+  --brand-paper:       #F5F6FC;
+  --brand-paper-hi:    #FFFFFF;
+  --brand-indigo:      #1B1650;
+  --brand-indigo-mid:  #2B2689;
+  --brand-indigo-soft: rgba(27, 22, 80, 0.10);
+  --brand-indigo-mute: rgba(27, 22, 80, 0.55);
+  --brand-yellow:      #4A4AFF;  /* AHOY Blue as the accent slot */
+  --brand-yellow-soft: rgba(74, 74, 255, 0.18);
+  --brand-coral:       #757FFF;
+  --brand-ink:         #0E0936;
+  --brand-line:        #D3D6E0;
+  --brand-line-soft:   rgba(27, 22, 80, 0.06);
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* Voltage — brand-anchored, DARK. Phantom + Active Blue + Periwinkle. */
+[data-theme="voltage"] {
+  --brand-sand:        #1E1E24;
+  --brand-sand-deep:   #18181D;
+  --brand-sand-deeper: #000000;
+  --brand-paper:       #000000;
+  --brand-paper-hi:    #2A2A30;
+  --brand-indigo:      #F5F6FC;
+  --brand-indigo-mid:  #C2CEFF;
+  --brand-indigo-soft: rgba(245, 246, 252, 0.10);
+  --brand-indigo-mute: rgba(245, 246, 252, 0.55);
+  --brand-yellow:      #4536F5;  /* Active Blue as the accent slot */
+  --brand-yellow-soft: rgba(69, 54, 245, 0.20);
+  --brand-coral:       #C2CEFF;
+  --brand-ink:         #FFFFFF;
+  --brand-line:        #40424D;
+  --brand-line-soft:   rgba(245, 246, 252, 0.06);
+
+  --font-display: "Boldonse", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Switzer", "Satoshi", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* Stadia — beyond brand. Warm off-white + ink + coral accent. */
+[data-theme="stadia"] {
+  --brand-sand:        #F6F3EC;
+  --brand-sand-deep:   #EAE6DC;
+  --brand-sand-deeper: #DAD5C7;
   --brand-paper:       #FFFFFF;
   --brand-paper-hi:    #FFFFFF;
-  --brand-indigo:      #0A1F44;
-  --brand-indigo-mid:  #1A2F5C;
-  --brand-indigo-soft: rgba(10, 31, 68, 0.10);
-  --brand-indigo-mute: rgba(10, 31, 68, 0.55);
-  --brand-yellow:      #C8102E; /* red as the headline accent */
-  --brand-yellow-soft: rgba(200, 16, 46, 0.18);
-  --brand-coral:       #FF6B6B;
-  --brand-ink:         #050E20;
-  --brand-line:        rgba(10, 31, 68, 0.14);
-  --brand-line-soft:   rgba(10, 31, 68, 0.06);
+  --brand-indigo:      #0C0C10;
+  --brand-indigo-mid:  #2A2A30;
+  --brand-indigo-soft: rgba(12, 12, 16, 0.08);
+  --brand-indigo-mute: rgba(12, 12, 16, 0.55);
+  --brand-yellow:      #EE5A36;  /* Coral as the accent slot */
+  --brand-yellow-soft: rgba(238, 90, 54, 0.18);
+  --brand-coral:       #EE5A36;
+  --brand-ink:         #000000;
+  --brand-line:        rgba(12, 12, 16, 0.10);
+  --brand-line-soft:   rgba(12, 12, 16, 0.05);
+
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body:    "Inter Tight", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
 }
 
-/* ── Modern palette: charcoal surface, electric blue, white text.
-      EA-Sports / Nike-broadcast modern sport. ── */
-[data-theme="modern"] {
-  --brand-sand:        #1A1D24;
-  --brand-sand-deep:   #14171D;
-  --brand-sand-deeper: #0E1116;
-  --brand-paper:       #232730;
-  --brand-paper-hi:    #2C313C;
-  --brand-indigo:      #F5F7FA;
-  --brand-indigo-mid:  #C9CFD9;
-  --brand-indigo-soft: rgba(245, 247, 250, 0.10);
-  --brand-indigo-mute: rgba(245, 247, 250, 0.55);
-  --brand-yellow:      #00D4FF;
-  --brand-yellow-soft: rgba(0, 212, 255, 0.18);
-  --brand-coral:       #FF4D6D;
-  --brand-ink:         #FFFFFF;
-  --brand-line:        rgba(245, 247, 250, 0.14);
-  --brand-line-soft:   rgba(245, 247, 250, 0.06);
-}
+/* Meadow — beyond brand, pitch-green ink on bone cream. */
+[data-theme="meadow"] {
+  --brand-sand:        #F4F1E8;
+  --brand-sand-deep:   #E8E4D5;
+  --brand-sand-deeper: #D9D3BF;
+  --brand-paper:       #FBFAEF;
+  --brand-paper-hi:    #FFFFFF;
+  --brand-indigo:      #1F3026;  /* pitch-green ink as structure */
+  --brand-indigo-mid:  #2F6B47;
+  --brand-indigo-soft: rgba(31, 48, 38, 0.10);
+  --brand-indigo-mute: rgba(31, 48, 38, 0.55);
+  --brand-yellow:      #C84A2D;  /* Terracotta as the accent slot */
+  --brand-yellow-soft: rgba(200, 74, 45, 0.18);
+  --brand-coral:       #6FA77B;
+  --brand-ink:         #0F1A13;
+  --brand-line:        #D9D3BF;
+  --brand-line-soft:   rgba(31, 48, 38, 0.06);
 
-/* ── Turf palette: forest green surface, cream paper, gold accent.
-      Pitch-inspired earthy. ── */
-[data-theme="turf"] {
-  --brand-sand:        #1F3A2E;
-  --brand-sand-deep:   #18302A;
-  --brand-sand-deeper: #122620;
-  --brand-paper:       #F4EBD3;
-  --brand-paper-hi:    #FBF5DD;
-  --brand-indigo:      #F4EBD3;
-  --brand-indigo-mid:  #D6C99B;
-  --brand-indigo-soft: rgba(244, 235, 211, 0.10);
-  --brand-indigo-mute: rgba(244, 235, 211, 0.60);
-  --brand-yellow:      #E0B43B;
-  --brand-yellow-soft: rgba(224, 180, 59, 0.20);
-  --brand-coral:       #E07B5B;
-  --brand-ink:         #FFFFFF;
-  --brand-line:        rgba(244, 235, 211, 0.14);
-  --brand-line-soft:   rgba(244, 235, 211, 0.06);
-}
-
-/* ── Bold palette: black surface, neon yellow, white. Young / loud. ── */
-[data-theme="bold"] {
-  --brand-sand:        #0A0A0A;
-  --brand-sand-deep:   #050505;
-  --brand-sand-deeper: #000000;
-  --brand-paper:       #1A1A1A;
-  --brand-paper-hi:    #2A2A2A;
-  --brand-indigo:      #FFFFFF;
-  --brand-indigo-mid:  #D4D4D4;
-  --brand-indigo-soft: rgba(255, 255, 255, 0.10);
-  --brand-indigo-mute: rgba(255, 255, 255, 0.55);
-  --brand-yellow:      #E1FF00;
-  --brand-yellow-soft: rgba(225, 255, 0, 0.20);
-  --brand-coral:       #FF4D4D;
-  --brand-ink:         #FFFFFF;
-  --brand-line:        rgba(255, 255, 255, 0.14);
-  --brand-line-soft:   rgba(255, 255, 255, 0.06);
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body:    "Inter Tight", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
 }
 
 @theme {
   --font-inter: 'Inter', sans-serif;
-  --font-satoshi: 'Satoshi', system-ui, sans-serif;
-  --font-clash: 'Clash Display', 'Satoshi', system-ui, sans-serif;
-  --font-fragment: 'Fragment Mono', ui-monospace, 'SF Mono', monospace;
+  /* Legacy font tokens aliased to the runtime theme-switchable vars below.
+     Existing components that use `var(--font-clash)` / Tailwind `font-clash`
+     keep working AND now follow the active palette's typography. */
+  --font-satoshi: var(--font-body);
+  --font-clash: var(--font-display);
+  --font-fragment: var(--font-mono);
   /* legacy navy kept for back-compat; brand-aligned navy lives in BRAND.indigo (#1B1550) */
   --color-deep-indigo: #1B1550;
   --color-electric-navy: #282689;

@@ -89,17 +89,16 @@ export const BRAND_RAW = {
 } as const
 
 /**
- * Type fields to use across the brand-aligned redesign.
- * Display = Clash Display (loud uppercase headlines, hero numerics).
- * Body    = Satoshi (UI copy, body, nav, buttons).
- * Mono    = Fragment Mono (timestamps, eyebrows, metadata).
- *
- * Wire actual font loading via next/font in src/app/layout.tsx (slice will follow).
+ * Type fields, themeable via CSS variables. Each [data-theme="..."] block
+ * in globals.css overrides --font-display / --font-body / --font-mono so
+ * components using TYPE.display etc. live-switch fonts when the theme
+ * changes. Default values come from the :root block (Almanac — Clash
+ * Display + Satoshi + Fragment Mono).
  */
 export const TYPE = {
-  display: '"Clash Display", "Satoshi", system-ui, sans-serif',
-  body:    '"Satoshi", system-ui, sans-serif',
-  mono:    '"Fragment Mono", ui-monospace, "SF Mono", monospace',
+  display: 'var(--font-display)',
+  body:    'var(--font-body)',
+  mono:    'var(--font-mono)',
 } as const
 
 export const RADIUS = {
