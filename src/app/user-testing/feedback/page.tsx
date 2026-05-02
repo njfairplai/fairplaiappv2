@@ -103,7 +103,7 @@ export default function FeedbackPage() {
           color: 'var(--brand-indigo-mute)',
           fontWeight: 700,
           marginBottom: 12,
-        }}>STEP 6 OF 6 · YOUR FEEDBACK</div>
+        }}>STEP 6 OF 6 · YOUR PALETTE VOTE</div>
         <h1 style={{
           fontFamily: 'var(--font-clash)',
           fontSize: 44,
@@ -111,11 +111,12 @@ export default function FeedbackPage() {
           letterSpacing: '-0.02em',
           margin: '0 0 16px',
         }}>
-          Rate what you saw.
+          Pick the palette<br />that felt right.
         </h1>
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 36, maxWidth: 560 }}>
-          A few short questions on the palette and the coach experience.
-          Most are one click — should take 3 to 4 minutes.
+          A few short questions on the colours only — features and the coach
+          experience get their own test later. Most questions are one click,
+          should take 2 to 3 minutes.
         </p>
 
         <FeedbackForm />

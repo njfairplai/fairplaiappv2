@@ -7,19 +7,22 @@ import { THEMES } from '@/lib/themes'
 /**
  * Feedback form for /user-testing/feedback.
  *
- * Structure follows usability-research best practices: heavy on click-not-type
- * (single/multi-select, Likert 1–5, NPS 0–10) with a single optional open
- * textarea at the end so submission isn't blocked on writing. ~3-4 min to
- * complete.
+ * **PALETTE TEST ONLY.** This form gathers feedback on the colour palettes,
+ * not on features or usability. Per-feature usefulness ratings have been
+ * removed — they belong in the future portal-usability test (separate route)
+ * once the rest of the coach portal is redesigned and a winning palette is
+ * picked.
  *
  * Sections:
  *   A. Palette vote (single-select)
  *   B. Three-word descriptor (chip multi-select, max 3)
- *   C. Section usefulness (7× Likert 1–5)
- *   D. Overall feel (3× Likert 1–5)
- *   E. NPS 0–10
- *   F. One open textarea (optional)
- *   G. Role + email (optional)
+ *   C. Overall feel (3× Likert 1–5)
+ *   D. NPS 0–10
+ *   E. One open textarea (optional)
+ *   F. Role + email (optional)
+ *
+ * Click-heavy by design: only one optional textarea so submission isn't
+ * blocked on writing. ~2-3 min to complete.
  *
  * The whole structured payload posts as JSONB in `responses`, plus the
  * palette vote denormalised at the top level for easy filtering.
@@ -45,24 +48,13 @@ const DESCRIPTOR_WORDS = [
   'Cluttered', 'Confusing', 'Busy', 'Cold', 'Outdated', 'Cheap', 'Generic',
 ] as const
 
-const SECTION_LABELS = [
-  { key: 'match_in_numbers', label: 'Match in numbers (the stat bars at the top)' },
-  { key: 'timeline',         label: 'Timeline of moments' },
-  { key: 'clip',             label: 'Clip + Key Stats panel' },
-  { key: 'squad',            label: 'Squad table' },
-  { key: 'player_detail',    label: 'Per-player detail panel' },
-  { key: 'recap',            label: 'Match recap (Share via WhatsApp)' },
-  { key: 'watch_match',      label: 'Watch full match link' },
-] as const
-
 const FEEL_STATEMENTS = [
-  { key: 'professional', label: 'The design looks professional.' },
-  { key: 'scan',         label: 'The page is easy to scan at a glance.' },
-  { key: 'trust',        label: "I'd trust this with my squad's data." },
+  { key: 'professional', label: 'This palette looks professional.' },
+  { key: 'scan',         label: 'The page is easy to scan in this palette.' },
+  { key: 'trust',        label: "I'd trust a coach product that looked like this." },
 ] as const
 
 const LIKERT_LABELS = ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree']
-const USEFUL_LABELS = ['Not useful', 'Slightly', 'Useful', 'Very', 'Essential']
 
 const labelStyle = {
   fontFamily: 'var(--font-fragment)',
@@ -246,38 +238,30 @@ export function FeedbackForm() {
     })
   }
 
-  // Section C: section usefulness (1-5 each)
-  const [usefulness, setUsefulness] = useState<Record<string, number | null>>(
-    Object.fromEntries(SECTION_LABELS.map(s => [s.key, null]))
-  )
-  const setUseful = (key: string, v: number) => setUsefulness(prev => ({ ...prev, [key]: v }))
-
-  // Section D: overall feel (1-5 each)
+  // Section C: overall feel (1-5 each)
   const [feel, setFeel] = useState<Record<string, number | null>>(
     Object.fromEntries(FEEL_STATEMENTS.map(s => [s.key, null]))
   )
   const setFeelKey = (key: string, v: number) => setFeel(prev => ({ ...prev, [key]: v }))
 
-  // Section E: NPS
+  // Section D: NPS
   const [nps, setNps] = useState<number | null>(null)
 
-  // Section F: open
+  // Section E: open
   const [whatsMissing, setWhatsMissing] = useState('')
 
-  // Section G: about you
+  // Section F: about you
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Required: palette + words >= 1 + all usefulness + all feel + nps
-  const allUsefulnessAnswered = SECTION_LABELS.every(s => usefulness[s.key] !== null)
+  // Required: palette + words >= 1 + all feel + nps
   const allFeelAnswered = FEEL_STATEMENTS.every(s => feel[s.key] !== null)
   const canSubmit =
     !!paletteVote &&
     words.length > 0 &&
-    allUsefulnessAnswered &&
     allFeelAnswered &&
     nps !== null &&
     !submitting
@@ -296,7 +280,6 @@ export function FeedbackForm() {
 
     const responses = {
       palette_words: words,
-      usefulness,
       feel,
       nps,
     }
@@ -413,29 +396,10 @@ export function FeedbackForm() {
         </div>
       </section>
 
-      {/* ────────── Section C: usefulness per portal section ────────── */}
+      {/* ────────── Section C: overall feel about the palette ────────── */}
       <section>
-        <div style={sectionEyebrow}>SECTION C · USEFULNESS BY FEATURE</div>
-        <h2 style={sectionHeadline}>How useful is each part of the page?</h2>
-        <ScaleHeader leftLabel={USEFUL_LABELS[0]} rightLabel={USEFUL_LABELS[4]} />
-        <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
-          {SECTION_LABELS.map(s => (
-            <LikertRow
-              key={s.key}
-              label={s.label}
-              value={usefulness[s.key]}
-              onChange={v => setUseful(s.key, v)}
-              ends={[USEFUL_LABELS[0], USEFUL_LABELS[4]]}
-              showEnds={false}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* ────────── Section D: overall feel ────────── */}
-      <section>
-        <div style={sectionEyebrow}>SECTION D · OVERALL FEEL</div>
-        <h2 style={sectionHeadline}>How much do you agree?</h2>
+        <div style={sectionEyebrow}>SECTION C · OVERALL FEEL</div>
+        <h2 style={sectionHeadline}>How much do you agree about the palette you picked?</h2>
         <ScaleHeader leftLabel={LIKERT_LABELS[0]} rightLabel={LIKERT_LABELS[4]} />
         <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
           {FEEL_STATEMENTS.map(s => (
@@ -451,17 +415,17 @@ export function FeedbackForm() {
         </div>
       </section>
 
-      {/* ────────── Section E: NPS ────────── */}
+      {/* ────────── Section D: NPS ────────── */}
       <section>
-        <div style={sectionEyebrow}>SECTION E · RECOMMENDATION</div>
-        <h2 style={sectionHeadline}>How likely are you to recommend Fairplai to another coach?</h2>
+        <div style={sectionEyebrow}>SECTION D · RECOMMENDATION</div>
+        <h2 style={sectionHeadline}>If the design used your favourite palette, how likely would you recommend Fairplai to another coach?</h2>
         <NPSScale value={nps} onChange={setNps} />
       </section>
 
-      {/* ────────── Section F: open ────────── */}
+      {/* ────────── Section E: open ────────── */}
       <section>
-        <div style={sectionEyebrow}>SECTION F · ANYTHING ELSE</div>
-        <h2 style={sectionHeadline}>What&apos;s missing or what would you change? (optional)</h2>
+        <div style={sectionEyebrow}>SECTION E · ANYTHING ELSE</div>
+        <h2 style={sectionHeadline}>Anything else about the colours? (optional)</h2>
         <textarea
           value={whatsMissing}
           onChange={e => setWhatsMissing(e.target.value)}
@@ -471,10 +435,10 @@ export function FeedbackForm() {
         />
       </section>
 
-      {/* ────────── Section G: about you ────────── */}
+      {/* ────────── Section F: about you ────────── */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
-          <div style={sectionEyebrow}>SECTION G · ABOUT YOU</div>
+          <div style={sectionEyebrow}>SECTION F · ABOUT YOU</div>
           <h2 style={sectionHeadline}>Just two more.</h2>
         </div>
         <div>

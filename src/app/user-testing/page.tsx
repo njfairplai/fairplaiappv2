@@ -50,7 +50,7 @@ export default function UserTestingLandingPage() {
           fontWeight: 700,
           marginBottom: 14,
         }}>
-          USER TESTING · DESIGN PREVIEW
+          USER TESTING · PALETTE COMPARISON
         </div>
 
         {/* Headline */}
@@ -62,20 +62,20 @@ export default function UserTestingLandingPage() {
           margin: '0 0 24px',
           fontWeight: 700,
         }}>
-          Help us shape the<br />coach portal.
+          Help us pick the<br />right colours.
         </h1>
 
         {/* Body */}
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 16, maxWidth: 580 }}>
-          Fairplai is a sports-tech platform for football academies. Coaches use
-          it to review match footage, see per-player AI analysis, and share
-          highlights with parents.
+          Fairplai is a sports-tech platform for football academies. We&apos;re
+          asking <strong>only about the colours</strong> in this round — not
+          about features, layout, or the coach experience. That comes later in
+          a separate test.
         </p>
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 32, maxWidth: 580 }}>
-          We&apos;re testing five colour palettes for the redesign and gathering
-          feedback on the coach experience overall. You&apos;ll see the same
-          coach portal page in each palette, one at a time. At the end you&apos;ll
-          vote for a palette and rate the design — most questions are one click.
+          You&apos;ll see the same coach page rendered in five different colour
+          palettes, one at a time. At the end, vote for the one that felt right
+          and pick a few words to describe it. Most questions are one click.
         </p>
 
         {/* Palette swatches preview */}
