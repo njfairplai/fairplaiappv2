@@ -1,926 +1,1899 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { ChevronLeft, ChevronDown, ChevronUp, X } from 'lucide-react'
-import { sessions, players, matchAnalyses, squadScores, rosters, pitches } from '@/lib/mockData'
-import PlayerAvatar from '@/components/coach/PlayerAvatar'
-import type { MatchAnalysis, Player } from '@/lib/types'
 import dynamic from 'next/dynamic'
+import { sessions, players, matchAnalyses, highlights, pitches } from '@/lib/mockData'
+import type { MatchAnalysis, Player, Highlight } from '@/lib/types'
+import { BRAND, TYPE, COLORS } from '@/lib/constants'
 
-const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 260 }} /> })
+const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
 
-/* ── colour constants ── */
-const C = {
-  primary: '#4A4AFF',
-  navy: '#0F172A',
-  darkBg: '#0A0E1A',
-  muted: '#64748B',
-  lightBg: '#F5F6FC',
-  border: '#E2E8F0',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
+/* ──────────────────────────────────────────────────────────────────
+   Coach Match Analysis (Direction C — sand-first redesign).
+   Visual language: sand surface, indigo structure, yellow earns its keep.
+   ────────────────────────────────────────────────────────────────── */
+
+/* ── Hardcoded match scores (mirrors current page) ── */
+const gameScores: Record<string, { homeGoals: number; awayGoals: number }> = {
+  session_005: { homeGoals: 2, awayGoals: 1 },
+  session_006: { homeGoals: 1, awayGoals: 2 },
+  session_007: { homeGoals: 3, awayGoals: 1 },
+  session_010: { homeGoals: 0, awayGoals: 0 },
+  session_013: { homeGoals: 2, awayGoals: 0 },
+  session_014: { homeGoals: 3, awayGoals: 2 },
 }
 
-/* ── game scores (hardcoded) ── */
-const gameScores: Record<string, { score: string; result: 'W' | 'L' | 'D'; homeGoals: number; awayGoals: number }> = {
-  session_005: { score: '2-1', result: 'W', homeGoals: 2, awayGoals: 1 },
-  session_006: { score: '1-2', result: 'L', homeGoals: 1, awayGoals: 2 },
-  session_007: { score: '3-1', result: 'W', homeGoals: 3, awayGoals: 1 },
-  session_010: { score: '0-0', result: 'D', homeGoals: 0, awayGoals: 0 },
-  session_013: { score: '2-0', result: 'W', homeGoals: 2, awayGoals: 0 },
-  session_014: { score: '3-2', result: 'W', homeGoals: 3, awayGoals: 2 },
+/* ── Team stats per session — mirrors legacy [sessionId]/page.tsx so the v3
+ * route shows the same comparison data once we wire it in. */
+type TeamStat = { possession: number; passAccuracy: number; shotsOnTarget: number; tackles: number; intercepts: number }
+const gameTeamStats: Record<string, { home: TeamStat; away: TeamStat }> = {
+  session_005: { home: { possession: 58, passAccuracy: 81, shotsOnTarget: 6, tackles: 15, intercepts: 22 }, away: { possession: 42, passAccuracy: 68, shotsOnTarget: 3, tackles: 12, intercepts: 18 } },
+  session_006: { home: { possession: 48, passAccuracy: 72, shotsOnTarget: 5, tackles: 16, intercepts: 24 }, away: { possession: 52, passAccuracy: 75, shotsOnTarget: 7, tackles: 19, intercepts: 28 } },
+  session_007: { home: { possession: 54, passAccuracy: 78, shotsOnTarget: 8, tackles: 18, intercepts: 26 }, away: { possession: 46, passAccuracy: 65, shotsOnTarget: 4, tackles: 14, intercepts: 19 } },
+  session_010: { home: { possession: 51, passAccuracy: 74, shotsOnTarget: 4, tackles: 20, intercepts: 25 }, away: { possession: 49, passAccuracy: 71, shotsOnTarget: 3, tackles: 17, intercepts: 22 } },
+  session_013: { home: { possession: 62, passAccuracy: 84, shotsOnTarget: 9, tackles: 14, intercepts: 30 }, away: { possession: 38, passAccuracy: 62, shotsOnTarget: 2, tackles: 11, intercepts: 16 } },
+  session_014: { home: { possession: 55, passAccuracy: 77, shotsOnTarget: 10, tackles: 16, intercepts: 27 }, away: { possession: 45, passAccuracy: 70, shotsOnTarget: 7, tackles: 18, intercepts: 23 } },
 }
 
-/* ── team stats for competitive matches (hardcoded) ── */
-const teamStats: Record<string, { home: Record<string, number>; away: Record<string, number> }> = {
-  session_007: {
-    home: { possession: 54, passAccuracy: 78, totalPasses: 347, shotsOnTarget: 8, tackles: 18, corners: 5 },
-    away: { possession: 46, passAccuracy: 65, totalPasses: 289, shotsOnTarget: 4, tackles: 14, corners: 3 },
-  },
-  session_005: {
-    home: { possession: 58, passAccuracy: 81, totalPasses: 372, shotsOnTarget: 6, tackles: 15, corners: 7 },
-    away: { possession: 42, passAccuracy: 68, totalPasses: 264, shotsOnTarget: 3, tackles: 12, corners: 2 },
-  },
-  session_006: {
-    home: { possession: 48, passAccuracy: 72, totalPasses: 310, shotsOnTarget: 5, tackles: 16, corners: 4 },
-    away: { possession: 52, passAccuracy: 75, totalPasses: 338, shotsOnTarget: 7, tackles: 19, corners: 6 },
-  },
-  session_010: {
-    home: { possession: 51, passAccuracy: 74, totalPasses: 320, shotsOnTarget: 4, tackles: 20, corners: 5 },
-    away: { possession: 49, passAccuracy: 71, totalPasses: 305, shotsOnTarget: 3, tackles: 17, corners: 4 },
-  },
-  session_013: {
-    home: { possession: 62, passAccuracy: 84, totalPasses: 410, shotsOnTarget: 9, tackles: 14, corners: 8 },
-    away: { possession: 38, passAccuracy: 62, totalPasses: 245, shotsOnTarget: 2, tackles: 11, corners: 1 },
-  },
-  session_014: {
-    home: { possession: 55, passAccuracy: 77, totalPasses: 355, shotsOnTarget: 10, tackles: 16, corners: 6 },
-    away: { possession: 45, passAccuracy: 70, totalPasses: 290, shotsOnTarget: 7, tackles: 18, corners: 5 },
-  },
-}
+/* ── Helpers ── */
+const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const monthAbbr = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
-/* ── helpers ── */
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-function formatDateFull(dateStr: string): string {
+function formatDateMeta(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
-  return `${dayNames[d.getDay()]}, ${monthAbbr[d.getMonth()]} ${d.getDate()}`
+  return `${dayNames[d.getDay()].toUpperCase()} ${d.getDate()} ${monthAbbr[d.getMonth()]}`
 }
 
-function calcDurationMinutes(startTime: string, endTime: string): number {
-  const [sh, sm] = startTime.split(':').map(Number)
-  const [eh, em] = endTime.split(':').map(Number)
-  return (eh * 60 + em) - (sh * 60 + sm)
+/** Score values: keep traffic-light semantics (red/yellow/green) for clarity per locked plan. */
+function scoreValueColor(score: number): string {
+  if (score >= 80) return COLORS.success
+  if (score >= 60) return COLORS.warning
+  return COLORS.error
 }
 
-function getScoreColor(score: number): string {
-  if (score >= 75) return C.success
-  if (score >= 60) return C.warning
-  return C.error
+/** "Exceptional" tier per v3 — drives MOTM treatment. */
+function isExceptional(score: number): boolean {
+  return score >= 85
 }
 
-function getPositionColor(position: string): string {
-  if (position === 'GK') return '#D97706'
-  if (['CB', 'LB', 'RB'].includes(position)) return '#059669'
-  if (['CM', 'AM', 'DM', 'CDM', 'CAM'].includes(position)) return C.primary
-  if (['ST', 'CF', 'LW', 'RW'].includes(position)) return '#DC2626'
-  return C.muted
+/** Compute a "key stats" line that surfaces 1-2 facts that show why this player
+ *  stood out vs the squad: top-1, top-3, or X above squad avg. Templated until
+ *  Coach Mikel ships AI-generated copy. */
+function keyStatsForHighlight(
+  h: Pick<Highlight, 'eventType'>,
+  a: MatchAnalysis | undefined,
+  squad: MatchAnalysis[],
+): string {
+  if (!a || squad.length === 0) {
+    return 'Stats not available for this player yet.'
+  }
+  // Helpers for squad-relative ranking.
+  const rank = (key: keyof MatchAnalysis): { rank: number; total: number } => {
+    const value = a[key] as number
+    const sorted = [...squad].map(x => x[key] as number).sort((x, y) => y - x)
+    return { rank: sorted.indexOf(value) + 1, total: sorted.length }
+  }
+  const avg = (key: keyof MatchAnalysis): number => {
+    const sum = squad.reduce((s, x) => s + (x[key] as number), 0)
+    return Math.round(sum / squad.length)
+  }
+  const ordinal = (n: number): string => {
+    if (n === 1) return 'highest'
+    if (n === 2) return 'second-highest'
+    if (n === 3) return 'third-highest'
+    return `#${n}`
+  }
+  const km = a.distanceCovered.toFixed(1)
+  const kmh = a.topSpeed.toFixed(1)
+  const compRank = rank('compositeScore')
+  const speedRank = rank('topSpeed')
+  const passRank = rank('passCompletion')
+  const defRank = rank('defendingScore')
+  const posRank = rank('positionalScore')
+  const sprintRank = rank('sprintCount')
+  const passAvg = avg('passCompletion')
+  const defAvg = avg('defendingScore')
+
+  switch (h.eventType) {
+    case 'goal': {
+      const headline = compRank.rank <= 3
+        ? `Composite ${a.compositeScore}, ${ordinal(compRank.rank)} in the squad today.`
+        : `Composite ${a.compositeScore} this match.`
+      const second = speedRank.rank <= 3
+        ? `Top speed ${kmh} km/h, ${ordinal(speedRank.rank)} sprint of the day.`
+        : `Top speed ${kmh} km/h.`
+      return `${headline} ${second}`
+    }
+    case 'key_pass': {
+      const diff = a.passCompletion - passAvg
+      const above = diff > 0 ? `, ${diff} above squad avg ${passAvg}%` : ''
+      return `Pass completion ${a.passCompletion}%${above}. Passing score ${a.passingScore} today.`
+    }
+    case 'sprint_recovery':
+      return `${a.sprintCount} sprints (${ordinal(sprintRank.rank)} on the squad). Top speed ${kmh} km/h, ${km} km covered.`
+    case 'tackle': {
+      const diff = a.defendingScore - defAvg
+      const above = diff > 0 ? `, ${diff} above squad avg ${defAvg}` : ''
+      return `Defending score ${a.defendingScore}${above}. ${a.sprintCount} sprints this match.`
+    }
+    case 'save':
+      return `Positional score ${a.positionalScore} (${ordinal(posRank.rank)} on the squad). ${km} km covered, ${a.sprintCount} sprints.`
+    default:
+      return `Composite ${a.compositeScore} (${ordinal(compRank.rank)} on the squad). Defending ${a.defendingScore}, passing ${a.passCompletion}%.`
+  }
 }
 
-function getPositionGroup(pos: string): 'GK' | 'DEF' | 'MID' | 'FWD' {
+/** Map highlight event type → v3 letter + label. */
+const eventMeta: Record<string, { letter: string; label: string; isWarning?: boolean }> = {
+  goal:             { letter: 'G', label: 'GOAL' },
+  key_pass:         { letter: 'A', label: 'KEY PASS' },
+  sprint_recovery:  { letter: 'P', label: 'PRESS' },
+  tackle:           { letter: 'T', label: 'TACKLE' },
+  save:             { letter: 'S', label: 'SAVE' },
+}
+
+/* ─────────── Motion (inline <style>) ─────────── */
+const v3Motion = `
+@keyframes v3-track-draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
+@keyframes v3-pin-pop    { 0% { transform: translate(-50%,-50%) scale(0); opacity:0 } 60% { transform: translate(-50%,-50%) scale(1.18); opacity:1 } 100% { transform: translate(-50%,-50%) scale(1); opacity:1 } }
+@keyframes v3-row-rise   { from { opacity:0; transform: translateY(8px) } to { opacity:1; transform: translateY(0) } }
+@keyframes v3-pulse-ring { 0% { transform: translate(-50%,-50%) scale(0.6); opacity:0.6 } 100% { transform: translate(-50%,-50%) scale(2.2); opacity:0 } }
+@keyframes v3-playhead   { 0%,100% { opacity:0.55 } 50% { opacity:1 } }
+@keyframes v3-panel-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes v3-panel-up    { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes v3-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+.v3-row { animation: v3-row-rise .42s cubic-bezier(.2,.7,.2,1) both; }
+.v3-pin { animation: v3-pin-pop .38s cubic-bezier(.2,1.4,.4,1) both; }
+.v3-track-line { stroke-dasharray: 1200; animation: v3-track-draw 900ms cubic-bezier(.6,0,.2,1) 80ms both; }
+.v3-pulse-ring { animation: v3-pulse-ring 1.6s ease-out infinite; }
+.v3-playhead { animation: v3-playhead 1.6s ease-in-out infinite; }
+.v3-row .v3-stripe, .v3-row .v3-num, .v3-row .v3-arrow { transition: all 220ms cubic-bezier(.2,.7,.3,1); }
+.v3-row:hover { background: rgba(27,21,80,0.025); }
+.v3-row:hover .v3-stripe { filter: brightness(0.9); }
+.v3-row:hover .v3-num    { background: ${BRAND.indigo}; color: ${BRAND.sand}; transform: scale(1.04); }
+.v3-row .v3-arrow { opacity: 0; transform: translateX(-4px); }
+.v3-row:hover .v3-arrow { opacity: 1; transform: translateX(0); }
+.v3-cta { transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease; }
+.v3-cta:hover { transform: translateY(-1px); }
+.v3-cta:active { transform: translateY(0); }
+.v3-pill:hover { background: rgba(27,21,80,0.06); }
+`
+
+/* ─────────────────── Back row ───────────────────
+ * Replaces the redundant V3Header band. The existing coach layout
+ * already provides the brand mark and the Coach's Hub / Video /
+ * Analysis / Squad / IDPs nav. We just need a back-link + a place
+ * for the "Share recap" CTA, both on the sand surface so they
+ * read as part of the v3 page, not the platform chrome.
+ */
+function V3BackRow({ onBack, onShareRecap, onWatchFullMatch }: {
+  onBack: () => void
+  onShareRecap: () => void
+  onWatchFullMatch: () => void
+}) {
+  return (
+    <div style={{
+      background: BRAND.sand,
+      padding: '14px 28px 4px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      fontFamily: TYPE.body,
+    }}>
+      <button onClick={onBack} className="v3-cta" style={{
+        background: 'transparent', border: 'none', cursor: 'pointer',
+        color: BRAND.indigo, fontSize: 14,
+        fontFamily: TYPE.mono, letterSpacing: '0.16em', fontWeight: 600,
+        padding: '4px 0',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }} aria-label="Back to matches">
+        ← BACK TO MATCHES
+      </button>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <button onClick={onWatchFullMatch} className="v3-cta" style={{
+          background: 'transparent', color: BRAND.indigo,
+          border: `1px solid ${BRAND.indigo}`,
+          padding: '8px 14px', fontFamily: TYPE.body, fontWeight: 600, fontSize: 13,
+          borderRadius: 7, cursor: 'pointer', letterSpacing: '0.01em',
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+        }} aria-label="Watch full match">
+          <span aria-hidden style={{ fontSize: 11 }}>▶</span>
+          Watch full match
+        </button>
+        <button onClick={onShareRecap} className="v3-cta" style={{
+          background: BRAND.indigo, color: BRAND.sand, border: 'none',
+          padding: '9px 16px', fontFamily: TYPE.body, fontWeight: 600, fontSize: 13,
+          borderRadius: 7, cursor: 'pointer', letterSpacing: '0.01em',
+          boxShadow: '0 4px 10px rgba(27,21,80,0.18)',
+        }}>Share recap →</button>
+      </div>
+    </div>
+  )
+}
+
+/** Available filter keys — each maps to a subset of event types in the data. */
+type FilterKey = 'all' | 'goal' | 'key_pass' | 'tackle' | 'save'
+
+const FILTER_DEFS: { key: FilterKey; label: string; matches: (eventType: string) => boolean }[] = [
+  { key: 'all',      label: 'All',         matches: () => true },
+  { key: 'goal',     label: 'Goals',       matches: t => t === 'goal' },
+  { key: 'key_pass', label: 'Key passes',  matches: t => t === 'key_pass' },
+  { key: 'tackle',   label: 'Tackles',     matches: t => t === 'tackle' },
+  { key: 'save',     label: 'Saves',       matches: t => t === 'save' },
+]
+
+/** Roster sort modes — keep this small. Score + Position are the two axes
+ *  coaches actually use; "Moments" duplicates score signal and "Worries" was
+ *  too heavy a label for a sort pill. Bring them back if a real use case shows up. */
+type RosterSortKey = 'score' | 'position'
+
+const ROSTER_SORT_DEFS: { key: RosterSortKey; label: string }[] = [
+  { key: 'score',    label: 'Score ↓' },
+  { key: 'position', label: 'Position' },
+]
+
+/* ─────────────────── Score strip ─────────────────── */
+function V3ScoreStrip({
+  homeName, awayName, homeGoals, awayGoals, dateLabel, venue,
+  filter, setFilter, countsByKey,
+}: {
+  homeName: string; awayName: string;
+  homeGoals: number; awayGoals: number;
+  dateLabel: string; venue: string;
+  filter: FilterKey; setFilter: (s: FilterKey) => void;
+  countsByKey: Record<FilterKey, number>;
+}) {
+  const homeWon = homeGoals > awayGoals
+  const drew = homeGoals === awayGoals
+  return (
+    <div style={{
+      padding: '14px 28px 22px',
+      borderBottom: `1px solid ${BRAND.line}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 18,
+      background: BRAND.sand,
+      flexWrap: 'wrap',
+    }}>
+      <div style={{ fontFamily: TYPE.display, fontSize: 32, color: BRAND.indigo, letterSpacing: '0.02em' }}>{homeName.toUpperCase()}</div>
+      <div style={{ fontFamily: TYPE.display, fontSize: 44, letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: 10, color: BRAND.indigo }}>
+        <span style={{ position: 'relative', display: 'inline-block' }}>
+          {/* yellow swatch behind the winning team's goal count (or both, if draw) */}
+          {(homeWon || drew) && (
+            <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>{homeGoals}</span>
+        </span>
+        <span style={{ color: BRAND.indigoMute, fontSize: 24 }}>-</span>
+        <span style={{ position: 'relative', display: 'inline-block', color: homeWon ? BRAND.indigoMid : BRAND.indigo }}>
+          {(drew || (!homeWon && homeGoals !== awayGoals)) && (
+            <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>{awayGoals}</span>
+        </span>
+      </div>
+      <div style={{ fontFamily: TYPE.display, fontSize: 32, color: BRAND.indigoMute, letterSpacing: '0.02em' }}>{awayName.toUpperCase()}</div>
+      <div style={{ width: 1, height: 28, background: BRAND.line, marginLeft: 6 }} />
+      <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', color: BRAND.indigoMute }}>
+        FT · {dateLabel} · {venue}
+      </div>
+
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {FILTER_DEFS.map(f => {
+          const active = filter === f.key
+          const n = countsByKey[f.key]
+          // Hide pills that match nothing (e.g. no saves in this match)
+          if (f.key !== 'all' && n === 0) return null
+          return (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={active ? '' : 'v3-pill'}
+              style={{
+                background: active ? BRAND.indigo : 'transparent',
+                color: active ? BRAND.sand : BRAND.indigo,
+                border: `1px solid ${active ? BRAND.indigo : BRAND.line}`,
+                padding: '7px 12px', borderRadius: 999,
+                fontFamily: TYPE.body, fontSize: 11.5, fontWeight: active ? 600 : 500,
+                letterSpacing: '0.02em', cursor: 'pointer',
+                transition: 'all 160ms ease',
+              }}
+            >{f.label} ({n})</button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────── Match stats strip ───────────────────
+ * Five paired bars (possession, pass accuracy, shots on target, tackles,
+ * intercepts) reading the same data the legacy sidebar showed, but folded
+ * into the page narrative below the score strip. Indigo for the home team,
+ * indigoMute for the away — the leading bar gets a yellow tip so the eye
+ * lands on who won each duel. */
+function V3MatchStats({ stats, homeName, awayName }: {
+  stats: { home: TeamStat; away: TeamStat } | undefined
+  homeName: string
+  awayName: string
+}) {
+  if (!stats) return null
+  const rows: { key: keyof TeamStat; label: string; suffix: string }[] = [
+    { key: 'possession',    label: 'POSSESSION',     suffix: '%' },
+    { key: 'passAccuracy',  label: 'PASS ACCURACY',  suffix: '%' },
+    { key: 'shotsOnTarget', label: 'SHOTS ON TARGET', suffix: '' },
+    { key: 'tackles',       label: 'TACKLES',         suffix: '' },
+    { key: 'intercepts',    label: 'INTERCEPTS',      suffix: '' },
+  ]
+  return (
+    <div style={{
+      padding: '20px 28px 22px',
+      borderBottom: `1px solid ${BRAND.line}`,
+      background: BRAND.sand,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.22em', color: BRAND.indigoMute, fontWeight: 700 }}>
+          MATCH IN NUMBERS
+        </div>
+        <div style={{ display: 'flex', gap: 14, fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: BRAND.indigo }} /> {homeName.toUpperCase()}
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: BRAND.indigoMute }} /> {awayName.toUpperCase()}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 32, rowGap: 10 }}>
+        {rows.map(({ key, label, suffix }) => {
+          const h = stats.home[key]
+          const a = stats.away[key]
+          const total = h + a || 1
+          const homePct = (h / total) * 100
+          const awayPct = (a / total) * 100
+          const homeWon = h > a
+          const drew = h === a
+          return (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>
+                <span style={{ color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 18, letterSpacing: '-0.01em' }}>{h}{suffix}</span>
+                <span>{label}</span>
+                <span style={{ color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 18, letterSpacing: '-0.01em' }}>{a}{suffix}</span>
+              </div>
+              <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', background: BRAND.indigoSoft }}>
+                <div style={{
+                  width: `${homePct}%`,
+                  background: homeWon ? BRAND.indigo : drew ? BRAND.indigoMid : BRAND.indigoMid,
+                  position: 'relative',
+                }}>
+                  {/* yellow leading-tip when home wins this stat */}
+                  {homeWon && (
+                    <span style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 4, background: BRAND.yellow }} />
+                  )}
+                </div>
+                <div style={{ width: 1, background: BRAND.sand }} />
+                <div style={{
+                  width: `${awayPct}%`,
+                  background: !homeWon && !drew ? BRAND.indigo : BRAND.indigoMute,
+                  position: 'relative',
+                }}>
+                  {!homeWon && !drew && (
+                    <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: BRAND.yellow }} />
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────── Timeline ─────────────────── */
+type TLEvent = { id: string; t: number; type: string; playerId: string; isGoal: boolean; isWarning: boolean }
+
+function V3Timeline({ events, totalMin, activeId, onSelect }: {
+  events: TLEvent[]; totalMin: number; activeId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const active = events.find(e => e.id === activeId)
+  const playheadPct = active ? (active.t / totalMin) * 100 : 0
+  const HALF_TIME = totalMin / 2
+  const ticks = [0, totalMin * 0.25, HALF_TIME, totalMin * 0.75, totalMin]
+
+  return (
+    <div style={{ position: 'relative', padding: '28px 28px 22px', background: BRAND.sand, borderBottom: `1px solid ${BRAND.line}` }}>
+      {/* minute scale */}
+      <div style={{ position: 'relative', height: 14, marginBottom: 6 }}>
+        {ticks.map((m, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: `${(m / totalMin) * 100}%`,
+              transform: 'translateX(-50%)',
+              fontFamily: TYPE.mono,
+              fontSize: 9.5,
+              letterSpacing: '0.15em',
+              color: BRAND.indigoMute,
+            }}
+          >
+            {Math.abs(m - HALF_TIME) < 0.1 ? 'HALF' : `${Math.round(m)}'`}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ position: 'relative', height: 78 }}>
+        <svg width="100%" height="78" viewBox="0 0 1200 78" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
+          <line x1="0" y1="39" x2="1200" y2="39" stroke="rgba(27,21,80,0.18)" strokeWidth="1" />
+          <line className="v3-track-line" x1="0" y1="39" x2="1200" y2="39" stroke={BRAND.indigo} strokeOpacity="0.85" strokeWidth="2" />
+        </svg>
+        {/* HT marker */}
+        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, borderLeft: `1px dashed ${BRAND.line}` }} />
+
+        {/* Pins are positioned relative to the timeline container directly so the
+           pin button and the vertical connector never overlap. Above pins sit at
+           y=14 (pin top y=3, bottom y=25); below pins sit at y=64 (top y=53,
+           bottom y=75). Track line is at y=39. Connectors fill the gap between
+           pin edge and track. */}
+        {events.map((e, i) => {
+          const meta = eventMeta[e.type] || { letter: '·', label: e.type.toUpperCase() }
+          const left = (e.t / totalMin) * 100
+          const above = i % 2 === 0
+          const isActive = e.id === activeId
+          const pinSize = isActive ? 28 : 22
+          const pinCenterY = above ? 14 : 64
+          const pinTopY = pinCenterY - pinSize / 2
+          const pinBottomY = pinCenterY + pinSize / 2
+          // Connector spans from pin edge to track line (y=39).
+          const connectorTop = above ? pinBottomY : 39
+          const connectorBottom = above ? 39 : pinTopY
+          const connectorHeight = connectorBottom - connectorTop
+          return (
+            <div key={e.id} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+              {/* Connector — drawn first so the pin button sits on top */}
+              <div style={{
+                position: 'absolute',
+                left: `${left}%`,
+                top: connectorTop,
+                width: 1,
+                height: connectorHeight,
+                background: isActive ? BRAND.indigo : BRAND.line,
+                transform: 'translateX(-50%)',
+              }} />
+              {/* Pulse ring (active) — drawn before pin so the pin button sits on top */}
+              {isActive && (
+                <div className="v3-pulse-ring" style={{
+                  position: 'absolute',
+                  left: `${left}%`, top: pinCenterY,
+                  width: 26, height: 26, borderRadius: '50%',
+                  border: `2px solid ${e.isGoal ? BRAND.yellow : BRAND.indigo}`,
+                  pointerEvents: 'none',
+                }} />
+              )}
+              {/* Pin button — last in the stack, with class for the pop-in animation */}
+              <button
+                className={i < 12 ? 'v3-pin' : ''}
+                onClick={() => onSelect(e.id)}
+                aria-label={meta.label}
+                style={{
+                  position: 'absolute',
+                  left: `${left}%`, top: pinCenterY,
+                  transform: 'translate(-50%,-50%)',
+                  width: pinSize, height: pinSize,
+                  borderRadius: '50%',
+                  background: e.isGoal ? BRAND.yellow : (isActive ? BRAND.indigo : BRAND.sand),
+                  border: `2px solid ${BRAND.indigo}`,
+                  color: e.isGoal ? BRAND.indigo : (isActive ? BRAND.sand : BRAND.indigo),
+                  fontFamily: TYPE.display, fontSize: isActive ? 13 : 11, fontWeight: 700,
+                  cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: isActive
+                    ? `0 0 0 5px ${e.isGoal ? BRAND.yellowSoft : BRAND.indigoSoft}, 0 4px 8px rgba(27,21,80,0.15)`
+                    : '0 1px 3px rgba(27,21,80,0.18)',
+                  transition: 'all 180ms cubic-bezier(.2,1.4,.4,1)',
+                  pointerEvents: 'auto',
+                  animationDelay: `${80 + i * 60}ms`,
+                }}
+              >{meta.letter}</button>
+            </div>
+          )
+        })}
+
+        {active && (
+          <div className="v3-playhead" style={{
+            position: 'absolute', left: `${playheadPct}%`, top: -8, bottom: -8, width: 2,
+            background: BRAND.yellow, transform: 'translateX(-50%)',
+            boxShadow: `0 0 8px ${BRAND.yellow}`,
+          }} />
+        )}
+      </div>
+
+      {/* legend */}
+      <div style={{ marginTop: 18, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        {Object.entries(eventMeta).map(([k, m]) => (
+          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.15em', color: BRAND.indigoMute }}>
+            <span style={{
+              width: 11, height: 11, borderRadius: '50%',
+              background: k === 'goal' ? BRAND.yellow : 'transparent',
+              border: `1.5px solid ${BRAND.indigo}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 7, color: BRAND.indigo, fontFamily: TYPE.display,
+            }}>{m.letter}</span>
+            {m.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────── Clip panel (video well + commentary) ─────────────────── */
+function V3ClipPanel({ event, player, analysis, squad }: {
+  event: TLEvent | null;
+  player: Player | undefined;
+  analysis: MatchAnalysis | undefined;
+  squad: MatchAnalysis[];
+}) {
+  if (!event || !player) return null
+  const meta = eventMeta[event.type] || { letter: '·', label: event.type.toUpperCase() }
+  const playerName = `${player.firstName} ${player.lastName}`
+  const why = keyStatsForHighlight({ eventType: event.type as Highlight['eventType'] }, analysis, squad)
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1.45fr 1fr',
+      gap: 0,
+      position: 'relative',
+      background: BRAND.sand,
+      borderBottom: `1px solid ${BRAND.line}`,
+      alignItems: 'stretch',
+    }}>
+      {/* video well — the only "dark" surface in v3.
+         Stretches vertically to match the commentary panel height so we don't
+         leave dead space below the video on tall screens. minHeight keeps a
+         16:9 floor for the typical desktop column width (~640px). */}
+      <div style={{ position: 'relative', minHeight: 360, height: '100%', background: BRAND.indigo, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 80%, ${BRAND.indigoMid} 0%, ${BRAND.indigo} 70%)` }} />
+        {/* mowed-stripes ambient texture */}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} style={{
+            position: 'absolute', left: 0, right: 0, top: `${i * 12.5}%`, height: '12.5%',
+            background: i % 2 ? 'rgba(238,228,200,0.04)' : 'transparent',
+          }} />
+        ))}
+        {/* pitch markings */}
+        <svg width="100%" height="100%" viewBox="0 0 100 56" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          <rect x="2" y="2" width="96" height="52" fill="none" stroke={BRAND.sand} strokeOpacity="0.18" strokeWidth="0.25" />
+          <line x1="50" y1="2" x2="50" y2="54" stroke={BRAND.sand} strokeOpacity="0.18" strokeWidth="0.25" />
+          <circle cx="50" cy="28" r="6" fill="none" stroke={BRAND.sand} strokeOpacity="0.18" strokeWidth="0.25" />
+        </svg>
+        {/* trail */}
+        <svg width="100%" height="100%" viewBox="0 0 100 56" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
+          <path className="v3-track-line" d="M 18 38 Q 32 26, 48 22 T 78 14" stroke={BRAND.yellow} strokeWidth="0.8" fill="none" strokeDasharray="3 1.6" opacity="0.95" />
+          <circle className="v3-pin" style={{ animationDelay: '750ms' }} cx="78" cy="14" r="2.4" fill={BRAND.yellow} />
+          <circle cx="78" cy="14" r="5" fill={BRAND.yellow} fillOpacity="0.22" />
+          <circle cx="18" cy="38" r="1.6" fill={BRAND.sand} fillOpacity="0.55" />
+        </svg>
+        {/* HUD top-left */}
+        <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', gap: 8 }}>
+          <div style={{ background: 'rgba(11,8,40,0.65)', backdropFilter: 'blur(6px)', color: BRAND.sand, fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', padding: '5px 10px', borderRadius: 4, border: `1px solid rgba(238,228,200,0.18)` }}>● 0.5× SLOW-MO</div>
+          <div style={{
+            background: event.isGoal ? BRAND.yellow : BRAND.sand,
+            color: BRAND.indigo,
+            fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', padding: '5px 10px', borderRadius: 4, fontWeight: 700,
+          }}>{meta.label}</div>
+        </div>
+        {/* big timestamp top-right */}
+        <div style={{ position: 'absolute', top: 14, right: 14, color: BRAND.sand, fontFamily: TYPE.display, fontSize: 44, letterSpacing: '-0.02em', textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
+          {Math.floor(event.t)}'
+        </div>
+        {/* play controls */}
+        <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="v3-cta" style={{ width: 50, height: 50, borderRadius: '50%', background: BRAND.yellow, border: 'none', color: BRAND.indigo, fontSize: 18, cursor: 'pointer', boxShadow: `0 4px 14px rgba(252,215,24,0.4)` }}>▶</button>
+          <div style={{ flex: 1, height: 4, background: 'rgba(238,228,200,0.22)', borderRadius: 2, position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '42%', background: BRAND.yellow, borderRadius: 2 }} />
+            <div style={{ position: 'absolute', left: '42%', top: '50%', transform: 'translate(-50%,-50%)', width: 12, height: 12, borderRadius: '50%', background: BRAND.yellow, boxShadow: `0 0 0 4px rgba(252,215,24,0.32)` }} />
+          </div>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 11, color: BRAND.sand, letterSpacing: '0.12em' }}>0:18 / 0:42</div>
+        </div>
+      </div>
+
+      {/* commentary panel — sand on sand, with paper card for the headline + yellow why card */}
+      <div style={{
+        background: BRAND.sand, color: BRAND.indigo, padding: '24px 26px',
+        position: 'relative', overflow: 'hidden',
+        borderLeft: `1px solid ${BRAND.line}`,
+      }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.22em', color: BRAND.indigo, fontWeight: 700 }}>
+          {String(Math.floor(event.t)).padStart(2, '0')}' · {meta.label}
+        </div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 38, marginTop: 4, lineHeight: 1, letterSpacing: '-0.02em', color: BRAND.indigo }}>
+          {event.isGoal ? `${playerName.split(' ')[0]}'s finish` : meta.label.toLowerCase()}
+        </div>
+
+        {/* player chip */}
+        <div style={{
+          marginTop: 18, display: 'flex', alignItems: 'center', gap: 12,
+          padding: '12px 14px', background: BRAND.paper, borderRadius: 10,
+          border: `1px solid ${BRAND.line}`,
+        }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: '50%',
+            background: BRAND.indigo, color: BRAND.sand,
+            fontFamily: TYPE.display, fontSize: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>{player.jerseyNumber}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: TYPE.body, fontSize: 14, fontWeight: 600 }}>{playerName}</div>
+            <div style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.14em', color: BRAND.indigoMute }}>{(player.position[0] || '').toUpperCase()} · #{player.jerseyNumber}</div>
+          </div>
+        </div>
+
+        {/* why this matters — the yellow editorial moment */}
+        <div style={{
+          marginTop: 18, padding: '16px 18px',
+          background: BRAND.yellow, color: BRAND.indigo, borderRadius: 10,
+          position: 'relative',
+          boxShadow: '0 4px 14px rgba(252,215,24,0.25)',
+        }}>
+          <div style={{ position: 'absolute', left: -3, top: 14, bottom: 14, width: 3, background: BRAND.indigo, borderRadius: 2 }} />
+          <div style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.22em', color: BRAND.indigo, fontWeight: 700 }}>KEY STATS</div>
+          <div style={{ fontFamily: TYPE.body, fontSize: 14.5, lineHeight: 1.55, marginTop: 6, color: BRAND.indigo, fontWeight: 500 }}>
+            {why}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
+          <button className="v3-cta" style={{
+            flex: 1, padding: '12px', background: BRAND.indigo, color: BRAND.sand, border: 'none', borderRadius: 8,
+            fontFamily: TYPE.body, fontWeight: 600, fontSize: 13, cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(27,21,80,0.18)',
+          }}>Save clip</button>
+          <button className="v3-cta" style={{
+            flex: 1, padding: '12px', background: 'transparent', color: BRAND.indigo,
+            border: `1px solid ${BRAND.indigo}`, borderRadius: 8,
+            fontFamily: TYPE.body, fontWeight: 600, fontSize: 13, cursor: 'pointer',
+          }}>Send to {player.firstName}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────── Roster row ─────────────────── */
+type PlayerRow = { player: Player; analysis: MatchAnalysis; events: TLEvent[] }
+
+/** Position grouping mirrors the legacy match page so the key-stat picks line
+ *  up with what coaches expect from each role. */
+type PositionGroup = 'GK' | 'DEF' | 'MID' | 'FWD'
+
+function getPositionGroup(pos: string): PositionGroup {
   if (pos === 'GK') return 'GK'
-  if (['CB', 'LB', 'RB'].includes(pos)) return 'DEF'
-  if (['CM', 'AM', 'DM', 'CDM', 'CAM'].includes(pos)) return 'MID'
+  if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) return 'DEF'
   if (['ST', 'CF', 'LW', 'RW'].includes(pos)) return 'FWD'
   return 'MID'
 }
 
-function getKeyStat(pos: string, analysis: MatchAnalysis): string {
-  if (pos === 'GK') return `${Math.round(analysis.defendingScore / 10)} saves`
-  if (['CB', 'LB', 'RB'].includes(pos)) return `${Math.round(analysis.defendingScore / 10)} tackles`
-  if (['CM', 'CDM', 'CAM', 'AM', 'DM'].includes(pos)) return `${Math.round(analysis.passingScore / 20)} key passes`
-  if (['ST', 'CF', 'LW', 'RW'].includes(pos)) return `${Math.round(analysis.dribblingScore / 20)} dribbles`
-  return `${Math.round(analysis.passingScore / 20)} key passes`
+/** Position-aware key stats. Each cell self-labels (mono eyebrow + value) so
+ *  the column is honest about what it's showing for this player. Counts are
+ *  derived from per-category scores (mock data) until real per-event totals
+ *  land from the AI pipeline. */
+function getKeyStats(pos: string, a: MatchAnalysis): [{ label: string; value: number; suffix: string }, { label: string; value: number; suffix: string }] {
+  const group = getPositionGroup(pos)
+  if (group === 'GK') {
+    return [
+      { label: 'SAVES', value: Math.round(a.defendingScore / 10), suffix: '' },
+      { label: 'PASS', value: a.passCompletion, suffix: '%' },
+    ]
+  }
+  if (group === 'DEF') {
+    return [
+      { label: 'TACKLES', value: Math.round(a.defendingScore / 10), suffix: '' },
+      { label: 'INTS', value: Math.round(a.positionalScore / 8), suffix: '' },
+    ]
+  }
+  if (group === 'FWD') {
+    return [
+      { label: 'GOALS', value: Math.max(0, Math.round((a.dribblingScore - 50) / 30)), suffix: '' },
+      { label: 'DRIB', value: a.dribbleSuccess, suffix: '%' },
+    ]
+  }
+  // MID
+  return [
+    { label: 'KEY PASS', value: Math.round(a.passingScore / 20), suffix: '' },
+    { label: 'PASS', value: a.passCompletion, suffix: '%' },
+  ]
 }
 
-function getGrade(score: number): { grade: string; color: string } {
-  if (score >= 80) return { grade: 'A', color: '#10B981' }
-  if (score >= 65) return { grade: 'B', color: '#4A4AFF' }
-  if (score >= 50) return { grade: 'C', color: '#F59E0B' }
-  return { grade: 'D', color: '#EF4444' }
-}
+const ROSTER_GRID_DESKTOP = '40px minmax(160px, 1fr) 60px 80px 100px 100px 24px'
 
-type SortField = 'score' | 'distance' | 'sprints'
-type SortDir = 'asc' | 'desc'
-
-interface PlayerRow {
-  player: Player
-  analysis: MatchAnalysis
-  pos: string
-  seasonAvg: number
-  trend: number
-  posGroup: 'GK' | 'DEF' | 'MID' | 'FWD'
-}
-
-/* ── component ── */
-export default function WebMatchAnalysisPage() {
-  const params = useParams()
-  const router = useRouter()
-  const sessionId = params.sessionId as string
-
-  const session = sessions.find(s => s.id === sessionId)
-
-  const [sortField, setSortField] = useState<SortField>('score')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
-  const [posFilter, setPosFilter] = useState<'All' | 'GK' | 'DEF' | 'MID' | 'FWD'>('All')
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
-  const [matchNote, setMatchNote] = useState('')
-  const [matchNoteLastSaved, setMatchNoteLastSaved] = useState<string | null>(null)
-  const [notesExpanded, setNotesExpanded] = useState(false)
-  const [playerNotes, setPlayerNotes] = useState<Record<string, string>>({})
-  const [playerNoteLastSaved, setPlayerNoteLastSaved] = useState<string | null>(null)
-
-  // Load coach notes from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined' && sessionId) {
-      const saved = localStorage.getItem(`fairplai_match_note_${sessionId}`)
-      if (saved) { setMatchNote(saved); setNotesExpanded(true) }
-    }
-  }, [sessionId])
-
-  // Auto-save coach notes
-  useEffect(() => {
-    if (typeof window === 'undefined' || !matchNote || !sessionId) return
-    const timer = setTimeout(() => {
-      localStorage.setItem(`fairplai_match_note_${sessionId}`, matchNote)
-      const now = new Date()
-      setMatchNoteLastSaved(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`)
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [matchNote, sessionId])
-
-  // Load player session note when panel opens
-  useEffect(() => {
-    if (typeof window !== 'undefined' && selectedPlayerId && sessionId) {
-      const key = `fairplai_player_session_note_${sessionId}_${selectedPlayerId}`
-      const saved = localStorage.getItem(key)
-      if (saved) {
-        setPlayerNotes(prev => ({ ...prev, [selectedPlayerId]: saved }))
-      }
-    }
-  }, [selectedPlayerId, sessionId])
-
-  // Auto-save player session notes
-  useEffect(() => {
-    if (typeof window === 'undefined' || !selectedPlayerId || !sessionId) return
-    const note = playerNotes[selectedPlayerId]
-    if (!note) return
-    const timer = setTimeout(() => {
-      localStorage.setItem(`fairplai_player_session_note_${sessionId}_${selectedPlayerId}`, note)
-      const now = new Date()
-      setPlayerNoteLastSaved(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`)
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [playerNotes, selectedPlayerId, sessionId])
-
-  // Derive data
-  const sessionAnalyses = useMemo(() => matchAnalyses.filter(a => a.sessionId === sessionId), [sessionId])
-
-  const playerRows = useMemo((): PlayerRow[] => {
-    return sessionAnalyses.map(analysis => {
-      const player = players.find(p => p.id === analysis.playerId)
-      if (!player) return null
-      const pos = player.position[0] || 'CM'
-      const seasonAvg = squadScores[player.id]?.compositeScore ?? 0
-      const trend = analysis.compositeScore - seasonAvg
-      return { player, analysis, pos, seasonAvg, trend, posGroup: getPositionGroup(pos) }
-    }).filter(Boolean) as PlayerRow[]
-  }, [sessionAnalyses])
-
-  function sortAndFilter(rows: PlayerRow[]): PlayerRow[] {
-    let filtered = posFilter === 'All' ? rows : rows.filter(r => r.posGroup === posFilter)
-    filtered = [...filtered].sort((a, b) => {
-      let aVal: number, bVal: number
-      switch (sortField) {
-        case 'score': aVal = a.analysis.compositeScore; bVal = b.analysis.compositeScore; break
-        case 'distance': aVal = a.analysis.distanceCovered; bVal = b.analysis.distanceCovered; break
-        case 'sprints': aVal = a.analysis.sprintCount; bVal = b.analysis.sprintCount; break
-      }
-      return sortDir === 'desc' ? bVal - aVal : aVal - bVal
-    })
-    return filtered
-  }
-
-  // For competitive: single filtered list
-  const filteredRows = useMemo(() => sortAndFilter(playerRows), [playerRows, posFilter, sortField, sortDir])
-
-  // For training: split by team
-  const teamARows = useMemo(() => sortAndFilter(playerRows.filter(r => r.analysis.teamAssignment === 'A')), [playerRows, posFilter, sortField, sortDir])
-  const teamBRows = useMemo(() => sortAndFilter(playerRows.filter(r => r.analysis.teamAssignment === 'B')), [playerRows, posFilter, sortField, sortDir])
-
-  // Average squad score
-  const avgScore = useMemo(() => {
-    if (sessionAnalyses.length === 0) return 0
-    return Math.round(sessionAnalyses.reduce((sum, a) => sum + a.compositeScore, 0) / sessionAnalyses.length)
-  }, [sessionAnalyses])
-
-  // Team averages for training
-  const teamAAvg = useMemo(() => {
-    const teamA = sessionAnalyses.filter(a => a.teamAssignment === 'A')
-    if (teamA.length === 0) return 0
-    return Math.round(teamA.reduce((sum, a) => sum + a.compositeScore, 0) / teamA.length)
-  }, [sessionAnalyses])
-
-  const teamBAvg = useMemo(() => {
-    const teamB = sessionAnalyses.filter(a => a.teamAssignment === 'B')
-    if (teamB.length === 0) return 0
-    return Math.round(teamB.reduce((sum, a) => sum + a.compositeScore, 0) / teamB.length)
-  }, [sessionAnalyses])
-
-  if (!session) {
-    return (
-      <div style={{ background: C.lightBg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: C.muted, fontSize: 16 }}>Session not found</p>
-      </div>
-    )
-  }
-
-  const isCompetitive = session.type === 'match'
-  const durationMin = calcDurationMinutes(session.startTime, session.endTime)
-  const roster = rosters.find(r => r.id === session.rosterId)
-  const pitch = pitches.find(p => p.id === session.pitchId)
-  const gameScore = gameScores[sessionId]
-  const stats = teamStats[sessionId]
-
-  // Arc calculations
-  const arcRadius = 36
-  const arcCircumference = 2 * Math.PI * arcRadius
-  const arcOffset = arcCircumference - (arcCircumference * avgScore / 100)
-
-  // Sort toggle handler
-  function handleSort(field: SortField) {
-    if (sortField === field) {
-      setSortDir(prev => prev === 'desc' ? 'asc' : 'desc')
-    } else {
-      setSortField(field)
-      setSortDir('desc')
-    }
-  }
-
-  function renderSortArrow(field: SortField) {
-    if (sortField !== field) return null
-    return sortDir === 'desc' ? ' ↓' : ' ↑'
-  }
-
-  // Selected player data for side panel
-  const selectedRow = selectedPlayerId ? playerRows.find(r => r.player.id === selectedPlayerId) : null
-
-  /* ── Shared table renderer ── */
-  function renderPlayerTable(rows: PlayerRow[], showMinutes: boolean, showPassPct: boolean) {
-    return (
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead>
-            <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-              <th style={{ textAlign: 'left' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' as const }}>#</th>
-              <th style={{ textAlign: 'left' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12 }}>Player</th>
-              <th style={{ textAlign: 'left' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12 }}>Pos</th>
-              <th
-                onClick={() => handleSort('score')}
-                style={{ textAlign: 'center' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12, cursor: 'pointer', userSelect: 'none' as const, whiteSpace: 'nowrap' as const }}
-              >
-                Score{renderSortArrow('score')}
-              </th>
-              <th style={{ textAlign: 'center' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12 }}>Trend</th>
-              {showMinutes && (
-                <th style={{ textAlign: 'center' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12 }}>Min</th>
-              )}
-              {showPassPct && (
-                <th style={{ textAlign: 'center' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12 }}>Pass%</th>
-              )}
-              <th
-                onClick={() => handleSort('distance')}
-                style={{ textAlign: 'center' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12, cursor: 'pointer', userSelect: 'none' as const, whiteSpace: 'nowrap' as const }}
-              >
-                Distance{renderSortArrow('distance')}
-              </th>
-              <th
-                onClick={() => handleSort('sprints')}
-                style={{ textAlign: 'center' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12, cursor: 'pointer', userSelect: 'none' as const, whiteSpace: 'nowrap' as const }}
-              >
-                Sprints{renderSortArrow('sprints')}
-              </th>
-              <th style={{ textAlign: 'right' as const, padding: '10px 8px', color: C.muted, fontWeight: 600, fontSize: 12 }}>Key Stat</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ player, analysis, pos, trend }) => {
-              const scoreColor = getScoreColor(analysis.compositeScore)
-              const posColor = getPositionColor(pos)
-              return (
-                <tr
-                  key={player.id}
-                  onClick={() => setSelectedPlayerId(player.id)}
-                  style={{
-                    borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
-                    background: selectedPlayerId === player.id ? '#F8F9FF' : 'transparent',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { if (selectedPlayerId !== player.id) (e.currentTarget as HTMLElement).style.background = '#FAFBFF' }}
-                  onMouseLeave={e => { if (selectedPlayerId !== player.id) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  <td style={{ padding: '12px 8px', fontWeight: 600, color: C.navy, fontSize: 13 }}>
-                    {player.jerseyNumber}
-                  </td>
-                  <td style={{ padding: '12px 8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <PlayerAvatar player={player} size="sm" />
-                      <span style={{ fontWeight: 600, color: C.navy, fontSize: 13 }}>
-                        {player.firstName} {player.lastName}
-                      </span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 8px' }}>
-                    <span style={{
-                      display: 'inline-block', fontSize: 11, fontWeight: 600, borderRadius: 8,
-                      padding: '2px 8px', background: `${posColor}1A`, color: posColor,
-                    }}>
-                      {pos}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center' as const }}>
-                    <span style={{ fontWeight: 800, fontSize: 16, color: scoreColor }}>
-                      {analysis.compositeScore}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center' as const }}>
-                    {trend !== 0 && (
-                      <span style={{
-                        fontSize: 12, fontWeight: 600,
-                        color: trend > 0 ? C.success : C.error,
-                      }}>
-                        {trend > 0 ? `↑+${trend}` : `↓${trend}`}
-                      </span>
-                    )}
-                    {trend === 0 && <span style={{ fontSize: 12, color: C.muted }}>—</span>}
-                  </td>
-                  {showMinutes && (
-                    <td style={{ padding: '12px 8px', textAlign: 'center' as const, fontWeight: 600, color: C.navy, fontSize: 13 }}>
-                      {analysis.minutesPlayed ?? '–'}&apos;
-                    </td>
-                  )}
-                  {showPassPct && (
-                    <td style={{ padding: '12px 8px', textAlign: 'center' as const, fontWeight: 600, color: C.navy, fontSize: 13 }}>
-                      {analysis.passCompletion}%
-                    </td>
-                  )}
-                  <td style={{ padding: '12px 8px', textAlign: 'center' as const, fontWeight: 600, color: C.navy, fontSize: 13 }}>
-                    {analysis.distanceCovered.toFixed(1)} km
-                  </td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center' as const, fontWeight: 600, color: C.navy, fontSize: 13 }}>
-                    {analysis.sprintCount}
-                  </td>
-                  <td style={{ padding: '12px 8px', textAlign: 'right' as const, fontSize: 13, color: C.muted, fontWeight: 500 }}>
-                    {getKeyStat(pos, analysis)}
-                  </td>
-                </tr>
-              )
-            })}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={showMinutes && showPassPct ? 10 : 8} style={{ padding: 32, textAlign: 'center' as const, color: C.muted, fontSize: 14 }}>
-                  No player data available.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-
-  /* ── Comparison bar renderer ── */
-  function renderComparisonBar(label: string, homeVal: number, awayVal: number, isPercentage: boolean = false) {
-    const total = homeVal + awayVal
-    const homePct = total > 0 ? (homeVal / total) * 100 : 50
-    const awayPct = 100 - homePct
-    const suffix = isPercentage ? '%' : ''
-    return (
-      <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
-        <div style={{ width: 50, textAlign: 'right' as const, fontWeight: 700, fontSize: 15, color: C.navy }}>
-          {homeVal}{suffix}
-        </div>
-        <div style={{ flex: 1, display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', background: '#F1F5F9' }}>
-          <div style={{ width: `${homePct}%`, background: C.primary, borderRadius: '4px 0 0 4px', transition: 'width 0.5s ease' }} />
-          <div style={{ width: `${awayPct}%`, background: '#94A3B8', borderRadius: '0 4px 4px 0', transition: 'width 0.5s ease' }} />
-        </div>
-        <div style={{ width: 50, textAlign: 'left' as const, fontWeight: 700, fontSize: 15, color: '#64748B' }}>
-          {awayVal}{suffix}
-        </div>
-        <div style={{ width: 120, fontSize: 12, color: C.muted, fontWeight: 500 }}>{label}</div>
-      </div>
-    )
-  }
-
+function V3RosterRow({ row, idx, onSelect }: {
+  row: PlayerRow; idx: number;
+  onSelect: (playerId: string) => void;
+}) {
+  const { player: p, analysis: a, events } = row
+  const c = scoreValueColor(a.compositeScore)
+  const exceptional = isExceptional(a.compositeScore)
+  const [ks1, ks2] = getKeyStats(p.position[0] || 'CM', a)
+  // Dedupe event chips by type so a player with two goals shows one G chip,
+  // not two — they read as "what kind of moments did this player have."
+  const uniqueChips = Array.from(new Set(events.map(e => e.type))).slice(0, 3)
   return (
-    <div style={{ background: C.lightBg, minHeight: '100%' }}>
+    <div
+      className="v3-row"
+      onClick={() => onSelect(p.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(p.id) } }}
+      style={{
+        animationDelay: `${100 + idx * 35}ms`,
+        display: 'grid',
+        gridTemplateColumns: ROSTER_GRID_DESKTOP,
+        alignItems: 'center', gap: 16, padding: '14px 4px',
+        borderBottom: `1px solid ${BRAND.line}`, cursor: 'pointer',
+        position: 'relative',
+      }}
+    >
+      <div className="v3-num" style={{
+        width: 36, height: 36, borderRadius: 8,
+        background: exceptional ? BRAND.yellow : BRAND.paper,
+        border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
+        color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 15,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>{p.jerseyNumber}</div>
 
-      {/* ─── HEADER ─── */}
-      {isCompetitive ? (
-        /* ── COMPETITIVE: Broadcast Scoreboard Hero ── */
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
-          <Image
-            src="/players/teamphoto.jpg"
-            alt="Team"
-            fill
-            style={{ objectFit: 'cover', objectPosition: 'center top' }}
-          />
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(135deg, rgba(10,14,26,0.95) 0%, rgba(15,23,42,0.92) 100%)',
-            zIndex: 1,
-          }} />
-          <div style={{ position: 'relative', zIndex: 2, padding: '24px 32px 0' }}>
-            {/* Back button */}
-            <div
-              onClick={() => router.push('/coach/web/analysis')}
-              style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', marginBottom: 16, maxWidth: 1200, margin: '0 auto 16px',
-              }}
-            >
-              <ChevronLeft size={18} color="#fff" />
-            </div>
-
-            {/* Scoreboard */}
-            <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' as const, padding: '16px 0 32px' }}>
-              {/* Competition badge */}
-              {session.competition && (
-                <div style={{
-                  display: 'inline-block', background: 'rgba(74,74,255,0.2)', color: '#818CF8',
-                  fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '4px 14px', marginBottom: 16,
-                  letterSpacing: '0.05em', textTransform: 'uppercase' as const,
-                }}>
-                  {session.competition}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 32, marginBottom: 12 }}>
-                {/* Home team */}
-                <div style={{ flex: 1, textAlign: 'right' as const }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF' }}>{roster?.name ?? 'Home'}</div>
-                </div>
-
-                {/* Score */}
-                {gameScore && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{
-                      fontSize: 48, fontWeight: 900, color: '#FFFFFF', lineHeight: 1,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}>
-                      {gameScore.homeGoals}
-                    </div>
-                    <div style={{ fontSize: 32, fontWeight: 300, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>–</div>
-                    <div style={{
-                      fontSize: 48, fontWeight: 900, color: 'rgba(255,255,255,0.6)', lineHeight: 1,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}>
-                      {gameScore.awayGoals}
-                    </div>
-                  </div>
-                )}
-
-                {/* Away team */}
-                <div style={{ flex: 1, textAlign: 'left' as const }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.6)' }}>{session.opponent ?? 'Away'}</div>
-                </div>
-              </div>
-
-              {/* Result badge + date */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                {gameScore && (
-                  <div style={{
-                    background: gameScore.result === 'W' ? 'rgba(16,185,129,0.2)' : gameScore.result === 'L' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)',
-                    color: gameScore.result === 'W' ? '#10B981' : gameScore.result === 'L' ? '#EF4444' : '#F59E0B',
-                    fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '3px 12px',
-                  }}>
-                    {gameScore.result === 'W' ? 'Won' : gameScore.result === 'L' ? 'Lost' : 'Draw'}
-                  </div>
-                )}
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
-                  {formatDateFull(session.date)} · {session.startTime} – {session.endTime} · {pitch?.name ?? 'Unknown Pitch'}
-                </div>
-              </div>
-            </div>
-          </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: TYPE.body, fontSize: 14, fontWeight: 600, color: BRAND.indigo, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {p.firstName} {p.lastName}
+          {exceptional && <span style={{ fontSize: 10, color: BRAND.indigo, background: BRAND.yellow, padding: '1px 5px', borderRadius: 2, fontFamily: TYPE.mono, letterSpacing: '0.12em', fontWeight: 700 }}>★ MOTM</span>}
+          {/* Inline event chips — moments without a dedicated column */}
+          {uniqueChips.map((type, i) => {
+            const m = eventMeta[type] || { letter: '·' }
+            const isGoal = type === 'goal'
+            return (
+              <span key={i} title={m.label} style={{
+                fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.12em', fontWeight: 700,
+                padding: '2px 5px',
+                background: isGoal ? BRAND.yellow : BRAND.indigoSoft,
+                color: BRAND.indigo,
+                borderRadius: 3,
+              }}>{m.letter}</span>
+            )
+          })}
         </div>
-      ) : (
-        /* ── TRAINING: Standard Header ── */
-        <div style={{ position: 'relative', overflow: 'hidden', padding: '32px 0' }}>
-          <Image
-            src="/players/teamphoto.jpg"
-            alt="Team"
-            fill
-            style={{ objectFit: 'cover', objectPosition: 'center top' }}
-          />
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(10,14,26,0.85) 0%, rgba(10,14,26,0.98) 100%)',
-            zIndex: 1,
-          }} />
-          <div style={{
-            position: 'relative', zIndex: 2,
-            maxWidth: 1200, margin: '0 auto', padding: '0 32px',
-          }}>
-            {/* Back button */}
-            <div
-              onClick={() => router.push('/coach/web/analysis')}
-              style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'rgba(10,14,26,0.5)', backdropFilter: 'blur(8px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', marginBottom: 16,
-              }}
-            >
-              <ChevronLeft size={18} color="#fff" />
-            </div>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 2 }}>
+          {(p.position[0] || '').toUpperCase()}
+        </div>
+      </div>
 
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
-              <div>
-                {/* Training badge */}
-                <div style={{
-                  display: 'inline-block', background: 'rgba(16,185,129,0.15)', color: '#10B981',
-                  fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '3px 10px', marginBottom: 8,
-                }}>
-                  TRAINING MATCH
-                </div>
+      {/* Composite score */}
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontFamily: TYPE.display, fontSize: 22, color: c, letterSpacing: '-0.02em', lineHeight: 1 }}>{a.compositeScore}</div>
+      </div>
 
-                {/* Title */}
-                <div style={{ color: '#FFFFFF', fontSize: 28, fontWeight: 800 }}>
-                  {roster?.name ?? 'Squad'} — Team A vs Team B
-                </div>
+      {/* Distance — universal stat */}
+      <div>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>DISTANCE</div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 17, color: BRAND.indigo, letterSpacing: '-0.01em', lineHeight: 1.1, marginTop: 2 }}>
+          {a.distanceCovered.toFixed(1)} km
+        </div>
+      </div>
 
-                {/* Subtitle */}
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginTop: 4 }}>
-                  {formatDateFull(session.date)} · {session.startTime} – {session.endTime} ({durationMin} min) · {pitch?.name ?? 'Unknown Pitch'}
-                </div>
-              </div>
+      {/* Key stat 1 — position-aware */}
+      <div>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>{ks1.label}</div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 17, color: BRAND.indigo, letterSpacing: '-0.01em', lineHeight: 1.1, marginTop: 2 }}>
+          {ks1.value}{ks1.suffix}
+        </div>
+      </div>
 
-              {/* Avg Squad Score Arc */}
-              {avgScore > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <svg width={84} height={84} viewBox="0 0 84 84">
-                    <circle cx={42} cy={42} r={arcRadius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={4} />
-                    <circle cx={42} cy={42} r={arcRadius} fill="none" stroke={C.primary} strokeWidth={4}
-                      strokeDasharray={arcCircumference} strokeDashoffset={arcOffset}
-                      strokeLinecap="round" transform="rotate(-90 42 42)" />
-                    <text x={42} y={46} textAnchor="middle" fill={getScoreColor(avgScore)} fontSize={20} fontWeight={700}>
-                      {avgScore}
-                    </text>
-                  </svg>
-                  <div>
-                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Avg Squad Score</div>
-                    <div style={{ color: getScoreColor(avgScore), fontSize: 14, fontWeight: 700, marginTop: 2 }}>
-                      {avgScore >= 75 ? 'Strong Performance' : avgScore >= 60 ? 'Average Performance' : 'Needs Improvement'}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+      {/* Key stat 2 — position-aware */}
+      <div>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>{ks2.label}</div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 17, color: BRAND.indigo, letterSpacing: '-0.01em', lineHeight: 1.1, marginTop: 2 }}>
+          {ks2.value}{ks2.suffix}
+        </div>
+      </div>
+
+      <div className="v3-arrow" style={{ color: BRAND.indigo, fontSize: 16, fontFamily: TYPE.body }}>→</div>
+    </div>
+  )
+}
+
+/* ─────────────────── Roster row (mobile) ─────────────────── */
+function V3RosterRowMobile({ row, idx, onSelect }: {
+  row: PlayerRow; idx: number;
+  onSelect: (playerId: string) => void;
+}) {
+  const { player: p, analysis: a } = row
+  const c = scoreValueColor(a.compositeScore)
+  const exceptional = isExceptional(a.compositeScore)
+  return (
+    <div
+      className="v3-row"
+      onClick={() => onSelect(p.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(p.id) } }}
+      style={{
+        animationDelay: `${100 + idx * 28}ms`,
+        display: 'grid',
+        gridTemplateColumns: '40px 1fr 60px 24px',
+        alignItems: 'center', gap: 16, padding: '12px 4px',
+        borderBottom: `1px solid ${BRAND.line}`, cursor: 'pointer',
+      }}
+    >
+      <div className="v3-num" style={{
+        width: 32, height: 32, borderRadius: 8,
+        background: exceptional ? BRAND.yellow : BRAND.paper,
+        border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
+        color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 13,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>{p.jerseyNumber}</div>
+
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: TYPE.body, fontSize: 13.5, fontWeight: 600, color: BRAND.indigo, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {p.firstName} {p.lastName}
+          {exceptional && <span style={{ fontSize: 9, color: BRAND.indigo, background: BRAND.yellow, padding: '1px 4px', borderRadius: 2, fontFamily: TYPE.mono, letterSpacing: '0.12em', fontWeight: 700 }}>★</span>}
+        </div>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 2 }}>
+          {(p.position[0] || '').toUpperCase()} · {row.events.length} {row.events.length === 1 ? 'MOMENT' : 'MOMENTS'}
+        </div>
+      </div>
+
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontFamily: TYPE.display, fontSize: 22, color: c, letterSpacing: '-0.02em', lineHeight: 1 }}>{a.compositeScore}</div>
+      </div>
+
+      <div className="v3-arrow" style={{ color: BRAND.indigo, fontSize: 16, fontFamily: TYPE.body, opacity: 1, transform: 'translateX(0)' }}>→</div>
+    </div>
+  )
+}
+
+/* ─────────────────── Roster section (single team or one of A/B) ───────────────────
+ * Owns the column header + the list of rows. When called twice (training match),
+ * each section gets its own sub-header (Team A / Team B) with avg score and a
+ * yellow / indigo accent square. The sort pills above the section apply to both. */
+function V3RosterSection({ title, rows, avg, accent, isMobile, onSelect }: {
+  title?: string
+  rows: PlayerRow[]
+  avg?: number
+  accent?: 'A' | 'B'
+  isMobile: boolean
+  onSelect: (playerId: string) => void
+}) {
+  const showHeader = !!title
+  const accentColor = accent === 'A' ? BRAND.yellow : accent === 'B' ? BRAND.indigo : null
+  return (
+    <div>
+      {showHeader && (
+        <div style={{
+          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+          padding: '12px 4px 10px', gap: 10, flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {accentColor && (
+              <span style={{
+                width: 14, height: 14, borderRadius: 3,
+                background: accentColor,
+                border: accent === 'B' ? `1.5px solid ${BRAND.indigo}` : 'none',
+              }} aria-hidden />
+            )}
+            <span style={{ fontFamily: TYPE.display, fontSize: isMobile ? 20 : 24, color: BRAND.indigo, letterSpacing: '-0.01em' }}>{title}</span>
+            <span style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>
+              {rows.length} {rows.length === 1 ? 'PLAYER' : 'PLAYERS'}
+            </span>
           </div>
+          {typeof avg === 'number' && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.18em', color: BRAND.indigoMute, fontWeight: 700 }}>AVG</span>
+              <span style={{ fontFamily: TYPE.display, fontSize: 22, color: scoreValueColor(avg), letterSpacing: '-0.02em' }}>{avg}</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ─── MAIN CONTENT ─── */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 32px 48px' }}>
-
-        {/* ─── COMPETITIVE: Comparison Bars ─── */}
-        {isCompetitive && stats && (
-          <div style={{
-            background: '#FFFFFF', borderRadius: 14, padding: '20px 28px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-            marginBottom: 24,
-          }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginBottom: 8 }}>Match Statistics</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.primary }}>{roster?.name ?? 'Home'}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8' }}>{session.opponent ?? 'Away'}</span>
-            </div>
-            {renderComparisonBar('Possession', stats.home.possession, stats.away.possession, true)}
-            {renderComparisonBar('Pass Accuracy', stats.home.passAccuracy, stats.away.passAccuracy, true)}
-            {renderComparisonBar('Total Passes', stats.home.totalPasses, stats.away.totalPasses)}
-            {renderComparisonBar('Shots on Target', stats.home.shotsOnTarget, stats.away.shotsOnTarget)}
-            {renderComparisonBar('Tackles', stats.home.tackles, stats.away.tackles)}
-            {renderComparisonBar('Corners', stats.home.corners, stats.away.corners)}
-          </div>
-        )}
-
-        {/* ─── POSITION FILTER PILLS (shared for both layouts) ─── */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {(['All', 'GK', 'DEF', 'MID', 'FWD'] as const).map(filter => (
-            <button
-              key={filter}
-              onClick={() => setPosFilter(filter)}
-              style={{
-                padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                fontSize: 13, fontWeight: 600,
-                background: posFilter === filter ? C.primary : '#F1F5F9',
-                color: posFilter === filter ? '#fff' : C.muted,
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-
-        {/* ─── TRAINING: Stacked Team Tables ─── */}
-        {!isCompetitive && (
+      {/* column header — desktop has shared headers for # / NAME / SCORE only;
+          stat cells self-label per row so they can vary by position. */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '40px 1fr 60px 24px' : ROSTER_GRID_DESKTOP,
+        gap: 16,
+        padding: '8px 4px', borderBottom: `1px solid ${BRAND.line}`,
+        fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.18em', color: BRAND.indigoMute,
+      }}>
+        {isMobile ? (
           <>
-            {/* Team A */}
-            <div style={{
-              background: '#FFFFFF', borderRadius: 14, padding: 24,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-              marginBottom: 16,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#EF4444' }} />
-                  <span style={{ fontSize: 16, fontWeight: 700, color: C.navy }}>Team A</span>
-                  <span style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>({teamARows.length} players)</span>
-                </div>
-                {teamAAvg > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>Avg Score</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: getScoreColor(teamAAvg) }}>{teamAAvg}</span>
-                  </div>
-                )}
-              </div>
-              {renderPlayerTable(teamARows, false, false)}
-            </div>
-
-            {/* Team B */}
-            <div style={{
-              background: '#FFFFFF', borderRadius: 14, padding: 24,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-              marginBottom: 24,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#3B82F6' }} />
-                  <span style={{ fontSize: 16, fontWeight: 700, color: C.navy }}>Team B</span>
-                  <span style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>({teamBRows.length} players)</span>
-                </div>
-                {teamBAvg > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>Avg Score</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: getScoreColor(teamBAvg) }}>{teamBAvg}</span>
-                  </div>
-                )}
-              </div>
-              {renderPlayerTable(teamBRows, false, false)}
-            </div>
+            <div>#</div><div>NAME · POS</div><div style={{ textAlign: 'right' }}>SCORE</div><div></div>
+          </>
+        ) : (
+          <>
+            <div>#</div><div>NAME · POS</div><div style={{ textAlign: 'right' }}>SCORE</div><div></div><div></div><div></div><div></div>
           </>
         )}
+      </div>
 
-        {/* ─── COMPETITIVE: Single Player Table ─── */}
-        {isCompetitive && (
-          <div style={{
-            background: '#FFFFFF', borderRadius: 14, padding: 24,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-            marginBottom: 24,
-          }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.navy, marginBottom: 16 }}>
-              Player Performance
-            </div>
-            {renderPlayerTable(filteredRows, true, true)}
-          </div>
-        )}
+      {rows.map((r, i) =>
+        isMobile ? (
+          <V3RosterRowMobile key={r.player.id} row={r} idx={i} onSelect={onSelect} />
+        ) : (
+          <V3RosterRow key={r.player.id} row={r} idx={i} onSelect={onSelect} />
+        )
+      )}
+    </div>
+  )
+}
 
-        {/* ─── COACH NOTES ─── */}
+/* ─────────────────── Player detail panel ─────────────────── */
+/** Letter grade + colour band for a category score (0–100). */
+function getGrade(score: number): { grade: string; color: string } {
+  if (score >= 85) return { grade: 'A', color: COLORS.success }
+  if (score >= 70) return { grade: 'B', color: COLORS.success }
+  if (score >= 60) return { grade: 'C', color: COLORS.warning }
+  if (score >= 50) return { grade: 'D', color: COLORS.warning }
+  return { grade: 'F', color: COLORS.error }
+}
+
+/** Mobile detection — full-page takeover on phones, slide-in on desktop. */
+function useIsMobile(breakpoint = 768): boolean {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const m = window.matchMedia(`(max-width: ${breakpoint}px)`)
+    const handler = () => setIsMobile(m.matches)
+    handler()
+    m.addEventListener('change', handler)
+    return () => m.removeEventListener('change', handler)
+  }, [breakpoint])
+  return isMobile
+}
+
+function V3PlayerDetail({ row, onClose }: { row: PlayerRow; onClose: () => void }) {
+  const { player: p, analysis: a } = row
+  const isMobile = useIsMobile()
+  const compositeColor = scoreValueColor(a.compositeScore)
+  const exceptional = isExceptional(a.compositeScore)
+
+  // Season average not tracked per-match in mock data — use composite as a placeholder.
+  // Real implementation will pull this from PlayerSeasonStats.
+  const radarData = [
+    { category: 'Physical',   score: a.physicalScore,   avg: a.compositeScore },
+    { category: 'Passing',    score: a.passingScore,    avg: a.compositeScore },
+    { category: 'Dribbling',  score: a.dribblingScore,  avg: a.compositeScore },
+    { category: 'Defending',  score: a.defendingScore,  avg: a.compositeScore },
+    { category: 'Control',    score: a.controlScore,    avg: a.compositeScore },
+    { category: 'Positional', score: a.positionalScore, avg: a.compositeScore },
+  ]
+
+  const grades = [
+    { label: 'Physical', score: a.physicalScore },
+    { label: 'Passing', score: a.passingScore },
+    { label: 'Dribbling', score: a.dribblingScore },
+    { label: 'Defending', score: a.defendingScore },
+    { label: 'Control', score: a.controlScore },
+    { label: 'Positional', score: a.positionalScore },
+  ]
+
+  // Persisted per-session, per-player coach notes (mirrors the existing match page pattern).
+  const noteKey = `fairplai_player_session_note_${a.sessionId}_${p.id}`
+  const [note, setNote] = useState<string>('')
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setNote(window.localStorage.getItem(noteKey) ?? '')
+  }, [noteKey])
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (note) window.localStorage.setItem(noteKey, note)
+  }, [note, noteKey])
+
+  // Common panel content (header + score + radar + grades + physical + notes)
+  const content = (
+    <div style={{
+      height: '100%',
+      overflowY: 'auto',
+      background: BRAND.sand,
+      color: BRAND.indigo,
+      fontFamily: TYPE.body,
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '20px 24px',
+        background: BRAND.indigo, color: BRAND.sand,
+        position: 'sticky', top: 0, zIndex: 2,
+      }}>
         <div style={{
-          background: '#FFFFFF', borderRadius: 14,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-          overflow: 'hidden',
+          width: 44, height: 44, borderRadius: '50%',
+          background: BRAND.sand, color: BRAND.indigo,
+          fontFamily: TYPE.display, fontSize: 18, fontWeight: 700,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: exceptional ? `0 0 0 2px ${BRAND.yellow}` : 'none',
+          flexShrink: 0,
+        }}>{p.jerseyNumber}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: TYPE.display, fontSize: 22, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
+            {p.firstName} {p.lastName}
+          </div>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', color: 'rgba(238,228,200,0.7)', marginTop: 4 }}>
+            #{p.jerseyNumber} · {(p.position[0] || '').toUpperCase()} · {a.minutesPlayed ?? '-'}&apos;
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="v3-cta"
+          style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(238,228,200,0.10)', color: BRAND.sand,
+            border: `1px solid rgba(238,228,200,0.2)`,
+            fontSize: 16, cursor: 'pointer', flexShrink: 0,
+          }}
+        >×</button>
+      </div>
+
+      {/* Composite score band */}
+      <div style={{
+        padding: '24px',
+        display: 'flex', alignItems: 'center', gap: 18,
+        borderBottom: `1px solid ${BRAND.line}`,
+      }}>
+        <div style={{
+          width: 96, height: 96, borderRadius: '50%',
+          border: `4px solid ${compositeColor}`,
+          background: BRAND.paper,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
         }}>
-          <button
-            onClick={() => setNotesExpanded(!notesExpanded)}
-            style={{
-              width: '100%', background: '#fff', padding: '14px 24px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: C.navy,
-            }}
-          >
-            Coach Notes
-            {notesExpanded ? <ChevronUp size={16} color={C.muted} /> : <ChevronDown size={16} color={C.muted} />}
-          </button>
-          {notesExpanded && (
-            <div style={{ padding: '0 24px 20px' }}>
-              <textarea
-                value={matchNote}
-                onChange={e => setMatchNote(e.target.value)}
-                placeholder="Add notes about this session..."
-                style={{
-                  width: '100%', minHeight: 100, border: `1px solid ${C.border}`,
-                  borderRadius: 8, padding: 12, fontSize: 14, resize: 'vertical',
-                  fontFamily: 'inherit', boxSizing: 'border-box' as const,
-                }}
-              />
-              {matchNoteLastSaved && (
-                <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>Last saved: {matchNoteLastSaved}</div>
-              )}
-            </div>
+          <div style={{ fontFamily: TYPE.display, fontSize: 34, lineHeight: 1, letterSpacing: '-0.02em', color: compositeColor }}>{a.compositeScore}</div>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 8.5, letterSpacing: '0.2em', color: BRAND.indigoMute, marginTop: 4 }}>SCORE</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>SESSION SCORE</div>
+          <div style={{ fontFamily: TYPE.display, fontSize: 24, marginTop: 4, letterSpacing: '-0.01em' }}>
+            {a.compositeScore >= 85 ? 'Exceptional.' : a.compositeScore >= 75 ? 'Strong session.' : a.compositeScore >= 60 ? 'Solid.' : 'Room to grow.'}
+          </div>
+          {exceptional && (
+            <div style={{
+              display: 'inline-block',
+              marginTop: 8,
+              padding: '4px 10px',
+              background: BRAND.yellow, color: BRAND.indigo,
+              fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.18em', fontWeight: 700,
+              borderRadius: 4,
+            }}>★ MOTM</div>
           )}
         </div>
       </div>
 
-      {/* ─── PLAYER SIDE PANEL ─── */}
-      {selectedRow && (
-        <>
-          {/* Overlay */}
-          <div
-            onClick={() => setSelectedPlayerId(null)}
-            style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
-              zIndex: 100, cursor: 'pointer',
-            }}
-          />
-          {/* Drawer */}
-          <div style={{
-            position: 'fixed', top: 0, right: 0, bottom: 0, width: 420,
-            background: '#FFFFFF', zIndex: 101, overflowY: 'auto' as const,
-            boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
-            animation: 'slideIn 0.25s ease-out',
-          }}>
-            <style dangerouslySetInnerHTML={{ __html: `
-              @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-            `}} />
+      {/* Performance Radar */}
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 8 }}>PERFORMANCE RADAR</div>
+        <div style={{ background: BRAND.paper, borderRadius: 12, padding: 12, border: `1px solid ${BRAND.line}` }}>
+          <RadarChartDynamic data={radarData} height={isMobile ? 240 : 280} />
+        </div>
+      </div>
 
-            {/* Close button */}
-            <div
-              onClick={() => setSelectedPlayerId(null)}
-              style={{
-                position: 'absolute' as const, top: 16, right: 16,
-                width: 32, height: 32, borderRadius: '50%',
-                background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', zIndex: 10,
-              }}
-            >
-              <X size={16} color={C.muted} />
-            </div>
-
-            {/* Player header */}
-            <div style={{ padding: '24px 24px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-                <PlayerAvatar player={selectedRow.player} size="lg" />
+      {/* Category Grades */}
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 10 }}>CATEGORY GRADES</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {grades.map(({ label, score }) => {
+            const { grade, color } = getGrade(score)
+            return (
+              <div key={label} style={{
+                background: BRAND.paper, border: `1px solid ${BRAND.line}`,
+                borderRadius: 10, padding: '12px 14px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+              }}>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.navy }}>
-                    {selectedRow.player.firstName} {selectedRow.player.lastName}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '2px 8px',
-                      background: `${getPositionColor(selectedRow.pos)}1A`, color: getPositionColor(selectedRow.pos),
-                    }}>
-                      {selectedRow.pos}
-                    </span>
-                    <span style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>#{selectedRow.player.jerseyNumber}</span>
-                    {/* Team badge for training */}
-                    {!isCompetitive && selectedRow.analysis.teamAssignment && (
-                      <span style={{
-                        fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '2px 8px',
-                        background: selectedRow.analysis.teamAssignment === 'A' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
-                        color: selectedRow.analysis.teamAssignment === 'A' ? '#EF4444' : '#3B82F6',
-                      }}>
-                        Team {selectedRow.analysis.teamAssignment}
-                      </span>
-                    )}
-                  </div>
+                  <div style={{ fontSize: 12, color: BRAND.indigoMute, fontFamily: TYPE.mono, letterSpacing: '0.12em' }}>{label.toUpperCase()}</div>
+                  <div style={{ fontFamily: TYPE.display, fontSize: 22, color: BRAND.indigo, marginTop: 2, letterSpacing: '-0.01em' }}>{score}</div>
                 </div>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: `${color}1A`, color, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: TYPE.display, fontSize: 16, fontWeight: 800,
+                }}>{grade}</div>
               </div>
+            )
+          })}
+        </div>
+      </div>
 
-              {/* Session composite score arc */}
-              {(() => {
-                const s = selectedRow.analysis.compositeScore
-                const r = 40
-                const circ = 2 * Math.PI * r
-                const off = circ - (circ * s / 100)
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20, padding: '16px', background: '#F8F9FC', borderRadius: 12 }}>
-                    <svg width={96} height={96} viewBox="0 0 96 96">
-                      <circle cx={48} cy={48} r={r} fill="none" stroke="#E2E8F0" strokeWidth={5} />
-                      <circle cx={48} cy={48} r={r} fill="none" stroke={getScoreColor(s)} strokeWidth={5}
-                        strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round" transform="rotate(-90 48 48)" />
-                      <text x={48} y={52} textAnchor="middle" fill={getScoreColor(s)} fontSize={24} fontWeight={800}>
-                        {s}
-                      </text>
-                    </svg>
-                    <div>
-                      <div style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>Session Score</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: getScoreColor(s), marginTop: 2 }}>
-                        {s >= 75 ? 'Strong' : s >= 60 ? 'Average' : 'Needs Work'}
-                      </div>
-                      {selectedRow.trend !== 0 && (
-                        <div style={{ fontSize: 12, color: selectedRow.trend > 0 ? C.success : C.error, marginTop: 2, fontWeight: 600 }}>
-                          {selectedRow.trend > 0 ? `↑+${selectedRow.trend}` : `↓${selectedRow.trend}`} vs season avg
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })()}
+      {/* Physical Details */}
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 10 }}>PHYSICAL</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          {[
+            { label: 'Distance', value: `${a.distanceCovered.toFixed(1)} km` },
+            { label: 'Top Speed', value: `${a.topSpeed.toFixed(1)} km/h` },
+            { label: 'Sprints', value: `${a.sprintCount}` },
+          ].map(({ label, value }) => (
+            <div key={label} style={{
+              background: BRAND.paper, border: `1px solid ${BRAND.line}`, borderRadius: 10,
+              padding: '12px 8px', textAlign: 'center',
+            }}>
+              <div style={{ fontFamily: TYPE.display, fontSize: 18, fontWeight: 700, color: BRAND.indigo, letterSpacing: '-0.01em' }}>{value}</div>
+              <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 4 }}>{label.toUpperCase()}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-              {/* Radar chart */}
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginBottom: 8 }}>Performance Radar</div>
-                <RadarChartDynamic
-                  height={260}
-                  data={[
-                    { category: 'Physical', score: selectedRow.analysis.physicalScore, avg: squadScores[selectedRow.player.id]?.compositeScore ?? 70 },
-                    { category: 'Positional', score: selectedRow.analysis.positionalScore, avg: squadScores[selectedRow.player.id]?.compositeScore ?? 70 },
-                    { category: 'Passing', score: selectedRow.analysis.passingScore, avg: squadScores[selectedRow.player.id]?.compositeScore ?? 70 },
-                    { category: 'Dribbling', score: selectedRow.analysis.dribblingScore, avg: squadScores[selectedRow.player.id]?.compositeScore ?? 70 },
-                    { category: 'Control', score: selectedRow.analysis.controlScore, avg: squadScores[selectedRow.player.id]?.compositeScore ?? 70 },
-                    { category: 'Defending', score: selectedRow.analysis.defendingScore, avg: squadScores[selectedRow.player.id]?.compositeScore ?? 70 },
-                  ]}
-                />
+      {/* Coach notes */}
+      <div style={{ padding: '20px 24px 32px' }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 8 }}>SESSION NOTES</div>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder={`Add notes about ${p.firstName}...`}
+          style={{
+            width: '100%', minHeight: 90,
+            border: `1px solid ${BRAND.line}`, background: BRAND.paper,
+            borderRadius: 10, padding: 12,
+            fontSize: 14, color: BRAND.indigo,
+            resize: 'vertical', fontFamily: TYPE.body, boxSizing: 'border-box',
+          }}
+        />
+      </div>
+    </div>
+  )
+
+  return (
+    <>
+      {/* backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(11,8,40,0.45)',
+          zIndex: 90,
+          animation: 'v3-backdrop-in 180ms ease-out both',
+        }}
+      />
+      {/* panel: takeover on mobile, slide-in 460px on desktop */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: isMobile ? '100vw' : 460,
+          background: BRAND.sand,
+          boxShadow: '-8px 0 32px rgba(11,8,40,0.18)',
+          zIndex: 100,
+          animation: isMobile
+            ? 'v3-panel-up 280ms cubic-bezier(.2,.7,.2,1) both'
+            : 'v3-panel-right 280ms cubic-bezier(.2,.7,.2,1) both',
+        }}
+      >
+        {content}
+      </div>
+    </>
+  )
+}
+
+/* ─────────────────── Mobile vertical reel ───────────────────
+ * Full-bleed single-highlight view per the spec's DirectionC_v3_Mobile.
+ * Swipe up → next event in visibleEvents; swipe down → previous (wraps).
+ * Tap player chip → open V3PlayerDetail (full-screen takeover on mobile).
+ */
+function V3MobileReel({
+  visibleEvents,
+  activeEventId,
+  setActiveEventId,
+  homeGoals,
+  awayGoals,
+  onSelectPlayer,
+  squadAnalyses,
+}: {
+  visibleEvents: TLEvent[]
+  activeEventId: string | null
+  setActiveEventId: (id: string) => void
+  homeGoals: number
+  awayGoals: number
+  onSelectPlayer: (id: string) => void
+  squadAnalyses: MatchAnalysis[]
+}) {
+  const idx = visibleEvents.findIndex(e => e.id === activeEventId)
+  const safeIdx = idx >= 0 ? idx : 0
+  const event = visibleEvents[safeIdx] ?? null
+  const player = event ? players.find(p => p.id === event.playerId) : undefined
+
+  // Touch swipe state
+  const touchStartY = useRef<number | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0]?.clientY ?? null
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return
+    const endY = e.changedTouches[0]?.clientY ?? touchStartY.current
+    const dy = touchStartY.current - endY
+    touchStartY.current = null
+    if (Math.abs(dy) < 60 || visibleEvents.length === 0) return
+    const total = visibleEvents.length
+    const next = dy > 0 ? (safeIdx + 1) % total : (safeIdx - 1 + total) % total
+    setActiveEventId(visibleEvents[next].id)
+  }
+
+  if (!event) {
+    return (
+      <div style={{ background: BRAND.sand, color: BRAND.indigo, padding: '40px 22px', textAlign: 'center', fontFamily: TYPE.body }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>NO MOMENTS</div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 22, marginTop: 6 }}>Nothing to review here.</div>
+      </div>
+    )
+  }
+
+  const meta = eventMeta[event.type] || { letter: '·', label: event.type.toUpperCase() }
+  const playerAnalysis = player ? squadAnalyses.find(a => a.playerId === player.id) : undefined
+  const why = keyStatsForHighlight({ eventType: event.type as Highlight['eventType'] }, playerAnalysis, squadAnalyses)
+  const playerScore = playerAnalysis?.compositeScore ?? 70
+
+  return (
+    <div
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      style={{
+        width: '100%',
+        background: BRAND.sand,
+        color: BRAND.indigo,
+        fontFamily: TYPE.body,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Mini status strip — eyebrow + score readout */}
+      <div style={{
+        padding: '10px 16px 8px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: BRAND.sand,
+        borderBottom: `1px solid ${BRAND.line}`,
+      }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>
+          THE REEL · {safeIdx + 1}/{visibleEvents.length}
+        </div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 22, color: BRAND.indigo, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ position: 'relative' }}>
+            {homeGoals >= awayGoals && (
+              <span style={{ position: 'absolute', inset: '-3px -5px', background: BRAND.yellow, borderRadius: 3, zIndex: 0 }} />
+            )}
+            <span style={{ position: 'relative', zIndex: 1 }}>{homeGoals}</span>
+          </span>
+          <span style={{ opacity: 0.45 }}>-</span>
+          <span style={{ position: 'relative' }}>
+            {awayGoals > homeGoals && (
+              <span style={{ position: 'absolute', inset: '-3px -5px', background: BRAND.yellow, borderRadius: 3, zIndex: 0 }} />
+            )}
+            <span style={{ position: 'relative', zIndex: 1 }}>{awayGoals}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Video well — full-bleed indigo with pitch markings + animated trail */}
+      <div style={{ position: 'relative', aspectRatio: '9/13', minHeight: 380, background: BRAND.indigo, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 70%, ${BRAND.indigoMid} 0%, ${BRAND.indigo} 70%)` }} />
+        {/* mowed-stripes ambient texture */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} style={{
+            position: 'absolute', left: 0, right: 0, top: `${i * 16.5}%`, height: '16.5%',
+            background: i % 2 ? 'rgba(238,228,200,0.04)' : 'transparent',
+          }} />
+        ))}
+        {/* trail */}
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
+          <path className="v3-track-line" d="M 20 70 Q 36 50, 50 38 T 78 22" stroke={BRAND.yellow} strokeWidth="0.8" fill="none" strokeDasharray="2.5 1.6" opacity="0.95" />
+          <circle className="v3-pin" style={{ animationDelay: '750ms' }} cx="78" cy="22" r="2.6" fill={BRAND.yellow} />
+          <circle cx="78" cy="22" r="6" fill={BRAND.yellow} fillOpacity="0.22" />
+        </svg>
+        {/* HUD top-left/top-right */}
+        <div style={{ position: 'absolute', top: 14, left: 14, right: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{
+            background: event.isGoal ? BRAND.yellow : BRAND.sand,
+            color: BRAND.indigo,
+            fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.2em', padding: '4px 9px',
+            borderRadius: 3, fontWeight: 700,
+          }}>{meta.label}</div>
+          <div style={{ fontFamily: TYPE.display, fontSize: 32, color: BRAND.sand, letterSpacing: '-0.02em', textShadow: '0 2px 12px rgba(0,0,0,0.65)' }}>
+            {Math.floor(event.t)}&apos;
+          </div>
+        </div>
+        {/* Centered play button */}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{
+            width: 70, height: 70, borderRadius: '50%',
+            background: BRAND.yellow, color: BRAND.indigo,
+            fontSize: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 0 0 6px rgba(252,215,24,0.18), 0 8px 22px rgba(0,0,0,0.45)`,
+          }}>▶</div>
+        </div>
+        {/* Right-edge event-index strip */}
+        <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {visibleEvents.slice(0, 12).map((_, i) => (
+            <div key={i} style={{
+              width: 3,
+              height: i === safeIdx ? 18 : 8,
+              borderRadius: 2,
+              background: i === safeIdx ? BRAND.yellow : 'rgba(238,228,200,0.4)',
+            }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom info card */}
+      <div style={{
+        background: BRAND.sand, color: BRAND.indigo,
+        padding: '18px 18px 22px',
+        borderTop: `3px solid ${BRAND.indigo}`,
+      }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.22em', color: BRAND.indigoMute, fontWeight: 700 }}>
+          {Math.floor(event.t)}&apos; · {meta.label}
+        </div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 26, lineHeight: 1, letterSpacing: '-0.02em', marginTop: 4, color: BRAND.indigo }}>
+          {event.isGoal && player ? `${player.firstName}'s finish` : meta.label.toLowerCase()}
+        </div>
+
+        {/* Player chip — tap to open detail */}
+        {player && (
+          <button
+            onClick={() => onSelectPlayer(player.id)}
+            className="v3-cta"
+            style={{
+              marginTop: 12, width: '100%',
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 10px', background: BRAND.paper,
+              borderRadius: 8, border: `1px solid ${BRAND.line}`,
+              cursor: 'pointer', textAlign: 'left',
+            }}
+          >
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: BRAND.indigo, color: BRAND.sand,
+              fontFamily: TYPE.display, fontSize: 13,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: playerScore >= 85 ? `0 0 0 2px ${BRAND.yellow}` : 'none',
+              flexShrink: 0,
+            }}>{player.jerseyNumber}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: TYPE.body, fontSize: 12.5, fontWeight: 600 }}>{player.firstName} {player.lastName}</div>
+              <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.14em', color: BRAND.indigoMute }}>
+                {(player.position[0] || '').toUpperCase()} · #{player.jerseyNumber}
               </div>
+            </div>
+            <div style={{ fontFamily: TYPE.display, fontSize: 22, color: BRAND.indigo, letterSpacing: '-0.02em' }}>{playerScore}</div>
+          </button>
+        )}
 
-              {/* Category grade cards */}
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginBottom: 8 }}>Category Grades</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-                {[
-                  { label: 'Physical', score: selectedRow.analysis.physicalScore },
-                  { label: 'Passing', score: selectedRow.analysis.passingScore },
-                  { label: 'Dribbling', score: selectedRow.analysis.dribblingScore },
-                  { label: 'Control', score: selectedRow.analysis.controlScore },
-                  { label: 'Defending', score: selectedRow.analysis.defendingScore },
-                  { label: 'Positional', score: selectedRow.analysis.positionalScore },
-                ].map(({ label, score }) => {
-                  const { grade, color } = getGrade(score)
-                  return (
-                    <div key={label} style={{
-                      background: '#F8F9FC', borderRadius: 10, padding: '12px 14px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    }}>
-                      <div>
-                        <div style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{label}</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginTop: 2 }}>{score}</div>
-                      </div>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 8,
-                        background: `${color}1A`, color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 16, fontWeight: 800,
-                      }}>
-                        {grade}
-                      </div>
-                    </div>
-                  )
-                })}
+        {/* Why this matters card */}
+        <div style={{ marginTop: 12, padding: '10px 12px', background: BRAND.yellow, borderRadius: 8, boxShadow: '0 4px 14px rgba(252,215,24,0.25)' }}>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.22em', color: BRAND.indigo, fontWeight: 700 }}>KEY STATS</div>
+          <div style={{ fontFamily: TYPE.body, fontSize: 13, lineHeight: 1.5, marginTop: 4, color: BRAND.indigo, fontWeight: 500 }}>{why}</div>
+        </div>
+
+        {/* Footer row */}
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.18em', color: BRAND.indigoMute }}>SWIPE UP FOR NEXT ↑</div>
+          <button className="v3-cta" style={{
+            background: BRAND.indigo, color: BRAND.sand, border: 'none',
+            padding: '8px 14px', borderRadius: 999,
+            fontFamily: TYPE.body, fontWeight: 600, fontSize: 12.5, cursor: 'pointer',
+          }}>Save clip</button>
+        </div>
+      </div>
+
+      {/* Squad summary entry — keep the roster reachable on mobile via a one-tap link */}
+      <div style={{ background: BRAND.sand, padding: '14px 18px 24px' }}>
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>SQUAD</div>
+        <div style={{ fontFamily: TYPE.display, fontSize: 18, marginTop: 2, letterSpacing: '-0.01em' }}>Tap a player below to see their card.</div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────── WhatsApp recap modal ─────────────────── */
+function V3Bubble({ children, time }: { children: React.ReactNode; time: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '2px 0' }}>
+      <div style={{
+        maxWidth: '84%', background: '#D9FDD3',
+        borderRadius: '8px 2px 8px 8px',
+        padding: '8px 10px 6px', boxShadow: '0 1px 1px rgba(0,0,0,0.08)',
+        fontFamily: TYPE.body, fontSize: 14, lineHeight: 1.42, color: '#0B141A',
+      }}>
+        {children}
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center', justifyContent: 'flex-end', marginTop: 2, fontSize: 10, color: '#667781' }}>
+          <span>{time}</span>
+          <span style={{ color: '#53BDEB' }}>✓✓</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function V3WhatsAppRecap({
+  onClose,
+  homeName,
+  awayName,
+  homeGoals,
+  awayGoals,
+  squadAverage,
+  motm,
+  motmScore,
+  motmGoals,
+  motmAssists,
+  topGoal,
+  topGoalPlayer,
+  notesSent,
+}: {
+  onClose: () => void
+  homeName: string
+  awayName: string
+  homeGoals: number
+  awayGoals: number
+  squadAverage: number
+  motm: Player | undefined
+  motmScore: number
+  motmGoals: number
+  motmAssists: number
+  topGoal: TLEvent | undefined
+  topGoalPlayer: Player | undefined
+  notesSent: number
+}) {
+  const isMobile = useIsMobile()
+
+  // Close on Esc
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  const motmName = motm ? `${motm.firstName} ${motm.lastName[0] ?? ''}.` : 'Top scorer'
+  const motmLine = motmGoals > 0 || motmAssists > 0
+    ? `${motmGoals === 1 ? 'One goal' : motmGoals > 1 ? `${motmGoals} goals` : ''}${motmGoals > 0 && motmAssists > 0 ? ', ' : ''}${motmAssists === 1 ? 'one assist' : motmAssists > 1 ? `${motmAssists} assists` : ''}.`
+    : 'Top performer of the day.'
+  const goalMin = topGoal ? Math.floor(topGoal.t) : 33
+  const topGoalWhy = topGoalPlayer
+    ? `${topGoalPlayer.firstName}'s finish, exactly the pattern we drilled.`
+    : 'A finish to remember.'
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(11,8,40,0.55)',
+          zIndex: 200,
+          animation: 'v3-backdrop-in 180ms ease-out both',
+        }}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        style={{
+          position: 'fixed',
+          left: '50%',
+          top: isMobile ? 0 : '50%',
+          transform: isMobile ? 'translateX(-50%)' : 'translate(-50%, -50%)',
+          width: isMobile ? '100vw' : 420,
+          height: isMobile ? '100vh' : 720,
+          maxHeight: isMobile ? '100vh' : '90vh',
+          background: '#EFEAE2',
+          borderRadius: isMobile ? 0 : 18,
+          overflow: 'hidden',
+          zIndex: 210,
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 20px 60px rgba(11,8,40,0.35)',
+          animation: isMobile
+            ? 'v3-panel-up 280ms cubic-bezier(.2,.7,.2,1) both'
+            : 'v3-panel-up 220ms cubic-bezier(.2,.7,.2,1) both',
+        }}
+      >
+        {/* WhatsApp header */}
+        <div style={{ background: '#008069', color: '#fff', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer', padding: 0, lineHeight: 1 }}>‹</button>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: BRAND.indigo, border: `2px solid ${BRAND.yellow}`,
+            color: BRAND.sand, fontFamily: TYPE.display, fontSize: 14,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>L13</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{homeName} · Parents</div>
+            <div style={{ fontSize: 11, opacity: 0.85 }}>{notesSent + 4} members</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{
+            background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer',
+            fontSize: 18, padding: 4,
+          }}>×</button>
+        </div>
+
+        {/* Auto-drafted banner */}
+        <div style={{
+          background: BRAND.yellow, borderBottom: `1px solid ${BRAND.indigoSoft}`,
+          padding: '8px 14px',
+          fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.2em', color: BRAND.indigo,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 700,
+        }}>
+          <span>★ AUTO-DRAFTED FROM FAIRPL.AI</span>
+          <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Edit</span>
+        </div>
+
+        {/* Bubbles */}
+        <div style={{ flex: 1, padding: '12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
+          <div style={{ alignSelf: 'center', background: 'rgba(225,245,254,0.92)', color: '#0F4B6F', fontSize: 11, padding: '4px 10px', borderRadius: 6, marginBottom: 6 }}>Today · 13:42</div>
+
+          <V3Bubble time="13:42">
+            <b>{homeName.replace(' U13', '')} {homeGoals} - {awayGoals} {awayName} 🦁</b><br />
+            Squad average {squadAverage} this match.
+          </V3Bubble>
+
+          <V3Bubble time="13:42">
+            ⭐ <b>Player of the Match: {motmName}</b><br />
+            {motmLine} Score: {motmScore}.
+          </V3Bubble>
+
+          <V3Bubble time="13:42">
+            <div style={{ background: BRAND.indigo, borderRadius: 8, padding: 8, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{
+                width: 92, height: 60, borderRadius: 5,
+                background: BRAND.indigoMid, position: 'relative',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+              }}>
+                <svg width="100%" height="100%" viewBox="0 0 92 60" style={{ position: 'absolute', inset: 0 }}>
+                  <path d="M 14 44 Q 32 30, 50 22 T 78 14" stroke={BRAND.yellow} strokeWidth="1.2" fill="none" strokeDasharray="3 2" />
+                  <circle cx="78" cy="14" r="2.5" fill={BRAND.yellow} />
+                </svg>
+                <div style={{
+                  position: 'relative', width: 24, height: 24, borderRadius: '50%',
+                  background: BRAND.yellow, color: BRAND.indigo, fontSize: 11,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                }}>▶</div>
               </div>
-
-              {/* Physical detail row */}
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginBottom: 8 }}>Physical Details</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
-                {[
-                  { label: 'Distance', value: `${selectedRow.analysis.distanceCovered.toFixed(1)} km` },
-                  { label: 'Top Speed', value: `${selectedRow.analysis.topSpeed.toFixed(1)} km/h` },
-                  { label: 'Sprints', value: `${selectedRow.analysis.sprintCount}` },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{
-                    background: '#F8F9FC', borderRadius: 10, padding: '12px',
-                    textAlign: 'center' as const,
-                  }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: C.navy }}>{value}</div>
-                    <div style={{ fontSize: 11, color: C.muted, fontWeight: 500, marginTop: 2 }}>{label}</div>
-                  </div>
-                ))}
+              <div style={{ color: BRAND.sand, fontSize: 12, lineHeight: 1.4, flex: 1 }}>
+                <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.18em', color: BRAND.yellow, fontWeight: 700 }}>
+                  {goalMin}&apos; · GOAL
+                </div>
+                <div style={{ fontWeight: 600, marginTop: 2 }}>{topGoalWhy}</div>
+                <div style={{ color: 'rgba(238,228,200,0.7)', fontSize: 11, marginTop: 2 }}>0:42 clip</div>
               </div>
+            </div>
+          </V3Bubble>
 
-              {/* Session notes */}
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginBottom: 8 }}>Session Notes</div>
-              <textarea
-                value={playerNotes[selectedRow.player.id] ?? ''}
-                onChange={e => setPlayerNotes(prev => ({ ...prev, [selectedRow.player.id]: e.target.value }))}
-                placeholder={`Add notes about ${selectedRow.player.firstName}...`}
-                style={{
-                  width: '100%', minHeight: 80, border: `1px solid ${C.border}`,
-                  borderRadius: 8, padding: 12, fontSize: 14, resize: 'vertical',
-                  fontFamily: 'inherit', boxSizing: 'border-box' as const, marginBottom: 4,
-                }}
-              />
-              {playerNoteLastSaved && selectedPlayerId === selectedRow.player.id && (
-                <div style={{ fontSize: 11, color: C.muted, marginBottom: 24 }}>Last saved: {playerNoteLastSaved}</div>
-              )}
-              <div style={{ height: 24 }} />
+          <V3Bubble time="13:43">
+            <b>Three things from today:</b><br />
+            ✅ Tuesday&apos;s arrival drill paid off.<br />
+            ⚠️ Two soft concessions from the same pattern.<br />
+            🔥 Late winner from {motm?.firstName ?? 'the squad'}. Keep this rhythm going.
+          </V3Bubble>
+
+          <V3Bubble time="13:43">
+            Each player gets a personal note in the app. {notesSent} sent. See you Tuesday 19:00 ⚽
+          </V3Bubble>
+        </div>
+
+        {/* Footer message bar (decorative) */}
+        <div style={{ padding: '8px 10px', background: '#EFEAE2' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: '#fff', borderRadius: 24, padding: '8px 12px' }}>
+            <span style={{ color: '#667781' }}>😊</span>
+            <div style={{ flex: 1, color: '#667781', fontSize: 14 }}>Message</div>
+            <span style={{ color: '#667781' }}>📎</span>
+            <span style={{ color: '#667781' }}>📷</span>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/* ─────────────────── Page ─────────────────── */
+export default function CoachMatchAnalysisPage() {
+  const params = useParams<{ sessionId: string }>()
+  const router = useRouter()
+  const sessionId = params?.sessionId ?? ''
+
+  const session = useMemo(() => sessions.find(s => s.id === sessionId), [sessionId])
+
+  // Compute roster rows from real data
+  const sessionAnalyses = useMemo(() => matchAnalyses.filter(a => a.sessionId === sessionId), [sessionId])
+
+  // Highlights live in a separate top-level export, joined by sessionId.
+  const sessionHighlights = useMemo(() => highlights.filter(h => h.sessionId === sessionId), [sessionId])
+
+  // Aggregate timeline events across all highlights for the session
+  const allEvents: TLEvent[] = useMemo(
+    () => sessionHighlights
+      .map(h => ({
+        id: h.id,
+        t: h.timestampSeconds / 60, // seconds → minutes
+        type: h.eventType,
+        playerId: h.playerId,
+        isGoal: h.eventType === 'goal',
+        isWarning: false,
+      }))
+      .sort((a, b) => a.t - b.t),
+    [sessionHighlights],
+  )
+
+  // Player rows always show all players; their per-row event ticks/tags filter
+  // along with the timeline so the page reads as one coordinated filter state.
+  const buildPlayerRows = (events: TLEvent[]): PlayerRow[] => {
+    return sessionAnalyses
+      .map(a => {
+        const p = players.find(pl => pl.id === a.playerId)
+        if (!p) return null
+        const evs: TLEvent[] = events.filter(e => e.playerId === a.playerId)
+        return { player: p, analysis: a, events: evs }
+      })
+      .filter((r): r is PlayerRow => r !== null)
+      .sort((a, b) => b.analysis.compositeScore - a.analysis.compositeScore)
+  }
+  const playerRows: PlayerRow[] = useMemo(
+    () => buildPlayerRows(allEvents),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessionAnalyses, allEvents],
+  )
+
+  const totalMin = useMemo(() => {
+    if (!session) return 70
+    const [sh, sm] = session.startTime.split(':').map(Number)
+    const [eh, em] = session.endTime.split(':').map(Number)
+    return Math.max(20, (eh * 60 + em) - (sh * 60 + sm))
+  }, [session])
+
+  const [activeEventId, setActiveEventId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<FilterKey>('all')
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  const [rosterSort, setRosterSort] = useState<RosterSortKey>('score')
+  const [recapOpen, setRecapOpen] = useState(false)
+  const isMobile = useIsMobile()
+
+  // Apply the active filter to the events list
+  const filterDef = FILTER_DEFS.find(f => f.key === filter) ?? FILTER_DEFS[0]
+  const visibleEvents = useMemo(
+    () => allEvents.filter(e => filterDef.matches(e.type)),
+    [allEvents, filterDef],
+  )
+
+  // Per-row events respect the current filter so the page reads as one
+  // coordinated state (timeline + roster ticks + roster tags all filter together).
+  const visiblePlayerRows: PlayerRow[] = useMemo(() => {
+    if (filter === 'all') return playerRows
+    return playerRows.map(r => ({ ...r, events: r.events.filter(e => filterDef.matches(e.type)) }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerRows, filter])
+
+  // Apply the active roster sort on top of the filtered list.
+  const sortRows = (rows: PlayerRow[]): PlayerRow[] => {
+    const next = [...rows]
+    switch (rosterSort) {
+      case 'score':
+        return next.sort((a, b) => b.analysis.compositeScore - a.analysis.compositeScore)
+      case 'position':
+        return next.sort((a, b) => {
+          const ap = (a.player.position[0] || '').toString()
+          const bp = (b.player.position[0] || '').toString()
+          if (ap !== bp) return ap.localeCompare(bp)
+          return b.analysis.compositeScore - a.analysis.compositeScore
+        })
+      default:
+        return next
+    }
+  }
+  const sortedPlayerRows: PlayerRow[] = useMemo(
+    () => sortRows(visiblePlayerRows),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visiblePlayerRows, rosterSort],
+  )
+
+  // Detect a training-match split (any analysis has teamAssignment set).
+  // For competitive matches, render a single squad list; for training, two
+  // stacked sections with their own avg score.
+  const isTeamSplit = sessionAnalyses.some(a => a.teamAssignment === 'A' || a.teamAssignment === 'B')
+  const teamARows = useMemo(() => sortRows(visiblePlayerRows.filter(r => r.analysis.teamAssignment === 'A')),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visiblePlayerRows, rosterSort])
+  const teamBRows = useMemo(() => sortRows(visiblePlayerRows.filter(r => r.analysis.teamAssignment === 'B')),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visiblePlayerRows, rosterSort])
+  const teamAvg = (rows: PlayerRow[]): number => rows.length === 0
+    ? 0
+    : Math.round(rows.reduce((s, r) => s + r.analysis.compositeScore, 0) / rows.length)
+
+  // Default-select the most "interesting" visible event when data/filter changes.
+  // If the current selection isn't in the filtered set, fall back to the first goal,
+  // then to the first visible event.
+  useMemo(() => {
+    if (visibleEvents.length === 0) {
+      setActiveEventId(null)
+      return
+    }
+    if (activeEventId && visibleEvents.some(e => e.id === activeEventId)) return
+    const goal = visibleEvents.find(e => e.isGoal)
+    setActiveEventId((goal ?? visibleEvents[0]).id)
+  }, [visibleEvents, activeEventId])
+
+  const activeEvent = visibleEvents.find(e => e.id === activeEventId) ?? null
+  const activePlayer = activeEvent ? players.find(p => p.id === activeEvent.playerId) : undefined
+  const activeAnalysis = activeEvent ? sessionAnalyses.find(a => a.playerId === activeEvent.playerId) : undefined
+
+  // Counts per filter key for the pill labels (total set, regardless of current selection)
+  const countsByKey = useMemo(() => {
+    const out: Record<FilterKey, number> = { all: 0, goal: 0, key_pass: 0, tackle: 0, save: 0 }
+    out.all = allEvents.length
+    for (const e of allEvents) {
+      if (e.type in out) (out as Record<string, number>)[e.type]++
+    }
+    return out
+  }, [allEvents])
+
+  if (!session) {
+    return (
+      <div style={{ background: BRAND.sand, minHeight: '100vh', padding: 40, color: BRAND.indigo, fontFamily: TYPE.body }}>
+        <style dangerouslySetInnerHTML={{ __html: v3Motion }} />
+        <div style={{ fontFamily: TYPE.display, fontSize: 32 }}>Session not found</div>
+        <button onClick={() => router.back()} style={{ marginTop: 20 }}>Go back</button>
+      </div>
+    )
+  }
+
+  // Header / score strip data
+  const score = gameScores[sessionId]
+  const homeName = 'Lions U13' // placeholder — real roster name would come from rosters/squad
+  const awayName = session.opponent ?? 'Training B'
+  const dateLabel = formatDateMeta(session.date)
+  const venue = pitches.find(p => p.id === session.pitchId)?.name ?? 'Academy Pitch'
+  const homeGoals = score?.homeGoals ?? 0
+  const awayGoals = score?.awayGoals ?? 0
+
+  // Recap snapshot — squad average, MOTM, top goal, notes count.
+  const squadAverage = sessionAnalyses.length > 0
+    ? Math.round(sessionAnalyses.reduce((sum, a) => sum + a.compositeScore, 0) / sessionAnalyses.length)
+    : 0
+  const motmRow = playerRows[0] // playerRows is pre-sorted by composite desc
+  const motm = motmRow?.player
+  const motmScore = motmRow?.analysis.compositeScore ?? 0
+  const motmGoals = motmRow ? motmRow.events.filter(e => e.isGoal).length : 0
+  const motmAssists = motmRow ? motmRow.events.filter(e => e.type === 'key_pass').length : 0
+  const topGoal = allEvents.find(e => e.isGoal)
+  const topGoalPlayer = topGoal ? players.find(p => p.id === topGoal.playerId) : undefined
+
+  return (
+    <div style={{
+      width: '100%',
+      minHeight: '100vh',
+      background: BRAND.sand,
+      color: BRAND.indigo,
+      fontFamily: TYPE.body,
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      <style dangerouslySetInnerHTML={{ __html: v3Motion }} />
+
+      <V3BackRow
+        onBack={() => router.back()}
+        onShareRecap={() => setRecapOpen(true)}
+        onWatchFullMatch={() => router.push(`/coach/web/video?session=${sessionId}`)}
+      />
+
+      {isMobile ? (
+        <V3MobileReel
+          visibleEvents={visibleEvents}
+          activeEventId={activeEventId}
+          setActiveEventId={setActiveEventId}
+          homeGoals={homeGoals}
+          awayGoals={awayGoals}
+          onSelectPlayer={setSelectedPlayerId}
+          squadAnalyses={sessionAnalyses}
+        />
+      ) : (
+        <>
+          <V3ScoreStrip
+            homeName={homeName}
+            awayName={awayName}
+            homeGoals={homeGoals}
+            awayGoals={awayGoals}
+            dateLabel={dateLabel}
+            venue={venue}
+            filter={filter}
+            setFilter={setFilter}
+            countsByKey={countsByKey}
+          />
+
+          <V3MatchStats stats={gameTeamStats[sessionId]} homeName={homeName} awayName={awayName} />
+
+          <V3Timeline
+            events={visibleEvents}
+            totalMin={totalMin}
+            activeId={activeEventId}
+            onSelect={setActiveEventId}
+          />
+
+          <V3ClipPanel event={activeEvent} player={activePlayer} analysis={activeAnalysis} squad={sessionAnalyses} />
+        </>
+      )}
+
+      {/* Roster — both layouts share it; on mobile it falls below the reel */}
+      <div style={{ background: BRAND.sand, padding: isMobile ? '20px 18px 32px' : '24px 28px 32px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.22em', color: BRAND.indigoMute, fontWeight: 700 }}>
+              {isTeamSplit
+                ? `TRAINING MATCH · ${playerRows.length} PLAYERS`
+                : `SQUAD · ${playerRows.length} PLAYERS`}
+            </div>
+            <div style={{ fontFamily: TYPE.display, fontSize: isMobile ? 22 : 32, color: BRAND.indigo, marginTop: 2, letterSpacing: '-0.01em' }}>
+              {isTeamSplit ? 'Who lined up where.' : 'Who did what at a glance.'}
             </div>
           </div>
-        </>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {ROSTER_SORT_DEFS.map(({ key, label }) => {
+              const active = rosterSort === key
+              return (
+                <button
+                  key={key}
+                  onClick={() => setRosterSort(key)}
+                  className={active ? '' : 'v3-pill'}
+                  style={{
+                    background: active ? BRAND.indigo : 'transparent',
+                    color: active ? BRAND.sand : BRAND.indigo,
+                    border: `1px solid ${active ? BRAND.indigo : BRAND.line}`,
+                    padding: '6px 11px', borderRadius: 999,
+                    fontFamily: TYPE.body, fontSize: 11.5, fontWeight: active ? 600 : 500,
+                    cursor: 'pointer', transition: 'all 160ms ease',
+                  }}
+                >{label}</button>
+              )
+            })}
+          </div>
+        </div>
+
+        {isTeamSplit ? (
+          <>
+            <V3RosterSection title="Team A" rows={teamARows} avg={teamAvg(teamARows)} accent="A" isMobile={isMobile} onSelect={setSelectedPlayerId} />
+            <div style={{ height: 18 }} />
+            <V3RosterSection title="Team B" rows={teamBRows} avg={teamAvg(teamBRows)} accent="B" isMobile={isMobile} onSelect={setSelectedPlayerId} />
+          </>
+        ) : (
+          <V3RosterSection rows={sortedPlayerRows} isMobile={isMobile} onSelect={setSelectedPlayerId} />
+        )}
+      </div>
+
+      {/* Player detail panel (slide-in on desktop, takeover on mobile) */}
+      {selectedPlayerId && (() => {
+        const row = playerRows.find(r => r.player.id === selectedPlayerId)
+        if (!row) return null
+        return <V3PlayerDetail row={row} onClose={() => setSelectedPlayerId(null)} />
+      })()}
+
+      {/* WhatsApp recap modal */}
+      {recapOpen && (
+        <V3WhatsAppRecap
+          onClose={() => setRecapOpen(false)}
+          homeName={homeName}
+          awayName={awayName}
+          homeGoals={homeGoals}
+          awayGoals={awayGoals}
+          squadAverage={squadAverage}
+          motm={motm}
+          motmScore={motmScore}
+          motmGoals={motmGoals}
+          motmAssists={motmAssists}
+          topGoal={topGoal}
+          topGoalPlayer={topGoalPlayer}
+          notesSent={sessionAnalyses.length}
+        />
       )}
     </div>
   )
