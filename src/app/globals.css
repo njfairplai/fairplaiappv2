@@ -30,12 +30,8 @@
  *   1. almanac          — incumbent — sand + indigo + yellow
  *   2. cloudline        — brand     — cool light + AHOY blue
  *   3. voltage          — brand     — Phantom dark + Active blue
- *   4. stadia           — beyond    — warm off-white + ink + coral
- *   5. touchline-cards  — beyond    — sage cards on warm cream    ← review pair
- *   6. touchline-page   — beyond    — sage page background + cream cards ← review pair
- *
- * Slots 5 + 6 are a temporary review pair: ship both, pick one in the
- * visual review, then drop the loser and rename the winner to `touchline`.
+ *   4. touchline-cards  — beyond    — sage cards on warm cream
+ *   5. touchline-page   — beyond    — sage page background + cream cards
  *
  * Note on var naming: --brand-yellow is the SEMANTIC accent slot, not
  * literally yellow. In Voltage it's blue; in others it varies.
@@ -115,29 +111,6 @@
 
   /* Dark theme — invert the black-on-transparent wordmark to render white. */
   --logo-invert: invert(1);
-
-  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
-  --font-body:    "Satoshi", system-ui, sans-serif;
-  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
-}
-
-/* Stadia — beyond brand. Warm off-white + ink + coral accent. */
-[data-theme="stadia"] {
-  --brand-sand:        #F6F3EC;
-  --brand-sand-deep:   #EAE6DC;
-  --brand-sand-deeper: #DAD5C7;
-  --brand-paper:       #FFFFFF;
-  --brand-paper-hi:    #FFFFFF;
-  --brand-indigo:      #0C0C10;
-  --brand-indigo-mid:  #2A2A30;
-  --brand-indigo-soft: rgba(12, 12, 16, 0.08);
-  --brand-indigo-mute: rgba(12, 12, 16, 0.55);
-  --brand-yellow:      #EE5A36;  /* Coral as the accent slot */
-  --brand-yellow-soft: rgba(238, 90, 54, 0.18);
-  --brand-coral:       #EE5A36;
-  --brand-ink:         #000000;
-  --brand-line:        rgba(12, 12, 16, 0.10);
-  --brand-line-soft:   rgba(12, 12, 16, 0.05);
 
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body:    "Satoshi", system-ui, sans-serif;

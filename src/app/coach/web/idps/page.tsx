@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Star, Send, Download, Save, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { useCoachTheme } from '@/contexts/CoachThemeContext'
@@ -126,12 +127,13 @@ function MiniRadar({ data }: { data: Array<{ category: string; value: number; av
 export default function IDPsPage() {
   const { selectedRosterId } = useTeam()
   const { colors: themeColors } = useCoachTheme()
+  const searchParams = useSearchParams()
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Record<string, IDPDraft>>({})
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
   const [sendingId, setSendingId] = useState<string | null>(null)
 
-  // Load from localStorage
+  // Load drafts/sent from localStorage on mount.
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const d = localStorage.getItem('fairplai_idp_drafts')
@@ -140,6 +142,15 @@ export default function IDPsPage() {
       if (s) setSentIds(new Set(JSON.parse(s)))
     }
   }, [])
+
+  // Deep-link: when arriving with `?player=<id>` (from the squad pop-out's
+  // "Open IDP" CTA or the player profile's IDP postscript), open that
+  // player's editor immediately. Validate the id exists in the roster.
+  useEffect(() => {
+    const pid = searchParams?.get('player')
+    if (!pid) return
+    if (players.some(p => p.id === pid)) setSelectedPlayerId(pid)
+  }, [searchParams])
 
   const rosterPlayers = useMemo(() => {
     if (selectedRosterId === 'all') {

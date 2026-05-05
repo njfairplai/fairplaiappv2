@@ -41,15 +41,6 @@ export const THEMES: Theme[] = [
     swatches: ['#1E1E24', '#F5F6FC', '#4536F5'],
   },
   {
-    id: 'stadia',
-    name: 'Stadia',
-    tagline: 'The football monograph',
-    swatches: ['#F6F3EC', '#0C0C10', '#EE5A36'],
-  },
-  // Touchline review pair — slot 5 is split into two variants for visual
-  // comparison. After the visual review one will be dropped and the
-  // winner renamed to plain `touchline`.
-  {
     id: 'touchline-cards',
     name: 'Touchline · Cards',
     tagline: 'Sage cards on cream',

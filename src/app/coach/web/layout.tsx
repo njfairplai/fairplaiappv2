@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Sparkles, Film, Users, FileText, ChevronDown, Smartphone, BarChart3, Sun, Moon } from 'lucide-react'
+import { Sparkles, Film, Users, ChevronDown, Smartphone, BarChart3 } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { CoachThemeProvider, useCoachTheme } from '@/contexts/CoachThemeContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
@@ -33,26 +33,36 @@ const BRAND_CHROME = {
   pageBg: BRAND.sand,
 } as const
 
+// IDPs tab dropped (Slice 6.1.1) — per-player IDP lives inline on the player
+// profile (postscript section). The dedicated IDP editor at /coach/web/idps is
+// reachable via the "Open IDP" CTA on the player profile + squad pop-out.
 const tabs = [
   { href: '/coach/web', label: "Coach's Hub", icon: Sparkles, exact: true },
   { href: '/coach/web/video', label: 'Video', icon: Film },
   { href: '/coach/web/analysis', label: 'Analysis', icon: BarChart3 },
   { href: '/coach/web/squad', label: 'Squad', icon: Users },
-  { href: '/coach/web/idps', label: 'IDPs', icon: FileText },
 ]
 
 function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
-  const { mode, colors: themeColors, toggleTheme } = useCoachTheme()
+  const { mode, colors: themeColors } = useCoachTheme()
   const isMobile = useIsMobile()
 
-  // The redesigned Coach Match Analysis route opts into the brand chrome.
-  const isBrandedRoute = pathname.startsWith('/coach/web/match/')
+  // Routes that have been redesigned into the brand chrome opt in here.
+  // Slice 6.1 added /coach/web/squad (pitch-cluster squad view).
+  // Slice 6.1.1 added /coach/web/player/* (filmstrip player profile).
+  const isBrandedRoute =
+    pathname.startsWith('/coach/web/match/') ||
+    pathname === '/coach/web/squad' ||
+    pathname.startsWith('/coach/web/player/')
   const colors = isBrandedRoute ? { ...themeColors, ...BRAND_CHROME } : themeColors
-  const fontFamilyBody = isBrandedRoute ? TYPE.body : 'inherit'
-  const tabFontWeight = isBrandedRoute ? 600 : undefined
+  // Brand fonts are now the default across every coach/web route (chrome
+  // unification — Slice 6 polish), even on routes whose body still uses
+  // the legacy CoachThemeContext colours.
+  const fontFamilyBody = TYPE.body
+  const tabFontWeight = 600
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', overflowX: 'hidden', fontFamily: fontFamilyBody }}>
@@ -89,7 +99,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
                 background: isBrandedRoute ? BRAND.paper : (mode === 'light' ? '#F1F5F9' : 'rgba(255,255,255,0.06)'),
                 border: `1px solid ${isBrandedRoute ? BRAND.line : (mode === 'light' ? '#E2E8F0' : 'rgba(255,255,255,0.1)')}`,
                 color: colors.headerText, fontSize: isMobile ? 11 : 13, fontWeight: 600,
-                fontFamily: isBrandedRoute ? TYPE.body : 'inherit',
+                fontFamily: TYPE.body,
                 cursor: 'pointer', outline: 'none',
                 appearance: 'none', WebkitAppearance: 'none',
                 maxWidth: isMobile ? 110 : 'none',
@@ -104,24 +114,6 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
             </select>
             <ChevronDown size={isMobile ? 11 : 13} color={colors.textMuted} style={{ position: 'absolute', right: isMobile ? 6 : 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
           </div>
-
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            title={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: 8,
-              background: isBrandedRoute ? BRAND.paper : (mode === 'light' ? '#F1F5F9' : 'rgba(255,255,255,0.06)'),
-              border: `1px solid ${isBrandedRoute ? BRAND.line : (mode === 'light' ? '#E2E8F0' : 'rgba(255,255,255,0.1)')}`,
-              cursor: 'pointer', transition: 'all 0.15s ease', flexShrink: 0,
-            }}
-          >
-            {mode === 'light'
-              ? <Moon size={isMobile ? 14 : 16} color={isBrandedRoute ? BRAND.indigoMid : '#64748B'} />
-              : <Sun size={isMobile ? 14 : 16} color="#F59E0B" />
-            }
-          </button>
 
           {/* Switch to Mobile (icon only on mobile) */}
           <button
@@ -139,7 +131,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
               background: isBrandedRoute ? BRAND.indigoSoft : (mode === 'light' ? 'rgba(74,74,255,0.06)' : 'rgba(74,74,255,0.12)'),
               border: `1px solid ${isBrandedRoute ? 'rgba(27,21,80,0.18)' : (mode === 'light' ? 'rgba(74,74,255,0.15)' : 'rgba(74,74,255,0.25)')}`,
               cursor: 'pointer', transition: 'all 0.15s ease', flexShrink: 0,
-              fontFamily: isBrandedRoute ? TYPE.body : 'inherit',
+              fontFamily: TYPE.body,
             }}
           >
             <Smartphone size={isMobile ? 14 : 14} color={isBrandedRoute ? BRAND.indigo : '#4A4AFF'} />
@@ -156,14 +148,14 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
               <span style={{
                 fontSize: isMobile ? 11 : 13, fontWeight: 700,
                 color: isBrandedRoute ? BRAND.sand : '#4A4AFF',
-                fontFamily: isBrandedRoute ? TYPE.display : 'inherit',
+                fontFamily: TYPE.display,
               }}>CA</span>
             </div>
             {!isMobile && (
               <span style={{
                 fontSize: 13, fontWeight: 600,
                 color: colors.headerTextMuted,
-                fontFamily: isBrandedRoute ? TYPE.body : 'inherit',
+                fontFamily: TYPE.body,
               }}>Coach Ali</span>
             )}
           </div>
@@ -199,7 +191,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
                 color: isActive ? colors.tabTextActive : colors.tabText,
                 fontSize: isMobile ? 12 : (isBrandedRoute ? 12.5 : 14),
                 fontWeight: isActive ? (isBrandedRoute ? 700 : 700) : (tabFontWeight ?? 500),
-                fontFamily: isBrandedRoute ? TYPE.body : 'inherit',
+                fontFamily: TYPE.body,
                 letterSpacing: isBrandedRoute ? '0.06em' : 'normal',
                 textTransform: isBrandedRoute ? ('uppercase' as const) : ('none' as const),
                 borderBottom: isActive ? `3px solid ${colors.tabIndicator}` : '3px solid transparent',

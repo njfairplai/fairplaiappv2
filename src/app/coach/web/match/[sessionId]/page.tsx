@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { sessions, players, matchAnalyses, highlights, pitches } from '@/lib/mockData'
 import type { MatchAnalysis, Player, Highlight } from '@/lib/types'
 import { BRAND, TYPE, COLORS } from '@/lib/constants'
+import { getKeyStats } from '@/lib/squad-position-stats'
 
 const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
 
@@ -670,47 +671,8 @@ function V3ClipPanel({ event, player, analysis, squad }: {
 /* ─────────────────── Roster row ─────────────────── */
 type PlayerRow = { player: Player; analysis: MatchAnalysis; events: TLEvent[] }
 
-/** Position grouping mirrors the legacy match page so the key-stat picks line
- *  up with what coaches expect from each role. */
-type PositionGroup = 'GK' | 'DEF' | 'MID' | 'FWD'
-
-function getPositionGroup(pos: string): PositionGroup {
-  if (pos === 'GK') return 'GK'
-  if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) return 'DEF'
-  if (['ST', 'CF', 'LW', 'RW'].includes(pos)) return 'FWD'
-  return 'MID'
-}
-
-/** Position-aware key stats. Each cell self-labels (mono eyebrow + value) so
- *  the column is honest about what it's showing for this player. Counts are
- *  derived from per-category scores (mock data) until real per-event totals
- *  land from the AI pipeline. */
-function getKeyStats(pos: string, a: MatchAnalysis): [{ label: string; value: number; suffix: string }, { label: string; value: number; suffix: string }] {
-  const group = getPositionGroup(pos)
-  if (group === 'GK') {
-    return [
-      { label: 'SAVES', value: Math.round(a.defendingScore / 10), suffix: '' },
-      { label: 'PASS', value: a.passCompletion, suffix: '%' },
-    ]
-  }
-  if (group === 'DEF') {
-    return [
-      { label: 'TACKLES', value: Math.round(a.defendingScore / 10), suffix: '' },
-      { label: 'INTS', value: Math.round(a.positionalScore / 8), suffix: '' },
-    ]
-  }
-  if (group === 'FWD') {
-    return [
-      { label: 'GOALS', value: Math.max(0, Math.round((a.dribblingScore - 50) / 30)), suffix: '' },
-      { label: 'DRIB', value: a.dribbleSuccess, suffix: '%' },
-    ]
-  }
-  // MID
-  return [
-    { label: 'KEY PASS', value: Math.round(a.passingScore / 20), suffix: '' },
-    { label: 'PASS', value: a.passCompletion, suffix: '%' },
-  ]
-}
+// Position grouping + key-stat picks live in `src/lib/squad-position-stats.ts`
+// so the squad pop-out and any future surface read the same mapping.
 
 const ROSTER_GRID_DESKTOP = '40px minmax(160px, 1fr) 60px 80px 100px 100px 24px'
 

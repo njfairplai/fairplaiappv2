@@ -252,6 +252,36 @@ export const sessions: Session[] = [
   // Analysed training sessions
   { id: 'session_021', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-27', startTime: '17:00', endTime: '19:00', type: 'drill' as const, status: 'analysed' as const, opponent: undefined, competition: undefined, creditsConsumed: 30, programId: 'program_001', participatingPlayerIds: ['player_001', 'player_002', 'player_003', 'player_004', 'player_005', 'player_006', 'player_007', 'player_008'], aiMatchConfidence: 85, autoTriggeredAnalysis: true },
   { id: 'session_022', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-03-26', startTime: '17:00', endTime: '18:30', type: 'drill' as const, status: 'analysed' as const, opponent: undefined, competition: undefined, creditsConsumed: 28, programId: 'program_002', participatingPlayerIds: ['player_009', 'player_010', 'player_011', 'player_012', 'player_013', 'player_014', 'player_015', 'player_016'], aiMatchConfidence: 82, autoTriggeredAnalysis: true },
+
+  // ─── BACKFILL: extra match sessions so each player has ~9–10 in their filmstrip
+  // (Slice 6.1.2). Earlier season for roster_001 (Dec → mid-Jan) + roster_002 (Jan → Mar).
+  { id: 'session_023', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2025-12-13', startTime: '15:00', endTime: '16:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Jazira Academy', competition: 'UAE Youth League', creditsConsumed: 36, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 90, autoTriggeredAnalysis: true },
+  { id: 'session_024', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2025-12-20', startTime: '15:00', endTime: '16:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Wahda Youth', competition: 'Friendly', creditsConsumed: 32, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 84, autoTriggeredAnalysis: true },
+  { id: 'session_025', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-10', startTime: '15:00', endTime: '16:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Bani Yas SC', competition: 'UAE Youth League', creditsConsumed: 38, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 86, autoTriggeredAnalysis: true },
+  { id: 'session_026', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-17', startTime: '15:00', endTime: '16:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Khor Fakkan', competition: 'UAE Youth League', creditsConsumed: 36, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 89, autoTriggeredAnalysis: true },
+  // training_match sessions — these DO get scored + clipped, just visually
+  // marked differently in the filmstrip. (Training matches outnumber comp ~2:1.)
+  { id: 'session_027', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-12', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 70, autoTriggeredAnalysis: true },
+  { id: 'session_037', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2025-12-17', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 72, autoTriggeredAnalysis: true },
+  { id: 'session_038', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2025-12-24', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 71, autoTriggeredAnalysis: true },
+  { id: 'session_039', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-14', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 73, autoTriggeredAnalysis: true },
+  { id: 'session_040', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-21', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 74, autoTriggeredAnalysis: true },
+  { id: 'session_041', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-28', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 70, autoTriggeredAnalysis: true },
+  { id: 'session_042', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-05', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 75, autoTriggeredAnalysis: true },
+  { id: 'session_043', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-19', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 73, autoTriggeredAnalysis: true },
+  { id: 'session_044', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-26', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 74, autoTriggeredAnalysis: true },
+
+  // roster_002 — backfill 8 match sessions (currently only session_010 has analyses)
+  { id: 'session_028', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2025-12-14', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Bani Yas U14', competition: 'UAE Youth League', creditsConsumed: 33, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 86, autoTriggeredAnalysis: true },
+  { id: 'session_029', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2025-12-21', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Wasl U14', competition: 'UAE Youth League', creditsConsumed: 35, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 88, autoTriggeredAnalysis: true },
+  { id: 'session_030', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-01-11', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Sharjah U14', competition: 'Friendly', creditsConsumed: 30, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 82, autoTriggeredAnalysis: true },
+  { id: 'session_031', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-01-18', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Wahda U14', competition: 'Cup', creditsConsumed: 38, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 91, autoTriggeredAnalysis: true },
+  { id: 'session_032', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-01-25', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Ain U14', competition: 'UAE Youth League', creditsConsumed: 36, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 85, autoTriggeredAnalysis: true },
+  { id: 'session_033', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-01', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Dubai SC U14', competition: 'UAE Youth League', creditsConsumed: 37, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 87, autoTriggeredAnalysis: true },
+  { id: 'session_034', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-08', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Jazira U14', competition: 'UAE Youth League', creditsConsumed: 36, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 84, autoTriggeredAnalysis: true },
+  { id: 'session_035', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-03-08', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Bani Yas U14 (away)', competition: 'Cup', creditsConsumed: 38, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 89, autoTriggeredAnalysis: true },
+  // training_match for roster_002 — no analyses
+  { id: 'session_036', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-13', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 68, autoTriggeredAnalysis: false },
 ]
 
 // ─── MATCH ANALYSIS (Kiyan Makkawi — across multiple matches) ────
@@ -289,6 +319,110 @@ export const matchAnalyses: MatchAnalysis[] = [
   { id: 'analysis_024', sessionId: 'session_022', playerId: 'player_014', compositeScore: 69, physicalScore: 56, positionalScore: 80, passingScore: 58, dribblingScore: 32, controlScore: 62, defendingScore: 86, distanceCovered: 3.0, topSpeed: 17.8, sprintCount: 2, passCompletion: 70, dribbleSuccess: 28, highlights: [], teamAssignment: 'A', minutesPlayed: 90 },
   { id: 'analysis_025', sessionId: 'session_022', playerId: 'player_015', compositeScore: 72, physicalScore: 76, positionalScore: 78, passingScore: 74, dribblingScore: 55, controlScore: 68, defendingScore: 82, distanceCovered: 6.6, topSpeed: 25.8, sprintCount: 10, passCompletion: 76, dribbleSuccess: 48, highlights: [], teamAssignment: 'B', minutesPlayed: 90 },
   { id: 'analysis_026', sessionId: 'session_022', playerId: 'player_016', compositeScore: 70, physicalScore: 78, positionalScore: 66, passingScore: 64, dribblingScore: 76, controlScore: 68, defendingScore: 48, distanceCovered: 7.0, topSpeed: 27.5, sprintCount: 14, passCompletion: 60, dribbleSuccess: 70, highlights: [], teamAssignment: 'B', minutesPlayed: 90 },
+
+  // ─── BACKFILL: per-player analyses for the new match sessions + the existing
+  // sessions where coverage was sparse (so the player profile filmstrip renders
+  // ~9–10 frames per player). Generated programmatically so the file stays
+  // readable. Training_match sessions intentionally excluded — those days
+  // surface as "TRAINING" frames with no score. (Slice 6.1.2.)
+  ...(function buildBackfillAnalyses(): MatchAnalysis[] {
+    // Player profile: which roster they belong to + a base composite score
+    // anchored to squadScores (or sensible default for roster_002 which lacks
+    // squadScores entries today).
+    const profile: Record<string, { base: number; pos: 'GK' | 'DEF' | 'MID' | 'FWD' }> = {
+      player_001: { base: 76, pos: 'MID' },
+      player_002: { base: 72, pos: 'FWD' },
+      player_003: { base: 73, pos: 'DEF' },
+      player_004: { base: 75, pos: 'FWD' },
+      player_005: { base: 68, pos: 'GK'  },
+      player_006: { base: 67, pos: 'DEF' },
+      player_007: { base: 78, pos: 'MID' },
+      player_008: { base: 70, pos: 'MID' },
+      player_009: { base: 74, pos: 'FWD' },
+      player_010: { base: 71, pos: 'DEF' },
+      player_011: { base: 73, pos: 'MID' },
+      player_012: { base: 67, pos: 'DEF' },
+      player_013: { base: 75, pos: 'FWD' },
+      player_014: { base: 69, pos: 'GK'  },
+      player_015: { base: 70, pos: 'DEF' },
+      player_016: { base: 72, pos: 'FWD' },
+    }
+    // (sessionId → list of players who need analyses backfilled for it).
+    // For existing sessions where some players are missing, list only the
+    // missing ones; for new sessions, list the full roster.
+    const r1 = ['player_001', 'player_002', 'player_003', 'player_004', 'player_005', 'player_006', 'player_007', 'player_008']
+    const r2 = ['player_009', 'player_010', 'player_011', 'player_012', 'player_013', 'player_014', 'player_015', 'player_016']
+    const sessionPlayerMap: Record<string, string[]> = {
+      // New roster_001 matches (session_023..026)
+      session_023: r1, session_024: r1, session_025: r1, session_026: r1,
+      // Existing roster_001 match sessions where coverage was sparse
+      session_005: ['player_002', 'player_003', 'player_004', 'player_005', 'player_006', 'player_007', 'player_008'],
+      session_006: ['player_002', 'player_003', 'player_004', 'player_005', 'player_006', 'player_007', 'player_008'],
+      session_008: r1,
+      session_013: r1,
+      session_014: r1,
+      // Training matches for roster_001 (session_027 + 037..044) — DO get scored
+      session_027: r1, session_037: r1, session_038: r1, session_039: r1,
+      session_040: r1, session_041: r1, session_042: r1, session_043: r1, session_044: r1,
+      // New roster_002 matches (session_028..035)
+      session_028: r2, session_029: r2, session_030: r2,
+      session_031: r2, session_032: r2, session_033: r2,
+      session_034: r2, session_035: r2,
+      // Existing roster_002 match — backfill missing players
+      session_010: r2,
+      // Training match for roster_002
+      session_036: r2,
+    }
+
+    // Per-session deterministic variance — keep it gentle (-5..+8) so we get
+    // a believable spread with occasional MOTM and occasional poor form.
+    const variance = (sId: string, pid: string): number => {
+      const seed = (sId.charCodeAt(sId.length - 1) * 7 + pid.charCodeAt(pid.length - 1) * 13) % 14
+      return seed - 5 // range -5..+8
+    }
+
+    let counter = 100
+    const out: MatchAnalysis[] = []
+    for (const [sId, pids] of Object.entries(sessionPlayerMap)) {
+      for (const pid of pids) {
+        const prof = profile[pid]
+        if (!prof) continue
+        const v = variance(sId, pid)
+        const composite = Math.max(40, Math.min(95, prof.base + v))
+        const phys = Math.max(40, Math.min(95, composite + (prof.pos === 'GK' ? -15 : v)))
+        const pos = Math.max(40, Math.min(95, composite + (prof.pos === 'DEF' ? +5 : 0)))
+        const pass = Math.max(40, Math.min(95, composite + (prof.pos === 'MID' ? +4 : -2)))
+        const drib = Math.max(40, Math.min(95, composite + (prof.pos === 'FWD' ? +6 : prof.pos === 'GK' ? -25 : 0)))
+        const ctrl = Math.max(40, Math.min(95, composite + (prof.pos === 'MID' ? +2 : 0)))
+        const def = Math.max(40, Math.min(95, composite + (prof.pos === 'DEF' || prof.pos === 'GK' ? +10 : -8)))
+        const dist = prof.pos === 'GK' ? 3.2 + (v % 5) * 0.1 : 6.0 + ((composite - 60) / 100) * 1.5
+        const speed = prof.pos === 'GK' ? 18 + (v % 4) : 24 + ((composite - 60) / 100) * 5
+        const sprints = prof.pos === 'GK' ? Math.max(0, 2 + v) : Math.round(8 + (composite - 60) / 6)
+        const passComp = Math.max(50, Math.min(92, 65 + Math.round((pass - 60) / 2)))
+        const dribSucc = Math.max(20, Math.min(85, 50 + Math.round((drib - 60) / 2)))
+        out.push({
+          id: `analysis_${counter++}`,
+          sessionId: sId,
+          playerId: pid,
+          compositeScore: composite,
+          physicalScore: phys,
+          positionalScore: pos,
+          passingScore: pass,
+          dribblingScore: drib,
+          controlScore: ctrl,
+          defendingScore: def,
+          distanceCovered: Math.round(dist * 10) / 10,
+          topSpeed: Math.round(speed * 10) / 10,
+          sprintCount: sprints,
+          passCompletion: passComp,
+          dribbleSuccess: dribSucc,
+          highlights: [],
+          minutesPlayed: 70 + ((counter % 4) * 5),
+        })
+      }
+    }
+    return out
+  })(),
 ]
 
 // ─── HIGHLIGHTS (with privacy + squad + aiConfidence) ─────────

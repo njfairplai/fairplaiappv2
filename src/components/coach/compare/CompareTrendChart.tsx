@@ -1,0 +1,179 @@
+'use client'
+
+import type { ProgressionFrame } from '@/lib/player-progression'
+
+export interface CompareTrendRow {
+  id: string
+  label: string
+  color: string
+  progression: ProgressionFrame[]
+}
+
+interface CompareTrendChartProps {
+  rows: CompareTrendRow[]
+}
+
+/**
+ * Tiny multi-series line chart of composite scores across each player's
+ * season. X-axis is per-player matchday index (we don't try to align dates
+ * across rosters), y-axis is the 0-100 composite. Lines share the same chart
+ * so the coach can read trajectory side-by-side.
+ */
+export function CompareTrendChart({ rows }: CompareTrendChartProps) {
+  const w = 720
+  const h = 220
+  const padL = 36
+  const padR = 16
+  const padT = 16
+  const padB = 28
+  const innerW = w - padL - padR
+  const innerH = h - padT - padB
+
+  const maxLen = Math.max(1, ...rows.map(r => r.progression.length))
+
+  const xFor = (i: number) =>
+    padL + (maxLen <= 1 ? innerW / 2 : (i / (maxLen - 1)) * innerW)
+  const yFor = (score: number) =>
+    padT + innerH - (Math.max(0, Math.min(100, score)) / 100) * innerH
+
+  return (
+    <div
+      style={{
+        background: 'var(--brand-paper)',
+        border: '1px solid var(--brand-line)',
+        borderRadius: 12,
+        padding: '20px 22px',
+        display: 'grid',
+        gap: 14,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10.5,
+            letterSpacing: '0.22em',
+            color: 'var(--brand-indigo-mute)',
+            fontWeight: 700,
+            borderTop: '2px solid var(--brand-indigo)',
+            paddingTop: 8,
+          }}
+        >
+          SEASON TRAJECTORY · COMPOSITE
+        </div>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            letterSpacing: '0.18em',
+            color: 'var(--brand-indigo-mute)',
+            fontWeight: 600,
+          }}
+        >
+          MATCHDAY 1 . LATEST
+        </span>
+      </div>
+
+      <div style={{ width: '100%', overflowX: 'auto' }}>
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden style={{ maxWidth: '100%' }}>
+          {/* Y gridlines at 25/50/75 */}
+          {[25, 50, 75].map(g => (
+            <g key={g}>
+              <line
+                x1={padL}
+                x2={w - padR}
+                y1={yFor(g)}
+                y2={yFor(g)}
+                stroke="var(--brand-line)"
+                strokeDasharray="2 4"
+              />
+              <text
+                x={padL - 6}
+                y={yFor(g) + 3}
+                textAnchor="end"
+                fontFamily="var(--font-mono)"
+                fontSize={9}
+                fill="var(--brand-indigo-mute)"
+              >
+                {g}
+              </text>
+            </g>
+          ))}
+          {/* Axis baseline */}
+          <line
+            x1={padL}
+            x2={w - padR}
+            y1={yFor(0)}
+            y2={yFor(0)}
+            stroke="var(--brand-indigo)"
+            strokeWidth={1.5}
+          />
+          {/* Each player's line */}
+          {rows.map(r => {
+            if (r.progression.length === 0) return null
+            const pts = r.progression.map((f, i) => `${xFor(i)},${yFor(f.score)}`).join(' ')
+            return (
+              <g key={r.id}>
+                <polyline
+                  points={pts}
+                  fill="none"
+                  stroke={r.color}
+                  strokeWidth={2.4}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+                {r.progression.map((f, i) => (
+                  <circle
+                    key={f.md}
+                    cx={xFor(i)}
+                    cy={yFor(f.score)}
+                    r={3}
+                    fill={r.color}
+                    stroke="var(--brand-sand)"
+                    strokeWidth={1}
+                  />
+                ))}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* Legend */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 18,
+          flexWrap: 'wrap',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10.5,
+          letterSpacing: '0.18em',
+          color: 'var(--brand-indigo-mute)',
+          fontWeight: 700,
+        }}
+      >
+        {rows.map(r => (
+          <span key={r.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                width: 14,
+                height: 2,
+                background: r.color,
+                display: 'inline-block',
+              }}
+            />
+            {r.label.toUpperCase()} · {r.progression.length} MATCHES
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
