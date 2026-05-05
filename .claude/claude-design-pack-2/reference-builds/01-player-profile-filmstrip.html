@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Fairplai — Player Profile v2 · Filmstrip Refined</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  html,body { margin:0; padding:0; background:#f0eee9; font-family: Inter, system-ui, sans-serif; }
+  *, *::before, *::after { box-sizing: border-box; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="player-shared.jsx"></script>
+<script type="text/babel" src="direction-c-v2-refined.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { PB, PT, PLAYER,
+  DirectionCv2_DesktopTop, DirectionCv2_DesktopScrolled,
+  DirectionCv2_Mobile, DirectionCv2_ShareCard,
+  DirectionCv2_Case9, DirectionCv2_Case15, DirectionCv2_Case30,
+} = window;
+
+function Mobile({ children }) {
+  return (
+    <IOSDevice dark={false}>
+      <div style={{ width: '100%', height: '100%', background: PB.sand }}>
+        {children}
+      </div>
+    </IOSDevice>
+  );
+}
+
+function Desktop({ children, w = 1240, h = 820 }) {
+  return (
+    <div style={{ width: w, height: h, background: '#fff', overflow: 'hidden', boxShadow: '0 2px 0 rgba(0,0,0,0.06)' }}>
+      <div style={{ height: 32, background: '#e9e6df', display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        {['#fc625d', '#fdbc40', '#34c749'].map((c, i) => <div key={i} style={{ width: 11, height: 11, borderRadius: '50%', background: c }} />)}
+        <div style={{ flex: 1 }} />
+        <div style={{ fontFamily: PT.mono, fontSize: 10, color: 'rgba(27,21,80,0.5)', letterSpacing: '0.18em' }}>fairpl.ai/players/leo-pereira</div>
+        <div style={{ flex: 1 }} />
+      </div>
+      <div style={{ width: '100%', height: h - 32, overflow: 'auto', background: PB.sand }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Brief() {
+  return (
+    <div style={{ width: 820, padding: '36px 40px', background: '#fff', color: PB.indigo, fontFamily: PT.body, border: `1px solid ${PB.indigoLine}` }}>
+      <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: '0.22em', color: PB.indigo, fontWeight: 700 }}>v2 · REFINEMENT PASS · DIRECTION C LOCKED</div>
+      <div style={{ fontFamily: PT.display, fontSize: 56, lineHeight: 0.92, letterSpacing: '-0.02em', marginTop: 12 }}>
+        Less is more. <span style={{ background: PB.yellow }}>Latest match first.</span>
+      </div>
+      <div style={{ fontSize: 14.5, lineHeight: 1.6, color: PB.indigoMid, marginTop: 18, maxWidth: 700 }}>
+        Same structural concept as Direction C — time as the axis, filmstrip with playhead, scope = zoom level. Tightened against the v1 critique: lead with today's match, encode meaning visually instead of with copy, drop sections that weren't pulling weight.
+      </div>
+
+      <div style={{ marginTop: 22, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {[
+          ['+ Latest-match hero', 'Big composite arc, opponent, six stats, coach note — directly under identity. Filmstrip is now context.', PB.green],
+          ['+ Visual encoding', 'MOTM = gold border + ★ in sprocket. Poor = coral border. DNP = greyed, striped, stamped. Training = dashed.', PB.green],
+          ['+ Paged filmstrip', '7 frames at a time, chevrons show prev/next windows. Mini-map dots show the whole season.', PB.green],
+          ['+ Coach note for playhead', 'Real text per match. Empty state when missing. Replaces voice-memo fiction.', PB.green],
+          ['+ Mobile sticky scope', 'Strip pins after identity scrolls out — jersey, name, scope pill, back arrow.', PB.green],
+          ['+ Make-a-card CTA', 'Top-right of identity. Square / Story / Card formats. PNG + WhatsApp.', PB.green],
+          ['– Heatmap', "Dropped from profile. It's a session-level concern; lives on match analysis.", PB.coral],
+          ['– Voice-memo card', 'Was design fiction. Replaced with real coach text notes.', PB.coral],
+          ['– Trajectory four-lines', 'Duplicated the strip. Replaced with one-row season numbers strip + trend marker.', PB.coral],
+          ['– Design copy eyebrows', "All eyebrows now functional ('SEASON FILMSTRIP', 'THE PLAN'). No instructional or evocative copy.", PB.coral],
+        ].map(([k, v, c]) => (
+          <div key={k} style={{ background: PB.paper, border: `1px solid ${PB.indigoLine}`, borderRadius: 8, padding: '12px 14px' }}>
+            <div style={{ fontFamily: PT.mono, fontSize: 10, letterSpacing: '0.18em', color: c, fontWeight: 700 }}>{k.toUpperCase()}</div>
+            <div style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.5 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 22, padding: '14px 16px', background: PB.sand, borderRadius: 8, fontSize: 12.5, lineHeight: 1.55 }}>
+        <strong style={{ color: PB.indigo }}>Frame-to-frame compare</strong> deferred to v3 — the page now does a lot, and a second-frame mode would compete with the playhead detail and IDP for footroom. Notes captured.
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="brief" title="What changed" subtitle="v2 refinement pass. Less is more.">
+        <DCArtboard id="brief" label="Changelog" width={820} height={780}>
+          <Brief />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="primary" title="Primary screens" subtitle="Desktop top, desktop scrolled, mobile.">
+        <DCArtboard id="desktop-top" label="Desktop · top (latest-match-first)" width={1240} height={1100}>
+          <Desktop h={1100}><DirectionCv2_DesktopTop /></Desktop>
+        </DCArtboard>
+        <DCArtboard id="desktop-scroll" label="Desktop · scrolled (IDP postscript)" width={1240} height={1100}>
+          <Desktop h={1100}><DirectionCv2_DesktopScrolled /></Desktop>
+        </DCArtboard>
+        <DCArtboard id="mobile" label="Mobile · sticky scope + Show all" width={420} height={874}>
+          <Mobile><DirectionCv2_Mobile /></Mobile>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="cases" title="Filmstrip pagination — three season lengths" subtitle="Same shape, three scales. 9, 15, 30.">
+        <DCArtboard id="case-9" label="9-match season" width={1240} height={780}>
+          <Desktop h={780}><DirectionCv2_Case9 /></Desktop>
+        </DCArtboard>
+        <DCArtboard id="case-15" label="15-match season · paginated middle window" width={1240} height={780}>
+          <Desktop h={780}><DirectionCv2_Case15 /></Desktop>
+        </DCArtboard>
+        <DCArtboard id="case-30" label="30-match season · long-season case" width={1240} height={780}>
+          <Desktop h={780}><DirectionCv2_Case30 /></Desktop>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="bonus" title="Bonus · Share-card export" subtitle="Coaches will screenshot — build the screenshot for them.">
+        <DCArtboard id="share" label="Make a card · Square / Story / Card" width={1240} height={820}>
+          <Desktop h={820}><DirectionCv2_ShareCard /></Desktop>
+        </DCArtboard>
+      </DCSection>
+
+      <DCPostIt top={140} left={40} rotate={-3}>
+        Frame chrome alone tells you: result, MOTM, poor form, training, DNP. Zero text labels.
+      </DCPostIt>
+      <DCPostIt top={1280} right={40} rotate={2}>
+        Heatmap, voice memos, four-lines trajectory — all dropped. Page ends on the IDP.
+      </DCPostIt>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

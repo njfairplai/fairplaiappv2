@@ -1,0 +1,399 @@
+@import "tailwindcss";
+
+/* Note: Brand v3 fonts (Satoshi + Clash Display via Fontshare, Fragment Mono via Google Fonts)
+   are loaded as <link> tags in src/app/layout.tsx because Tailwind 4's PostCSS pipeline
+   intercepts CSS @import rules at build time. */
+
+/*
+ * ── Brand theme system (Path B from the redesign rollout plan) ──
+ *
+ * Single source of truth for colour tokens lives here as CSS variables on
+ * :root. Tailwind utilities (`bg-brand-sand`, `text-brand-indigo`, etc.)
+ * map to these vars via @theme. The TS `BRAND` const in src/lib/constants.ts
+ * also reads from these vars — so inline-styled components stay in sync
+ * with the var definitions.
+ *
+ * Theme switching at runtime: set `data-theme="<name>"` on <html> (or any
+ * wrapper). Each [data-theme="..."] block below overrides the --brand-*
+ * vars; everything that references them updates instantly without
+ * recompiling Tailwind.
+ *
+ * To add a new palette: copy the :root values, paste into a new
+ * [data-theme="name"] block, change the colour values. Done.
+ */
+/*
+ * Palette directions for the user-testing flow (Slice 4.5).
+ * All palettes share the same type system (Clash Display + Satoshi +
+ * Fragment Mono) so the test isolates colour as the only variable.
+ * Switch via `data-theme="<id>"` on any wrapper element.
+ *
+ *   1. almanac          — incumbent — sand + indigo + yellow
+ *   2. cloudline        — brand     — cool light + AHOY blue
+ *   3. voltage          — brand     — Phantom dark + Active blue
+ *   4. touchline-cards  — beyond    — sage cards on warm cream
+ *   5. touchline-page   — beyond    — sage page background + cream cards
+ *
+ * Note on var naming: --brand-yellow is the SEMANTIC accent slot, not
+ * literally yellow. In Voltage it's blue; in others it varies.
+ * Renaming everywhere is a much larger refactor — for now the names are
+ * legacy semantic anchors that just hold whatever colour the palette puts
+ * there.
+ */
+
+:root,
+[data-theme="almanac"] {
+  /* Almanac — incumbent. Sand-first, indigo structure, yellow accent. */
+  --brand-sand:        #EEE4C8;  /* surface */
+  --brand-sand-deep:   #E0D2A8;
+  --brand-sand-deeper: #D4C290;
+  --brand-paper:       #F8F2DE;  /* raised card */
+  --brand-paper-hi:    #FBF6E6;
+  --brand-indigo:      #1B1550;  /* structure / text */
+  --brand-indigo-mid:  #2E2674;
+  --brand-indigo-soft: rgba(27, 21, 80, 0.10);
+  --brand-indigo-mute: rgba(27, 21, 80, 0.55);
+  --brand-yellow:      #FCD718;  /* accent */
+  --brand-yellow-soft: rgba(252, 215, 24, 0.18);
+  --brand-coral:       #EB4D6D;
+  --brand-ink:         #0B0828;
+  --brand-line:        rgba(27, 21, 80, 0.12);
+  --brand-line-soft:   rgba(27, 21, 80, 0.06);
+
+  /* Cloud — third surface used for training-match frames in the filmstrip,
+     so they read as a distinct kind of card (not a faded sand match, not a
+     selected indigo match). Indigo-tinted cool gray that belongs to the
+     palette family without competing with sand or indigo. */
+  --brand-cloud:       #C7CADC;
+  --brand-cloud-deep:  #A9B0C5;
+
+  /* Logo inversion: black wordmark renders as-is on light themes. Dark
+     themes (e.g. Voltage) override to invert(1) to render it white. */
+  --logo-invert: none;
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* Cloudline — brand-anchored. Cool light surface, AHOY Blue lead. */
+[data-theme="cloudline"] {
+  --brand-sand:        #EDEFF7;
+  --brand-sand-deep:   #DDE0EC;
+  --brand-sand-deeper: #CED2E2;
+  --brand-paper:       #F5F6FC;
+  --brand-paper-hi:    #FFFFFF;
+  --brand-indigo:      #1B1650;
+  --brand-indigo-mid:  #2B2689;
+  --brand-indigo-soft: rgba(27, 22, 80, 0.10);
+  --brand-indigo-mute: rgba(27, 22, 80, 0.55);
+  --brand-yellow:      #4A4AFF;  /* AHOY Blue as the accent slot */
+  --brand-yellow-soft: rgba(74, 74, 255, 0.18);
+  --brand-coral:       #757FFF;
+  --brand-ink:         #0E0936;
+  --brand-line:        #D3D6E0;
+  --brand-line-soft:   rgba(27, 22, 80, 0.06);
+
+  /* Cloud — training-match frame body (see Almanac for rationale). */
+  --brand-cloud:       #BFC3D8;
+  --brand-cloud-deep:  #9DA4BD;
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* Voltage — brand-anchored, DARK. Phantom + Active Blue + Periwinkle. */
+[data-theme="voltage"] {
+  --brand-sand:        #1E1E24;
+  --brand-sand-deep:   #18181D;
+  --brand-sand-deeper: #000000;
+  --brand-paper:       #000000;
+  --brand-paper-hi:    #2A2A30;
+  --brand-indigo:      #F5F6FC;
+  --brand-indigo-mid:  #C2CEFF;
+  --brand-indigo-soft: rgba(245, 246, 252, 0.10);
+  --brand-indigo-mute: rgba(245, 246, 252, 0.55);
+  --brand-yellow:      #4536F5;  /* Active Blue as the accent slot */
+  --brand-yellow-soft: rgba(69, 54, 245, 0.20);
+  --brand-coral:       #C2CEFF;
+  --brand-ink:         #FFFFFF;
+  --brand-line:        #40424D;
+  --brand-line-soft:   rgba(245, 246, 252, 0.06);
+
+  /* Cloud — on dark theme, a slightly raised gray-blue so training frames
+     still read as a distinct surface against the near-black sand. */
+  --brand-cloud:       #303440;
+  --brand-cloud-deep:  #4A5063;
+
+  /* Dark theme — invert the black-on-transparent wordmark to render white. */
+  --logo-invert: invert(1);
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* Touchline · Cards — beyond brand. Sage-tinted cards on warm cream. */
+[data-theme="touchline-cards"] {
+  --brand-sand:        #F1EFE4;  /* page base — warm cream */
+  --brand-sand-deep:   #E2DFCE;
+  --brand-sand-deeper: #C9C5AE;
+  --brand-paper:       #DCE8D4;  /* sage-tinted card surface (the move) */
+  --brand-paper-hi:    #ECF2E5;  /* lighter sage for raised/hover */
+  --brand-indigo:      #1E3527;  /* deep pitch-green for text/structure */
+  --brand-indigo-mid:  #6FA77B;  /* sage for secondary chips/sub-headers */
+  --brand-indigo-soft: rgba(30, 53, 39, 0.10);
+  --brand-indigo-mute: rgba(30, 53, 39, 0.55);
+  --brand-yellow:      #4F8C5A;  /* mid-sage as the accent (CTAs, active) */
+  --brand-yellow-soft: rgba(79, 140, 90, 0.18);
+  --brand-coral:       #C8482D;  /* terracotta retained for warnings */
+  --brand-ink:         #0E1A12;
+  --brand-line:        #C9D6BE;
+  --brand-line-soft:   rgba(30, 53, 39, 0.06);
+
+  /* Cloud — sage-leaning gray for training frames. */
+  --brand-cloud:       #C2CFB7;
+  --brand-cloud-deep:  #9CB18E;
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* Touchline · Page — beyond brand. Sage page background, cream cards float on top. */
+[data-theme="touchline-page"] {
+  --brand-sand:        #C8DCC8;  /* page base — sage ground */
+  --brand-sand-deep:   #B5CDB6;
+  --brand-sand-deeper: #9CBAA0;
+  --brand-paper:       #F4F1E4;  /* warm cream cards on sage */
+  --brand-paper-hi:    #FFFFFF;
+  --brand-indigo:      #1E3527;  /* deep pitch-green text */
+  --brand-indigo-mid:  #2F6B47;  /* medium green for sub-structure */
+  --brand-indigo-soft: rgba(30, 53, 39, 0.10);
+  --brand-indigo-mute: rgba(30, 53, 39, 0.55);
+  --brand-yellow:      #2F6B47;  /* deeper green CTAs to read on sage */
+  --brand-yellow-soft: rgba(47, 107, 71, 0.18);
+  --brand-coral:       #C8482D;
+  --brand-ink:         #0E1A12;
+  --brand-line:        #A8C2A8;
+  --brand-line-soft:   rgba(30, 53, 39, 0.06);
+
+  /* Cloud — sage page → muted moss for training frames. */
+  --brand-cloud:       #AFC8AF;
+  --brand-cloud-deep:  #87A38A;
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
+@theme {
+  --font-inter: 'Inter', sans-serif;
+  /* Legacy font tokens aliased to the runtime theme-switchable vars below.
+     Existing components that use `var(--font-clash)` / Tailwind `font-clash`
+     keep working AND now follow the active palette's typography. */
+  --font-satoshi: var(--font-body);
+  --font-clash: var(--font-display);
+  --font-fragment: var(--font-mono);
+  /* legacy navy kept for back-compat; brand-aligned navy lives in BRAND.indigo (#1B1550) */
+  --color-deep-indigo: #1B1550;
+  --color-electric-navy: #282689;
+  --color-ahoy-blue: #4A4AFF;
+  --color-active-blue: #4536F5;
+  --color-periwinkle: #757FFF;
+  --color-fp-white: #F5F6FC;
+  --color-cloud: #EDEFF7;
+  --color-phantom: #1E1E24;
+  --color-arsenic: #40424D;
+  --color-graphite: #6E7180;
+  /* ── Brand v3 (Direction C) tokens — point at the runtime CSS vars
+        so changing :root or a [data-theme="..."] block live-updates the
+        Tailwind utilities (bg-brand-sand, text-brand-indigo, etc.). ── */
+  --color-brand-sand:        var(--brand-sand);
+  --color-brand-sand-deep:   var(--brand-sand-deep);
+  --color-brand-sand-deeper: var(--brand-sand-deeper);
+  --color-brand-paper:       var(--brand-paper);
+  --color-brand-paper-hi:    var(--brand-paper-hi);
+  --color-brand-indigo:      var(--brand-indigo);
+  --color-brand-indigo-mid:  var(--brand-indigo-mid);
+  --color-brand-yellow:      var(--brand-yellow);
+  --color-brand-coral:       var(--brand-coral);
+  --color-brand-ink:         var(--brand-ink);
+  --color-brand-cloud:       var(--brand-cloud);
+  --color-brand-cloud-deep:  var(--brand-cloud-deep);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #0D1020;
+  overscroll-behavior: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Ken Burns ── */
+@keyframes kenBurns {
+  from { transform: scale(1.06); }
+  to   { transform: scale(1.0); }
+}
+
+.ken-burns {
+  animation: kenBurns 2s ease-out forwards;
+}
+
+/* ── Tab fade ── */
+@keyframes tabFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.tab-fade {
+  animation: tabFade 180ms ease-out both;
+}
+
+/* ── Fade-up entrance ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up-0 { animation: fadeUp 0.5s ease-out 0.0s both; }
+.fade-up-1 { animation: fadeUp 0.5s ease-out 0.15s both; }
+.fade-up-2 { animation: fadeUp 0.5s ease-out 0.3s both; }
+.fade-up-3 { animation: fadeUp 0.5s ease-out 0.45s both; }
+.fade-up-4 { animation: fadeUp 0.5s ease-out 0.6s both; }
+
+/* ── Score arc animation (CSS approach) ── */
+@keyframes drawArc {
+  from { stroke-dashoffset: 226.2; }
+  to   { stroke-dashoffset: 42.98; }
+}
+
+.score-arc-animate {
+  stroke-dasharray: 226.2;
+  stroke-dashoffset: 226.2;
+  animation: drawArc 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
+}
+
+/* ── Number fade for score toggle ── */
+@keyframes numFade {
+  0%   { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.num-fade {
+  animation: numFade 200ms ease-out both;
+}
+
+/* ── Shimmer on cards ── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+}
+
+.shimmer-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.06) 40%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.06) 60%,
+    transparent 100%
+  );
+  animation: shimmer 4s ease-in-out 1s infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Skeleton loading shimmer ── */
+@keyframes skeletonShimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e8eaed 25%, #f5f5f5 50%, #e8eaed 75%);
+  background-size: 400px 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ── Percentile bar animation ── */
+.percentile-bar {
+  width: 0%;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.percentile-bar.animate {
+  /* width set by inline style */
+}
+
+/* ── Slide-up clip transition ── */
+@keyframes slideUpClip {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.slide-up-clip {
+  animation: slideUpClip 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Hide scrollbar ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Snap ── */
+.snap-x { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+.snap-start { scroll-snap-align: start; }
+
+/* ── Pulse for play buttons ── */
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.6; }
+  70%  { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.play-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: rgba(74, 74, 255, 0.3);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* ── Highlight pulse (nav icon, once) ── */
+@keyframes scoreArcPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.highlight-pulse {
+  animation: scoreArcPulse 0.6s ease-out 0.4s both;
+}
+
+/* ── Stat card shadow ── */
+.card-shadow {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
