@@ -29,30 +29,41 @@ const VISIBLE_CAP = 7
 
 interface HighlightsSectionProps {
   player: Player
-  /** Current playhead session — drives the "This match" reel hero. */
+  /** Current playhead session — drives the "This match" reel + clip filter
+   *  in match scope. Ignored in season scope. */
   currentSessionId?: string | null
+  /** Page scope from the profile-level toggle. */
+  scope: 'match' | 'season'
   isMobile?: boolean
 }
 
 /**
  * Highlights feed.
  *
- * Layout (top to bottom):
- *   1. Two reel hero cards: "This match" reel (only when scrubbed onto a real
- *      match) + "Season reel" — both have a single Share affordance.
+ * Match scope:
+ *   1. "This match" reel hero — single video aggregating the playhead
+ *      match's clips, with Share.
  *   2. Filter chips (All / Goals / Key passes / Tackles / Saves / Sprints).
- *   3. Grid of clip cards. 3 cols on wide desktop, 2 on mid, 1 on mobile.
- *      Each card: play icon, event badge, session label, minute, duration,
- *      inline Share + Flag actions. No thumbnails.
- *      Capped at 7 visible per filter; "See more (N)" expands.
+ *   3. Grid of clip cards filtered to the playhead match.
+ *      Each card: play icon, event badge, minute, duration, inline Share
+ *      + Flag actions. Cap 7, "See more (N)" expands.
+ *   Empty state per filter when no clips for that filter in this match.
  *
- * Empty state per filter when no clips match.
+ * Season scope:
+ *   1. Season reel hero ONLY. No filter chips, no clip grid. The full
+ *      season highlights live in the season reel as a single video; the
+ *      grid would just duplicate that data.
  */
-export function HighlightsSection({ player, currentSessionId, isMobile }: HighlightsSectionProps) {
+export function HighlightsSection({
+  player,
+  currentSessionId,
+  scope,
+  isMobile,
+}: HighlightsSectionProps) {
   const [filter, setFilter] = useState<EventFilter>('all')
   const [showAll, setShowAll] = useState(false)
 
-  const playerHighlights = useMemo(
+  const allPlayerHighlights = useMemo(
     () =>
       highlights
         .filter(h => h.playerId === player.id)
@@ -60,44 +71,55 @@ export function HighlightsSection({ player, currentSessionId, isMobile }: Highli
     [player.id],
   )
 
+  // In match scope the clip grid is restricted to the playhead match (this
+  // is the bug fix: previously the grid ignored currentSessionId and showed
+  // every season clip even when the user had scrubbed onto a specific match).
+  const inMatchScope = scope === 'match'
+  const scopedHighlights = useMemo(
+    () =>
+      inMatchScope && currentSessionId
+        ? allPlayerHighlights.filter(h => h.sessionId === currentSessionId)
+        : allPlayerHighlights,
+    [allPlayerHighlights, inMatchScope, currentSessionId],
+  )
+
   const filtered = useMemo(
     () =>
       filter === 'all'
-        ? playerHighlights
-        : playerHighlights.filter(h => h.eventType === filter),
-    [filter, playerHighlights],
+        ? scopedHighlights
+        : scopedHighlights.filter(h => h.eventType === filter),
+    [filter, scopedHighlights],
   )
 
   const counts = useMemo(() => {
     const out: Record<EventFilter, number> = {
-      all: playerHighlights.length,
+      all: scopedHighlights.length,
       goal: 0,
       key_pass: 0,
       tackle: 0,
       save: 0,
       sprint_recovery: 0,
     }
-    for (const h of playerHighlights) out[h.eventType as EventFilter]++
+    for (const h of scopedHighlights) out[h.eventType as EventFilter]++
     return out
-  }, [playerHighlights])
+  }, [scopedHighlights])
 
   const visible = showAll ? filtered : filtered.slice(0, VISIBLE_CAP)
   const hidden = filtered.length - visible.length
 
-  // Per-match reel — clips for the playhead session. Hidden if no playhead
-  // or the playhead has no clips for this player.
+  // Per-match reel — clips for the playhead session in match scope.
   const matchClips = useMemo(
     () =>
       currentSessionId
-        ? playerHighlights.filter(h => h.sessionId === currentSessionId)
+        ? allPlayerHighlights.filter(h => h.sessionId === currentSessionId)
         : [],
-    [playerHighlights, currentSessionId],
+    [allPlayerHighlights, currentSessionId],
   )
   const matchSession = currentSessionId ? sessions.find(s => s.id === currentSessionId) : null
   const matchReelDuration = matchClips.reduce((s, h) => s + h.durationSeconds, 0)
 
   // Season reel — every clip
-  const seasonReelDuration = playerHighlights.reduce((s, h) => s + h.durationSeconds, 0)
+  const seasonReelDuration = allPlayerHighlights.reduce((s, h) => s + h.durationSeconds, 0)
   const playerName = `${player.firstName} ${player.lastName}`
 
   return (
@@ -143,148 +165,161 @@ export function HighlightsSection({ player, currentSessionId, isMobile }: Highli
         </div>
       </div>
 
-      {/* Reel heroes */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile
-            ? '1fr'
-            : matchClips.length > 0
-            ? '1fr 1fr'
-            : '1fr',
-          gap: 12,
-          marginBottom: 18,
-        }}
-      >
-        {matchClips.length > 0 && matchSession && (
-          <ReelHero
-            kind="this-match"
-            title={`This match · vs ${matchSession.opponent ?? 'Match'}`}
-            clipCount={matchClips.length}
-            durationSec={matchReelDuration}
-            shareTitle={`${playerName} · ${matchClips.length} clips vs ${matchSession.opponent ?? 'Match'}`}
-            shareUrl={`https://fairpl.ai/m/${currentSessionId}/p/${player.id}`}
-          />
-        )}
-        <ReelHero
-          kind="season"
-          title="Season reel"
-          clipCount={playerHighlights.length}
-          durationSec={seasonReelDuration}
-          shareTitle={`${playerName} · season highlights`}
-          shareUrl={`https://fairpl.ai/p/${player.id}/season`}
-        />
-      </div>
-
-      {/* Filter chips */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: isMobile ? 'nowrap' : 'wrap',
-          overflowX: isMobile ? 'auto' : 'visible',
-          gap: 6,
-          marginBottom: 14,
-          paddingBottom: isMobile ? 4 : 0,
-        }}
-      >
-        {(Object.keys(FILTER_LABELS) as EventFilter[]).map(f => {
-          const active = filter === f
-          const count = counts[f]
-          return (
-            <button
-              key={f}
-              type="button"
-              onClick={() => {
-                setFilter(f)
-                setShowAll(false)
-              }}
+      {/* Reel hero — single card per scope. Match scope shows the playhead
+          match's reel (or an empty placeholder if no clips); season scope
+          shows the full-season reel. */}
+      <div style={{ marginBottom: inMatchScope ? 18 : 0 }}>
+        {inMatchScope ? (
+          matchClips.length > 0 && matchSession ? (
+            <ReelHero
+              kind="this-match"
+              title={`This match · vs ${matchSession.opponent ?? 'Match'}`}
+              clipCount={matchClips.length}
+              durationSec={matchReelDuration}
+              shareTitle={`${playerName} · ${matchClips.length} clips vs ${matchSession.opponent ?? 'Match'}`}
+              shareUrl={`https://fairpl.ai/m/${currentSessionId}/p/${player.id}`}
+            />
+          ) : (
+            <div
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 999,
-                border: active ? '1px solid var(--brand-indigo)' : '1px solid var(--brand-line)',
-                background: active ? 'var(--brand-indigo)' : 'transparent',
-                color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+                background: 'var(--brand-paper)',
+                border: '1px solid var(--brand-line)',
+                borderRadius: 12,
+                padding: 24,
+                textAlign: 'center',
                 fontFamily: 'var(--font-body)',
-                fontSize: 12.5,
-                fontWeight: 600,
-                cursor: 'pointer',
-                letterSpacing: '0.02em',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
+                fontSize: 13.5,
+                color: 'var(--brand-indigo-mute)',
               }}
             >
-              {FILTER_LABELS[f]}
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
-                  letterSpacing: '0.12em',
-                  opacity: 0.7,
-                }}
-              >
-                {count}
-              </span>
-            </button>
+              No clips for this match yet.
+            </div>
           )
-        })}
+        ) : (
+          <ReelHero
+            kind="season"
+            title="Season reel"
+            clipCount={allPlayerHighlights.length}
+            durationSec={seasonReelDuration}
+            shareTitle={`${playerName} · season highlights`}
+            shareUrl={`https://fairpl.ai/p/${player.id}/season`}
+          />
+        )}
       </div>
 
-      {/* Clip grid OR empty state */}
-      {filtered.length === 0 ? (
-        <div
-          style={{
-            background: 'var(--brand-paper)',
-            border: '1px solid var(--brand-line)',
-            borderRadius: 12,
-            padding: 32,
-            textAlign: 'center',
-            fontFamily: 'var(--font-body)',
-            fontSize: 14,
-            color: 'var(--brand-indigo-mute)',
-          }}
-        >
-          {filter === 'all'
-            ? 'No highlights this season yet.'
-            : `No ${FILTER_LABELS[filter].toLowerCase()} this season yet.`}
-        </div>
-      ) : (
+      {/* Filter chips + clip grid (match scope only — season scope's reel
+          is the whole story). */}
+      {inMatchScope && (
         <>
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile
-                ? '1fr'
-                : 'repeat(auto-fill, minmax(260px, 1fr))',
-              gap: 10,
+              display: 'flex',
+              flexWrap: isMobile ? 'nowrap' : 'wrap',
+              overflowX: isMobile ? 'auto' : 'visible',
+              gap: 6,
+              marginBottom: 14,
+              paddingBottom: isMobile ? 4 : 0,
             }}
           >
-            {visible.map(h => (
-              <ClipCard key={h.id} clip={h} playerName={playerName} />
-            ))}
+            {(Object.keys(FILTER_LABELS) as EventFilter[]).map(f => {
+              const active = filter === f
+              const count = counts[f]
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => {
+                    setFilter(f)
+                    setShowAll(false)
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: active ? '1px solid var(--brand-indigo)' : '1px solid var(--brand-line)',
+                    background: active ? 'var(--brand-indigo)' : 'transparent',
+                    color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    letterSpacing: '0.02em',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {FILTER_LABELS[f]}
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 10,
+                      letterSpacing: '0.12em',
+                      opacity: 0.7,
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-          {hidden > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowAll(true)}
+
+          {filtered.length === 0 ? (
+            <div
               style={{
-                marginTop: 14,
-                width: '100%',
-                background: 'transparent',
+                background: 'var(--brand-paper)',
                 border: '1px solid var(--brand-line)',
-                color: 'var(--brand-indigo)',
+                borderRadius: 12,
+                padding: 32,
+                textAlign: 'center',
                 fontFamily: 'var(--font-body)',
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '10px 18px',
-                borderRadius: 999,
-                cursor: 'pointer',
+                fontSize: 14,
+                color: 'var(--brand-indigo-mute)',
               }}
             >
-              See more ({hidden})
-            </button>
+              {filter === 'all'
+                ? 'No highlights for this match yet.'
+                : `No ${FILTER_LABELS[filter].toLowerCase()} in this match.`}
+            </div>
+          ) : (
+            <>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile
+                    ? '1fr'
+                    : 'repeat(auto-fill, minmax(260px, 1fr))',
+                  gap: 10,
+                }}
+              >
+                {visible.map(h => (
+                  <ClipCard key={h.id} clip={h} playerName={playerName} />
+                ))}
+              </div>
+              {hidden > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  style={{
+                    marginTop: 14,
+                    width: '100%',
+                    background: 'transparent',
+                    border: '1px solid var(--brand-line)',
+                    color: 'var(--brand-indigo)',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: '10px 18px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                  }}
+                >
+                  See more ({hidden})
+                </button>
+              )}
+            </>
           )}
         </>
       )}
@@ -461,7 +496,7 @@ function ClipCard({ clip, playerName }: { clip: Highlight; playerName: string })
             marginTop: 2,
           }}
         >
-          {date.toUpperCase()} · {minute}' · {clip.durationSeconds}S
+          {date.toUpperCase()} · {minute}m · {clip.durationSeconds}S
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>

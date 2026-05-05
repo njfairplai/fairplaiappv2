@@ -236,11 +236,14 @@ const ROSTER_SORT_DEFS: { key: RosterSortKey; label: string }[] = [
 
 /* ─────────────────── Score strip ─────────────────── */
 function V3ScoreStrip({
-  homeName, awayName, homeGoals, awayGoals, dateLabel, venue,
+  homeName, awayName, homeGoals, awayGoals, hasScore, dateLabel, venue,
   filter, setFilter, countsByKey,
 }: {
   homeName: string; awayName: string;
   homeGoals: number; awayGoals: number;
+  /** When false, the team-score row is suppressed (a "0 - 0" header on a
+   *  match with no GAME_SCORES entry + no events read as a broken state). */
+  hasScore: boolean;
   dateLabel: string; venue: string;
   filter: FilterKey; setFilter: (s: FilterKey) => void;
   countsByKey: Record<FilterKey, number>;
@@ -258,26 +261,32 @@ function V3ScoreStrip({
       flexWrap: 'wrap',
     }}>
       <div style={{ fontFamily: TYPE.display, fontSize: 32, color: BRAND.indigo, letterSpacing: '0.02em' }}>{homeName.toUpperCase()}</div>
-      <div style={{ fontFamily: TYPE.display, fontSize: 44, letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: 10, color: BRAND.indigo }}>
-        <span style={{ position: 'relative', display: 'inline-block' }}>
-          {/* yellow swatch behind the winning team's goal count (or both, if draw) */}
-          {(homeWon || drew) && (
-            <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
-          )}
-          <span style={{ position: 'relative', zIndex: 1 }}>{homeGoals}</span>
-        </span>
-        <span style={{ color: BRAND.indigoMute, fontSize: 24 }}>-</span>
-        <span style={{ position: 'relative', display: 'inline-block', color: homeWon ? BRAND.indigoMid : BRAND.indigo }}>
-          {(drew || (!homeWon && homeGoals !== awayGoals)) && (
-            <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
-          )}
-          <span style={{ position: 'relative', zIndex: 1 }}>{awayGoals}</span>
-        </span>
-      </div>
+      {hasScore ? (
+        <div style={{ fontFamily: TYPE.display, fontSize: 44, letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: 10, color: BRAND.indigo }}>
+          <span style={{ position: 'relative', display: 'inline-block' }}>
+            {/* yellow swatch behind the winning team's goal count (or both, if draw) */}
+            {(homeWon || drew) && (
+              <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
+            )}
+            <span style={{ position: 'relative', zIndex: 1 }}>{homeGoals}</span>
+          </span>
+          <span style={{ color: BRAND.indigoMute, fontSize: 24 }}>-</span>
+          <span style={{ position: 'relative', display: 'inline-block', color: homeWon ? BRAND.indigoMid : BRAND.indigo }}>
+            {(drew || (!homeWon && homeGoals !== awayGoals)) && (
+              <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
+            )}
+            <span style={{ position: 'relative', zIndex: 1 }}>{awayGoals}</span>
+          </span>
+        </div>
+      ) : (
+        <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.18em', color: BRAND.indigoMute, fontWeight: 700 }}>
+          VS
+        </div>
+      )}
       <div style={{ fontFamily: TYPE.display, fontSize: 32, color: BRAND.indigoMute, letterSpacing: '0.02em' }}>{awayName.toUpperCase()}</div>
       <div style={{ width: 1, height: 28, background: BRAND.line, marginLeft: 6 }} />
       <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', color: BRAND.indigoMute }}>
-        FT · {dateLabel} · {venue}
+        {hasScore ? `FT · ${dateLabel} · ${venue}` : `${dateLabel} · ${venue}`}
       </div>
 
       <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -407,6 +416,32 @@ function V3Timeline({ events, totalMin, activeId, onSelect }: {
   const playheadPct = active ? (active.t / totalMin) * 100 : 0
   const HALF_TIME = totalMin / 2
   const ticks = [0, totalMin * 0.25, HALF_TIME, totalMin * 0.75, totalMin]
+
+  // Empty state — when there are no events captured for this match the
+  // bare timeline (just tick marks) reads as broken. Surface that
+  // explicitly so the coach knows it's a data state, not a render bug.
+  if (events.length === 0) {
+    return (
+      <div
+        style={{
+          padding: '40px 28px',
+          background: BRAND.sand,
+          borderBottom: `1px solid ${BRAND.line}`,
+          textAlign: 'center',
+          fontFamily: TYPE.body,
+          fontSize: 13.5,
+          color: BRAND.indigoMute,
+        }}
+      >
+        <div style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, color: BRAND.indigoMute }}>
+          NO EVENTS CAPTURED
+        </div>
+        <div style={{ marginTop: 6 }}>
+          The AI didn&apos;t flag any moments for this match yet.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ position: 'relative', padding: '28px 28px 22px', background: BRAND.sand, borderBottom: `1px solid ${BRAND.line}` }}>
@@ -1766,6 +1801,7 @@ export default function CoachMatchAnalysisPage() {
             awayName={awayName}
             homeGoals={homeGoals}
             awayGoals={awayGoals}
+            hasScore={!!score}
             dateLabel={dateLabel}
             venue={venue}
             filter={filter}

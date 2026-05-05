@@ -16,7 +16,9 @@ interface FrameProps {
  *   MOTM       — gold border (3px) + yellow score arc + star sprocket
  *   Poor form  — coral border (2px) + coral score arc
  *   DNP        — diagonal-stripe overlay + DNP stamp, no arc
- *   Training   — dashed border (when not MOTM/poor)
+ *   Training   — slightly darker sand body + yellow TRAINING chip in the
+ *                FOOTER (replaces the opponent line). The chip is the only
+ *                differentiator now — same palette as comp, just a flag.
  *   Upcoming   — translucent + UPCOMING label, no arc, no click
  *   Playhead   — indigo fill, sand text, yellow MD eyebrow
  *
@@ -47,9 +49,9 @@ export function Frame({ frame: f, isPlayhead, onClick, width = 138, height = 172
   if (isMotm) arcColor = 'var(--brand-yellow)'
   else if (isPoor) arcColor = 'var(--brand-coral)'
 
-  // Training frames sit on a deeper sand surface and the score arc desaturates
-  // to ~70% — the score is still legible, but visually less weighty than
-  // competitive matches alongside.
+  // Training frames sit on a slightly darker sand surface so they read as a
+  // touch heavier than comp, but stay in the same colour family. The yellow
+  // TRAINING chip in the footer carries the kind signal — that's enough.
   const surfaceColor = isTraining ? 'var(--brand-sand-deep)' : 'var(--brand-paper)'
   const bodyBgColor = isPlayhead
     ? `radial-gradient(ellipse at 50% 65%, var(--brand-indigo-mid) 0%, var(--brand-indigo) 80%)`
@@ -58,7 +60,6 @@ export function Frame({ frame: f, isPlayhead, onClick, width = 138, height = 172
     : isTraining
     ? 'var(--brand-sand-deep)'
     : 'var(--brand-sand)'
-  const arcOpacity = isTraining && !isPlayhead ? 0.7 : 1
 
   const resultDot =
     f.result === 'W'
@@ -109,7 +110,9 @@ export function Frame({ frame: f, isPlayhead, onClick, width = 138, height = 172
         opacity: isUpcoming ? 0.45 : 1,
       }}
     >
-      {/* Sprocket header — sprockets (T for training, star for MOTM) + result dot + date */}
+      {/* Sprocket header — single line, just date + (MOTM star or W/L dot).
+          The decorative 3-sprocket dots used to live here; dropped, they
+          carried no information. */}
       <div
         style={{
           background: isPlayhead
@@ -120,53 +123,37 @@ export function Frame({ frame: f, isPlayhead, onClick, width = 138, height = 172
           borderBottom: `1px solid ${
             isPlayhead ? 'rgba(238, 228, 200, 0.16)' : 'var(--brand-line)'
           }`,
-          padding: '5px 8px',
+          padding: '6px 10px',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
         }}
       >
-        <span style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-          {[0, 1, 2].map(i =>
-            isMotm && i === 1 ? (
-              <span
-                key={i}
-                style={{
-                  color: 'var(--brand-yellow)',
-                  fontSize: 11,
-                  lineHeight: 1,
-                  marginTop: -1,
-                }}
-              >
-                ★
-              </span>
-            ) : isTraining && i === 1 ? (
-              <span
-                key={i}
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9,
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  color: isPlayhead ? 'var(--brand-yellow)' : 'var(--brand-indigo-mid)',
-                  lineHeight: 1,
-                  marginTop: -1,
-                }}
-              >
-                T
-              </span>
-            ) : (
-              <span
-                key={i}
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 1,
-                  background: isPlayhead ? '#1B1550' : 'var(--brand-line)',
-                }}
-              />
-            ),
-          )}
+        {isMotm && (
+          <span
+            style={{
+              color: 'var(--brand-yellow)',
+              fontSize: 12,
+              lineHeight: 1,
+              marginTop: -1,
+            }}
+          >
+            ★
+          </span>
+        )}
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 9,
+            letterSpacing: '0.16em',
+            fontWeight: 700,
+            color: isPlayhead ? 'var(--brand-yellow)' : 'var(--brand-indigo-mute)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {f.shortDate.toUpperCase()}
         </span>
         <span style={{ flex: 1 }} />
         {!isTraining && (
@@ -181,17 +168,6 @@ export function Frame({ frame: f, isPlayhead, onClick, width = 138, height = 172
             }}
           />
         )}
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            letterSpacing: '0.16em',
-            fontWeight: 700,
-            color: isPlayhead ? 'var(--brand-yellow)' : 'var(--brand-indigo-mute)',
-          }}
-        >
-          {f.shortDate.toUpperCase()}
-        </span>
       </div>
 
       {/* Body — score arc, DNP stripes, or upcoming label */}
@@ -226,10 +202,11 @@ export function Frame({ frame: f, isPlayhead, onClick, width = 138, height = 172
           </svg>
         )}
 
-        {/* Training matches now DO show a score — just at 70% opacity so
-            competitive frames visually outweigh them. */}
+        {/* Score arc — small, top-left. Reverted from a brief experiment
+            with a centered 76px arc; the larger arc swallowed the frame and
+            forced the strip to only fit 4 cards. */}
         {!isDnp && !isUpcoming && f.score > 0 && (
-          <div style={{ position: 'absolute', top: 10, left: 10, opacity: arcOpacity }}>
+          <div style={{ position: 'absolute', top: 10, left: 10 }}>
             <ScoreArc
               value={f.score}
               size={50}
@@ -340,55 +317,54 @@ export function Frame({ frame: f, isPlayhead, onClick, width = 138, height = 172
         )}
       </div>
 
-      {/* Footer — date + opponent */}
+      {/* Footer — opponent for comp matches. For training matches the yellow
+          TRAINING chip replaces the opponent line entirely (per direction —
+          "vs Internal squad" was redundant given the chip). */}
       <div
         style={{
           background: isPlayhead
             ? '#0F0A36'
-            : isTraining
-            ? 'var(--brand-sand-deeper)'
             : 'var(--brand-sand-deep)',
           borderTop: `1px solid ${
             isPlayhead ? 'rgba(238, 228, 200, 0.16)' : 'var(--brand-line)'
           }`,
-          padding: '6px 8px',
+          padding: '8px 10px',
+          minHeight: 28,
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 8.5,
-            letterSpacing: '0.14em',
-            fontWeight: 700,
-            color: isPlayhead ? 'rgba(238, 228, 200, 0.55)' : 'var(--brand-indigo-mute)',
-          }}
-        >
-          {f.shortDate.toUpperCase()}
-          {isTraining && (
-            <span
-              style={{
-                marginLeft: 4,
-                color: isPlayhead ? 'var(--brand-yellow)' : 'var(--brand-indigo-mid)',
-              }}
-            >
-              · TRAINING
-            </span>
-          )}
-        </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 11,
-            fontWeight: 600,
-            color: isPlayhead ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-            marginTop: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {f.opp}
-        </div>
+        {isTraining ? (
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              fontWeight: 800,
+              letterSpacing: '0.18em',
+              color: 'var(--brand-indigo)',
+              background: 'var(--brand-yellow)',
+              padding: '3px 8px',
+              borderRadius: 3,
+              lineHeight: 1,
+            }}
+          >
+            TRAINING
+          </span>
+        ) : (
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: isPlayhead ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {f.opp}
+          </div>
+        )}
       </div>
     </button>
   )

@@ -20,8 +20,14 @@ export default function FloatingNav() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Don't show on public pages (home, shared links, guest footage)
-  const isPublicPage = pathname === '/' || pathname.startsWith('/share/') || pathname.startsWith('/guest/')
+  // Don't show on public pages (home, shared links, guest footage) or on
+  // the coach/web product routes — those are the customer-facing surfaces
+  // we're shipping; the dev role-switcher pill on top is noise there.
+  const isPublicPage =
+    pathname === '/' ||
+    pathname.startsWith('/share/') ||
+    pathname.startsWith('/guest/') ||
+    pathname.startsWith('/coach/web')
 
   function selectRole(role: UserRole) {
     if (typeof window !== 'undefined') {

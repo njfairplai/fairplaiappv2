@@ -1,6 +1,5 @@
 'use client'
 
-import { useId } from 'react'
 import type { Player, MatchAnalysis } from '@/lib/types'
 import { RADAR_CATEGORIES, type RadarCategory } from './PolyRadar'
 
@@ -104,13 +103,18 @@ function BibShape({
   neckColor: string
   children: React.ReactNode
 }) {
-  const id = useId().replace(/:/g, '')
   const outer =
     'M 22 4 L 78 4 Q 78 12 80 18 L 90 22 Q 96 24 96 32 L 96 116 Q 96 124 88 124 L 12 124 Q 4 124 4 116 L 4 32 Q 4 24 10 22 L 20 18 Q 22 12 22 4 Z'
   const neck = 'M 38 4 L 62 4 Q 62 22 50 22 Q 38 22 38 4 Z'
   const combined = `${outer} ${neck}`
   return (
     <div style={{ width, height, position: 'relative' }}>
+      {/* SVG provides the bib silhouette underneath. The HTML children render
+          on top — they're positioned via percentages of bibW/bibH and stay
+          inside the bib bounds, so no clip-path is needed. (Earlier versions
+          used a userSpaceOnUse clipPath defined for a 100×130 viewbox; that
+          masked anything past 100×130 px once the bib was rendered at modal
+          scale, blanking the preview.) */}
       <svg
         width={width}
         height={height}
@@ -118,11 +122,6 @@ function BibShape({
         preserveAspectRatio="none"
         style={{ position: 'absolute', inset: 0, display: 'block' }}
       >
-        <defs>
-          <clipPath id={`bibclip-${id}`} clipPathUnits="userSpaceOnUse">
-            <path d={combined} fillRule="evenodd" />
-          </clipPath>
-        </defs>
         <path d={combined} fill={fill} fillRule="evenodd" />
         <path
           d={outer}
@@ -139,16 +138,7 @@ function BibShape({
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          clipPath: `url(#bibclip-${id})`,
-          WebkitClipPath: `url(#bibclip-${id})`,
-        }}
-      >
-        {children}
-      </div>
+      <div style={{ position: 'absolute', inset: 0 }}>{children}</div>
     </div>
   )
 }
@@ -799,16 +789,27 @@ export function BibCard({
   )
 }
 
-/** Tiny mini-bib button that replaces the "Make a card" text affordance. */
+/** Tiny mini-bib button that replaces the "Make a card" text affordance.
+ *  Size is responsive — mobile clients can pass `size="sm"` to render a
+ *  smaller 48×60 variant so the identity strip doesn't crowd the player
+ *  name on narrow viewports. */
 export function CardThumbButton({
   player,
   seasonScore,
   onClick,
+  size = 'md',
 }: {
   player: Player
   seasonScore: number
   onClick: () => void
+  size?: 'sm' | 'md'
 }) {
+  const W = size === 'sm' ? 48 : 64
+  const H = size === 'sm' ? 60 : 80
+  const numberSize = size === 'sm' ? 22 : 30
+  const lastNameSize = size === 'sm' ? 5 : 6
+  const compositeSize = size === 'sm' ? 11 : 14
+  const padTop = size === 'sm' ? 16 : 22
   return (
     <button
       type="button"
@@ -820,17 +821,18 @@ export function CardThumbButton({
         border: 'none',
         padding: 0,
         cursor: 'pointer',
-        width: 64,
-        height: 80,
+        width: W,
+        height: H,
         position: 'relative',
         transition: 'transform 200ms ease',
+        flexShrink: 0,
       }}
       onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
       onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
     >
       <BibShape
-        width={64}
-        height={80}
+        width={W}
+        height={H}
         fill="var(--brand-indigo)"
         stroke="var(--brand-indigo)"
         strokeWidth={1}
@@ -843,13 +845,13 @@ export function CardThumbButton({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            paddingTop: 22,
+            paddingTop: padTop,
           }}
         >
           <div
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 6,
+              fontSize: lastNameSize,
               color: 'var(--brand-sand)',
               opacity: 0.7,
               letterSpacing: '0.14em',
@@ -862,7 +864,7 @@ export function CardThumbButton({
           <div
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 30,
+              fontSize: numberSize,
               color: 'var(--brand-sand)',
               letterSpacing: '-0.06em',
               lineHeight: 1,
@@ -874,7 +876,7 @@ export function CardThumbButton({
           <div
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 14,
+              fontSize: compositeSize,
               color: 'var(--brand-yellow)',
               letterSpacing: '-0.04em',
               lineHeight: 1,

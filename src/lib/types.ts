@@ -107,7 +107,7 @@ export interface Session {
   startTime: string
   endTime: string
   type: 'match' | 'drill' | 'training_match'
-  status: 'scheduled' | 'in_progress' | 'complete' | 'processing' | 'analysed' | 'playback_ready'
+  status: 'scheduled' | 'in_progress' | 'complete' | 'processing' | 'analysed' | 'playback_ready' | 'cancelled'
   processingStatusId?: string
   opponent?: string
   competition?: string

@@ -13,6 +13,7 @@ function statusBadge(status: Session['status']) {
     complete: { variant: 'info', label: 'Complete' },
     analysed: { variant: 'success', label: 'Analysed' },
     playback_ready: { variant: 'success', label: 'Playback Ready' },
+    cancelled: { variant: 'neutral', label: 'Cancelled' },
   }
   const { variant, label } = map[status]
   return <Badge variant={variant}>{label}</Badge>

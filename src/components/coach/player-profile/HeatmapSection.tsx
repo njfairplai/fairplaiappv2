@@ -1,48 +1,47 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { playerHeatmaps } from '@/lib/mockData'
 import type { Player, PlayerHeatmapData, HeatmapPoint } from '@/lib/types'
 
-type Scope = 'session' | 'season'
-
 interface HeatmapSectionProps {
   player: Player
-  /** Current playhead session — heatmap defaults to this match's data. */
+  /** Current playhead session — drives the heat data in match scope. */
   currentSessionId?: string | null
   /** When the playhead lands on a training match, signal that here so the
    *  heatmap renders an empty state instead of pretending data exists. */
   isTraining?: boolean
+  /** Page scope from the profile-level toggle. Match: this match's heat.
+   *  Season: aggregate across the whole season. The old in-section dropdown
+   *  was removed because the page-level toggle controls this now. */
+  scope: 'match' | 'season'
   isMobile?: boolean
 }
 
 /**
- * Vertical pitch + heat overlay. Session-scoped by default (follows the
- * playhead); toggle pill switches to "Season aggregate" which merges every
- * match's heat points for this player.
+ * Horizontal pitch + heat overlay.
  *
- * Data source: `playerHeatmaps` mock keyed by `${playerId}_${sessionId}` or
- * `${playerId}` for season aggregates. Falls back to a procedurally
- * generated cluster centered on the player's position group when no real
- * heatmap exists for the active scope.
+ * In match scope: this match's heat (jittered from the season base using the
+ * session id as a seed, since the mock doesn't store per-session points).
+ * In season scope: the raw season aggregate.
+ *
+ * Data source: `playerHeatmaps` mock keyed by `${playerId}`. Falls back to a
+ * procedurally generated cluster centered on the player's position group
+ * when no real heatmap exists.
  */
 export function HeatmapSection({
   player,
   currentSessionId,
   isTraining,
+  scope,
   isMobile,
 }: HeatmapSectionProps) {
-  const [scope, setScope] = useState<Scope>('session')
-
   const points = useMemo(() => {
-    if (isTraining) return null
-    // Look up by playerId — current mock keys heatmaps by player only,
-    // not per-session. We synthesize per-session variations from the same
-    // base by jittering the points slightly using the session id as a seed.
+    if (scope === 'match' && isTraining) return null
     const data: PlayerHeatmapData | undefined = playerHeatmaps[player.id]
     if (!data) return generateFallback(player.position[0] ?? 'CM')
     if (scope === 'season') return data.points
-    // Per-match: jitter the season points using the session id as a seed
+    // Match scope — jitter the season points using the session id as a seed
     if (!currentSessionId) return data.points
     const seed = sessionSeed(currentSessionId)
     return data.points.map((p, i) => ({
@@ -54,8 +53,10 @@ export function HeatmapSection({
 
   // Horizontal pitch: own goal on the LEFT, attacking RIGHT — matches the
   // match analysis page convention. Aspect ratio ~3:2.
-  const w = isMobile ? 320 : 720
-  const h = isMobile ? 220 : 480
+  // ~20% smaller than the original 720×480 / 320×220. Radar takes the more
+  // prominent spot above; heatmap is the supporting evidence below.
+  const w = isMobile ? 256 : 576
+  const h = isMobile ? 176 : 384
 
   return (
     <section
@@ -68,7 +69,7 @@ export function HeatmapSection({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '180px 1fr auto',
+          gridTemplateColumns: isMobile ? '1fr' : '180px 1fr',
           gap: isMobile ? 12 : 32,
           alignItems: 'baseline',
           marginBottom: 16,
@@ -86,6 +87,9 @@ export function HeatmapSection({
           }}
         >
           HEATMAP
+          {scope === 'season' && (
+            <span style={{ marginLeft: 8, opacity: 0.7 }}>· SEASON AGGREGATE</span>
+          )}
         </span>
         <div
           style={{
@@ -97,29 +101,9 @@ export function HeatmapSection({
         >
           Where {player.firstName} played.
         </div>
-        {!isTraining && (
-          <div
-            role="tablist"
-            style={{
-              display: 'inline-flex',
-              background: 'var(--brand-sand)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 999,
-              padding: 3,
-              alignSelf: isMobile ? 'flex-start' : 'center',
-            }}
-          >
-            <ScopeBtn active={scope === 'session'} onClick={() => setScope('session')}>
-              This match
-            </ScopeBtn>
-            <ScopeBtn active={scope === 'season'} onClick={() => setScope('season')}>
-              Season aggregate
-            </ScopeBtn>
-          </div>
-        )}
       </div>
 
-      {isTraining ? (
+      {scope === 'match' && isTraining ? (
         <div
           style={{
             background: 'var(--brand-sand)',
@@ -215,39 +199,6 @@ function PitchHeatmap({
         return <circle key={i} cx={cx} cy={cy} r={rr} fill="url(#fp-heat)" />
       })}
     </svg>
-  )
-}
-
-function ScopeBtn({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      style={{
-        background: active ? 'var(--brand-indigo)' : 'transparent',
-        color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-        border: 'none',
-        borderRadius: 999,
-        padding: '6px 14px',
-        fontFamily: 'var(--font-body)',
-        fontSize: 12,
-        fontWeight: 700,
-        cursor: 'pointer',
-        letterSpacing: '0.02em',
-      }}
-    >
-      {children}
-    </button>
   )
 }
 

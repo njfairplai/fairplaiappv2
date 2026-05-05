@@ -164,6 +164,7 @@ export default function SessionsPage() {
             analysed: { bg: `${COLORS.success}1A`, color: COLORS.success },
             complete: { bg: `${COLORS.success}1A`, color: COLORS.success },
             playback_ready: { bg: `${COLORS.success}1A`, color: COLORS.success },
+            cancelled: { bg: '#F3F4F6', color: '#9CA3AF' },
           }
           const sc = statusColors[s.status]
 
@@ -174,6 +175,7 @@ export default function SessionsPage() {
             analysed: 'Analysed',
             complete: 'Complete',
             playback_ready: 'Playback Ready',
+            cancelled: 'Cancelled',
           }
 
           const needsClassification = s.aiMatchConfidence !== undefined && s.aiMatchConfidence < 85 && s.status === 'complete'

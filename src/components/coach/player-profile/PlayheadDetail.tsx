@@ -1,11 +1,16 @@
+import type { Player, MatchAnalysis } from '@/lib/types'
 import type { ProgressionFrame } from '@/lib/player-progression'
+import { matchAnalyses } from '@/lib/mockData'
+import { getKeyStats } from '@/lib/squad-position-stats'
 import { ScoreArc } from './ScoreArc'
 import { MatchNoteEditor } from './MatchNoteEditor'
 
 interface PlayheadDetailProps {
   frame: ProgressionFrame
-  /** Player id — used to key the note storage. */
-  playerId: string
+  /** Player — used to surface the same per-match key stats line that
+   *  LatestHero renders, so a scrubbed match doesn't lose them. */
+  player: Player
+  isMobile?: boolean
 }
 
 /**
@@ -13,12 +18,17 @@ interface PlayheadDetailProps {
  * latest match. The latest is already rendered by <LatestHero/>, so this
  * component returns null when called with the latest frame.
  *
+ * Layout matches LatestHero (2-row desktop, single-column mobile stack):
+ *   Row 1: score arc │ match label + meta │ coach note
+ *   Row 2: ────── stat strip (full width) ──────
+ *
  * Three states:
  *   - Upcoming: small "no data yet" stub
  *   - DNP:     coral eyebrow + the coach's reason note
- *   - Played:  three-column score + label + coach note
+ *   - Played:  full layout with stats
  */
-export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
+export function PlayheadDetail({ frame: f, player, isMobile }: PlayheadDetailProps) {
+  const playerId = player.id
   if (f.upcoming) {
     return (
       <section
@@ -48,7 +58,7 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
             marginTop: 6,
           }}
         >
-          vs {f.opp}
+          {f.kind === 'training' ? 'Training match' : `vs ${f.opp}`}
         </div>
         <div
           style={{
@@ -93,7 +103,7 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
             marginTop: 6,
           }}
         >
-          vs {f.opp}
+          {f.kind === 'training' ? 'Training match' : `vs ${f.opp}`}
         </div>
         <div style={{ maxWidth: 540, marginTop: 4 }}>
           <MatchNoteEditor playerId={playerId} sessionId={f.sessionId} variant="light" />
@@ -102,7 +112,15 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
     )
   }
 
-  // Played match
+  // Played match — pull the underlying analysis so we can surface the same
+  // key-stats strip as LatestHero. Without this, scrubbing onto a non-latest
+  // match shows the score and label but no per-match data — the page felt
+  // half-rendered.
+  const analysis = matchAnalyses.find(
+    a => a.playerId === player.id && a.sessionId === f.sessionId,
+  )
+  const stats = analysis ? buildStats(player, analysis) : []
+
   const arcColor = f.motm
     ? 'var(--brand-yellow)'
     : f.poor
@@ -123,20 +141,23 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
     <section
       style={{
         background: 'var(--brand-paper)',
-        padding: '28px 36px',
+        padding: isMobile ? '24px 16px' : '28px 36px',
         borderBottom: '1px solid var(--brand-line)',
       }}
     >
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '140px minmax(0, 1fr) 320px',
-          gap: 28,
-          alignItems: 'center',
+          display: isMobile ? 'flex' : 'grid',
+          flexDirection: isMobile ? 'column' : undefined,
+          gridTemplateColumns: isMobile ? undefined : '140px minmax(0, 1fr) 320px',
+          gap: isMobile ? 14 : 28,
+          alignItems: isMobile ? 'stretch' : 'center',
         }}
       >
-        <ScoreArc value={f.score} size={120} stroke={10} color={arcColor} />
-        <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+          <ScoreArc value={f.score} size={isMobile ? 96 : 120} stroke={isMobile ? 8 : 10} color={arcColor} />
+        </div>
+        <div style={{ minWidth: 0, textAlign: isMobile ? 'center' : 'left' }}>
           <span
             style={{
               fontFamily: 'var(--font-mono)',
@@ -151,14 +172,13 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
           <div
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 34,
+              fontSize: isMobile ? 24 : 34,
               color: 'var(--brand-indigo)',
               letterSpacing: '-0.02em',
               marginTop: 4,
-              wordBreak: 'break-word',
             }}
           >
-            vs {f.opp}
+            {f.kind === 'training' ? 'Training match' : `vs ${f.opp}`}
           </div>
           <div
             style={{
@@ -168,28 +188,18 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
               marginTop: 4,
               display: 'flex',
               gap: 10,
+              alignItems: 'center',
               flexWrap: 'wrap',
+              justifyContent: isMobile ? 'center' : 'flex-start',
             }}
           >
             <span>{f.shortDate}</span>
-            <span>·</span>
+            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
             <span>{resultLabel}</span>
-            {f.g > 0 && (
+            {analysis?.minutesPlayed !== undefined && (
               <>
-                <span>·</span>
-                <span>
-                  <strong style={{ color: 'var(--brand-indigo)' }}>{f.g}</strong> goal
-                  {f.g > 1 ? 's' : ''}
-                </span>
-              </>
-            )}
-            {f.a > 0 && (
-              <>
-                <span>·</span>
-                <span>
-                  <strong style={{ color: 'var(--brand-indigo)' }}>{f.a}</strong> key pass
-                  {f.a > 1 ? 'es' : ''}
-                </span>
+                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+                <span>{analysis.minutesPlayed} mins</span>
               </>
             )}
           </div>
@@ -200,6 +210,7 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
             border: '1px solid var(--brand-line)',
             borderRadius: 10,
             padding: '14px 16px',
+            order: isMobile ? 3 : undefined,
           }}
         >
           <span
@@ -216,6 +227,73 @@ export function PlayheadDetail({ frame: f, playerId }: PlayheadDetailProps) {
           <MatchNoteEditor playerId={playerId} sessionId={f.sessionId} variant="light" />
         </div>
       </div>
+
+      {/* Row 2: full-width stat strip — same shape as LatestHero. */}
+      {stats.length > 0 && (
+        <div
+          style={{
+            marginTop: isMobile ? 12 : 18,
+            display: 'grid',
+            gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`,
+            gap: 0,
+            borderTop: '1px solid var(--brand-line)',
+            borderBottom: '1px solid var(--brand-line)',
+          }}
+        >
+          {stats.map((s, i) => (
+            <div
+              key={s.k}
+              style={{
+                padding: isMobile ? '10px 8px' : '12px 10px',
+                borderRight: i < stats.length - 1 ? '1px solid var(--brand-line)' : 'none',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: isMobile ? 18 : 22,
+                  color: 'var(--brand-indigo)',
+                  letterSpacing: '-0.02em',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {s.v}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9,
+                  letterSpacing: '0.16em',
+                  fontWeight: 700,
+                  color: 'var(--brand-indigo-mute)',
+                  marginTop: 4,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {s.k.toUpperCase()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   )
+}
+
+/** Same shape as LatestHero.buildHeroStats — kept inline so they evolve
+ *  together. 5 cells: position-aware key stats + universal movement stats. */
+function buildStats(player: Player, a: MatchAnalysis): Array<{ k: string; v: string }> {
+  const [keyA, keyB] = getKeyStats(player.position[0] ?? 'CM', a)
+  return [
+    { k: keyA.label, v: `${keyA.value}${keyA.suffix}` },
+    { k: keyB.label, v: `${keyB.value}${keyB.suffix}` },
+    { k: 'Distance', v: `${a.distanceCovered.toFixed(1)} km` },
+    { k: 'Top speed', v: `${a.topSpeed.toFixed(1)}` },
+    { k: 'Sprints', v: String(a.sprintCount) },
+  ]
 }

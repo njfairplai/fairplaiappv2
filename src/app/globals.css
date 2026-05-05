@@ -59,6 +59,13 @@
   --brand-line:        rgba(27, 21, 80, 0.12);
   --brand-line-soft:   rgba(27, 21, 80, 0.06);
 
+  /* Cloud — third surface used for training-match frames in the filmstrip,
+     so they read as a distinct kind of card (not a faded sand match, not a
+     selected indigo match). Indigo-tinted cool gray that belongs to the
+     palette family without competing with sand or indigo. */
+  --brand-cloud:       #C7CADC;
+  --brand-cloud-deep:  #A9B0C5;
+
   /* Logo inversion: black wordmark renders as-is on light themes. Dark
      themes (e.g. Voltage) override to invert(1) to render it white. */
   --logo-invert: none;
@@ -86,6 +93,10 @@
   --brand-line:        #D3D6E0;
   --brand-line-soft:   rgba(27, 22, 80, 0.06);
 
+  /* Cloud — training-match frame body (see Almanac for rationale). */
+  --brand-cloud:       #BFC3D8;
+  --brand-cloud-deep:  #9DA4BD;
+
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body:    "Satoshi", system-ui, sans-serif;
   --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
@@ -108,6 +119,11 @@
   --brand-ink:         #FFFFFF;
   --brand-line:        #40424D;
   --brand-line-soft:   rgba(245, 246, 252, 0.06);
+
+  /* Cloud — on dark theme, a slightly raised gray-blue so training frames
+     still read as a distinct surface against the near-black sand. */
+  --brand-cloud:       #303440;
+  --brand-cloud-deep:  #4A5063;
 
   /* Dark theme — invert the black-on-transparent wordmark to render white. */
   --logo-invert: invert(1);
@@ -135,6 +151,10 @@
   --brand-line:        #C9D6BE;
   --brand-line-soft:   rgba(30, 53, 39, 0.06);
 
+  /* Cloud — sage-leaning gray for training frames. */
+  --brand-cloud:       #C2CFB7;
+  --brand-cloud-deep:  #9CB18E;
+
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body:    "Satoshi", system-ui, sans-serif;
   --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
@@ -157,6 +177,10 @@
   --brand-ink:         #0E1A12;
   --brand-line:        #A8C2A8;
   --brand-line-soft:   rgba(30, 53, 39, 0.06);
+
+  /* Cloud — sage page → muted moss for training frames. */
+  --brand-cloud:       #AFC8AF;
+  --brand-cloud-deep:  #87A38A;
 
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body:    "Satoshi", system-ui, sans-serif;
@@ -195,6 +219,8 @@
   --color-brand-yellow:      var(--brand-yellow);
   --color-brand-coral:       var(--brand-coral);
   --color-brand-ink:         var(--brand-ink);
+  --color-brand-cloud:       var(--brand-cloud);
+  --color-brand-cloud-deep:  var(--brand-cloud-deep);
 }
 
 * {

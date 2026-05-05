@@ -182,7 +182,7 @@ export default function SquadPage() {
             <p style={{ margin: '2px 0 0', fontSize: isWeb && isMobile ? 12 : 14, color: isWeb ? themeColors.textMuted : 'rgba(255,255,255,0.5)' }}>{selectedRosterId === 'all' ? 'All Teams' : selectedRoster.name}</p>
           </div>
           <button
-            onClick={() => router.push(isWeb ? '/coach/web/squad/compare' : '/coach/squad/compare')}
+            onClick={() => router.push(isWeb ? '/coach/web/compare' : '/coach/squad/compare')}
             title="Compare players"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,

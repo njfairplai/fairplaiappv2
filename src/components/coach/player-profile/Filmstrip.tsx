@@ -17,14 +17,17 @@ interface FilmstripProps {
   frameH?: number
 }
 
-/** Auto-derive how many frames fit at the current viewport. */
+/** Auto-derive how many frames fit at the current viewport. Floors at 5 on
+ *  any reasonable desktop width — 4 frames felt too sparse and the cards
+ *  read as oversized. Mobile drops to 3. */
 function useResponsiveWindowSize(): number {
   const [size, setSize] = useState(7)
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth
-      if (w >= 1200) return 7
-      if (w >= 768) return 5
+      if (w >= 1280) return 7
+      if (w >= 1024) return 6
+      if (w >= 720) return 5
       return 3
     }
     setSize(compute())
@@ -61,7 +64,19 @@ export function Filmstrip({
   const [start, setStart] = useState(initialStart)
 
   useEffect(() => {
-    setStart(Math.max(0, Math.min(totalLen - windowSize, playheadIdx - windowSize + 2)))
+    // Only re-window when the new playhead falls OUTSIDE the current visible
+    // slice. Clicking a frame that's already on screen used to re-center the
+    // window unnecessarily, which made the strip lurch every click and broke
+    // the "step through adjacent matches" mental model. Now we behave like
+    // `scrollIntoView({block: 'nearest'})` — leave the window alone if the
+    // playhead is already showing.
+    setStart(prev => {
+      if (playheadIdx >= prev && playheadIdx < prev + windowSize) return prev
+      return Math.max(
+        0,
+        Math.min(totalLen - windowSize, playheadIdx - windowSize + 2),
+      )
+    })
   }, [currentMd, totalLen, windowSize, playheadIdx])
 
   const end = Math.min(start + windowSize, totalLen)
@@ -72,7 +87,9 @@ export function Filmstrip({
   const gap = 12
 
   const playheadInWindow = playheadIdx >= start && playheadIdx < end
-  const playheadOffset = (playheadIdx - start) * (cellW + gap) + cellW / 2
+  // The yellow playhead bar sits on the LEFT EDGE of the selected frame
+  // (used to bisect the frame, which read as a confusing axis line).
+  const playheadOffset = (playheadIdx - start) * (cellW + gap)
 
   // Page-window labels — date ranges (e.g. "FEB 24 – APR 19") not MD numbers.
   const prevWin =
@@ -248,45 +265,6 @@ export function Filmstrip({
         )}
       </div>
 
-      {/* Mini-map dots */}
-      <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            letterSpacing: '0.18em',
-            color: muted,
-            fontWeight: 700,
-          }}
-        >
-          FULL SEASON
-        </span>
-        <div style={{ flex: 1, display: 'flex', gap: 2, position: 'relative' }}>
-          {data.map((d, i) => {
-            const inWindow = i >= start && i < end
-            const isPlay = d.md === currentMd
-            let dotColor: string = dark ? 'rgba(238, 228, 200, 0.18)' : 'var(--brand-line)'
-            if (d.motm) dotColor = yellow
-            else if (d.poor) dotColor = 'var(--brand-coral)'
-            else if (d.dnp) dotColor = 'rgba(235, 77, 109, 0.14)'
-            else if (d.upcoming) dotColor = dark ? 'rgba(238, 228, 200, 0.1)' : 'var(--brand-line-soft)'
-            else if (d.score >= 75) dotColor = dark ? 'var(--brand-sand)' : 'var(--brand-indigo)'
-            return (
-              <div
-                key={d.md}
-                style={{
-                  flex: 1,
-                  height: 8,
-                  background: dotColor,
-                  opacity: inWindow ? 1 : 0.45,
-                  border: isPlay ? `2px solid ${yellow}` : 'none',
-                  borderRadius: 2,
-                }}
-              />
-            )
-          })}
-        </div>
-      </div>
     </div>
   )
 }

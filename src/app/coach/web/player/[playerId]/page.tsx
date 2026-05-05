@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, GitCompareArrows } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { players, rosters, matchAnalyses } from '@/lib/mockData'
-import { PlayerPickerPopover } from '@/components/coach/compare/PlayerPickerPopover'
+import { ScopeToggle, type ProfileScope } from '@/components/coach/player-profile/ScopeToggle'
 import { getPlayerProgression, getLatestFrame } from '@/lib/player-progression'
-import { getSeasonScore, scoreColor } from '@/lib/squad-season-score'
+import { getSeasonScore } from '@/lib/squad-season-score'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { PlayerGlyph } from '@/components/coach/player-profile/PlayerGlyph'
 import { LatestHero } from '@/components/coach/player-profile/LatestHero'
@@ -41,7 +41,7 @@ export default function CoachWebPlayerPage() {
   const { playerId } = useParams<{ playerId: string }>()
   const isMobile = useIsMobile()
   const [shareOpen, setShareOpen] = useState(false)
-  const [comparePickerOpen, setComparePickerOpen] = useState(false)
+  const [scope, setScope] = useState<ProfileScope>('match')
 
   const player = players.find(p => p.id === playerId)
 
@@ -81,7 +81,10 @@ export default function CoachWebPlayerPage() {
         minHeight: 'calc(100vh - 108px)',
       }}
     >
-      {/* 1. Identity strip */}
+      {/* 1. Identity strip — back / glyph / name. SEASON + LATEST score cells
+          and the Compare-with-player button were removed: scores live in the
+          mode-specific hero now (match or season), and Compare-with moved
+          into the radar section's header where comparison logically lives. */}
       <section
         style={{
           padding: isMobile ? '16px 16px' : '20px 36px',
@@ -89,8 +92,8 @@ export default function CoachWebPlayerPage() {
           borderBottom: '1px solid var(--brand-line)',
           display: 'grid',
           gridTemplateColumns: isMobile
-            ? 'auto 1fr auto auto'
-            : 'auto minmax(0, 1fr) auto auto auto auto',
+            ? 'auto 1fr auto'
+            : 'auto minmax(0, 1fr) auto',
           gap: isMobile ? 12 : 24,
           alignItems: 'center',
         }}
@@ -143,14 +146,15 @@ export default function CoachWebPlayerPage() {
             <div
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: isMobile ? 24 : 38,
+                fontSize: isMobile ? 20 : 38,
                 letterSpacing: '-0.02em',
-                lineHeight: 1.05,
+                lineHeight: 1.1,
                 color: 'var(--brand-indigo)',
                 marginTop: 2,
-                whiteSpace: 'nowrap',
+                whiteSpace: isMobile ? 'normal' : 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
+                wordBreak: 'break-word',
               }}
             >
               {player.firstName} {player.lastName}
@@ -182,177 +186,118 @@ export default function CoachWebPlayerPage() {
             )}
           </div>
         </div>
-        {!isMobile && (
-          <div
-            style={{
-              textAlign: 'center',
-              borderLeft: '1px solid var(--brand-line)',
-              padding: '0 22px',
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9.5,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-              }}
-            >
-              SEASON
-            </span>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 38,
-                color: scoreColor(seasonScore.avg || 0),
-                letterSpacing: '-0.02em',
-                marginTop: 3,
-              }}
-            >
-              {seasonScore.avg || '—'}
-            </div>
-          </div>
-        )}
-        {!isMobile && latest && (
-          <div
-            style={{
-              textAlign: 'center',
-              borderLeft: '1px solid var(--brand-line)',
-              padding: '0 22px',
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9.5,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-              }}
-            >
-              LATEST
-            </span>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 38,
-                color: latest.motm ? 'var(--brand-yellow)' : scoreColor(latest.score),
-                letterSpacing: '-0.02em',
-                marginTop: 3,
-                WebkitTextStroke: latest.motm ? '1.5px var(--brand-indigo)' : 'none',
-              }}
-            >
-              {latest.score}
-            </div>
-            {latest.motm && (
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  letterSpacing: '0.18em',
-                  fontWeight: 700,
-                  color: 'var(--brand-indigo)',
-                  marginTop: 2,
-                }}
-              >
-                ★ MOTM
-              </div>
-            )}
-          </div>
-        )}
-        <div style={{ position: 'relative', display: 'inline-flex' }}>
-          <button
-            type="button"
-            onClick={() => setComparePickerOpen(o => !o)}
-            aria-label="Compare with another player"
-            style={{
-              background: 'transparent',
-              color: 'var(--brand-indigo)',
-              border: '1px solid var(--brand-line)',
-              padding: isMobile ? '8px 10px' : '10px 14px',
-              borderRadius: 8,
-              fontFamily: 'var(--font-body)',
-              fontWeight: 600,
-              fontSize: isMobile ? 12 : 13,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <GitCompareArrows size={isMobile ? 13 : 14} />
-            {isMobile ? '' : 'Compare with…'}
-          </button>
-          <PlayerPickerPopover
-            pool={players}
-            excluded={[player.id]}
-            open={comparePickerOpen}
-            onClose={() => setComparePickerOpen(false)}
-            onPick={otherId =>
-              router.push(`/coach/web/compare?players=${player.id},${otherId}`)
-            }
-            align="right"
-          />
-        </div>
         <CardThumbButton
           player={player}
           seasonScore={seasonScore.avg || 0}
           onClick={() => setShareOpen(true)}
+          size={isMobile ? 'sm' : 'md'}
         />
       </section>
 
-      {/* 2/3. Latest hero or scrubbed playhead detail */}
-      {currentFrame &&
-        (isCurrentLatest && latest ? (
-          <LatestHero player={player} latest={latest} />
-        ) : (
-          <PlayheadDetail frame={currentFrame} playerId={player.id} />
-        ))}
+      {/* 2. Scope toggle — match (default) vs season. Drives every section
+          below so the page commits to one story at a time. */}
+      <ScopeToggle
+        scope={scope}
+        onChange={setScope}
+        matchLabel={
+          currentFrame
+            ? `vs ${currentFrame.opp} . ${currentFrame.shortDate}`
+            : ''
+        }
+        isMobile={isMobile}
+      />
 
-      {/* 4. Filmstrip */}
-      {progression.length > 0 && (
-        <div style={{ padding: isMobile ? '20px 12px' : '24px 36px' }}>
-          <Filmstrip
-            data={progression}
-            currentMd={effectiveMd ?? progression[0].md}
-            onSelect={setCurrentMd}
-            frameW={isMobile ? 116 : 138}
-            frameH={isMobile ? 152 : 172}
-            dark
+      {scope === 'match' ? (
+        <>
+          {/* Match hero (latest or scrubbed playhead) — match score arc + key stats inline */}
+          {currentFrame &&
+            (isCurrentLatest && latest ? (
+              <LatestHero player={player} latest={latest} isMobile={isMobile} />
+            ) : (
+              <PlayheadDetail frame={currentFrame} player={player} isMobile={isMobile} />
+            ))}
+
+          {/* Filmstrip — only visible in match mode (it's the match navigator) */}
+          {progression.length > 0 && (
+            <div style={{ padding: isMobile ? '20px 12px' : '24px 36px' }}>
+              <Filmstrip
+                data={progression}
+                currentMd={effectiveMd ?? progression[0].md}
+                onSelect={setCurrentMd}
+                frameW={isMobile ? 116 : 138}
+                frameH={isMobile ? 152 : 172}
+                dark
+              />
+            </div>
+          )}
+
+          {/* Highlights filtered to the playhead match */}
+          <HighlightsSection
+            player={player}
+            currentSessionId={currentFrame?.sessionId}
+            scope="match"
+            isMobile={isMobile}
           />
-        </div>
+
+          {/* Radar with both polygons (match solid, season dotted) */}
+          <RadarSection
+            player={player}
+            records={seasonAnalyses}
+            currentSessionId={currentFrame?.sessionId}
+            scope="match"
+            isMobile={isMobile}
+          />
+
+          {/* Heatmap of this match — supports the radar story below it */}
+          <HeatmapSection
+            player={player}
+            currentSessionId={currentFrame?.sessionId}
+            isTraining={currentFrame?.kind === 'training'}
+            scope="match"
+            isMobile={isMobile}
+          />
+        </>
+      ) : (
+        <>
+          {/* Season hero — composite + Matches/Goals/Key passes/MOTMs/Minutes/Trend */}
+          {progression.length > 0 && (
+            <SeasonNumbers
+              data={progression}
+              hero
+              seasonScore={seasonScore.avg || 0}
+              isMobile={isMobile}
+            />
+          )}
+
+          {/* Highlights — season reel only, no clip grid */}
+          <HighlightsSection
+            player={player}
+            currentSessionId={undefined}
+            scope="season"
+            isMobile={isMobile}
+          />
+
+          {/* Radar — season polygon only, no overlay */}
+          <RadarSection
+            player={player}
+            records={seasonAnalyses}
+            currentSessionId={null}
+            scope="season"
+            isMobile={isMobile}
+          />
+
+          {/* Heatmap — season aggregate */}
+          <HeatmapSection
+            player={player}
+            currentSessionId={undefined}
+            isTraining={false}
+            scope="season"
+            isMobile={isMobile}
+          />
+        </>
       )}
 
-      {/* 5. Season numbers strip */}
-      {progression.length > 0 && <SeasonNumbers data={progression} />}
-
-      {/* 6. Highlights — moved right after filmstrip+numbers so the season
-          story flows: matches → numbers → moments. */}
-      <HighlightsSection
-        player={player}
-        currentSessionId={currentFrame?.sessionId}
-        isMobile={isMobile}
-      />
-
-      {/* 7. Radar — interactive 6 categories with click-to-drill sub-stats */}
-      <RadarSection
-        player={player}
-        records={seasonAnalyses}
-        currentSessionId={currentFrame?.sessionId}
-        isMobile={isMobile}
-      />
-
-      {/* 8. Heatmap — horizontal pitch with heat overlay */}
-      <HeatmapSection
-        player={player}
-        currentSessionId={currentFrame?.sessionId}
-        isTraining={currentFrame?.kind === 'training'}
-        isMobile={isMobile}
-      />
-
-      {/* 9. IDP postscript */}
+      {/* IDP — match-agnostic, lives in both modes */}
       <IdpPostscript player={player} />
 
       <ShareCardModal

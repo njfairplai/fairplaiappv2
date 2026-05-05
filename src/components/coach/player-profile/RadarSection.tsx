@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Layers } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { GitCompareArrows } from 'lucide-react'
 import type { Player, MatchAnalysis } from '@/lib/types'
-import { highlights } from '@/lib/mockData'
+import { highlights, players } from '@/lib/mockData'
 import { PolyRadar, RADAR_CATEGORIES, type RadarCategory } from './PolyRadar'
+import { PlayerPickerPopover } from '@/components/coach/compare/PlayerPickerPopover'
+import type { ProfileScope } from './ScopeToggle'
 
 const CATEGORIES = RADAR_CATEGORIES
 type Category = RadarCategory
@@ -22,33 +25,41 @@ interface RadarSectionProps {
   player: Player
   /** Every season MatchAnalysis record for this player. */
   records: MatchAnalysis[]
-  /** Current playhead session id from the filmstrip. When the coach toggles
-   *  the overlay, this match's per-category scores draw on top of the season
-   *  shape so they can compare. */
+  /** Current playhead session id from the filmstrip. In match scope this drives
+   *  the solid match polygon; in season scope it's ignored. */
   currentSessionId?: string | null
+  /** Page scope. Match (default): match polygon solid + season dotted overlay.
+   *  Season: only the season polygon. */
+  scope: ProfileScope
   isMobile?: boolean
 }
 
 /**
- * Solo season radar with a prominent overlay toggle.
+ * 6-axis radar that adapts to page scope.
  *
- * Default state: ONE bold indigo radar = the player's season averages across
- * the 6 categories. No faint grey background series (that was invisible and
- * confusing).
+ * Match scope: the playhead match draws as a solid indigo polygon, the
+ * player's season average draws as a dotted yellow overlay underneath. Both
+ * are visible by default — the coach reads the match against the baseline at
+ * a glance. A "Hide season average" link in the legend collapses the overlay
+ * if it gets in the way.
  *
- * Compare mode: the coach taps a yellow "Compare with this match" button
- * (sized as a real CTA, not a settings toggle); the playhead match's radar
- * draws on top of the season shape in dotted yellow. A small legend appears
- * underneath. Tap again to remove.
+ * Season scope: only the season polygon. No overlay, no toggle, no legend.
  *
- * Click any axis to drill the 3 sub-stats below the radar.
+ * The header carries a "Compare with…" button that picks another player and
+ * routes to the compare page (this is the lone "compare" entry-point on the
+ * profile, since the identity strip dropped its old button).
+ *
+ * Click any axis to drill 3 sub-stats below the radar.
  */
 export function RadarSection({
   player,
   records,
   currentSessionId,
+  scope,
   isMobile,
 }: RadarSectionProps) {
+  const router = useRouter()
+  const [pickerOpen, setPickerOpen] = useState(false)
   // Season averages — the default radar shape and the source for derived sub-stats.
   const avg = useMemo(() => {
     const pick = (f: (r: MatchAnalysis) => number): number => {
@@ -77,8 +88,12 @@ export function RadarSection({
     [records, currentSessionId],
   )
 
-  const [overlayOn, setOverlayOn] = useState(false)
-  const showOverlay = overlayOn && !!matchRecord
+  // Season-overlay visibility — defaults ON in match scope so the coach sees
+  // the dotted reference straight away. Toggled via the "Hide / Show season
+  // average" link in the legend below.
+  const [seasonOverlayVisible, setSeasonOverlayVisible] = useState(true)
+  const inMatchScope = scope === 'match'
+  const showSeasonOverlay = inMatchScope && !!matchRecord && seasonOverlayVisible
 
   // Default-selected category: strongest season axis.
   const strongest = useMemo<Category>(() => {
@@ -103,41 +118,72 @@ export function RadarSection({
 
   const [selected, setSelected] = useState<Category>(strongest)
 
-  const keyPassCount = useMemo(
-    () => highlights.filter(h => h.playerId === player.id && h.eventType === 'key_pass').length,
-    [player.id],
-  )
+  // Sub-stats follow the radar's primary series. In match scope they're
+  // derived from THIS match (distance / top speed / sprints, plus AI splits
+  // off the match's per-category scores). In season scope, season averages.
+  const useMatchStats = inMatchScope && matchRecord
+  const src = useMatchStats
+    ? {
+        physical: matchRecord.physicalScore,
+        positional: matchRecord.positionalScore,
+        passing: matchRecord.passingScore,
+        dribbling: matchRecord.dribblingScore,
+        control: matchRecord.controlScore,
+        defending: matchRecord.defendingScore,
+        distance: matchRecord.distanceCovered,
+        topSpeed: matchRecord.topSpeed,
+        sprintCount: matchRecord.sprintCount,
+        passCompletion: matchRecord.passCompletion,
+        dribbleSuccess: matchRecord.dribbleSuccess,
+      }
+    : avg
+
+  const keyPassCount = useMemo(() => {
+    if (useMatchStats) {
+      return highlights.filter(
+        h =>
+          h.playerId === player.id &&
+          h.sessionId === matchRecord.sessionId &&
+          h.eventType === 'key_pass',
+      ).length
+    }
+    return highlights.filter(h => h.playerId === player.id && h.eventType === 'key_pass').length
+  }, [player.id, useMatchStats, matchRecord])
+
+  // "/ 90" labels are misleading in match scope (a single match), so swap
+  // them for the bare label.
+  const perLabel = useMatchStats ? '' : ' / 90'
 
   const subStats: Record<Category, [SubStat, SubStat, SubStat]> = {
     Physical: [
-      { label: 'Distance / 90', value: `${avg.distance.toFixed(1)} km`, source: 'real' },
-      { label: 'Top speed', value: `${avg.topSpeed.toFixed(1)} km/h`, source: 'real' },
-      { label: 'Sprints / 90', value: `${avg.sprintCount}`, source: 'real' },
+      { label: `Distance${perLabel}`, value: `${src.distance.toFixed(1)} km`, source: 'real' },
+      { label: 'Top speed', value: `${src.topSpeed.toFixed(1)} km/h`, source: 'real' },
+      { label: `Sprints${perLabel}`, value: `${src.sprintCount}`, source: 'real' },
     ],
     Positional: [
-      { label: 'Position discipline', value: `${avg.positional}`, source: 'ai-derived' },
-      { label: 'Recoveries / 90', value: `${Math.round(avg.positional / 8)}`, source: 'ai-derived' },
-      { label: 'Heat coverage', value: `${Math.round(avg.positional * 0.9)}%`, source: 'ai-derived' },
+      { label: 'Position discipline', value: `${src.positional}`, source: 'ai-derived' },
+      { label: `Recoveries${perLabel}`, value: `${Math.round(src.positional / 8)}`, source: 'ai-derived' },
+      { label: 'Heat coverage', value: `${Math.round(src.positional * 0.9)}%`, source: 'ai-derived' },
     ],
     Passing: [
-      { label: 'Pass completion', value: `${avg.passCompletion}%`, source: 'real' },
+      { label: 'Pass completion', value: `${src.passCompletion}%`, source: 'real' },
       { label: 'Key passes', value: `${keyPassCount}`, source: 'real' },
-      { label: 'Long balls / 90', value: `${Math.round(avg.passing / 18)}`, source: 'ai-derived' },
+      { label: `Long balls${perLabel}`, value: `${Math.round(src.passing / 18)}`, source: 'ai-derived' },
     ],
     Dribbling: [
-      { label: 'Dribble success', value: `${avg.dribbleSuccess}%`, source: 'real' },
-      { label: 'Take-ons / 90', value: `${Math.round(avg.dribbling / 12)}`, source: 'ai-derived' },
-      { label: 'Press-resistance', value: `${Math.round(avg.dribbling * 0.95)}`, source: 'ai-derived' },
+      { label: 'Dribble success', value: `${src.dribbleSuccess}%`, source: 'real' },
+      { label: `Take-ons${perLabel}`, value: `${Math.round(src.dribbling / 12)}`, source: 'ai-derived' },
+      { label: 'Press-resistance', value: `${Math.round(src.dribbling * 0.95)}`, source: 'ai-derived' },
     ],
     Control: [
-      { label: 'Touches / 90', value: `${Math.round(avg.control * 1.2)}`, source: 'ai-derived' },
-      { label: 'Retention', value: `${Math.min(99, avg.control + 5)}%`, source: 'ai-derived' },
-      { label: 'First touches won', value: `${Math.round(avg.control / 9)}`, source: 'ai-derived' },
+      { label: `Touches${perLabel}`, value: `${Math.round(src.control * 1.2)}`, source: 'ai-derived' },
+      { label: 'Retention', value: `${Math.min(99, src.control + 5)}%`, source: 'ai-derived' },
+      { label: 'First touches won', value: `${Math.round(src.control / 9)}`, source: 'ai-derived' },
     ],
     Defending: [
-      { label: 'Tackles / 90', value: `${Math.round(avg.defending / 10)}`, source: 'ai-derived' },
-      { label: 'Interceptions / 90', value: `${Math.round(avg.positional / 8)}`, source: 'ai-derived' },
-      { label: 'Duels won', value: `${Math.min(99, avg.defending + 4)}%`, source: 'ai-derived' },
+      { label: `Tackles${perLabel}`, value: `${Math.round(src.defending / 10)}`, source: 'ai-derived' },
+      { label: `Interceptions${perLabel}`, value: `${Math.round(src.positional / 8)}`, source: 'ai-derived' },
+      { label: 'Duels won', value: `${Math.min(99, src.defending + 4)}%`, source: 'ai-derived' },
     ],
   }
 
@@ -203,19 +249,19 @@ export function RadarSection({
         >
           How {player.firstName} plays.
         </div>
-        {matchRecord && (
+        <div style={{ position: 'relative', display: 'inline-flex' }}>
           <button
             type="button"
-            onClick={() => setOverlayOn(v => !v)}
-            aria-pressed={showOverlay}
+            onClick={() => setPickerOpen(o => !o)}
+            aria-label="Compare with another player"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
               padding: '10px 16px',
               borderRadius: 999,
-              background: showOverlay ? 'var(--brand-indigo)' : 'var(--brand-yellow)',
-              color: showOverlay ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+              background: 'var(--brand-yellow)',
+              color: 'var(--brand-indigo)',
               border: 'none',
               fontFamily: 'var(--font-body)',
               fontSize: 13,
@@ -224,10 +270,20 @@ export function RadarSection({
               letterSpacing: '0.01em',
             }}
           >
-            <Layers size={14} />
-            {showOverlay ? 'Hide match overlay' : 'Compare with this match'}
+            <GitCompareArrows size={14} />
+            Compare with…
           </button>
-        )}
+          <PlayerPickerPopover
+            pool={players}
+            excluded={[player.id]}
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            onPick={otherId =>
+              router.push(`/coach/web/compare?players=${player.id},${otherId}`)
+            }
+            align="right"
+          />
+        </div>
       </div>
 
       <div
@@ -240,69 +296,107 @@ export function RadarSection({
         }}
       >
         <PolyRadar
-          series={[
-            {
-              values: seasonValues,
-              color: 'var(--brand-indigo)',
-              fillOpacity: 0.22,
-              strokeWidth: 2,
-            },
-            ...(showOverlay && matchValues
+          series={
+            inMatchScope && matchValues
               ? [
+                  // Season dotted underneath as the reference shape.
+                  ...(showSeasonOverlay
+                    ? [
+                        {
+                          values: seasonValues,
+                          color: 'var(--brand-yellow)',
+                          fillOpacity: 0,
+                          strokeWidth: 2,
+                          strokeDasharray: '6 4',
+                          dots: false,
+                        },
+                      ]
+                    : []),
+                  // This match — solid indigo, drawn on top.
                   {
                     values: matchValues,
-                    color: 'var(--brand-yellow)',
-                    fillOpacity: 0.18,
+                    color: 'var(--brand-indigo)',
+                    fillOpacity: 0.22,
                     strokeWidth: 2.5,
-                    strokeDasharray: '6 4',
-                    dotStroke: 'var(--brand-indigo)',
                   },
                 ]
-              : []),
-          ]}
+              : [
+                  // Season scope (or no match record) — solid season only.
+                  {
+                    values: seasonValues,
+                    color: 'var(--brand-indigo)',
+                    fillOpacity: 0.22,
+                    strokeWidth: 2,
+                  },
+                ]
+          }
           selected={selected}
           onSelect={setSelected}
           size={isMobile ? 280 : 340}
         />
       </div>
 
-      {/* Legend appears only in compare mode. */}
-      {showOverlay && matchValues && (
+      {/* Legend (match scope only, when there's a match to overlay). The
+          "Hide / Show season average" link doubles as the toggle so the
+          page only carries one affordance for season-overlay control. */}
+      {inMatchScope && matchValues && (
         <div
           style={{
             marginTop: 10,
             display: 'flex',
             justifyContent: 'center',
+            alignItems: 'center',
             gap: 18,
             fontFamily: 'var(--font-mono)',
             fontSize: 10.5,
             letterSpacing: '0.18em',
             color: 'var(--brand-indigo-mute)',
             fontWeight: 700,
+            flexWrap: 'wrap',
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <span
               style={{
-                width: 12,
-                height: 2,
+                width: 14,
+                height: 2.5,
                 background: 'var(--brand-indigo)',
-                display: 'inline-block',
-              }}
-            />
-            SEASON
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                width: 12,
-                height: 0,
-                borderTop: '2px dashed var(--brand-yellow)',
                 display: 'inline-block',
               }}
             />
             THIS MATCH
           </span>
+          {showSeasonOverlay && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span
+                style={{
+                  width: 14,
+                  height: 0,
+                  borderTop: '2px dashed var(--brand-yellow)',
+                  display: 'inline-block',
+                }}
+              />
+              SEASON AVG
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setSeasonOverlayVisible(v => !v)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--brand-indigo)',
+              fontFamily: 'inherit',
+              fontSize: 'inherit',
+              letterSpacing: 'inherit',
+              fontWeight: 'inherit',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: 0,
+            }}
+          >
+            {showSeasonOverlay ? 'HIDE SEASON AVERAGE' : 'SHOW SEASON AVERAGE'}
+          </button>
         </div>
       )}
 

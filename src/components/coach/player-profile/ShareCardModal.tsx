@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Share2 } from 'lucide-react'
 import type { Player, MatchAnalysis } from '@/lib/types'
 import type { ProgressionFrame } from '@/lib/player-progression'
 import { BibCard, BIB_FORMATS, computeBibRadar, type BibFormat } from './BibCard'
@@ -36,6 +37,27 @@ export function ShareCardModal({
   rosterName,
 }: ShareCardModalProps) {
   const [format, setFormat] = useState<BibFormat>('square')
+  const [shareOpen, setShareOpen] = useState(false)
+  const shareRef = useRef<HTMLDivElement | null>(null)
+
+  // Outside-click + Escape close for the Share popover.
+  useEffect(() => {
+    if (!shareOpen) return
+    const onDocClick = (e: MouseEvent) => {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShareOpen(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShareOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [shareOpen])
 
   // Lock body scroll while open.
   useEffect(() => {
@@ -211,7 +233,9 @@ export function ShareCardModal({
             </button>
           </div>
 
-          {/* Format picker */}
+          {/* Format picker — text pills, no inline thumbnails. The single
+              live preview on the left already shows the active format; the
+              picker just needs to read at a glance. */}
           <div style={{ marginTop: 24 }}>
             <span
               style={{
@@ -224,203 +248,139 @@ export function ShareCardModal({
             >
               FORMAT
             </span>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <div
+              role="tablist"
+              aria-label="Card format"
+              style={{
+                display: 'flex',
+                marginTop: 10,
+                background: 'var(--brand-paper)',
+                border: '1px solid var(--brand-indigo)',
+                borderRadius: 999,
+                padding: 3,
+                gap: 2,
+              }}
+            >
               {(Object.entries(BIB_FORMATS) as [BibFormat, (typeof BIB_FORMATS)[BibFormat]][]).map(
                 ([k, v]) => {
                   const active = format === k
-                  const previewH = 100
-                  const aspect = k === 'square' ? 1 : k === 'story' ? 9 / 16 : 16 / 10
-                  const previewW = previewH * aspect
-                  const cardScale = (previewH - 8) / v.h
                   return (
                     <button
                       key={k}
                       type="button"
+                      role="tab"
+                      aria-selected={active}
                       onClick={() => setFormat(k)}
                       style={{
                         flex: 1,
-                        background: active ? 'var(--brand-indigo)' : 'var(--brand-paper)',
-                        border: '1.5px solid var(--brand-indigo)',
-                        padding: '10px 8px 8px',
+                        background: active ? 'var(--brand-indigo)' : 'transparent',
+                        color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+                        border: 'none',
+                        padding: '8px 10px',
                         cursor: 'pointer',
                         textAlign: 'center',
-                        color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-                        borderRadius: 6,
+                        borderRadius: 999,
+                        fontFamily: 'var(--font-body)',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: '0.01em',
                       }}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          height: previewH,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: previewW,
-                            height: previewH,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <BibCard
-                            player={player}
-                            radar={radar}
-                            seasonScore={seasonScore}
-                            matchesPlayed={matchesPlayed}
-                            minutesPlayed={minutesPlayed}
-                            trend={trend}
-                            rosterName={rosterName}
-                            format={k}
-                            scale={cardScale}
-                          />
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: 9,
-                          letterSpacing: '0.18em',
-                          fontWeight: 700,
-                          marginTop: 6,
-                          color: active ? 'var(--brand-yellow)' : 'var(--brand-indigo-mute)',
-                        }}
-                      >
-                        {v.label.toUpperCase()}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: 9.5,
-                          marginTop: 2,
-                          opacity: 0.75,
-                        }}
-                      >
-                        {v.sub}
-                      </div>
+                      {v.label}
                     </button>
                   )
                 },
               )}
             </div>
+            <div
+              style={{
+                marginTop: 8,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                letterSpacing: '0.16em',
+                color: 'var(--brand-indigo-mute)',
+                fontWeight: 600,
+              }}
+            >
+              {BIB_FORMATS[format].sub.toUpperCase()} . {native.w}×{native.h}
+            </div>
           </div>
 
-          {/* Share targets */}
+          {/* One big Share button. Click → popover with Download / WhatsApp /
+              Instagram. Replaces the previous always-visible 3-button strip. */}
           <div
+            ref={shareRef}
             style={{
+              position: 'relative',
               marginTop: 24,
               paddingTop: 18,
               borderTop: '1px solid var(--brand-line)',
             }}
           >
-            <span
+            <button
+              type="button"
+              onClick={() => setShareOpen(o => !o)}
+              aria-haspopup="menu"
+              aria-expanded={shareOpen}
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
+                width: '100%',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: 'var(--brand-yellow)',
+                color: 'var(--brand-indigo)',
+                border: '1px solid var(--brand-indigo)',
+                padding: '14px 16px',
+                fontFamily: 'var(--font-body)',
+                fontSize: 15,
+                fontWeight: 800,
+                cursor: 'pointer',
+                borderRadius: 8,
+                letterSpacing: '0.01em',
               }}
             >
-              SHARE TO
-            </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-              <button
-                type="button"
+              <Share2 size={16} />
+              Share player card
+            </button>
+
+            {shareOpen && (
+              <div
+                role="menu"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  background: 'var(--brand-yellow)',
-                  color: 'var(--brand-indigo)',
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 'calc(100% - 8px)',
+                  marginBottom: 4,
+                  background: 'var(--brand-sand)',
                   border: '1px solid var(--brand-indigo)',
-                  padding: '12px 14px',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13.5,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  borderRadius: 6,
+                  borderRadius: 10,
+                  padding: 8,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                  boxShadow: '0 14px 32px rgba(11, 8, 40, 0.22)',
+                  zIndex: 2,
                 }}
               >
-                <span>Download PNG</span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 10,
-                    letterSpacing: '0.16em',
-                    opacity: 0.6,
-                  }}
-                >
-                  {native.w}×{native.h}
-                </span>
-              </button>
-              <button
-                type="button"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  background: 'transparent',
-                  color: 'var(--brand-indigo)',
-                  border: '1px solid var(--brand-indigo)',
-                  padding: '11px 14px',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  borderRadius: 6,
-                }}
-              >
-                <span
-                  style={{
-                    width: 18,
-                    height: 18,
-                    background: '#25D366',
-                    color: '#fff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 10,
-                    fontWeight: 800,
-                    borderRadius: 3,
-                  }}
-                >
-                  W
-                </span>
-                Send via WhatsApp
-              </button>
-              <button
-                type="button"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  background: 'transparent',
-                  color: 'var(--brand-indigo)',
-                  border: '1px solid var(--brand-indigo)',
-                  padding: '11px 14px',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  borderRadius: 6,
-                }}
-              >
-                <span
-                  style={{
-                    width: 18,
-                    height: 18,
-                    background: '#E1306C',
-                    display: 'inline-block',
-                    borderRadius: 3,
-                  }}
+                <ShareOption
+                  label="Download PNG"
+                  meta={`${native.w}×${native.h}`}
+                  swatch={null}
                 />
-                Post to Instagram Story
-              </button>
-            </div>
+                <ShareOption
+                  label="Send via WhatsApp"
+                  meta=""
+                  swatch={{ bg: '#25D366', glyph: 'W' }}
+                />
+                <ShareOption
+                  label="Post to Instagram Story"
+                  meta=""
+                  swatch={{ bg: '#E1306C', glyph: '' }}
+                />
+              </div>
+            )}
           </div>
 
           <div
@@ -440,5 +400,77 @@ export function ShareCardModal({
         </div>
       </div>
     </div>
+  )
+}
+
+/** Single row inside the Share popover. */
+function ShareOption({
+  label,
+  meta,
+  swatch,
+}: {
+  label: string
+  meta: string
+  swatch: { bg: string; glyph: string } | null
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+        background: 'transparent',
+        color: 'var(--brand-indigo)',
+        border: 'none',
+        padding: '10px 12px',
+        fontFamily: 'var(--font-body)',
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: 'pointer',
+        borderRadius: 8,
+        textAlign: 'left',
+      }}
+      onMouseEnter={e =>
+        (e.currentTarget.style.background = 'var(--brand-paper)')
+      }
+      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+    >
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+        {swatch && (
+          <span
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 3,
+              background: swatch.bg,
+              color: '#fff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 10,
+              fontWeight: 800,
+            }}
+          >
+            {swatch.glyph}
+          </span>
+        )}
+        {label}
+      </span>
+      {meta && (
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            opacity: 0.6,
+          }}
+        >
+          {meta}
+        </span>
+      )}
+    </button>
   )
 }
