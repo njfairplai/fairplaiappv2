@@ -57,6 +57,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   // Slice 6.1 added /coach/web/squad (pitch-cluster squad view).
   // Slice 6.1.1 added /coach/web/player/* (filmstrip player profile).
   const isBrandedRoute =
+    pathname === '/coach/web' ||
     pathname.startsWith('/coach/web/match/') ||
     pathname === '/coach/web/squad' ||
     pathname.startsWith('/coach/web/player/') ||
