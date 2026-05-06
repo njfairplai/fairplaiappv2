@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Star, Send, Download, Save, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { useCoachTheme } from '@/contexts/CoachThemeContext'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { COLORS } from '@/lib/constants'
 import {
   players, rosters, squadScores, seasonReviews, playerSeasonStats,
@@ -127,6 +128,7 @@ function MiniRadar({ data }: { data: Array<{ category: string; value: number; av
 export default function IDPsPage() {
   const { selectedRosterId } = useTeam()
   const { colors: themeColors } = useCoachTheme()
+  const isMobile = useIsMobile()
   const searchParams = useSearchParams()
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Record<string, IDPDraft>>({})
@@ -246,8 +248,10 @@ export default function IDPsPage() {
           </div>
         </div>
 
-        {/* Two column layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, padding: 24 }}>
+        {/* Two column layout — single column on mobile so the
+         *  auto-populated stats block above the input columns reflows
+         *  cleanly on phone widths. */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 14 : 20, padding: isMobile ? 14 : 24 }}>
           {/* LEFT: Auto-populated */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Score + Trend */}
@@ -281,7 +285,7 @@ export default function IDPsPage() {
             {stats && (
               <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                 <h4 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Key Stats</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 }}>
                   {stats.stats.map((stat) => (
                     <div key={stat.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F1F5F9' }}>
                       <span style={{ fontSize: 12, color: '#64748B' }}>{stat.label}</span>
