@@ -211,21 +211,41 @@ export const programs: Program[] = [
 
 // ─── SESSIONS (12 total) ─────────────────────────────────
 export const sessions: Session[] = [
-  // 4 drill/training sessions for U12 Red — playback_ready
-  { id: 'session_001', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-10', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'playback_ready', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds] },
+  // ──────────────────────────────────────────────────────────────
+  // Match Center alignment — Feb 2026
+  //
+  // session_001/_005/_006/_007/_008/_010 are the canonical mockData
+  // entries for the analysed/processing/prep sessions that appear
+  // in match-center.ts SESSIONS. Match-center is the source of truth
+  // for dates / opponents / kind; these entries inherit those values.
+  // When you change one, change both. Match Center surfaces, Highlights
+  // groups, Open match deep-links, and the match drill-in all read
+  // from this aligned set.
+  //
+  //   session_001  Feb 03  training_match  analysed   internal A vs B
+  //   session_005  Feb 08  match           analysed   Shabab FC
+  //   session_006  Feb 17  match           analysed   Stratford E.
+  //   session_007  Feb 24  match           analysed   Al Wasl Academy
+  //   session_008  Feb 28  match           scheduled  Al Wasl Academy
+  //   session_010  Feb 22  training_match  processing internal A vs B
+  // ──────────────────────────────────────────────────────────────
+  { id: 'session_001', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-03', startTime: '17:00', endTime: '18:30', type: 'training_match', status: 'analysed', creditsConsumed: 24, programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 86, autoTriggeredAnalysis: true },
+
+  // Drill sessions for U12 Red — playback_ready
   { id: 'session_002', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-12', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'playback_ready', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds] },
-  { id: 'session_003', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-17', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'playback_ready', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds] },
-  { id: 'session_004', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-20', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'playback_ready', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds] },
+  { id: 'session_003', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-19', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'playback_ready', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds] },
+  { id: 'session_004', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-26', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'playback_ready', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds] },
 
-  // 4 match sessions for U12 Red — analysed, autoTriggered on 3
-  { id: 'session_005', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-07', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Baniyas SC', competition: 'Friendly', creditsConsumed: 38, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 91, autoTriggeredAnalysis: true },
-  { id: 'session_006', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-14', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Al Ain FC', competition: 'UAE Youth League', creditsConsumed: 42, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 88, autoTriggeredAnalysis: true },
+  // Aligned match sessions — see Match Center alignment block above
+  { id: 'session_005', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-08', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Shabab FC', competition: 'Friendly', creditsConsumed: 38, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 91, autoTriggeredAnalysis: true },
+  { id: 'session_006', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-17', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Stratford E.', competition: 'UAE Youth League', creditsConsumed: 42, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 88, autoTriggeredAnalysis: true },
   { id: 'session_007', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-24', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Al Wasl Academy', competition: 'UAE Youth League', creditsConsumed: 40, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 93, autoTriggeredAnalysis: true },
-  { id: 'session_008', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-28', startTime: '15:00', endTime: '16:30', type: 'match', status: 'complete', opponent: 'Shabab Al Ahli', competition: 'UAE Youth League', programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 72, autoTriggeredAnalysis: false },
+  { id: 'session_008', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-28', startTime: '15:00', endTime: '16:30', type: 'match', status: 'scheduled', opponent: 'Al Wasl Academy', competition: 'UAE Youth League', programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 72, autoTriggeredAnalysis: false },
 
-  // 2 sessions for U14 Blue
+  // U14 Blue surfaces
   { id: 'session_009', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-19', startTime: '18:00', endTime: '19:30', type: 'drill', status: 'playback_ready', programId: 'program_002', participatingPlayerIds: [...u14BluePlayerIds] },
-  { id: 'session_010', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-22', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Sharjah FC', competition: 'UAE Youth League', creditsConsumed: 35, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 90, autoTriggeredAnalysis: true },
+  // session_010 — Match Center Feb 22 internal training match, processing
+  { id: 'session_010', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-22', startTime: '15:00', endTime: '16:30', type: 'training_match', status: 'processing', creditsConsumed: 26, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 90, autoTriggeredAnalysis: true },
 
   // 1 upcoming training for U12 Red
   { id: 'session_011', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-03', startTime: '17:00', endTime: '19:00', type: 'drill', status: 'scheduled', programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds] },

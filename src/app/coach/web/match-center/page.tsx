@@ -161,7 +161,11 @@ export default function CoachMatchCenterPage() {
         <State5Ready
           session={session}
           flaggedClips={flaggedClips}
-          onOpenFullAnalysis={() => router.push('/coach/web/match/session_010')}
+          onOpenFullAnalysis={
+            session.id
+              ? () => router.push(`/coach/web/match/${session.id}`)
+              : undefined
+          }
           onClipPlay={clip => {
             setClipQueue([clip])
             setClipQueueTitle(undefined)

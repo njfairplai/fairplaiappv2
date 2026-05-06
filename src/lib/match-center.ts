@@ -43,6 +43,14 @@ export interface MatchCenterSession {
   opponent: string | null
   score?: number | null
   motm?: string
+  /** Reference to the canonical `Session` in `src/lib/mockData.ts` for
+   *  sessions that have one. The `Open match` CTA on Highlights and the
+   *  `Open full match analysis →` CTA on State 5 Ready use this to deep-
+   *  link to `/coach/web/match/[sessionId]`. When omitted, the surface
+   *  hides the deep-link affordance — match-center.ts is the source of
+   *  truth for what the coach sees in the calendar; mockData sessions
+   *  inherit those dates/opponents/scores. */
+  id?: string
   /** When the date isn't a member of the active month (trailing cells in grid) */
   trailing?: boolean
 }
@@ -61,19 +69,24 @@ export interface MatchCenterSession {
  */
 export const SESSIONS: MatchCenterSession[] = [
   // ── February 2026 ──────────────────────────────────────────────
-  { date: '2026-02-03', day: 3,  month: 2, year: 2026, kind: 'training', status: 'ready',         opponent: 'Team A vs Team B', score: 74, motm: 'Saeed K.' },
+  // The four analysed February sessions reference real mockData IDs
+  // so deep-link CTAs (Open match, Open full analysis →) land on the
+  // correct match drill-in. mockData session_001/_005/_006/_007/_008/_010
+  // were rewritten to match these dates and opponents — see
+  // src/lib/mockData.ts for the aligned entries.
+  { date: '2026-02-03', day: 3,  month: 2, year: 2026, kind: 'training', status: 'ready',         opponent: 'Team A vs Team B', score: 74, motm: 'Saeed K.', id: 'session_001' },
   { date: '2026-02-05', day: 5,  month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-08', day: 8,  month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Shabab FC',         score: 71, motm: 'Kiyan M.' },
+  { date: '2026-02-08', day: 8,  month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Shabab FC',         score: 71, motm: 'Kiyan M.', id: 'session_005' },
   { date: '2026-02-10', day: 10, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
   { date: '2026-02-12', day: 12, month: 2, year: 2026, kind: 'match',    status: 'uncategorised', opponent: '— Pitch 2',         score: null },
   { date: '2026-02-14', day: 14, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-17', day: 17, month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Stratford E.',      score: 78, motm: 'Saeed K.' },
+  { date: '2026-02-17', day: 17, month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Stratford E.',      score: 78, motm: 'Saeed K.', id: 'session_006' },
   { date: '2026-02-19', day: 19, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-22', day: 22, month: 2, year: 2026, kind: 'training', status: 'processing',    opponent: 'Team A vs Team B' },
-  { date: '2026-02-24', day: 24, month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Al Wasl Academy',   score: 82, motm: 'Saeed K.' },
+  { date: '2026-02-22', day: 22, month: 2, year: 2026, kind: 'training', status: 'processing',    opponent: 'Team A vs Team B', id: 'session_010' },
+  { date: '2026-02-24', day: 24, month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Al Wasl Academy',   score: 82, motm: 'Saeed K.', id: 'session_007' },
   { date: '2026-02-25', day: 25, month: 2, year: 2026, kind: 'training', status: 'prep',          opponent: 'Team A vs Team B' },
   { date: '2026-02-26', day: 26, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-28', day: 28, month: 2, year: 2026, kind: 'match',    status: 'prep',          opponent: 'Al Wasl Academy' },
+  { date: '2026-02-28', day: 28, month: 2, year: 2026, kind: 'match',    status: 'prep',          opponent: 'Al Wasl Academy', id: 'session_008' },
 
   // ── March 2026 ────────────────────────────────────────────────
   { date: '2026-03-03', day: 3,  month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },

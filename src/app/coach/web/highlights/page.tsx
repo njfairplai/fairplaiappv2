@@ -271,7 +271,14 @@ export default function CoachHighlightsPage() {
                 }}
                 onShare={setClipSharing}
                 onFlagToggle={handleClipFlagToggle}
-                onOpenMatch={() => router.push(`/coach/web/match/${matchSessionIdForDay(group.day)}`)}
+                /* Open match deep-links to the canonical mockData
+                 *  sessionId carried on the MatchCenterSession.
+                 *  Sessions without a real ID (drills, prep before a
+                 *  mockData session exists) hide the button via
+                 *  the conditional in <MatchGroup>. */
+                openMatchHref={
+                  group.session?.id ? `/coach/web/match/${group.session.id}` : undefined
+                }
                 onPlayReel={() => {
                   if (group.clips.length === 0) return
                   setClipQueue(group.clips)
@@ -377,7 +384,10 @@ interface MatchGroupProps {
   onPlay: (clip: MatchCenterHighlight) => void
   onShare: (clip: MatchCenterHighlight) => void
   onFlagToggle: (clip: MatchCenterHighlight) => void
-  onOpenMatch: () => void
+  /** When provided, the "Open match →" button renders and routes
+   *  here. Omitted = button is hidden (e.g. for sessions without a
+   *  canonical mockData ID — usually drill or pre-match-data days). */
+  openMatchHref?: string
   onPlayReel: () => void
 }
 
@@ -389,9 +399,10 @@ function MatchGroup({
   onPlay,
   onShare,
   onFlagToggle,
-  onOpenMatch,
+  openMatchHref,
   onPlayReel,
 }: MatchGroupProps) {
+  const router = useRouter()
   const [expanded, setExpanded] = useState(false)
   const overflow = clips.length - CLIPS_VISIBLE_BEFORE_EXPAND
   const visible = expanded ? clips : clips.slice(0, CLIPS_VISIBLE_BEFORE_EXPAND)
@@ -462,9 +473,15 @@ function MatchGroup({
         >
           ▶ Play match reel
         </button>
-        <button type="button" style={mcButtons.ghost} onClick={onOpenMatch}>
-          Open match →
-        </button>
+        {openMatchHref && (
+          <button
+            type="button"
+            style={mcButtons.ghost}
+            onClick={() => router.push(openMatchHref)}
+          >
+            Open match →
+          </button>
+        )}
       </div>
 
       {/* Clip row (or wrap grid when expanded) */}
@@ -508,25 +525,6 @@ function MatchGroup({
       )}
     </Card>
   )
-}
-
-/**
- * Map a Match Center day-of-month to the corresponding session ID in
- * mockData.ts. Used by the "Open match" CTA on each Highlights match
- * group to deep-link into the full match analysis at
- * /coach/web/match/[sessionId]. Days without a dedicated mock session
- * fall back to session_007 (Al Wasl, Feb 24) — the populated demo
- * match. Real wiring will replace this with a proper join when the API
- * layer ships.
- */
-function matchSessionIdForDay(day: number): string {
-  const map: Record<number, string> = {
-    24: 'session_007', // Al Wasl Academy
-    17: 'session_006', // Al Ain FC
-    8: 'session_005',  // Baniyas SC
-    3: 'session_007',  // training match — demo fallback
-  }
-  return map[day] ?? 'session_007'
 }
 
 function matchesEventFilter(ev: string, filter: EventFilter): boolean {

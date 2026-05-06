@@ -231,13 +231,13 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
         })}
       </nav>
 
-      {/* Content. On mobile we pad the bottom of the scroll area to
-       *  match the BottomNav height so the last surface row never sits
-       *  hidden behind the fixed bar. */}
+      {/* Content. Letting the document scroll (not main) so the
+       *  sticky header + tab bar above actually catch at the top.
+       *  On mobile we pad the bottom of the page so the last surface
+       *  row never sits hidden behind the fixed BottomNav. */}
       <main
         style={{
           flex: 1,
-          overflow: 'auto',
           paddingBottom: isMobile ? 72 : 0,
         }}
       >
