@@ -163,6 +163,7 @@ export interface Highlight {
     | 'tackle'
     | 'save'
     | 'sprint_recovery'
+    | 'injury'
   timestampSeconds: number
   durationSeconds: number
   thumbnailUrl?: string
@@ -623,4 +624,62 @@ export interface PlayerSessionAttendanceEntry {
   termId: string
   status: 'present' | 'absent'
   sessionType: 'training' | 'match'
+}
+
+// ─── WELFARE: INJURY · PPE · COACH CAM · FATIGUE ────────
+// Coach-side producer features that feed the parent welfare surfaces.
+// All persisted to localStorage (mocked) until the AI/backend slices ship.
+
+export type InjuryType = 'collision' | 'fall' | 'strain' | 'other'
+export type InjurySeverity = 1 | 2 | 3
+
+export interface InjuryFlag {
+  id: string
+  sessionId: string
+  playerId: string
+  /** Match-clock minute the moment occurred. */
+  minute: number
+  type: InjuryType
+  severity: InjurySeverity
+  notes?: string
+  /** Optional clip the coach attached when flagging. */
+  clipId?: string
+  createdAt: string
+}
+
+export type PPEGearType = 'boots' | 'shin_guards' | 'kit' | 'other'
+export type PPEStatus = 'open' | 'addressed'
+
+export interface PPEFlag {
+  id: string
+  playerId: string
+  gearType: PPEGearType
+  notes: string
+  status: PPEStatus
+  createdAt: string
+}
+
+export type CoachCamTag = 'drill' | 'skill' | 'moment'
+
+export interface CoachCamClip {
+  id: string
+  playerId: string
+  coachId: string
+  uploadedAt: string
+  source: 'phone_upload'
+  caption?: string
+  tag?: CoachCamTag
+  thumbnailUrl: string
+  videoUrl: string
+  durationSeconds: number
+}
+
+/** Per-player fatigue series. Mocked 0–100 until AI lands the real algo. */
+export interface FatigueSample {
+  playerId: string
+  date: string
+  load: number
+  topSprintKmh: number
+  sprintCount: number
+  distancePerMinute: number
 }

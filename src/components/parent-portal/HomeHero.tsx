@@ -1,8 +1,14 @@
 'use client'
 
-import { Play } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { AlertTriangle, Play } from 'lucide-react'
 import type { Player, Session, MatchAnalysis, Highlight } from '@/lib/types'
 import { PolyRadar, type RadarCategory } from '@/components/coach/player-profile/PolyRadar'
+import {
+  getInjuryFlagsForPlayer,
+  getOpenPPEFlagsForPlayer,
+} from '@/lib/parent-portal'
 
 /* TODO: design-refinement-target — Pack 3 will refine visual treatment.
  * Current is a vertical 2-card hero: clip on top, radar below. Both halves
@@ -32,6 +38,7 @@ const EVENT_LABELS: Record<Highlight['eventType'], string> = {
   tackle:          'KEY DEFENCE',
   save:            'SAVE',
   sprint_recovery: 'SPRINT',
+  injury:          'INJURY',
 }
 
 export function HomeHero({
@@ -42,6 +49,15 @@ export function HomeHero({
   seasonAnalyses,
   role,
 }: HomeHeroProps) {
+  const router = useRouter()
+  // Welfare counts — drives the "moments to review" chip below the radar.
+  // Hydrated post-mount so SSR is deterministic.
+  const [welfareCount, setWelfareCount] = useState(0)
+  useEffect(() => {
+    const inj = getInjuryFlagsForPlayer(player.id)
+    const ppe = getOpenPPEFlagsForPlayer(player.id)
+    setWelfareCount(inj.length + ppe.length)
+  }, [player.id])
   // Season-averaged radar shape (different from Stats' per-match radar so
   // the two surfaces feel like distinct lenses, not duplicates).
   const seasonShape: Record<RadarCategory, number> | null = (() => {
@@ -270,6 +286,44 @@ export function HomeHero({
             size={260}
           />
         </div>
+      )}
+
+      {/* Welfare chip — surfaces injury / PPE counts. Auto-hides at 0.
+       *  Tap routes to /parent/notifications so the parent can drill in. */}
+      {welfareCount > 0 && (
+        <button
+          type="button"
+          onClick={() => router.push('/parent/notifications')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            alignSelf: 'stretch',
+            justifyContent: 'center',
+            padding: '10px 14px',
+            background: 'var(--brand-paper)',
+            border: '1px solid var(--brand-coral)',
+            borderRadius: 999,
+            color: 'var(--brand-coral)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 12.5,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          <AlertTriangle size={13} />
+          {welfareCount} moment{welfareCount === 1 ? '' : 's'} to review
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 12.5,
+              color: 'var(--brand-indigo-mute)',
+              marginLeft: 4,
+            }}
+          >
+            →
+          </span>
+        </button>
       )}
     </section>
   )

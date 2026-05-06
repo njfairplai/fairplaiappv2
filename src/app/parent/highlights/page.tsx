@@ -15,6 +15,7 @@ import {
 } from '@/lib/parent-portal'
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
+import { CoachClipsRail } from '@/components/parent-portal/CoachClipsRail'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
 import type { Highlight } from '@/lib/types'
 
@@ -45,6 +46,7 @@ const EVENT_BADGES: Record<Highlight['eventType'], { label: string; color: strin
   tackle:          { label: 'DEF',    color: 'var(--brand-coral)' },
   save:            { label: 'SAVE',   color: 'var(--brand-indigo)' },
   sprint_recovery: { label: 'SPRINT', color: 'var(--brand-indigo-mid)' },
+  injury:          { label: 'INJURY', color: 'var(--brand-coral)' },
 }
 
 /**
@@ -174,6 +176,11 @@ export default function ParentHighlightsPage() {
         activeKidId={activeKidId}
         onSwitch={setActiveKidId}
       />
+
+      {/* Coach's clips — sat above the season-reel hero so the
+       *  "things the coach picked out for you" surface is the first
+       *  thing the parent sees on this tab. Auto-hides when empty. */}
+      <CoachClipsRail playerId={activeKid.id} />
 
       {/* Season reel hero */}
       {playerHighlights.length > 0 && (

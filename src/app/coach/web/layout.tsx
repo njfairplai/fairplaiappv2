@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Sparkles, Film, Users, ChevronDown, Smartphone, BarChart3 } from 'lucide-react'
@@ -10,6 +11,7 @@ import BottomNav from '@/components/ui/BottomNav'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { BRAND, TYPE } from '@/lib/constants'
 import { Logo } from '@/components/shared/Logo'
+import { seedWelfareIfEmpty } from '@/lib/welfare-store'
 
 /**
  * Brand chrome override for the redesigned Coach Match Analysis route.
@@ -53,6 +55,10 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
   const { mode, colors: themeColors } = useCoachTheme()
   const isMobile = useIsMobile()
+
+  // Seed welfare demo data on first visit so the smart-flag rail + fatigue
+  // chips have shape immediately. Idempotent.
+  useEffect(() => { seedWelfareIfEmpty() }, [])
 
   // Routes that have been redesigned into the brand chrome opt in here.
   // Slice 6.1 added /coach/web/squad (pitch-cluster squad view).

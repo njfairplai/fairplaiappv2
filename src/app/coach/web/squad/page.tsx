@@ -11,6 +11,7 @@ import { getSeasonScoresFor, scoreColor } from '@/lib/squad-season-score'
 import { Pitch } from '@/components/coach/squad-grass/Pitch'
 import { PlayerToken } from '@/components/coach/squad-grass/PlayerToken'
 import { SideRail } from '@/components/coach/squad-grass/SideRail'
+import { getLatestFatigueByPlayer, fatigueTier } from '@/lib/parent-portal'
 
 /** A player's IDP draft is "stale" if it was last saved more than this many
  *  days ago — or never started. Matches the heuristic the IDPs editor uses. */
@@ -74,6 +75,15 @@ export default function CoachWebSquadPage() {
     () => getSeasonScoresFor(rosterPlayers.map(p => p.id)),
     [rosterPlayers],
   )
+
+  // Welfare overlay — most-recent fatigue sample per player. Read on
+  // mount via state so the SSR pass returns an empty map (deterministic).
+  const [fatigueByPlayer, setFatigueByPlayer] = useState<
+    ReturnType<typeof getLatestFatigueByPlayer>
+  >({})
+  useEffect(() => {
+    setFatigueByPlayer(getLatestFatigueByPlayer())
+  }, [])
 
   // Group every roster player into their cluster, then lay out positions.
   const positioned = useMemo(() => {
@@ -289,6 +299,8 @@ export default function CoachWebSquadPage() {
             {positioned.map(({ player, x, y }) => {
               const score = seasonScores[player.id]?.avg ?? 0
               const dimmed = idpFilterOn && !staleIds.has(player.id)
+              const sample = fatigueByPlayer[player.id]
+              const tier = sample ? fatigueTier(sample.load) : undefined
               return (
                 <PlayerToken
                   key={player.id}
@@ -298,6 +310,7 @@ export default function CoachWebSquadPage() {
                   y={y}
                   selected={selectedId === player.id}
                   dimmed={dimmed}
+                  fatigue={tier}
                   onClick={() => handleSelect(player.id)}
                 />
               )

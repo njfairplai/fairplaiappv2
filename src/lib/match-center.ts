@@ -312,3 +312,105 @@ export function getStateForSession(s: MatchCenterSession | undefined | null): Ma
       return null
   }
 }
+
+// ─── WELFARE PRODUCER HELPERS ────────────────────────────
+// Coach-side writers for the welfare features. All write to localStorage
+// via parent-portal.ts arrays; the parent inbox picks them up through
+// `readClientNotifications()`. Real backend wiring replaces these later.
+
+import {
+  appendToWelfareStore,
+  LS_INJURY_FLAGS,
+  LS_PPE_FLAGS,
+  LS_COACH_CAM,
+  LS_SHARED_CLIPS,
+  LS_FATIGUE,
+  type SharedClipRecord,
+} from '@/lib/welfare-store'
+import type {
+  InjuryFlag,
+  InjuryType,
+  InjurySeverity,
+  PPEFlag,
+  PPEGearType,
+  CoachCamClip,
+  CoachCamTag,
+  FatigueSample,
+} from '@/lib/types'
+
+function genId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+export function flagInjury(input: {
+  sessionId: string
+  playerId: string
+  minute: number
+  type: InjuryType
+  severity: InjurySeverity
+  notes?: string
+  clipId?: string
+}): InjuryFlag {
+  const flag: InjuryFlag = {
+    id: genId('inj'),
+    createdAt: new Date().toISOString(),
+    ...input,
+  }
+  appendToWelfareStore<InjuryFlag>(LS_INJURY_FLAGS, flag)
+  return flag
+}
+
+export function flagPPE(input: {
+  playerId: string
+  gearType: PPEGearType
+  notes: string
+}): PPEFlag {
+  const flag: PPEFlag = {
+    id: genId('ppe'),
+    status: 'open',
+    createdAt: new Date().toISOString(),
+    ...input,
+  }
+  appendToWelfareStore<PPEFlag>(LS_PPE_FLAGS, flag)
+  return flag
+}
+
+export function uploadCoachCam(input: {
+  playerId: string
+  coachId: string
+  caption?: string
+  tag?: CoachCamTag
+  thumbnailUrl: string
+  videoUrl: string
+  durationSeconds: number
+}): CoachCamClip {
+  const clip: CoachCamClip = {
+    id: genId('cc'),
+    uploadedAt: new Date().toISOString(),
+    source: 'phone_upload',
+    ...input,
+  }
+  appendToWelfareStore<CoachCamClip>(LS_COACH_CAM, clip)
+  return clip
+}
+
+export function sendClipToParent(input: {
+  highlightId: string
+  playerId: string
+  parentId: string
+  coachId: string
+  message?: string
+}): SharedClipRecord {
+  const rec: SharedClipRecord = {
+    id: genId('shc'),
+    sentAt: new Date().toISOString(),
+    ...input,
+  }
+  appendToWelfareStore<SharedClipRecord>(LS_SHARED_CLIPS, rec)
+  return rec
+}
+
+/** Used by mockData seeder + (future) AI-fed sample writers. */
+export function recordFatigueSample(input: FatigueSample): void {
+  appendToWelfareStore<FatigueSample>(LS_FATIGUE, input)
+}

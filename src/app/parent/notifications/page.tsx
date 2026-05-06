@@ -204,16 +204,7 @@ export default function ParentNotificationsPage() {
 }
 
 function NotificationDot({ kind }: { kind: PortalNotification['kind'] }) {
-  const color =
-    kind === 'clips'
-      ? 'var(--brand-indigo)'
-      : kind === 'coach_note'
-      ? 'var(--brand-yellow)'
-      : kind === 'idp_update'
-      ? 'var(--brand-coral)'
-      : kind === 'attendance_milestone'
-      ? 'var(--brand-yellow)'
-      : 'var(--brand-indigo-mute)'
+  const color = dotColorForKind(kind)
   return (
     <span
       style={{
@@ -228,6 +219,32 @@ function NotificationDot({ kind }: { kind: PortalNotification['kind'] }) {
   )
 }
 
+function dotColorForKind(kind: PortalNotification['kind']): string {
+  switch (kind) {
+    case 'clips':
+      return 'var(--brand-indigo)'
+    case 'coach_note':
+      return 'var(--brand-yellow)'
+    case 'idp_update':
+      return 'var(--brand-coral)'
+    case 'attendance_milestone':
+      return 'var(--brand-yellow)'
+    case 'session_scheduled':
+      return 'var(--brand-indigo-mute)'
+    // Welfare-stream additions
+    case 'shared_clip':
+      return 'var(--brand-indigo)'
+    case 'coach_cam':
+      return 'var(--brand-yellow)'
+    case 'injury':
+      return 'var(--brand-coral)'
+    case 'ppe':
+      return 'var(--brand-coral)'
+    default:
+      return 'var(--brand-indigo-mute)'
+  }
+}
+
 function labelForKind(kind: PortalNotification['kind']): string {
   switch (kind) {
     case 'clips':
@@ -240,6 +257,14 @@ function labelForKind(kind: PortalNotification['kind']): string {
       return 'MILESTONE'
     case 'session_scheduled':
       return 'SCHEDULE'
+    case 'shared_clip':
+      return 'SHARED CLIP'
+    case 'coach_cam':
+      return 'COACH CAM'
+    case 'injury':
+      return 'INJURY · WELFARE'
+    case 'ppe':
+      return 'GEAR · WELFARE'
     default:
       return 'UPDATE'
   }

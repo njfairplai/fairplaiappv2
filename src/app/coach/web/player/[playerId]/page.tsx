@@ -17,6 +17,7 @@ import { RadarSection } from '@/components/coach/player-profile/RadarSection'
 import { HeatmapSection } from '@/components/coach/player-profile/HeatmapSection'
 import { HighlightsSection } from '@/components/coach/player-profile/HighlightsSection'
 import { IdpPostscript } from '@/components/coach/player-profile/IdpPostscript'
+import { WorkloadSection } from '@/components/coach/player-profile/WorkloadSection'
 import { ShareCardModal } from '@/components/coach/player-profile/ShareCardModal'
 import { CardThumbButton } from '@/components/coach/player-profile/BibCard'
 
@@ -296,6 +297,13 @@ export default function CoachWebPlayerPage() {
           />
         </>
       )}
+
+      {/* Workload + gear — match-agnostic, sits between scope content and IDP */}
+      <WorkloadSection
+        playerId={player.id}
+        playerName={`${player.firstName} ${player.lastName}`}
+        isMobile={isMobile}
+      />
 
       {/* IDP — match-agnostic, lives in both modes */}
       <IdpPostscript player={player} />

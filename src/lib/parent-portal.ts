@@ -1,5 +1,100 @@
 import { players, parents, sessions, matchAnalyses, highlights, attendanceData } from '@/lib/mockData'
-import type { Player, Session, MatchAnalysis, Highlight } from '@/lib/types'
+import type {
+  Player,
+  Session,
+  MatchAnalysis,
+  Highlight,
+  InjuryFlag,
+  PPEFlag,
+  CoachCamClip,
+  FatigueSample,
+} from '@/lib/types'
+import {
+  LS_INJURY_FLAGS,
+  LS_PPE_FLAGS,
+  LS_COACH_CAM,
+  LS_SHARED_CLIPS,
+  LS_FATIGUE,
+  readArray,
+  type SharedClipRecord,
+} from '@/lib/welfare-store'
+
+// Re-export so callers don't need to know which submodule owns these.
+export {
+  LS_INJURY_FLAGS,
+  LS_PPE_FLAGS,
+  LS_COACH_CAM,
+  LS_SHARED_CLIPS,
+  LS_FATIGUE,
+  appendToWelfareStore,
+  type SharedClipRecord,
+} from '@/lib/welfare-store'
+
+// ─── WELFARE READERS ────────────────────────────────────
+export function getInjuryFlagsForPlayer(playerId: string): InjuryFlag[] {
+  return readArray<InjuryFlag>(LS_INJURY_FLAGS).filter(f => f.playerId === playerId)
+}
+
+export function getInjuryFlagsForSession(sessionId: string): InjuryFlag[] {
+  return readArray<InjuryFlag>(LS_INJURY_FLAGS).filter(f => f.sessionId === sessionId)
+}
+
+export function getPPEFlagsForPlayer(playerId: string): PPEFlag[] {
+  return readArray<PPEFlag>(LS_PPE_FLAGS).filter(f => f.playerId === playerId)
+}
+
+export function getOpenPPEFlagsForPlayer(playerId: string): PPEFlag[] {
+  return getPPEFlagsForPlayer(playerId).filter(f => f.status === 'open')
+}
+
+export function getCoachCamClipsForPlayer(playerId: string): CoachCamClip[] {
+  return readArray<CoachCamClip>(LS_COACH_CAM).filter(c => c.playerId === playerId)
+}
+
+export function getSharedClipsForPlayer(playerId: string): SharedClipRecord[] {
+  return readArray<SharedClipRecord>(LS_SHARED_CLIPS).filter(s => s.playerId === playerId)
+}
+
+/** Server-mocked + LS fatigue samples for a player. Only LS-side until the
+ *  AI lands the real algorithm; mockData seeds a baseline so parent surfaces
+ *  have shape on first load. */
+export function getFatigueSamplesForPlayer(playerId: string): FatigueSample[] {
+  return readArray<FatigueSample>(LS_FATIGUE).filter(s => s.playerId === playerId)
+}
+
+// ─── ALL-PLAYERS ROLLUPS (Coach Hub smart-flag rail) ─────
+export function getAllOpenPPEFlags(): PPEFlag[] {
+  return readArray<PPEFlag>(LS_PPE_FLAGS).filter(f => f.status === 'open')
+}
+
+export function getAllInjuryFlags(): InjuryFlag[] {
+  return readArray<InjuryFlag>(LS_INJURY_FLAGS)
+}
+
+export function getAllFatigueSamples(): FatigueSample[] {
+  return readArray<FatigueSample>(LS_FATIGUE)
+}
+
+/** Most-recent fatigue sample per player. Used for the squad-as-pitch chip
+ *  + the Coach Hub smart-flag rail. */
+export function getLatestFatigueByPlayer(): Record<string, FatigueSample> {
+  const all = getAllFatigueSamples()
+  const out: Record<string, FatigueSample> = {}
+  for (const s of all) {
+    const cur = out[s.playerId]
+    if (!cur || s.date > cur.date) out[s.playerId] = s
+  }
+  return out
+}
+
+/** Bucket a fatigue load into a UI tier. Threshold tuned for the mock 0–100
+ *  scale; the real algorithm will likely emit normalised values. */
+export type FatigueTier = 'low' | 'moderate' | 'high'
+export function fatigueTier(load: number): FatigueTier {
+  if (load >= 75) return 'high'
+  if (load >= 55) return 'moderate'
+  return 'low'
+}
 
 /**
  * Helpers for the shared parent + player portal. Both audiences look at the
@@ -110,6 +205,10 @@ export type NotificationKind =
   | 'idp_update'
   | 'attendance_milestone'
   | 'session_scheduled'
+  | 'shared_clip'
+  | 'coach_cam'
+  | 'injury'
+  | 'ppe'
 
 export interface PortalNotification {
   id: string
@@ -380,6 +479,58 @@ export function readClientNotifications(playerId: string): PortalNotification[] 
     }
   } catch {
     /* localStorage unavailable */
+  }
+
+  // Welfare-stream notifications: shared clips, coach-cam clips, injury
+  // moments, PPE flags. Each fans out from a per-record entry rather than
+  // a single rollup so the parent inbox shows one row per coach action.
+  for (const rec of getSharedClipsForPlayer(playerId)) {
+    const date = rec.sentAt.slice(0, 10)
+    out.push({
+      id: `shared_${rec.id}`,
+      kind: 'shared_clip',
+      title: 'Coach shared a clip',
+      body: rec.message ?? 'Tap to watch.',
+      date,
+      shortDate: formatShortDate(date),
+      href: `/parent/clips/${rec.highlightId}?source=shared`,
+    })
+  }
+  for (const c of getCoachCamClipsForPlayer(playerId)) {
+    const date = c.uploadedAt.slice(0, 10)
+    out.push({
+      id: `coachcam_${c.id}`,
+      kind: 'coach_cam',
+      title: 'Clip from coach',
+      body: c.caption ?? `${c.tag ?? 'Moment'} · ${c.durationSeconds}s`,
+      date,
+      shortDate: formatShortDate(date),
+      href: `/parent/clips/${c.id}?source=coach_cam`,
+    })
+  }
+  for (const inj of getInjuryFlagsForPlayer(playerId)) {
+    const date = inj.createdAt.slice(0, 10)
+    out.push({
+      id: `injury_${inj.id}`,
+      kind: 'injury',
+      title: 'A moment to know about',
+      body: `${inj.type[0].toUpperCase()}${inj.type.slice(1)} at ${inj.minute}'`,
+      date,
+      shortDate: formatShortDate(date),
+      href: `/parent/match/${inj.sessionId}?focusInjury=${inj.id}`,
+    })
+  }
+  for (const flag of getOpenPPEFlagsForPlayer(playerId)) {
+    const date = flag.createdAt.slice(0, 10)
+    out.push({
+      id: `ppe_${flag.id}`,
+      kind: 'ppe',
+      title: 'Gear note from coach',
+      body: flag.notes,
+      date,
+      shortDate: formatShortDate(date),
+      href: '/parent/development#gear',
+    })
   }
 
   return out

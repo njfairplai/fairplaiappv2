@@ -18,6 +18,7 @@ import {
 } from '@/lib/parent-portal'
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
+import { WelfareCards } from '@/components/parent-portal/WelfareCards'
 
 /**
  * Parent Development — read-only IDP summary, attendance record, soft-
@@ -186,6 +187,11 @@ export default function ParentDevelopmentPage() {
           </Card>
         </section>
       )}
+
+      {/* Workload + Gear — welfare cards. Auto-hide if no fatigue / PPE
+       *  data exists for this kid, so the page stays clean for kids
+       *  without flags. */}
+      <WelfareCards playerId={activeKid.id} />
 
       {/* Coach's plan (IDP read-only) */}
       {(dev || feedback) && (

@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Play } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { AlertTriangle, Play } from 'lucide-react'
+import { getInjuryFlagsForSession } from '@/lib/parent-portal'
+import type { InjuryFlag } from '@/lib/types'
 import {
   sessions,
   matchAnalyses,
@@ -26,6 +28,7 @@ const EVENT_BADGES: Record<Highlight['eventType'], { label: string; color: strin
   tackle:          { label: 'DEF',    color: 'var(--brand-coral)' },
   save:            { label: 'SAVE',   color: 'var(--brand-indigo)' },
   sprint_recovery: { label: 'SPRINT', color: 'var(--brand-indigo-mid)' },
+  injury:          { label: 'INJURY', color: 'var(--brand-coral)' },
 }
 
 /* TODO: design-refinement-target — Pack 3 polishes the visual.
@@ -35,7 +38,9 @@ const EVENT_BADGES: Record<Highlight['eventType'], { label: string; color: strin
 export default function ParentMatchDetailPage() {
   const router = useRouter()
   const params = useParams<{ sessionId: string }>()
+  const searchParams = useSearchParams()
   const sessionId = params.sessionId
+  const focusInjuryId = searchParams?.get('focusInjury') ?? null
   // For mock: assume parent_001's first kid is the player whose lens we view.
   // In real auth this comes from session + active kid switcher.
   const PLAYER_ID = 'player_001'
@@ -70,6 +75,26 @@ export default function ParentMatchDetailPage() {
       /* ignore */
     }
   }, [sessionId])
+
+  // Welfare — injury flags for THIS player + session.
+  const [playerInjuries, setPlayerInjuries] = useState<InjuryFlag[]>([])
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setPlayerInjuries(
+      getInjuryFlagsForSession(sessionId).filter(i => i.playerId === PLAYER_ID),
+    )
+  }, [sessionId])
+
+  // Scroll-to + visual highlight on focusInjury deep-link.
+  const injuryRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  useEffect(() => {
+    if (!focusInjuryId) return
+    const el = injuryRefs.current[focusInjuryId]
+    if (el) {
+      // Wait one tick so the section is mounted before we scroll.
+      requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    }
+  }, [focusInjuryId, playerInjuries])
 
   if (!session || !player) {
     return (
@@ -245,6 +270,89 @@ export default function ParentMatchDetailPage() {
           <ReadOnlyNoteRenderer playerId={PLAYER_ID} sessionId={sessionId} />
         </div>
       </section>
+
+      {/* Moments to know — injury flags the coach logged for this player.
+       *  When a parent lands here from a `?focusInjury=<id>` notification
+       *  link, the matched row scrolls into view + flashes briefly. */}
+      {playerInjuries.length > 0 && (
+        <section style={{ padding: '20px 16px 0' }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.22em',
+              color: 'var(--brand-indigo-mute)',
+              fontWeight: 700,
+              marginBottom: 10,
+            }}
+          >
+            MOMENTS TO KNOW
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {playerInjuries.map(inj => {
+              const focused = inj.id === focusInjuryId
+              return (
+                <div
+                  key={inj.id}
+                  ref={el => {
+                    injuryRefs.current[inj.id] = el
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 10,
+                    padding: '12px 14px',
+                    background: focused ? 'var(--brand-paper-hi)' : 'var(--brand-paper)',
+                    border: `1px solid ${focused ? 'var(--brand-coral)' : 'var(--brand-line)'}`,
+                    borderRadius: 10,
+                    transition: 'all 200ms ease',
+                  }}
+                >
+                  <AlertTriangle size={14} color="var(--brand-coral)" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: 'var(--brand-indigo)',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {inj.type} at {inj.minute}&apos;
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 9.5,
+                          letterSpacing: '0.16em',
+                          color: 'var(--brand-indigo-mute)',
+                          fontWeight: 700,
+                          marginLeft: 8,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        SEV {inj.severity}
+                      </span>
+                    </div>
+                    {inj.notes && (
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: 12.5,
+                          color: 'var(--brand-indigo-mute)',
+                          marginTop: 4,
+                        }}
+                      >
+                        {inj.notes}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* If processing or upcoming, show a thin status card. */}
       {!analysis && (

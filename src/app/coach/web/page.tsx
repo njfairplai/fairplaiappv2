@@ -1,6 +1,8 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { AlertTriangle, Footprints } from 'lucide-react'
 import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { HubFrame, MikelGlyph } from '@/components/coach/hub/HubEmbeds'
@@ -12,6 +14,12 @@ import {
 import { HubResponseCard } from '@/components/coach/hub/HubResponseCard'
 import { HubTiles } from '@/components/coach/hub/HubTiles'
 import { Toast } from '@/components/coach/match-center/Toast'
+import {
+  getAllOpenPPEFlags,
+  getLatestFatigueByPlayer,
+  fatigueTier,
+} from '@/lib/parent-portal'
+import { players } from '@/lib/mockData'
 
 /* Coach's Hub — /coach/web
  *
@@ -47,9 +55,26 @@ const SUGGESTION_CHIPS = [
 
 export default function CoachWebHubPage() {
   const isMobile = useIsMobile()
+  const router = useRouter()
   const inputHandle = useRef<HubChatInputHandle>(null)
   const [hasThread, setHasThread] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
+
+  // Welfare smart-flag rail. Re-reads localStorage on mount so the seeded
+  // demo data renders without a manual refresh after first visit.
+  const [welfareTick, setWelfareTick] = useState(0)
+  useEffect(() => {
+    setWelfareTick(t => t + 1)
+    // Re-trigger on visibility/focus so flags added in another tab show up
+    const onFocus = () => setWelfareTick(t => t + 1)
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+  const fatigueByPlayer = getLatestFatigueByPlayer()
+  const highFatigueCount = Object.values(fatigueByPlayer).filter(
+    s => fatigueTier(s.load) === 'high',
+  ).length
+  const openPPECount = getAllOpenPPEFlags().length
 
   function pickSuggestion(chip: string) {
     inputHandle.current?.setValueAndFocus(chip)
@@ -190,6 +215,63 @@ export default function CoachWebHubPage() {
         </div>
       )}
 
+      {/* Smart-flag rail — surfaces welfare intel that needs the coach's
+       *  attention. Reads from the same localStorage stream the parent
+       *  inbox uses, so producer + consumer stay in sync. */}
+      {(highFatigueCount > 0 || openPPECount > 0) && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: isMobile ? '4px 14px 0' : '8px 36px 0',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 10,
+              maxWidth: 720,
+              width: '100%',
+              animation: 'hubFadeIn 480ms ease 540ms both',
+            }}
+          >
+            {highFatigueCount > 0 && (
+              <button
+                type="button"
+                onClick={() => router.push('/coach/web/squad')}
+                style={smartFlagStyle(BRAND.coral)}
+              >
+                <Footprints size={14} />
+                <span>
+                  <strong style={{ fontWeight: 800 }}>{highFatigueCount}</strong>{' '}
+                  player{highFatigueCount === 1 ? '' : 's'} over fatigue threshold this week
+                </span>
+                <span style={smartFlagArrow}>→</span>
+              </button>
+            )}
+            {openPPECount > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  // Open PPE flags don't have a top-level home yet; the
+                  // squad surface is the closest entrypoint into players.
+                  router.push('/coach/web/squad')
+                }}
+                style={smartFlagStyle(BRAND.indigo)}
+              >
+                <AlertTriangle size={14} />
+                <span>
+                  <strong style={{ fontWeight: 800 }}>{openPPECount}</strong>{' '}
+                  open gear flag{openPPECount === 1 ? '' : 's'}
+                </span>
+                <span style={smartFlagArrow}>→</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Tile rail */}
       <div
         style={{
@@ -219,4 +301,26 @@ export default function CoachWebHubPage() {
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </HubFrame>
   )
+}
+
+function smartFlagStyle(accent: string): React.CSSProperties {
+  return {
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+    padding: '8px 14px',
+    background: BRAND.paper,
+    border: `1px solid ${BRAND.line}`,
+    borderLeft: `3px solid ${accent}`,
+    borderRadius: 8,
+    color: BRAND.indigo,
+    fontFamily: TYPE.body, fontSize: 12.5,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  }
+}
+
+const smartFlagArrow: React.CSSProperties = {
+  fontFamily: TYPE.body,
+  fontSize: 14,
+  color: BRAND.indigoMute,
+  marginLeft: 4,
 }

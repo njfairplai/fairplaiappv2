@@ -1,5 +1,6 @@
 import type { Player } from '@/lib/types'
 import { scoreColor } from '@/lib/squad-season-score'
+import type { FatigueTier } from '@/lib/parent-portal'
 
 interface PlayerTokenProps {
   player: Player
@@ -11,6 +12,10 @@ interface PlayerTokenProps {
   y: number
   selected?: boolean
   dimmed?: boolean
+  /** Most-recent fatigue tier — drives a small dot top-left of the token
+   *  so high-load players are visible at a glance from the squad view.
+   *  Undefined or 'low' = no dot. */
+  fatigue?: FatigueTier
   onClick?: () => void
 }
 
@@ -19,10 +24,13 @@ interface PlayerTokenProps {
  * badge top-right, first name underneath. Border colour = score band.
  * On select: scales up + halo. On dim (filtered out): low opacity.
  */
-export function PlayerToken({ player, score, x, y, selected, dimmed, onClick }: PlayerTokenProps) {
+export function PlayerToken({ player, score, x, y, selected, dimmed, fatigue, onClick }: PlayerTokenProps) {
   const c = scoreColor(score)
   const size = selected ? 56 : 44
   const firstName = player.firstName
+  const fatigueColor =
+    fatigue === 'high' ? 'var(--brand-coral)' :
+    fatigue === 'moderate' ? 'var(--brand-yellow)' : null
 
   return (
     <button
@@ -112,6 +120,23 @@ export function PlayerToken({ player, score, x, y, selected, dimmed, onClick }: 
       >
         {score}
       </div>
+      {/* fatigue dot top-left — coral (high) or yellow (moderate) */}
+      {fatigueColor && (
+        <div
+          title={`Fatigue: ${fatigue}`}
+          style={{
+            position: 'absolute',
+            top: -4,
+            left: -4,
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            background: fatigueColor,
+            border: '2px solid #1B1550',
+            lineHeight: 1,
+          }}
+        />
+      )}
     </button>
   )
 }

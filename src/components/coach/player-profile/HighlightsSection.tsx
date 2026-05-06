@@ -20,6 +20,7 @@ const EVENT_BADGES: Record<Highlight['eventType'], { label: string; color: strin
   tackle:          { label: 'DEF',    color: 'var(--brand-coral)' },
   save:            { label: 'SAVE',   color: 'var(--brand-indigo)' },
   sprint_recovery: { label: 'SPRINT', color: 'var(--brand-indigo-mid)' },
+  injury:          { label: 'INJURY', color: 'var(--brand-coral)' },
 }
 
 const FILTER_LABELS: Record<EventFilter, string> = {

@@ -1,16 +1,21 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { Send, Download, Link2 } from 'lucide-react'
 import { BRAND, TYPE } from '@/lib/constants'
 import type { MatchCenterHighlight } from '@/lib/match-center'
+import { sendClipToParent } from '@/lib/match-center'
+import { players, parents } from '@/lib/mockData'
 import { MEyebrow, mcButtons } from './atoms'
 
-/* Small action sheet that appears when the coach clicks ↗ on a clip.
- * Three stub destinations: copy link / send to parent / send to player.
- * Each triggers a toast via the parent-supplied callbacks. Real
- * messaging integration (WhatsApp / SMS / email) is downstream — for
- * now the sheet documents the intended capability and gives the coach
- * a real action point per the "every button does something" mandate. */
+/* Share Clip sheet — single primary CTA "Send to {parent}" plus the
+ * secondary Download + Copy link affordances. The previous three-way
+ * split (copy / parent / player) diluted the primary action; coaches
+ * share clips TO PARENTS — that's the job. The primary CTA writes a
+ * SharedClipRecord to localStorage which the parent inbox picks up
+ * via parent-portal.ts -> readClientNotifications(). The Copy link
+ * URL routes to /parent/clips/<highlightId>?source=shared, which is
+ * a real route built in this slice. */
 
 interface ShareSheetProps {
   clip: MatchCenterHighlight | null
@@ -30,18 +35,57 @@ export function ShareSheet({ clip, onClose, onAction }: ShareSheetProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [clip, onClose])
 
+  // Resolve player + parent so the primary CTA names the actual recipient.
+  const parentTarget = useMemo(() => {
+    if (!clip) return null
+    const player = players.find(p => p.jerseyNumber === clip.num)
+    if (!player) return null
+    const parentId = player.parentIds[0]
+    if (!parentId) return null
+    const parent = parents.find(p => p.id === parentId)
+    if (!parent) return null
+    return { player, parent }
+  }, [clip])
+
   if (!clip) return null
 
-  function shareTo(label: string, toast: string) {
-    if (label === 'Copy link' && typeof window !== 'undefined' && navigator.clipboard) {
-      // Best-effort clipboard write. We don't surface the URL itself
-      // anywhere yet so this is a stable demo URL.
-      const url = `${window.location.origin}/share/clip/${clip!.id}`
-      navigator.clipboard.writeText(url).catch(() => {})
-    }
-    onAction(toast)
+  function sendToParent() {
+    if (!parentTarget || !clip) return
+    sendClipToParent({
+      highlightId: clip.id,
+      playerId: parentTarget.player.id,
+      parentId: parentTarget.parent.id,
+      coachId: 'coach_001',
+      message: clip.headline,
+    })
+    onAction(`Sent to ${parentTarget.parent.name}`)
     onClose()
   }
+
+  function copyLink() {
+    if (!clip) return
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      const url = `${window.location.origin}/parent/clips/${clip.id}?source=shared`
+      navigator.clipboard.writeText(url).catch(() => {})
+    }
+    onAction('Link copied to clipboard')
+    onClose()
+  }
+
+  function download() {
+    // No real video binary in the mock — show feedback so the affordance
+    // is clearly wired but doesn't pretend to deliver a file. The real
+    // backend will swap this for a signed-URL download.
+    onAction('Download queued')
+    onClose()
+  }
+
+  const parentLabel = parentTarget
+    ? `Send to ${parentTarget.parent.name.split(' ')[0]}`
+    : 'Send to parent'
+  const parentSub = parentTarget
+    ? `${parentTarget.player.firstName}'s parent · in-app inbox`
+    : 'Parent inbox'
 
   return (
     <div
@@ -67,7 +111,7 @@ export function ShareSheet({ clip, onClose, onAction }: ShareSheetProps) {
           border: `1px solid ${BRAND.line}`,
           borderRadius: 8,
           width: '100%',
-          maxWidth: 380,
+          maxWidth: 400,
           padding: '20px 22px',
           boxShadow: '0 24px 56px rgba(11,8,40,0.4)',
         }}
@@ -84,36 +128,81 @@ export function ShareSheet({ clip, onClose, onAction }: ShareSheetProps) {
         >
           {clip.ev} · {clip.minute}&apos; · {clip.player} #{clip.num}
         </div>
+
+        {/* Primary CTA — full width, names the actual parent. */}
+        <button
+          type="button"
+          onClick={sendToParent}
+          disabled={!parentTarget}
+          style={{
+            ...mcButtons.primary,
+            marginTop: 16,
+            width: '100%',
+            padding: '13px 14px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            opacity: parentTarget ? 1 : 0.55,
+            cursor: parentTarget ? 'pointer' : 'not-allowed',
+          }}
+        >
+          <Send size={14} />
+          <span>{parentLabel}</span>
+        </button>
         <div
           style={{
-            marginTop: 16,
-            display: 'flex',
-            flexDirection: 'column',
+            fontFamily: TYPE.body,
+            fontSize: 11.5,
+            color: BRAND.indigoMute,
+            marginTop: 6,
+            textAlign: 'center',
+          }}
+        >
+          {parentSub}
+        </div>
+
+        {/* Secondary row — Download + Copy link, equal weight. */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
             gap: 8,
+            marginTop: 14,
           }}
         >
           <button
             type="button"
-            style={{ ...mcButtons.primary, padding: '11px 14px' }}
-            onClick={() => shareTo('Copy link', 'Link copied to clipboard')}
+            onClick={download}
+            style={{
+              ...mcButtons.ghost,
+              padding: '10px 14px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
           >
+            <Download size={13} />
+            Download
+          </button>
+          <button
+            type="button"
+            onClick={copyLink}
+            style={{
+              ...mcButtons.ghost,
+              padding: '10px 14px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            <Link2 size={13} />
             Copy link
           </button>
-          <button
-            type="button"
-            style={{ ...mcButtons.ghost, padding: '11px 14px' }}
-            onClick={() => shareTo('Parent', `Sent to ${clip!.player}'s parent`)}
-          >
-            Send to parent
-          </button>
-          <button
-            type="button"
-            style={{ ...mcButtons.ghost, padding: '11px 14px' }}
-            onClick={() => shareTo('Player', `Sent to ${clip!.player}`)}
-          >
-            Send to player
-          </button>
         </div>
+
         <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
           <button type="button" style={mcButtons.text} onClick={onClose}>
             Cancel

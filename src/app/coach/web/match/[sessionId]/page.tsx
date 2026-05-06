@@ -1,12 +1,20 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import { AlertTriangle } from 'lucide-react'
 import { sessions, players, matchAnalyses, highlights, pitches } from '@/lib/mockData'
-import type { MatchAnalysis, Player, Highlight } from '@/lib/types'
+import type { MatchAnalysis, Player, Highlight, InjuryFlag } from '@/lib/types'
 import { BRAND, TYPE, COLORS } from '@/lib/constants'
 import { getKeyStats } from '@/lib/squad-position-stats'
+import {
+  getInjuryFlagsForSession,
+  getLatestFatigueByPlayer,
+  fatigueTier,
+  type FatigueTier,
+} from '@/lib/parent-portal'
+import { InjurySheet } from '@/components/coach/match-center/InjurySheet'
 
 const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
 
@@ -362,7 +370,22 @@ type TLEvent = { id: string; t: number; type: string; playerId: string; isGoal: 
 /* Per-player row used by the roster + player detail panels. The events
  *  list drives the per-row event tags ("2G 1A" style) so the coach can
  *  scan who did what without diving into the player detail. */
-type PlayerRow = { player: Player; analysis: MatchAnalysis; events: TLEvent[] }
+type PlayerRow = {
+  player: Player
+  analysis: MatchAnalysis
+  events: TLEvent[]
+  /** Most-recent fatigue tier from welfare-store, undefined if no sample. */
+  fatigue?: FatigueTier
+}
+
+/** Map a fatigue tier to a dot color. Subtle on the row so it doesn't
+ *  fight the composite-score colour, but visible enough to scan. */
+function fatigueDotColor(tier: FatigueTier | undefined): string | null {
+  if (!tier) return null
+  if (tier === 'high') return BRAND.coral
+  if (tier === 'moderate') return BRAND.yellow
+  return 'transparent' // low — no dot, keeps row clean
+}
 
 /* Desktop roster grid template — jersey, name, position, composite,
  *  event tags, chevron. Used by both V3RosterRow and the section header
@@ -373,10 +396,11 @@ function V3RosterRow({ row, idx, onSelect }: {
   row: PlayerRow; idx: number;
   onSelect: (playerId: string) => void;
 }) {
-  const { player: p, analysis: a, events } = row
+  const { player: p, analysis: a, events, fatigue } = row
   const c = scoreValueColor(a.compositeScore)
   const exceptional = isExceptional(a.compositeScore)
   const [ks1, ks2] = getKeyStats(p.position[0] || 'CM', a)
+  const fatigueColor = fatigueDotColor(fatigue)
   // Dedupe event chips by type so a player with two goals shows one G chip,
   // not two — they read as "what kind of moments did this player have."
   const uniqueChips = Array.from(new Set(events.map(e => e.type))).slice(0, 3)
@@ -396,13 +420,28 @@ function V3RosterRow({ row, idx, onSelect }: {
         position: 'relative',
       }}
     >
-      <div className="v3-num" style={{
-        width: 36, height: 36, borderRadius: 8,
-        background: exceptional ? BRAND.yellow : BRAND.paper,
-        border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
-        color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 15,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>{p.jerseyNumber}</div>
+      <div style={{ position: 'relative' }}>
+        <div className="v3-num" style={{
+          width: 36, height: 36, borderRadius: 8,
+          background: exceptional ? BRAND.yellow : BRAND.paper,
+          border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
+          color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 15,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>{p.jerseyNumber}</div>
+        {/* Fatigue dot — top-right of jersey badge. Coral when high,
+         *  yellow when moderate, hidden when low (or no sample). */}
+        {fatigueColor && fatigue !== 'low' && (
+          <div
+            title={`Fatigue: ${fatigue}`}
+            style={{
+              position: 'absolute', top: -2, right: -2,
+              width: 10, height: 10, borderRadius: '50%',
+              background: fatigueColor,
+              border: `2px solid ${BRAND.sand}`,
+            }}
+          />
+        )}
+      </div>
 
       <div style={{ minWidth: 0 }}>
         <div style={{ fontFamily: TYPE.body, fontSize: 14, fontWeight: 600, color: BRAND.indigo, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -467,9 +506,10 @@ function V3RosterRowMobile({ row, idx, onSelect }: {
   row: PlayerRow; idx: number;
   onSelect: (playerId: string) => void;
 }) {
-  const { player: p, analysis: a } = row
+  const { player: p, analysis: a, fatigue } = row
   const c = scoreValueColor(a.compositeScore)
   const exceptional = isExceptional(a.compositeScore)
+  const fatigueColor = fatigueDotColor(fatigue)
   return (
     <div
       className="v3-row"
@@ -485,13 +525,26 @@ function V3RosterRowMobile({ row, idx, onSelect }: {
         borderBottom: `1px solid ${BRAND.line}`, cursor: 'pointer',
       }}
     >
-      <div className="v3-num" style={{
-        width: 32, height: 32, borderRadius: 8,
-        background: exceptional ? BRAND.yellow : BRAND.paper,
-        border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
-        color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 13,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>{p.jerseyNumber}</div>
+      <div style={{ position: 'relative' }}>
+        <div className="v3-num" style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: exceptional ? BRAND.yellow : BRAND.paper,
+          border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
+          color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 13,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>{p.jerseyNumber}</div>
+        {fatigueColor && fatigue !== 'low' && (
+          <div
+            title={`Fatigue: ${fatigue}`}
+            style={{
+              position: 'absolute', top: -2, right: -2,
+              width: 9, height: 9, borderRadius: '50%',
+              background: fatigueColor,
+              border: `2px solid ${BRAND.sand}`,
+            }}
+          />
+        )}
+      </div>
 
       <div style={{ minWidth: 0 }}>
         <div style={{ fontFamily: TYPE.body, fontSize: 13.5, fontWeight: 600, color: BRAND.indigo, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -609,11 +662,26 @@ function useIsMobile(breakpoint = 768): boolean {
   return isMobile
 }
 
-function V3PlayerDetail({ row, onClose }: { row: PlayerRow; onClose: () => void }) {
+function V3PlayerDetail({
+  row,
+  sessionInjuries,
+  onClose,
+  onWelfareChange,
+}: {
+  row: PlayerRow
+  /** Injury flags filtered to this session — V3PlayerDetail filters again
+   *  to this player so the panel shows only relevant rows. */
+  sessionInjuries: InjuryFlag[]
+  onClose: () => void
+  /** Called when a new injury is logged so the parent page re-reads. */
+  onWelfareChange: () => void
+}) {
   const { player: p, analysis: a } = row
   const isMobile = useIsMobile()
   const compositeColor = scoreValueColor(a.compositeScore)
   const exceptional = isExceptional(a.compositeScore)
+  const [injurySheetOpen, setInjurySheetOpen] = useState(false)
+  const playerInjuries = sessionInjuries.filter(i => i.playerId === p.id)
 
   // Season average not tracked per-match in mock data — use composite as a placeholder.
   // Real implementation will pull this from PlayerSeasonStats.
@@ -784,6 +852,96 @@ function V3PlayerDetail({ row, onClose }: { row: PlayerRow; onClose: () => void 
         </div>
       </div>
 
+      {/* Welfare — flag injury button + list of any injury flags
+       *  already logged for this player in this session. */}
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 10,
+          }}
+        >
+          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>
+            INJURY MOMENTS
+          </div>
+          <button
+            type="button"
+            onClick={() => setInjurySheetOpen(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px',
+              border: `1px solid ${BRAND.coral}`,
+              borderRadius: 6,
+              background: 'transparent',
+              color: BRAND.coral,
+              fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.16em',
+              fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            <AlertTriangle size={11} />
+            FLAG INJURY
+          </button>
+        </div>
+        {playerInjuries.length === 0 ? (
+          <div style={{ fontFamily: TYPE.body, fontSize: 12.5, color: BRAND.indigoMute }}>
+            No injury moments flagged this match.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {playerInjuries.map(inj => (
+              <div
+                key={inj.id}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '8px 10px',
+                  background: BRAND.paper,
+                  border: `1px solid ${BRAND.line}`,
+                  borderRadius: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.16em',
+                    color: BRAND.coral, fontWeight: 700,
+                  }}
+                >
+                  {inj.minute}&apos;
+                </span>
+                <span
+                  style={{
+                    fontFamily: TYPE.body, fontSize: 12.5,
+                    color: BRAND.indigo, textTransform: 'capitalize',
+                  }}
+                >
+                  {inj.type}
+                </span>
+                <span
+                  style={{
+                    fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.14em',
+                    color: BRAND.indigoMute, fontWeight: 700,
+                  }}
+                >
+                  SEV {inj.severity}
+                </span>
+                {inj.notes && (
+                  <span
+                    style={{
+                      fontFamily: TYPE.body, fontSize: 12, color: BRAND.indigoMid,
+                      flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                    title={inj.notes}
+                  >
+                    · {inj.notes}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Coach notes */}
       <div style={{ padding: '20px 24px 32px' }}>
         <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 8 }}>SESSION NOTES</div>
@@ -800,6 +958,15 @@ function V3PlayerDetail({ row, onClose }: { row: PlayerRow; onClose: () => void 
           }}
         />
       </div>
+
+      <InjurySheet
+        open={injurySheetOpen}
+        sessionId={a.sessionId}
+        playerId={p.id}
+        playerName={`${p.firstName} ${p.lastName}`}
+        onClose={() => setInjurySheetOpen(false)}
+        onSaved={onWelfareChange}
+      />
     </div>
   )
 
@@ -869,23 +1036,40 @@ export default function CoachMatchAnalysisPage() {
     [sessionHighlights],
   )
 
+  // Welfare overlay — fatigue tier per player + injury flags for the
+  // session. `welfareTick` is bumped from the InjurySheet's onSaved so
+  // the panel re-reads localStorage without a full page reload.
+  const [welfareTick, setWelfareTick] = useState(0)
+  const fatigueByPlayer = useMemo(
+    () => getLatestFatigueByPlayer(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [welfareTick],
+  )
+  const sessionInjuries: InjuryFlag[] = useMemo(
+    () => getInjuryFlagsForSession(sessionId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessionId, welfareTick],
+  )
+
   // Player rows always show all players; their per-row event ticks/tags filter
   // along with the timeline so the page reads as one coordinated filter state.
   const buildPlayerRows = (events: TLEvent[]): PlayerRow[] => {
-    return sessionAnalyses
-      .map(a => {
-        const p = players.find(pl => pl.id === a.playerId)
-        if (!p) return null
-        const evs: TLEvent[] = events.filter(e => e.playerId === a.playerId)
-        return { player: p, analysis: a, events: evs }
-      })
-      .filter((r): r is PlayerRow => r !== null)
-      .sort((a, b) => b.analysis.compositeScore - a.analysis.compositeScore)
+    const rows: PlayerRow[] = []
+    for (const a of sessionAnalyses) {
+      const p = players.find(pl => pl.id === a.playerId)
+      if (!p) continue
+      const evs: TLEvent[] = events.filter(e => e.playerId === a.playerId)
+      const sample = fatigueByPlayer[a.playerId]
+      const row: PlayerRow = { player: p, analysis: a, events: evs }
+      if (sample) row.fatigue = fatigueTier(sample.load)
+      rows.push(row)
+    }
+    return rows.sort((a, b) => b.analysis.compositeScore - a.analysis.compositeScore)
   }
   const playerRows: PlayerRow[] = useMemo(
     () => buildPlayerRows(allEvents),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sessionAnalyses, allEvents],
+    [sessionAnalyses, allEvents, fatigueByPlayer],
   )
 
   const totalMin = useMemo(() => {
@@ -1038,7 +1222,14 @@ export default function CoachMatchAnalysisPage() {
       {selectedPlayerId && (() => {
         const row = playerRows.find(r => r.player.id === selectedPlayerId)
         if (!row) return null
-        return <V3PlayerDetail row={row} onClose={() => setSelectedPlayerId(null)} />
+        return (
+          <V3PlayerDetail
+            row={row}
+            sessionInjuries={sessionInjuries}
+            onClose={() => setSelectedPlayerId(null)}
+            onWelfareChange={() => setWelfareTick(t => t + 1)}
+          />
+        )
       })()}
     </div>
   )
