@@ -6,12 +6,18 @@ import { highlights, sessions } from '@/lib/mockData'
 import type { Player, Highlight } from '@/lib/types'
 import { ShareMenu } from './ShareMenu'
 
-type EventFilter = 'all' | 'goal' | 'key_pass' | 'tackle' | 'save' | 'sprint_recovery'
+type EventFilter = 'all' | 'goal' | 'shot' | 'key_pass' | 'def' | 'save'
 
+/* Locked event vocabulary across the app: goal · shot · key (key_pass)
+ * · def · save. Legacy aliases (tackle, sprint_recovery, key) kept so
+ * older fixture rows don't break this lookup. */
 const EVENT_BADGES: Record<Highlight['eventType'], { label: string; color: string }> = {
   goal:            { label: 'GOAL',   color: 'var(--brand-yellow)' },
+  shot:            { label: 'SHOT',   color: 'var(--brand-indigo-mid)' },
+  key:             { label: 'KEY',    color: 'var(--brand-indigo)' },
   key_pass:        { label: 'KEY',    color: 'var(--brand-indigo)' },
-  tackle:          { label: 'TACKLE', color: 'var(--brand-coral)' },
+  def:             { label: 'DEF',    color: 'var(--brand-coral)' },
+  tackle:          { label: 'DEF',    color: 'var(--brand-coral)' },
   save:            { label: 'SAVE',   color: 'var(--brand-indigo)' },
   sprint_recovery: { label: 'SPRINT', color: 'var(--brand-indigo-mid)' },
 }
@@ -19,10 +25,10 @@ const EVENT_BADGES: Record<Highlight['eventType'], { label: string; color: strin
 const FILTER_LABELS: Record<EventFilter, string> = {
   all: 'All',
   goal: 'Goals',
+  shot: 'Shots',
   key_pass: 'Key passes',
-  tackle: 'Tackles',
+  def: 'Key defence',
   save: 'Saves',
-  sprint_recovery: 'Sprints',
 }
 
 const VISIBLE_CAP = 7
@@ -95,12 +101,23 @@ export function HighlightsSection({
     const out: Record<EventFilter, number> = {
       all: scopedHighlights.length,
       goal: 0,
+      shot: 0,
       key_pass: 0,
-      tackle: 0,
+      def: 0,
       save: 0,
-      sprint_recovery: 0,
     }
-    for (const h of scopedHighlights) out[h.eventType as EventFilter]++
+    // Map legacy event types to the EventFilter keys so older fixture
+    // rows still feed the counters (tackle→def, key→key_pass, etc.)
+    for (const h of scopedHighlights) {
+      const key: EventFilter | null =
+        h.eventType === 'goal' ? 'goal' :
+        h.eventType === 'shot' ? 'shot' :
+        h.eventType === 'key_pass' || h.eventType === 'key' ? 'key_pass' :
+        h.eventType === 'def' || h.eventType === 'tackle' ? 'def' :
+        h.eventType === 'save' ? 'save' :
+        null
+      if (key) out[key]++
+    }
     return out
   }, [scopedHighlights])
 

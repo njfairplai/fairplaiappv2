@@ -14,11 +14,17 @@ import { StatsRadarSection } from '@/components/parent-portal/StatsRadarSection'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
 import type { Highlight } from '@/lib/types'
 
+/* Locked event vocabulary across the app: goal · shot · key (key_pass)
+ * · def · save. Legacy aliases (tackle, sprint_recovery, key) carried
+ * here so older fixture rows don't break the lookup. */
 const EVENT_BADGES: Record<Highlight['eventType'], { label: string; color: string }> = {
-  goal: { label: 'GOAL', color: 'var(--brand-yellow)' },
-  key_pass: { label: 'KEY', color: 'var(--brand-indigo)' },
-  tackle: { label: 'TACKLE', color: 'var(--brand-coral)' },
-  save: { label: 'SAVE', color: 'var(--brand-indigo)' },
+  goal:            { label: 'GOAL',   color: 'var(--brand-yellow)' },
+  shot:            { label: 'SHOT',   color: 'var(--brand-indigo-mid)' },
+  key:             { label: 'KEY',    color: 'var(--brand-indigo)' },
+  key_pass:        { label: 'KEY',    color: 'var(--brand-indigo)' },
+  def:             { label: 'DEF',    color: 'var(--brand-coral)' },
+  tackle:          { label: 'DEF',    color: 'var(--brand-coral)' },
+  save:            { label: 'SAVE',   color: 'var(--brand-indigo)' },
   sprint_recovery: { label: 'SPRINT', color: 'var(--brand-indigo-mid)' },
 }
 

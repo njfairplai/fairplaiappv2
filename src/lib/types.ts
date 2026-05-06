@@ -147,7 +147,22 @@ export interface Highlight {
   id: string
   sessionId: string
   playerId: string
-  eventType: 'goal' | 'key_pass' | 'sprint_recovery' | 'tackle' | 'save'
+  /** Tagged event type. The locked vocabulary across the app is
+   *  GOAL · SHOT · KEY · DEF · SAVE (lower-cased here for legacy
+   *  string-comparison compat). `key_pass` is kept as an alias for
+   *  `key` so older consumers iterating the array don't break.
+   *  `sprint_recovery` and `tackle` are legacy types still present in
+   *  some pre-data-unification fixture rows; new clips use the locked
+   *  vocab and the match-center adapter only emits those. */
+  eventType:
+    | 'goal'
+    | 'shot'
+    | 'key'
+    | 'key_pass'
+    | 'def'
+    | 'tackle'
+    | 'save'
+    | 'sprint_recovery'
   timestampSeconds: number
   durationSeconds: number
   thumbnailUrl?: string
@@ -456,7 +471,9 @@ export interface PlayerHeatmapData {
 export interface TimelineEvent {
   highlightId: string
   playerId: string
-  eventType: 'goal' | 'key_pass' | 'sprint_recovery' | 'tackle' | 'save'
+  /** Same eventType union as Highlight (locked vocabulary + legacy
+   *  aliases). See Highlight.eventType for the definition. */
+  eventType: Highlight['eventType']
   timestampSeconds: number
   confidence: number
   pitchX?: number

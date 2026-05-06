@@ -17,6 +17,11 @@ import type {
   Term,
   PlayerSessionAttendanceEntry,
 } from './types'
+import {
+  MATCH_CENTER_HIGHLIGHTS,
+  SESSIONS as MATCH_CENTER_SESSIONS,
+  type MatchCenterHighlight,
+} from './match-center'
 
 // ─── FACILITIES ────────────────────────────────────────────
 export const facilities: Facility[] = [
@@ -480,7 +485,27 @@ export const matchAnalyses: MatchAnalysis[] = [
 ]
 
 // ─── HIGHLIGHTS (with privacy + squad + aiConfidence) ─────────
-export const highlights: Highlight[] = [
+/* ─────────────────── Highlights ─────────────────────────────────────
+ * Two stores merged into one canonical export here:
+ *
+ *   1. legacyHighlights — fixture rows for sessions match-center.ts
+ *      doesn't own (drills, future cup matches, training filler).
+ *      Keeps the demo coverage broad.
+ *   2. MATCH_CENTER_HIGHLIGHTS (src/lib/match-center.ts) — the
+ *      canonical set for every analysed match shown in Match Center,
+ *      Highlights, State 5 Ready, Coach Hub embeds. Locked vocabulary:
+ *      GOAL · SHOT · KEY · DEF · SAVE.
+ *
+ * The two used to drift (different opponents, different clip counts).
+ * Now: legacyHighlights is filtered to drop any session match-center
+ * owns; the match-center clips get adapted to the legacy `Highlight`
+ * shape; the two arrays concat into the single exported `highlights`.
+ *
+ * Consumers (parent portal, player profile, match drill-in, season
+ * review, etc.) keep importing `highlights` from mockData — same
+ * shape, just one source of truth underneath.
+ */
+const legacyHighlights: Highlight[] = [
   // Kiyan Makkawi
   { id: 'highlight_001', sessionId: 'session_007', playerId: 'player_001', eventType: 'goal', timestampSeconds: 2040, durationSeconds: 12, releasedToParent: true, confidence: 0.97, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_001', aiConfidence: 91, flaggedByCoach: false },
   { id: 'highlight_002', sessionId: 'session_007', playerId: 'player_001', eventType: 'key_pass', timestampSeconds: 4020, durationSeconds: 8, releasedToParent: true, confidence: 0.91, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_001', aiConfidence: 87, flaggedByCoach: false },
@@ -585,6 +610,71 @@ export const highlights: Highlight[] = [
     }
     return out
   })(),
+]
+
+/* Sessions match-center.ts owns. Their highlights come from
+ * MATCH_CENTER_HIGHLIGHTS (locked vocabulary, source of truth).
+ * Anything in legacyHighlights pointing here gets filtered out so
+ * the same clip doesn't appear twice. */
+const MATCH_CENTER_OWNED_SESSION_IDS: ReadonlySet<string> = new Set([
+  'session_001', // Feb 03 training match
+  'session_005', // Feb 08 vs Shabab FC
+  'session_006', // Feb 17 vs Stratford E.
+  'session_007', // Feb 24 vs Al Wasl Academy
+  'session_010', // Feb 22 training match (processing)
+  'session_053', // Mar 05 training match
+  'session_054', // Mar 08 vs Al Nasr Cubs
+  'session_055', // Mar 12 training match
+  'session_056', // Mar 15 vs Hatta Academy
+])
+
+/* Adapter — turn each MATCH_CENTER_HIGHLIGHT into the legacy Highlight
+ * shape so existing consumers keep working. Five tagged event types
+ * map cleanly: GOAL→goal, SHOT→shot, KEY→key_pass, DEF→def, SAVE→save.
+ * Player ID is looked up by jersey number (matches the U12 Red roster). */
+function matchCenterToLegacyHighlight(h: MatchCenterHighlight): Highlight | null {
+  const month = h.sessionMonth ?? 2
+  const session = MATCH_CENTER_SESSIONS.find(
+    s => s.year === 2026 && s.month === month && s.day === h.sessionDay,
+  )
+  if (!session?.id) return null
+  const player = players.find(p => p.jerseyNumber === h.num)
+  if (!player) return null
+
+  const evMap: Record<MatchCenterHighlight['ev'], Highlight['eventType']> = {
+    GOAL: 'goal',
+    SHOT: 'shot',
+    KEY: 'key_pass',
+    DEF: 'def',
+    SAVE: 'save',
+  }
+
+  return {
+    id: h.id,
+    sessionId: session.id,
+    playerId: player.id,
+    eventType: evMap[h.ev],
+    timestampSeconds: h.minute * 60,
+    durationSeconds: h.dur,
+    releasedToParent: true,
+    confidence: 0.92,
+    privacy: 'parent_visible',
+    watermarkEnabled: true,
+    squadId: session.kind === 'training' ? 'roster_001' : 'roster_001',
+    aiConfidence: 90,
+    flaggedByCoach: false,
+  }
+}
+
+/** Canonical highlights — legacy fixture rows for sessions match-center
+ *  doesn't own, plus adapted match-center clips for everything it does.
+ *  This is the only place `highlights` is exported; consumers across
+ *  parent + coach portals read from here. */
+export const highlights: Highlight[] = [
+  ...legacyHighlights.filter(h => !MATCH_CENTER_OWNED_SESSION_IDS.has(h.sessionId)),
+  ...MATCH_CENTER_HIGHLIGHTS.map(matchCenterToLegacyHighlight).filter(
+    (h): h is Highlight => h !== null,
+  ),
 ]
 
 // ─── COACH FLAGGED CLIPS ──────────────────────────────────

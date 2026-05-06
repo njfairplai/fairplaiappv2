@@ -21,11 +21,16 @@ interface HomeHeroProps {
   role: 'parent' | 'player'
 }
 
+/* Locked event vocabulary across the app. Legacy aliases (tackle,
+ * sprint_recovery, key) carried so older fixture rows don't break. */
 const EVENT_LABELS: Record<Highlight['eventType'], string> = {
-  goal: 'GOAL',
-  key_pass: 'KEY PASS',
-  tackle: 'TACKLE',
-  save: 'SAVE',
+  goal:            'GOAL',
+  shot:            'SHOT',
+  key:             'KEY PASS',
+  key_pass:        'KEY PASS',
+  def:             'KEY DEFENCE',
+  tackle:          'KEY DEFENCE',
+  save:            'SAVE',
   sprint_recovery: 'SPRINT',
 }
 
