@@ -257,7 +257,7 @@ export default function CoachHighlightsPage() {
             </div>
           </Card>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {pagedGroups.map(group => (
               <MatchGroup
                 key={group.day}
@@ -271,7 +271,7 @@ export default function CoachHighlightsPage() {
                 }}
                 onShare={setClipSharing}
                 onFlagToggle={handleClipFlagToggle}
-                onOpenMatch={() => router.push('/coach/web/match-center?session=feb' + group.day)}
+                onOpenMatch={() => router.push(`/coach/web/match/${matchSessionIdForDay(group.day)}`)}
                 onPlayReel={() => {
                   if (group.clips.length === 0) return
                   setClipQueue(group.clips)
@@ -398,7 +398,18 @@ function MatchGroup({
   const showCollapseControls = clips.length > CLIPS_VISIBLE_BEFORE_EXPAND
 
   return (
-    <Card style={{ padding: 0 }}>
+    /* White card body (overriding the default paper) with a soft
+     * elevation shadow so each match group lifts off the sand page
+     * background — paper-on-sand was too low contrast and made the
+     * surface read as one beige blur. The header band keeps its
+     * yellow-soft for analysed matches as a "this is played" signal. */
+    <Card
+      style={{
+        padding: 0,
+        background: '#fff',
+        boxShadow: '0 2px 6px rgba(11,8,40,0.06)',
+      }}
+    >
       <div
         style={{
           padding: '14px 20px',
@@ -440,21 +451,9 @@ function MatchGroup({
               : 'Match'}
           </div>
         </div>
-        {session?.status === 'ready' && session.score != null && (
-          <span
-            style={{
-              background: BRAND.indigo,
-              color: BRAND.sand,
-              fontFamily: TYPE.display,
-              fontSize: 22,
-              padding: '4px 10px',
-              borderRadius: 3,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {session.score}
-          </span>
-        )}
+        {/* Composite score chip (indigo "82") removed — the eyebrow's
+         *  date+kind+clip count and the headline's opponent already
+         *  carry the match identity. The chip was visual noise. */}
         <button
           type="button"
           style={{ ...mcButtons.ghost, background: BRAND.yellow, borderColor: BRAND.yellow }}
@@ -509,6 +508,25 @@ function MatchGroup({
       )}
     </Card>
   )
+}
+
+/**
+ * Map a Match Center day-of-month to the corresponding session ID in
+ * mockData.ts. Used by the "Open match" CTA on each Highlights match
+ * group to deep-link into the full match analysis at
+ * /coach/web/match/[sessionId]. Days without a dedicated mock session
+ * fall back to session_007 (Al Wasl, Feb 24) — the populated demo
+ * match. Real wiring will replace this with a proper join when the API
+ * layer ships.
+ */
+function matchSessionIdForDay(day: number): string {
+  const map: Record<number, string> = {
+    24: 'session_007', // Al Wasl Academy
+    17: 'session_006', // Al Ain FC
+    8: 'session_005',  // Baniyas SC
+    3: 'session_007',  // training match — demo fallback
+  }
+  return map[day] ?? 'session_007'
 }
 
 function matchesEventFilter(ev: string, filter: EventFilter): boolean {

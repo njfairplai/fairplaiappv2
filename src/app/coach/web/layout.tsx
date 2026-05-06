@@ -74,7 +74,8 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', overflowX: 'hidden', fontFamily: fontFamilyBody }}>
-      {/* Header bar */}
+      {/* Header bar — sticky so the logo + team selector + avatar
+       *  stay visible as the page content scrolls beneath. */}
       <header style={{
         height: isMobile ? 52 : 60, flexShrink: 0,
         background: colors.headerBg,
@@ -82,6 +83,9 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
         padding: isMobile ? '0 12px' : '0 24px',
         borderBottom: `1px solid ${colors.headerBorder}`,
         gap: 8,
+        position: 'sticky',
+        top: 0,
+        zIndex: 40,
       }}>
         {isBrandedRoute ? (
           <Logo height={isMobile ? 22 : 28} style={{ flexShrink: 0 }} />
@@ -170,11 +174,11 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Top tab bar — desktop only. On mobile the same four tabs
-       *  surface as a fixed bottom bar at the foot of the viewport
-       *  (BottomNav portal="coachWeb"). Hiding the top tabs on mobile
-       *  avoids duplicate navigation and reclaims vertical space for
-       *  the page content. */}
+      {/* Top tab bar — desktop only. Sticky beneath the header so the
+       *  Hub / Match Center / Players / Highlights tabs stay anchored
+       *  while the page scrolls. On mobile the same four tabs surface
+       *  as a fixed bottom bar (BottomNav portal="coachWeb") and the
+       *  top tab bar is hidden to avoid duplicate navigation. */}
       <nav style={{
         height: 48, flexShrink: 0,
         background: colors.tabBarBg,
@@ -183,6 +187,9 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
         padding: '0 24px',
         gap: 4,
         borderBottom: `1px solid ${colors.tabBarBorder}`,
+        position: 'sticky',
+        top: isMobile ? 52 : 60,
+        zIndex: 39,
       }}>
         {tabs.map(tab => {
           const isActive = tab.exact
