@@ -12,15 +12,19 @@ import { mcButtons } from './atoms'
  * owns the modal + share-menu state so multiple cards can share one
  * modal instance and the flagged state stays consistent. */
 
+/* Card badge colour pairs per event type. The five categories carry
+ * distinct visual weight — GOAL is the celebratory yellow, DEF carries
+ * coral urgency, the rest sit in the indigo family. Locked to the
+ * five tagged event types. */
 const EVENT_TOKENS: Record<
   MatchCenterHighlight['ev'],
   { bg: string; ink: string }
 > = {
-  GOAL:   { bg: BRAND.yellow,             ink: BRAND.indigo },
-  KEY:    { bg: BRAND.indigo,             ink: BRAND.sand   },
-  TACKLE: { bg: BRAND.coral,              ink: BRAND.sand   },
-  SAVE:   { bg: BRAND.indigoMid,          ink: BRAND.sand   },
-  SPRINT: { bg: 'rgba(27,21,80,0.7)',     ink: BRAND.sand   },
+  GOAL: { bg: BRAND.yellow,         ink: BRAND.indigo },
+  SHOT: { bg: 'rgba(27,21,80,0.7)', ink: BRAND.sand   },
+  KEY:  { bg: BRAND.indigo,         ink: BRAND.sand   },
+  DEF:  { bg: BRAND.coral,          ink: BRAND.sand   },
+  SAVE: { bg: BRAND.indigoMid,      ink: BRAND.sand   },
 }
 
 interface HighlightCardProps {

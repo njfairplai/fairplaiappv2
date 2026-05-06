@@ -148,7 +148,22 @@ export const MATCH_CENTER_ROSTER: RosterEntry[] = [
   { num: 19, name: 'Zayed Al-Maktoum',  pos: 'RB',  present: false, composite: 67 },
 ]
 
-export type HighlightEvent = 'GOAL' | 'KEY' | 'TACKLE' | 'SAVE' | 'SPRINT'
+/**
+ * Five highlight event categories — the only event types the system
+ * tags. Locked down deliberately so the coach gets a small, scannable
+ * filter set on the Highlights surface and the State 5 row.
+ *
+ *   GOAL  — ball in the back of the net
+ *   SHOT  — attempt on goal that isn't a goal (saved, missed, blocked)
+ *   KEY   — key pass / line-breaking pass (creates a chance)
+ *   DEF   — key defence (block, last-ditch tackle, ball recovery)
+ *   SAVE  — goalkeeper save
+ *
+ * Sprints, dribbles, generic tackles etc. are not tagged. The
+ * categories above cover the actionable moments a coach builds reels
+ * around.
+ */
+export type HighlightEvent = 'GOAL' | 'SHOT' | 'KEY' | 'DEF' | 'SAVE'
 
 export interface MatchCenterHighlight {
   id: string
@@ -166,54 +181,61 @@ export interface MatchCenterHighlight {
 }
 
 /**
- * Tagged clips across the four analysed matches in February. Used by
+ * Tagged clips across the four analysed sessions in February. Used by
  * State 5's horizontal row (filtered to the selected day) and by the
  * coach Highlights surface (grouped by match, season-wide reel browser).
  *
- * Feb 24 carries 20 clips so the Highlights expand UI ("+N more clips")
- * has something to demo against. The other matches stay tighter.
+ * Only five event types are tagged: GOAL · SHOT · KEY (key pass) ·
+ * DEF (key defence) · SAVE. Sprints, dribbles, generic tackles etc.
+ * are not surfaced — those moments don't drive a coach's reel.
+ *
+ * Feb 24 carries 20 clips so the Highlights "+N more clips" expand UI
+ * has something to demo against. Other matches stay tighter.
  */
 export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
   // ── Feb 24 · vs Al Wasl Academy · 3-1 W (the populated reference match)
-  { id: 'h-24-1',  sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 4,  dur: 32, headline: 'Opener inside 5 minutes' },
-  { id: 'h-24-2',  sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 8,  dur: 18, headline: 'Through-ball off the kickoff' },
-  { id: 'h-24-3',  sessionDay: 24, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 11, dur: 11, headline: 'Crunching tackle, ball recovered' },
-  { id: 'h-24-4',  sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 14, dur: 38, headline: 'Right-foot driven · 1-0' },
-  { id: 'h-24-5',  sessionDay: 24, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 19, dur: 12, headline: 'Reflex stop, near post' },
-  { id: 'h-24-6',  sessionDay: 24, ev: 'KEY',    player: 'Hamad Al-Mansoori',num: 10,minute: 23, dur: 16, headline: 'Switch to the far flank' },
-  { id: 'h-24-7',  sessionDay: 24, ev: 'SPRINT', player: 'Salem Al-Dhaheri', num: 11,minute: 26, dur: 10, headline: '6.8 m/s wing chase' },
-  { id: 'h-24-8',  sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 28, dur: 22, headline: 'Press-break carry, then split' },
-  { id: 'h-24-9',  sessionDay: 24, ev: 'TACKLE', player: 'Rashid Al-Marri',  num: 3, minute: 33, dur: 9,  headline: 'Block on the half-turn' },
-  { id: 'h-24-10', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 38, dur: 28, headline: 'Volley from the cutback · 2-0' },
-  { id: 'h-24-11', sessionDay: 24, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 42, dur: 14, headline: 'Tipped over the bar' },
-  { id: 'h-24-12', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1' },
-  { id: 'h-24-13', sessionDay: 24, ev: 'KEY',    player: 'Yousef Al-Zaabi',  num: 8, minute: 51, dur: 17, headline: 'Line-breaking carry' },
-  { id: 'h-24-14', sessionDay: 24, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 56, dur: 12, headline: 'Last-ditch tackle on edge' },
-  { id: 'h-24-15', sessionDay: 24, ev: 'SPRINT', player: 'Saeed Khalifa',    num: 7, minute: 60, dur: 11, headline: 'Counter-press recovery' },
-  { id: 'h-24-16', sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 65, dur: 19, headline: 'No-look pass, knife-edge' },
-  { id: 'h-24-17', sessionDay: 24, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 68, dur: 8,  headline: 'Smothered at feet' },
-  { id: 'h-24-18', sessionDay: 24, ev: 'GOAL',   player: 'Kiyan Makkawi',    num: 6, minute: 71, dur: 36, headline: 'Box arrival · 3-1' },
-  { id: 'h-24-19', sessionDay: 24, ev: 'TACKLE', player: 'Faisal Mansour',   num: 2, minute: 75, dur: 10, headline: 'Slide tackle on the touchline' },
-  { id: 'h-24-20', sessionDay: 24, ev: 'SPRINT', player: 'Saeed Khalifa',    num: 7, minute: 78, dur: 14, headline: '7.4 m/s recovery' },
+  { id: 'h-24-1',  sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 4,  dur: 32, headline: 'Opener inside 5 minutes' },
+  { id: 'h-24-2',  sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 8,  dur: 18, headline: 'Through-ball off the kickoff' },
+  { id: 'h-24-3',  sessionDay: 24, ev: 'DEF',  player: 'Khalid Al-Naqbi',   num: 4,  minute: 11, dur: 11, headline: 'Block on the edge, ball recovered' },
+  { id: 'h-24-4',  sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 14, dur: 38, headline: 'Right-foot driven · 1-0' },
+  { id: 'h-24-5',  sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 19, dur: 12, headline: 'Reflex stop, near post' },
+  { id: 'h-24-6',  sessionDay: 24, ev: 'KEY',  player: 'Hamad Al-Mansoori', num: 10, minute: 23, dur: 16, headline: 'Switch to the far flank' },
+  { id: 'h-24-7',  sessionDay: 24, ev: 'SHOT', player: 'Saeed Khalifa',     num: 7,  minute: 26, dur: 10, headline: 'Curler off the post' },
+  { id: 'h-24-8',  sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 28, dur: 22, headline: 'Press-break carry, then split' },
+  { id: 'h-24-9',  sessionDay: 24, ev: 'DEF',  player: 'Rashid Al-Marri',   num: 3,  minute: 33, dur: 9,  headline: 'Block on the half-turn' },
+  { id: 'h-24-10', sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 38, dur: 28, headline: 'Volley from the cutback · 2-0' },
+  { id: 'h-24-11', sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 42, dur: 14, headline: 'Tipped over the bar' },
+  { id: 'h-24-12', sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1' },
+  { id: 'h-24-13', sessionDay: 24, ev: 'KEY',  player: 'Yousef Al-Zaabi',   num: 8,  minute: 51, dur: 17, headline: 'Line-breaking carry' },
+  { id: 'h-24-14', sessionDay: 24, ev: 'DEF',  player: 'Khalid Al-Naqbi',   num: 4,  minute: 56, dur: 12, headline: 'Last-ditch block on edge' },
+  { id: 'h-24-15', sessionDay: 24, ev: 'SHOT', player: 'Ahmed Hassan',      num: 9,  minute: 60, dur: 11, headline: 'Header straight at the keeper' },
+  { id: 'h-24-16', sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 65, dur: 19, headline: 'No-look pass, knife-edge' },
+  { id: 'h-24-17', sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 68, dur: 8,  headline: 'Smothered at feet' },
+  { id: 'h-24-18', sessionDay: 24, ev: 'GOAL', player: 'Kiyan Makkawi',     num: 6,  minute: 71, dur: 36, headline: 'Box arrival · 3-1' },
+  { id: 'h-24-19', sessionDay: 24, ev: 'DEF',  player: 'Faisal Mansour',    num: 2,  minute: 75, dur: 10, headline: 'Recovery on the touchline' },
+  { id: 'h-24-20', sessionDay: 24, ev: 'SHOT', player: 'Saeed Khalifa',     num: 7,  minute: 78, dur: 14, headline: 'Drive saved by the keeper' },
 
   // ── Feb 17 · vs Stratford E. · composite 78
-  { id: 'h-17-1', sessionDay: 17, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 14, dur: 32, headline: 'Header from the corner' },
-  { id: 'h-17-2', sessionDay: 17, ev: 'KEY',    player: 'Hamad Al-Mansoori',num: 10, minute: 31, dur: 18, headline: 'Through-ball between CBs' },
-  { id: 'h-17-3', sessionDay: 17, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 38, dur: 9,  headline: 'Reflex stop at near post' },
-  { id: 'h-17-4', sessionDay: 17, ev: 'GOAL',   player: 'Ahmed Hassan',     num: 9, minute: 64, dur: 28, headline: 'Composed finish · 2-0' },
-  { id: 'h-17-5', sessionDay: 17, ev: 'TACKLE', player: 'Rashid Al-Marri',  num: 3, minute: 72, dur: 11, headline: 'Slide tackle on the break' },
+  { id: 'h-17-1', sessionDay: 17, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 14, dur: 32, headline: 'Header from the corner' },
+  { id: 'h-17-2', sessionDay: 17, ev: 'KEY',  player: 'Hamad Al-Mansoori', num: 10, minute: 31, dur: 18, headline: 'Through-ball between CBs' },
+  { id: 'h-17-3', sessionDay: 17, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 38, dur: 9,  headline: 'Reflex stop at near post' },
+  { id: 'h-17-4', sessionDay: 17, ev: 'GOAL', player: 'Ahmed Hassan',      num: 9,  minute: 64, dur: 28, headline: 'Composed finish · 2-0' },
+  { id: 'h-17-5', sessionDay: 17, ev: 'DEF',  player: 'Rashid Al-Marri',   num: 3,  minute: 72, dur: 11, headline: 'Block on the break' },
+  { id: 'h-17-6', sessionDay: 17, ev: 'SHOT', player: 'Kiyan Makkawi',     num: 6,  minute: 81, dur: 13, headline: 'Long range, just wide' },
 
   // ── Feb 08 · vs Shabab FC · composite 71
-  { id: 'h-08-1', sessionDay: 8, ev: 'GOAL',   player: 'Kiyan Makkawi',    num: 6, minute: 22, dur: 30, headline: 'Free-kick whipped in · 1-0' },
-  { id: 'h-08-2', sessionDay: 8, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 35, dur: 12, headline: 'Tipped over the bar' },
-  { id: 'h-08-3', sessionDay: 8, ev: 'KEY',    player: 'Saeed Khalifa',    num: 7, minute: 51, dur: 16, headline: 'Cut-back to the penalty spot' },
-  { id: 'h-08-4', sessionDay: 8, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 67, dur: 10, headline: 'Block on the edge of the box' },
+  { id: 'h-08-1', sessionDay: 8, ev: 'GOAL', player: 'Kiyan Makkawi',     num: 6,  minute: 22, dur: 30, headline: 'Free-kick whipped in · 1-0' },
+  { id: 'h-08-2', sessionDay: 8, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 35, dur: 12, headline: 'Tipped over the bar' },
+  { id: 'h-08-3', sessionDay: 8, ev: 'KEY',  player: 'Saeed Khalifa',     num: 7,  minute: 51, dur: 16, headline: 'Cut-back to the penalty spot' },
+  { id: 'h-08-4', sessionDay: 8, ev: 'DEF',  player: 'Khalid Al-Naqbi',   num: 4,  minute: 67, dur: 10, headline: 'Block on the edge of the box' },
+  { id: 'h-08-5', sessionDay: 8, ev: 'SHOT', player: 'Ahmed Hassan',      num: 9,  minute: 78, dur: 9,  headline: 'Volley over the bar' },
 
   // ── Feb 03 · training match · composite 74 (internal A-vs-B)
-  { id: 'h-03-1', sessionDay: 3, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 9,  dur: 24, headline: 'Volley after a switch' },
-  { id: 'h-03-2', sessionDay: 3, ev: 'SPRINT', player: 'Salem Al-Dhaheri', num: 11, minute: 17, dur: 13, headline: '6.9 m/s wing chase' },
-  { id: 'h-03-3', sessionDay: 3, ev: 'KEY',    player: 'Yousef Al-Zaabi',  num: 8, minute: 26, dur: 19, headline: 'Line-breaker into the half-space' },
-  { id: 'h-03-4', sessionDay: 3, ev: 'GOAL',   player: 'Mansoor Al-Falasi',num: 17, minute: 41, dur: 26, headline: 'Far-post tap-in' },
+  { id: 'h-03-1', sessionDay: 3, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 9,  dur: 24, headline: 'Volley after a switch' },
+  { id: 'h-03-2', sessionDay: 3, ev: 'SHOT', player: 'Salem Al-Dhaheri',  num: 11, minute: 17, dur: 13, headline: 'Drive forced wide by keeper' },
+  { id: 'h-03-3', sessionDay: 3, ev: 'KEY',  player: 'Yousef Al-Zaabi',   num: 8,  minute: 26, dur: 19, headline: 'Line-breaker into the half-space' },
+  { id: 'h-03-4', sessionDay: 3, ev: 'GOAL', player: 'Mansoor Al-Falasi', num: 17, minute: 41, dur: 26, headline: 'Far-post tap-in' },
+  { id: 'h-03-5', sessionDay: 3, ev: 'DEF', player: 'Tariq Al-Shamsi',    num: 14, minute: 52, dur: 8,  headline: 'Tracking back to clear' },
 ]
 
 /** Default selected day on first render (the populated Ready state). */

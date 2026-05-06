@@ -36,7 +36,12 @@ import { Toast } from '@/components/coach/match-center/Toast'
  *
  * The calendar primitive stays scoped to Match Center where it belongs.
  */
-const EVENT_FILTERS = ['ALL', 'GOALS', 'KEY', 'TACKLES', 'SAVES', 'SPRINTS'] as const
+/**
+ * Filter pills cover the five tagged event types plus "ALL".
+ * Pills wrap on tight viewports — multi-word labels like "KEY PASSES"
+ * read clearer than truncated single words like "PASSES".
+ */
+const EVENT_FILTERS = ['ALL', 'GOALS', 'SHOTS', 'KEY PASSES', 'KEY DEFENCE', 'SAVES'] as const
 type EventFilter = (typeof EVENT_FILTERS)[number]
 
 const PAGE_SIZE = 5
@@ -508,12 +513,12 @@ function MatchGroup({
 
 function matchesEventFilter(ev: string, filter: EventFilter): boolean {
   switch (filter) {
-    case 'GOALS':   return ev === 'GOAL'
-    case 'KEY':     return ev === 'KEY'
-    case 'TACKLES': return ev === 'TACKLE'
-    case 'SAVES':   return ev === 'SAVE'
-    case 'SPRINTS': return ev === 'SPRINT'
-    default:        return true
+    case 'GOALS':       return ev === 'GOAL'
+    case 'SHOTS':       return ev === 'SHOT'
+    case 'KEY PASSES':  return ev === 'KEY'
+    case 'KEY DEFENCE': return ev === 'DEF'
+    case 'SAVES':       return ev === 'SAVE'
+    default:            return true
   }
 }
 
