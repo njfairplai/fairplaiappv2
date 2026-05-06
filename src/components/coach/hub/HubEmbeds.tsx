@@ -261,8 +261,16 @@ export function MClipEmbed({
 }
 
 /** Mikel's avatar glyph — small indigo square with a yellow "M".
- *  Re-used in the greeting eyebrow and the response card byline. */
-export function MikelGlyph({ size = 18 }: { size?: number }) {
+ *  Re-used in the greeting eyebrow and the response card byline.
+ *  `pulse=true` adds a slow yellow-glow halo (hubMikelPulse keyframe)
+ *  so the glyph reads as alive rather than static. */
+export function MikelGlyph({
+  size = 18,
+  pulse = false,
+}: {
+  size?: number
+  pulse?: boolean
+}) {
   return (
     <span
       style={{
@@ -277,6 +285,7 @@ export function MikelGlyph({ size = 18 }: { size?: number }) {
         fontFamily: TYPE.mono,
         fontSize: size * 0.6,
         fontWeight: 700,
+        animation: pulse ? 'hubMikelPulse 2.4s ease-in-out infinite' : undefined,
       }}
     >
       M

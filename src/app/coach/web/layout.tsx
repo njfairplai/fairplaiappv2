@@ -72,8 +72,13 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   const fontFamilyBody = TYPE.body
   const tabFontWeight = 600
 
+  // `overflowX: 'hidden'` was previously set on the parent flex
+  // column to suppress horizontal scrollbars on edge cases. We
+  // dropped it: it silently created a scroll context that broke
+  // `position: sticky` on the header + tab bar. `maxWidth: '100vw'`
+  // on the parent covers the original concern.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', overflowX: 'hidden', fontFamily: fontFamilyBody }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', fontFamily: fontFamilyBody }}>
       {/* Header bar — sticky so the logo + team selector + avatar
        *  stay visible as the page content scrolls beneath. */}
       <header style={{

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef, type KeyboardEvent } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { hubGhostBtnStyle, hubPrimaryBtnStyle } from './HubEmbeds'
@@ -9,16 +9,39 @@ import { hubGhostBtnStyle, hubPrimaryBtnStyle } from './HubEmbeds'
  * weighted toward the question itself — everything else on the
  * surface is in service of "ask Mikel anything". */
 
+export interface HubChatInputHandle {
+  /** Imperative API: set the input value AND focus it. Used by the
+   *  parent page when a suggestion chip is clicked. */
+  setValueAndFocus: (next: string) => void
+}
+
 interface HubChatInputProps {
   initialFocus?: boolean
   onSubmit?: (question: string) => void
+  onAttach?: () => void
+  onMention?: () => void
 }
 
-export function HubChatInput({ initialFocus = false, onSubmit }: HubChatInputProps) {
+export const HubChatInput = forwardRef<HubChatInputHandle, HubChatInputProps>(function HubChatInput(
+  { initialFocus = false, onSubmit, onAttach, onMention },
+  ref,
+) {
   const isMobile = useIsMobile()
   const [value, setValue] = useState('')
   const [focused, setFocused] = useState(initialFocus)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useImperativeHandle(ref, () => ({
+    setValueAndFocus: (next: string) => {
+      setValue(next)
+      // Wait a tick so the textarea ref reflects the new value before
+      // focusing/selecting the end.
+      requestAnimationFrame(() => {
+        inputRef.current?.focus()
+        inputRef.current?.setSelectionRange(next.length, next.length)
+      })
+    },
+  }))
 
   // Cmd/Ctrl-K shortcut focuses the input. Matches the design's
   // "⏎ TO SEND · ⌘K TO FOCUS" hint in the input footer.
@@ -97,10 +120,10 @@ export function HubChatInput({ initialFocus = false, onSubmit }: HubChatInputPro
       >
         {!isMobile && (
           <>
-            <button type="button" style={hubGhostBtnStyle}>
+            <button type="button" style={hubGhostBtnStyle} onClick={onAttach}>
               ＋ Attach clip
             </button>
-            <button type="button" style={hubGhostBtnStyle}>
+            <button type="button" style={hubGhostBtnStyle} onClick={onMention}>
               ＠ Mention player
             </button>
           </>
@@ -134,7 +157,7 @@ export function HubChatInput({ initialFocus = false, onSubmit }: HubChatInputPro
       </div>
     </div>
   )
-}
+})
 
 interface SuggestionChipsProps {
   chips: string[]

@@ -31,6 +31,16 @@ function HubTile({
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-2px)'
+        e.currentTarget.style.boxShadow = '0 8px 20px rgba(11,8,40,0.12)'
+        e.currentTarget.style.borderColor = 'rgba(27,21,80,0.22)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(11,8,40,0.04)'
+        e.currentTarget.style.borderColor = BRAND.line
+      }}
       style={{
         flex: 1,
         minWidth: 180,
@@ -44,7 +54,8 @@ function HubTile({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'all 150ms ease',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+        boxShadow: '0 1px 3px rgba(11,8,40,0.04)',
       }}
     >
       <div

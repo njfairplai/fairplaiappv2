@@ -1,34 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { HubFrame, MikelGlyph } from '@/components/coach/hub/HubEmbeds'
-import { HubChatInput, SuggestionChips } from '@/components/coach/hub/HubChatInput'
+import {
+  HubChatInput,
+  SuggestionChips,
+  type HubChatInputHandle,
+} from '@/components/coach/hub/HubChatInput'
 import { HubResponseCard } from '@/components/coach/hub/HubResponseCard'
 import { HubTiles } from '@/components/coach/hub/HubTiles'
+import { Toast } from '@/components/coach/match-center/Toast'
 
 /* Coach's Hub — /coach/web
  *
- * Front door for the coach. Direction: Coach Mikel as an LLM agent.
- * Translated from the Claude Design handoff at
- * .claude/claude-design-pack/Handoffs/Coach Mikel/.
+ * Mikel as the front door. Direction translated from the Claude Design
+ * handoff at .claude/claude-design-pack/Handoffs/Coach Mikel/.
  *
  * Surface composition:
- *   1. Greeting eyebrow      — "MORNING, COACH SARA"
- *   2. Hero headline         — "Ask Mikel anything." (yellow highlight)
- *   3. Subtitle              — short copy explaining what Mikel knows
- *   4. Suggestion chips      — six starter prompts in mono pill style
- *   5. Chat input            — large centered input, the actual surface
- *   6. Response card         — Mikel's most-recent reply (mocked) with
- *                              embedded composite/player/clip chips
- *   7. Tile rail             — four small destinations (escape hatch)
+ *   1. Greeting eyebrow (M-glyph + "MORNING, COACH SARA")
+ *   2. Hero "Ask Mikel anything." — display, scaled
+ *   3. Subtitle one-liner
+ *   4. Six suggestion chips (mono-pill) — tap fills the chat input
+ *   5. Chat textarea — Cmd/Ctrl-K focus, Enter to submit
+ *   6. Response card (mocked Mikel reply with embedded chips)
+ *   7. Tile rail of destinations
  *   8. Privacy footer
  *
- * Replaces the legacy CoachChatContainer surface. The response card
- * uses local state to show/hide; default lands populated so the surface
- * is never empty. No real LLM streaming yet — the conversation
- * behaviour ships separately when the model layer wires up.
+ * Every CTA fires real feedback through the shared Toast component.
+ * No real LLM streaming yet — the response card is static mock content.
+ *
+ * Animations: greeting / hero / subtitle / chip strip stagger fade-in
+ * via the `hubFadeIn` keyframe; the M-glyph carries a slow pulse so
+ * the surface feels alive on idle. Hover lifts on the tile rail.
  */
 
 const SUGGESTION_CHIPS = [
@@ -42,18 +47,38 @@ const SUGGESTION_CHIPS = [
 
 export default function CoachWebHubPage() {
   const isMobile = useIsMobile()
-  // hasThread = whether the response card should render. Seeded `true`
-  // so the demo lands on the populated state. Real wiring will replace
-  // this with a streamed response when the LLM layer ships.
-  const [hasThread] = useState(true)
+  const inputHandle = useRef<HubChatInputHandle>(null)
+  const [hasThread, setHasThread] = useState(true)
+  const [toast, setToast] = useState<string | null>(null)
+
+  function pickSuggestion(chip: string) {
+    inputHandle.current?.setValueAndFocus(chip)
+  }
+
+  function submitQuestion() {
+    setToast('Mikel is thinking…')
+  }
+
+  function shareReel() {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      const url = `${window.location.origin}/coach/web/highlights?reel=mikel-saeed-pressing`
+      navigator.clipboard.writeText(url).catch(() => {})
+    }
+    setToast('Reel link copied to clipboard')
+  }
+
+  function newThread() {
+    setHasThread(false)
+    setToast('Started a new thread')
+  }
 
   return (
     <HubFrame>
       {/* Hero zone — eyebrow / hero / subtitle / chips / input,
-       *  centered horizontally with generous vertical spacing */}
+       *  centered with stagger fade-in animation. */}
       <div
         style={{
-          padding: isMobile ? '36px 16px 20px' : '64px 36px 28px',
+          padding: isMobile ? '28px 16px 18px' : '40px 36px 24px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -67,25 +92,27 @@ export default function CoachWebHubPage() {
             letterSpacing: '0.22em',
             color: BRAND.indigoMute,
             fontWeight: 700,
-            marginBottom: 14,
+            marginBottom: 12,
             display: 'flex',
             alignItems: 'center',
             gap: 8,
+            animation: 'hubFadeIn 360ms ease 0ms both',
           }}
         >
-          <MikelGlyph size={18} />
+          <MikelGlyph size={18} pulse />
           MORNING, COACH SARA
         </div>
 
         <div
           style={{
             fontFamily: TYPE.display,
-            fontSize: isMobile ? 44 : 84,
-            lineHeight: 0.92,
+            fontSize: isMobile ? 28 : 48,
+            lineHeight: 0.96,
             letterSpacing: '-0.025em',
             color: BRAND.indigo,
             textAlign: 'center',
             marginBottom: 6,
+            animation: 'hubFadeIn 360ms ease 80ms both',
           }}
         >
           Ask Mikel{' '}
@@ -103,20 +130,45 @@ export default function CoachWebHubPage() {
         <div
           style={{
             fontFamily: TYPE.body,
-            fontSize: isMobile ? 14 : 16,
+            fontSize: isMobile ? 13 : 14,
             color: BRAND.indigoMid,
             textAlign: 'center',
-            marginBottom: isMobile ? 22 : 30,
-            maxWidth: 560,
+            marginBottom: isMobile ? 18 : 22,
+            maxWidth: 520,
             lineHeight: 1.5,
+            animation: 'hubFadeIn 360ms ease 160ms both',
           }}
         >
           Match prep, player questions, clip reels, drill ideas. Mikel knows this
           week&apos;s footage.
         </div>
 
-        <SuggestionChips chips={SUGGESTION_CHIPS} />
-        <HubChatInput initialFocus={!isMobile} />
+        <div
+          style={{
+            animation: 'hubFadeIn 360ms ease 240ms both',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <SuggestionChips chips={SUGGESTION_CHIPS} onPick={pickSuggestion} />
+        </div>
+        <div
+          style={{
+            animation: 'hubFadeIn 400ms ease 320ms both',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <HubChatInput
+            ref={inputHandle}
+            initialFocus={!isMobile}
+            onSubmit={submitQuestion}
+            onAttach={() => setToast('Attach clip — coming soon')}
+            onMention={() => setToast('Player mention — coming soon')}
+          />
+        </div>
       </div>
 
       {/* Recent reply (when a thread exists) */}
@@ -126,9 +178,15 @@ export default function CoachWebHubPage() {
             display: 'flex',
             justifyContent: 'center',
             padding: isMobile ? '12px 14px' : '16px 36px',
+            animation: 'hubFadeIn 480ms ease 480ms both',
           }}
         >
-          <HubResponseCard />
+          <HubResponseCard
+            onShare={shareReel}
+            onNewThread={newThread}
+            onExportReel={() => setToast('Reel queued for export')}
+            onRegenerate={() => setToast('Regenerating — new angle on the way')}
+          />
         </div>
       )}
 
@@ -137,7 +195,7 @@ export default function CoachWebHubPage() {
         style={{
           display: 'flex',
           justifyContent: 'center',
-          padding: isMobile ? '20px 14px 36px' : '24px 36px 64px',
+          padding: isMobile ? '16px 14px 32px' : '20px 36px 56px',
         }}
       >
         <HubTiles />
@@ -157,6 +215,8 @@ export default function CoachWebHubPage() {
           MIKEL DOESN&apos;T STORE QUESTIONS · YOUR CONVERSATIONS ARE PRIVATE
         </span>
       </div>
+
+      <Toast message={toast} onDismiss={() => setToast(null)} />
     </HubFrame>
   )
 }

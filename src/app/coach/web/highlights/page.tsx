@@ -95,21 +95,33 @@ export default function CoachHighlightsPage() {
     })
   }, [eventFilter, playerFilter])
 
-  // Group by match. Order = newest match first (descending day).
+  // Group by match (year + month + day composite). Order = newest
+  // first by date. Clips without `sessionMonth` default to Feb 2026
+  // for backward compat with existing data.
   const groups = useMemo(() => {
-    const byDay = new Map<number, MatchCenterHighlight[]>()
+    const byKey = new Map<string, MatchCenterHighlight[]>()
     for (const h of filteredClips) {
-      const list = byDay.get(h.sessionDay) ?? []
+      const month = h.sessionMonth ?? 2
+      const key = `2026-${String(month).padStart(2, '0')}-${String(h.sessionDay).padStart(2, '0')}`
+      const list = byKey.get(key) ?? []
       list.push(h)
-      byDay.set(h.sessionDay, list)
+      byKey.set(key, list)
     }
-    const days = Array.from(byDay.keys()).sort((a, b) => b - a)
-    return days.map(day => {
-      const session = SESSIONS.find(s => s.day === day && s.month === 2 && s.year === 2026)
+    // Sort keys descending so newest matches show first.
+    const sortedKeys = Array.from(byKey.keys()).sort((a, b) => (a > b ? -1 : 1))
+    return sortedKeys.map(key => {
+      const [yearStr, monthStr, dayStr] = key.split('-')
+      const year = parseInt(yearStr!, 10)
+      const month = parseInt(monthStr!, 10)
+      const day = parseInt(dayStr!, 10)
+      const session = SESSIONS.find(s => s.day === day && s.month === month && s.year === year)
       return {
+        key,
         day,
+        month,
+        year,
         session: session ?? null,
-        clips: byDay.get(day)!,
+        clips: byKey.get(key)!,
       }
     })
   }, [filteredClips])
@@ -260,8 +272,9 @@ export default function CoachHighlightsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {pagedGroups.map(group => (
               <MatchGroup
-                key={group.day}
+                key={group.key}
                 day={group.day}
+                month={group.month}
                 session={group.session}
                 clips={group.clips}
                 flaggedClips={flaggedClips}
@@ -376,8 +389,12 @@ export default function CoachHighlightsPage() {
  */
 const CLIPS_VISIBLE_BEFORE_EXPAND = 6
 
+const MONTH_SHORT_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
 interface MatchGroupProps {
   day: number
+  /** 1-indexed month (1=Jan). Drives the date eyebrow label. */
+  month: number
   session: MatchCenterSession | null
   clips: MatchCenterHighlight[]
   flaggedClips: Set<string>
@@ -393,6 +410,7 @@ interface MatchGroupProps {
 
 function MatchGroup({
   day,
+  month,
   session,
   clips,
   flaggedClips,
@@ -442,7 +460,7 @@ function MatchGroup({
               fontWeight: 700,
             }}
           >
-            FEB {String(day).padStart(2, '0')} ·{' '}
+            {MONTH_SHORT_LABELS[month - 1]} {String(day).padStart(2, '0')} ·{' '}
             {session?.kind === 'training' ? 'TRAINING' : 'MATCH'} · {clips.length}{' '}
             {clips.length === 1 ? 'CLIP' : 'CLIPS'}
           </div>

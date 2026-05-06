@@ -414,6 +414,21 @@ body {
   100% { transform: translateY(0);    }
 }
 
+/* Coach Hub hero entrance — fade-in + lift. Used with staggered
+ * delays on the greeting / hero / subtitle / chips so the surface
+ * reads as composing itself, not a static layout. */
+@keyframes hubFadeIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0);   }
+}
+
+/* Coach Hub Mikel-glyph pulse — slow yellow-to-bright loop on the
+ * "M" eyebrow tile so the surface feels alive without being noisy. */
+@keyframes hubMikelPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(252,215,24,0.45); }
+  50%      { box-shadow: 0 0 0 4px rgba(252,215,24,0);  }
+}
+
 /* ── Stat card shadow ── */
 .card-shadow {
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);

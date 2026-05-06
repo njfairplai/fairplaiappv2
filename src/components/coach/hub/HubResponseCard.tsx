@@ -12,6 +12,13 @@ import {
   hubPrimaryBtnStyle,
 } from './HubEmbeds'
 
+interface HubResponseCardProps {
+  onShare?: () => void
+  onNewThread?: () => void
+  onExportReel?: () => void
+  onRegenerate?: () => void
+}
+
 /* Response card — Mikel's most-recent reply, surfaced inline below the
  * chat input so the Hub is never empty when the coach lands. The reply
  * is composed in prose with embedded chips (composite, player, clip)
@@ -21,7 +28,12 @@ import {
  * separately. Demo seed: "Build a 5-clip reel of Saeed's pressing this
  * month." Mikel responds with three embedded clips + a profile link. */
 
-export function HubResponseCard() {
+export function HubResponseCard({
+  onShare,
+  onNewThread,
+  onExportReel,
+  onRegenerate,
+}: HubResponseCardProps = {}) {
   const router = useRouter()
   const isMobile = useIsMobile()
   return (
@@ -61,10 +73,10 @@ export function HubResponseCard() {
         <span style={{ flex: 1 }} />
         {!isMobile && (
           <>
-            <button type="button" style={hubGhostBtnStyle}>
+            <button type="button" style={hubGhostBtnStyle} onClick={onShare}>
               ↗ SHARE
             </button>
-            <button type="button" style={hubGhostBtnStyle}>
+            <button type="button" style={hubGhostBtnStyle} onClick={onNewThread}>
               ＋ NEW THREAD
             </button>
           </>
@@ -218,6 +230,7 @@ export function HubResponseCard() {
           >
             <button
               type="button"
+              onClick={onExportReel}
               style={{ ...hubPrimaryBtnStyle, padding: '8px 14px', fontSize: 10.5 }}
             >
               EXPORT REEL ↗
@@ -242,6 +255,7 @@ export function HubResponseCard() {
             </button>
             <button
               type="button"
+              onClick={onRegenerate}
               style={{
                 background: 'transparent',
                 border: `1px solid ${BRAND.line}`,

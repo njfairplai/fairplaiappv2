@@ -89,12 +89,15 @@ export const SESSIONS: MatchCenterSession[] = [
   { date: '2026-02-28', day: 28, month: 2, year: 2026, kind: 'match',    status: 'prep',          opponent: 'Al Wasl Academy', id: 'session_008' },
 
   // ── March 2026 ────────────────────────────────────────────────
+  // Demo today is March 21 — March 5/8/15 are in the past relative
+  // to that, so they land as `ready` (analysed). March 22+ are
+  // genuine future fixtures.
   { date: '2026-03-03', day: 3,  month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-03-05', day: 5,  month: 3, year: 2026, kind: 'training', status: 'prep',          opponent: 'Team A vs Team B' },
-  { date: '2026-03-08', day: 8,  month: 3, year: 2026, kind: 'match',    status: 'prep',          opponent: 'Al Nasr Cubs' },
+  { date: '2026-03-05', day: 5,  month: 3, year: 2026, kind: 'training', status: 'ready',         opponent: 'Team A vs Team B', score: 76, motm: 'Saeed K.', id: 'session_053' },
+  { date: '2026-03-08', day: 8,  month: 3, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Al Nasr Cubs',     score: 79, motm: 'Kiyan M.', id: 'session_054' },
   { date: '2026-03-10', day: 10, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-03-12', day: 12, month: 3, year: 2026, kind: 'training', status: 'prep',      opponent: 'Team A vs Team B' },
-  { date: '2026-03-15', day: 15, month: 3, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Hatta Academy' },
+  { date: '2026-03-12', day: 12, month: 3, year: 2026, kind: 'training', status: 'ready',         opponent: 'Team A vs Team B', score: 73, motm: 'Saeed K.', id: 'session_055' },
+  { date: '2026-03-15', day: 15, month: 3, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Hatta Academy',    score: 81, motm: 'Saeed K.', id: 'session_056' },
   { date: '2026-03-17', day: 17, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
   { date: '2026-03-22', day: 22, month: 3, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Sharjah Cubs' },
   { date: '2026-03-24', day: 24, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
@@ -180,9 +183,13 @@ export type HighlightEvent = 'GOAL' | 'SHOT' | 'KEY' | 'DEF' | 'SAVE'
 
 export interface MatchCenterHighlight {
   id: string
-  /** February day-of-month the clip belongs to. Lets the Highlights page
-   *  group clips by match without a separate join. */
+  /** Day-of-month the clip belongs to. Pair with `sessionMonth` to
+   *  disambiguate (Feb 5 vs Mar 5). */
   sessionDay: number
+  /** 1-indexed month the clip belongs to. Lets Highlights group clips
+   *  cross-month without sessionDay collisions. Optional for backwards
+   *  compatibility — clips without it default to February 2026. */
+  sessionMonth?: number
   ev: HighlightEvent
   player: string
   num: number
@@ -248,7 +255,34 @@ export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
   { id: 'h-03-2', sessionDay: 3, ev: 'SHOT', player: 'Salem Al-Dhaheri',  num: 11, minute: 17, dur: 13, headline: 'Drive forced wide by keeper' },
   { id: 'h-03-3', sessionDay: 3, ev: 'KEY',  player: 'Yousef Al-Zaabi',   num: 8,  minute: 26, dur: 19, headline: 'Line-breaker into the half-space' },
   { id: 'h-03-4', sessionDay: 3, ev: 'GOAL', player: 'Mansoor Al-Falasi', num: 17, minute: 41, dur: 26, headline: 'Far-post tap-in' },
-  { id: 'h-03-5', sessionDay: 3, ev: 'DEF', player: 'Tariq Al-Shamsi',    num: 14, minute: 52, dur: 8,  headline: 'Tracking back to clear' },
+  { id: 'h-03-5', sessionDay: 3, ev: 'DEF',  player: 'Tariq Al-Shamsi',   num: 14, minute: 52, dur: 8,  headline: 'Tracking back to clear' },
+
+  // ── Mar 05 · training match · composite 76
+  { id: 'h-m05-1', sessionDay: 5,  sessionMonth: 3, ev: 'GOAL', player: 'Saeed Khalifa',    num: 7,  minute: 8,  dur: 26, headline: 'Half-volley first-time finish' },
+  { id: 'h-m05-2', sessionDay: 5,  sessionMonth: 3, ev: 'KEY',  player: 'Hamad Al-Mansoori',num: 10, minute: 19, dur: 14, headline: 'Reverse pass through the lines' },
+  { id: 'h-m05-3', sessionDay: 5,  sessionMonth: 3, ev: 'DEF',  player: 'Khalid Al-Naqbi',  num: 4,  minute: 31, dur: 9,  headline: 'Recovery on the counter' },
+  { id: 'h-m05-4', sessionDay: 5,  sessionMonth: 3, ev: 'GOAL', player: 'Ahmed Hassan',     num: 9,  minute: 44, dur: 30, headline: 'Header from a near-post cross' },
+
+  // ── Mar 08 · vs Al Nasr Cubs · composite 79
+  { id: 'h-m08-1', sessionDay: 8,  sessionMonth: 3, ev: 'GOAL', player: 'Saeed Khalifa',    num: 7,  minute: 12, dur: 32, headline: 'Cut inside, drilled low and hard' },
+  { id: 'h-m08-2', sessionDay: 8,  sessionMonth: 3, ev: 'KEY',  player: 'Kiyan Makkawi',    num: 6,  minute: 24, dur: 19, headline: 'Switch to the overlapping RB' },
+  { id: 'h-m08-3', sessionDay: 8,  sessionMonth: 3, ev: 'SHOT', player: 'Ahmed Hassan',     num: 9,  minute: 33, dur: 11, headline: 'Strike forced over the bar' },
+  { id: 'h-m08-4', sessionDay: 8,  sessionMonth: 3, ev: 'GOAL', player: 'Kiyan Makkawi',    num: 6,  minute: 51, dur: 28, headline: 'Late-arrival finish · 2-1' },
+  { id: 'h-m08-5', sessionDay: 8,  sessionMonth: 3, ev: 'SAVE', player: 'Omar Al-Sayed',    num: 1,  minute: 67, dur: 10, headline: 'One-on-one, smothered' },
+  { id: 'h-m08-6', sessionDay: 8,  sessionMonth: 3, ev: 'DEF',  player: 'Rashid Al-Marri',  num: 3,  minute: 76, dur: 9,  headline: 'Block on the edge of the box' },
+
+  // ── Mar 12 · training match · composite 73
+  { id: 'h-m12-1', sessionDay: 12, sessionMonth: 3, ev: 'GOAL', player: 'Mansoor Al-Falasi',num: 17, minute: 11, dur: 24, headline: 'Tap-in from the cutback' },
+  { id: 'h-m12-2', sessionDay: 12, sessionMonth: 3, ev: 'KEY',  player: 'Hassan Al-Suwaidi',num: 16, minute: 27, dur: 16, headline: 'Switch to free runner on the right' },
+  { id: 'h-m12-3', sessionDay: 12, sessionMonth: 3, ev: 'DEF',  player: 'Tariq Al-Shamsi',  num: 14, minute: 38, dur: 8,  headline: 'Recovery tackle on the wing' },
+
+  // ── Mar 15 · vs Hatta Academy · composite 81
+  { id: 'h-m15-1', sessionDay: 15, sessionMonth: 3, ev: 'GOAL', player: 'Saeed Khalifa',    num: 7,  minute: 6,  dur: 30, headline: 'Direct from the kickoff press' },
+  { id: 'h-m15-2', sessionDay: 15, sessionMonth: 3, ev: 'KEY',  player: 'Yousef Al-Zaabi',  num: 8,  minute: 18, dur: 17, headline: 'Disguised pass into the half-space' },
+  { id: 'h-m15-3', sessionDay: 15, sessionMonth: 3, ev: 'GOAL', player: 'Saeed Khalifa',    num: 7,  minute: 33, dur: 38, headline: 'Brace · 2-0 — solo run from halfway' },
+  { id: 'h-m15-4', sessionDay: 15, sessionMonth: 3, ev: 'DEF',  player: 'Khalid Al-Naqbi',  num: 4,  minute: 42, dur: 10, headline: 'Sliding block on the angle' },
+  { id: 'h-m15-5', sessionDay: 15, sessionMonth: 3, ev: 'SHOT', player: 'Salem Al-Dhaheri', num: 11, minute: 58, dur: 9,  headline: 'Curler off the inside of the post' },
+  { id: 'h-m15-6', sessionDay: 15, sessionMonth: 3, ev: 'SAVE', player: 'Omar Al-Sayed',    num: 1,  minute: 71, dur: 12, headline: 'Reaction stop from a deflection' },
 ]
 
 /** Default selected day on first render (the populated Ready state). */

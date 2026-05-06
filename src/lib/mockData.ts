@@ -321,6 +321,19 @@ export const sessions: Session[] = [
   { id: 'session_050', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-06', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 70, autoTriggeredAnalysis: true },
   { id: 'session_051', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-20', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 74, autoTriggeredAnalysis: true },
   { id: 'session_052', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-27', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 73, autoTriggeredAnalysis: true },
+
+  // ── March 2026 — match-center alignment ──
+  // session_053..056 are the canonical mockData entries for the four
+  // analysed March sessions in match-center.ts SESSIONS. See the
+  // alignment block at the top of this array for the full mapping.
+  //   session_053  Mar 05  training_match  analysed   internal A vs B
+  //   session_054  Mar 08  match           analysed   Al Nasr Cubs
+  //   session_055  Mar 12  training_match  analysed   internal A vs B
+  //   session_056  Mar 15  match           analysed   Hatta Academy
+  { id: 'session_053', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-05', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, creditsConsumed: 26, programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 87, autoTriggeredAnalysis: true },
+  { id: 'session_054', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-08', startTime: '15:00', endTime: '16:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Nasr Cubs', competition: 'UAE Youth League', creditsConsumed: 41, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 90, autoTriggeredAnalysis: true },
+  { id: 'session_055', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-12', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, creditsConsumed: 24, programId: 'program_001', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 85, autoTriggeredAnalysis: true },
+  { id: 'session_056', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-15', startTime: '15:00', endTime: '16:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Hatta Academy', competition: 'UAE Youth League', creditsConsumed: 42, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 92, autoTriggeredAnalysis: true },
 ]
 
 // ─── MATCH ANALYSIS (Kiyan Makkawi — across multiple matches) ────
