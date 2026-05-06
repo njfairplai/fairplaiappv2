@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, type Dispatch, type SetStateAction } from
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ChevronRight, X } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 import type { Player, MatchAnalysis, RadarDataItem } from '@/lib/types'
 import { matchAnalyses, sessions } from '@/lib/mockData'
@@ -63,6 +64,7 @@ function lastSessionRecord(playerId: string): MatchAnalysis | null {
  * scope. Bottom CTA navigates to /coach/web/player/[id].
  */
 export function SideRail({ player, season, open, onClose }: SideRailProps) {
+  const isMobile = useIsMobile()
   const [scope, setScope] = useState<StatScope>('last')
 
   // Reset scope when a different player is opened so the panel always lands
@@ -104,29 +106,68 @@ export function SideRail({ player, season, open, onClose }: SideRailProps) {
         }}
       />
 
-      {/* panel */}
+      {/* panel — slides in from the right on desktop (a side rail);
+       *  slides up from the bottom on mobile (a bottom sheet). The
+       *  content is identical, only the docking edge changes. The
+       *  bottom-sheet variant caps at 88vh and rounds the top corners
+       *  so it reads as lifting off the page. */}
       <aside
         role="dialog"
         aria-label={player ? `${player.firstName} ${player.lastName} player profile` : 'Player profile'}
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 'min(420px, 92vw)',
-          background: 'var(--brand-indigo)',
-          borderLeft: '1px solid rgba(238, 228, 200, 0.08)',
-          color: 'var(--brand-sand)',
-          fontFamily: 'var(--font-body)',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 240ms ease',
-          zIndex: 31,
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '-12px 0 36px rgba(0, 0, 0, 0.35)',
-          overflowY: 'auto',
-        }}
+        style={
+          isMobile
+            ? {
+                position: 'fixed',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                maxHeight: '88vh',
+                background: 'var(--brand-indigo)',
+                borderTop: '1px solid rgba(238, 228, 200, 0.08)',
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                color: 'var(--brand-sand)',
+                fontFamily: 'var(--font-body)',
+                transform: open ? 'translateY(0)' : 'translateY(100%)',
+                transition: 'transform 240ms ease',
+                zIndex: 31,
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 -16px 40px rgba(0, 0, 0, 0.4)',
+                overflowY: 'auto',
+              }
+            : {
+                position: 'fixed',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: 'min(420px, 92vw)',
+                background: 'var(--brand-indigo)',
+                borderLeft: '1px solid rgba(238, 228, 200, 0.08)',
+                color: 'var(--brand-sand)',
+                fontFamily: 'var(--font-body)',
+                transform: open ? 'translateX(0)' : 'translateX(100%)',
+                transition: 'transform 240ms ease',
+                zIndex: 31,
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '-12px 0 36px rgba(0, 0, 0, 0.35)',
+                overflowY: 'auto',
+              }
+        }
       >
+        {isMobile && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0 0' }}>
+            <span
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                background: 'rgba(238, 228, 200, 0.25)',
+              }}
+            />
+          </div>
+        )}
         {player && season ? (
           <Body player={player} season={season} records={records} last={last} scope={scope} setScope={setScope} onClose={onClose} />
         ) : null}
