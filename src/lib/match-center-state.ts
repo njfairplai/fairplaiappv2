@@ -103,6 +103,41 @@ export function writePrepConfirmation(sessionId: string, payload: PrepConfirmati
   writeJson(`fairplai_prep_confirmed_${sessionId}`, payload)
 }
 
+// ─── Lineup (matchday start/bench + format) ─────────────────────────
+//
+// The lineup tab persists two things: the format the coach is playing
+// (5v5 / 7v7 / 9v9 / 11v11) and the set of jersey numbers the coach
+// has marked as bench (i.e. NOT starting). Default state = "everyone
+// present is starting" so the form is empty until the coach demotes
+// someone — keeps the data sparse.
+
+export type LineupFormat = '5v5' | '7v7' | '9v9' | '11v11'
+
+export const LINEUP_FORMAT_TARGET: Record<LineupFormat, number> = {
+  '5v5': 5,
+  '7v7': 7,
+  '9v9': 9,
+  '11v11': 11,
+}
+
+export interface LineupState {
+  format: LineupFormat
+  /** Jersey numbers benched (i.e. NOT starting). All other present
+   *  players are implicitly starting. */
+  benched: number[]
+}
+
+export function readLineup(sessionId: string): LineupState {
+  return readJson<LineupState>(`fairplai_prep_lineup_${sessionId}`, {
+    format: '11v11',
+    benched: [],
+  })
+}
+
+export function writeLineup(sessionId: string, state: LineupState): void {
+  writeJson(`fairplai_prep_lineup_${sessionId}`, state)
+}
+
 // ─── Session classification override ─────────────────────────────────
 // When the coach reclassifies a session ("Mark as drills only", "Actually
 // it was a match → enter lineup"), we persist the override here so the
