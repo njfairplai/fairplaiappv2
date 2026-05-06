@@ -33,14 +33,17 @@ const BRAND_CHROME = {
   pageBg: BRAND.sand,
 } as const
 
-// IDPs tab dropped (Slice 6.1.1) — per-player IDP lives inline on the player
-// profile (postscript section). The dedicated IDP editor at /coach/web/idps is
-// reachable via the "Open IDP" CTA on the player profile + squad pop-out.
+// Slice 6.3 — top nav swapped to: Hub · Match Center · Players · Highlights.
+// "Video" + "Analysis" are dropped; the legacy paths redirect (see
+// next.config.ts) so old bookmarks land on the new surfaces. "Players"
+// points to the squad-as-pitch view, which IS the all-players surface.
+// Per-player profiles live at /coach/web/player/[id]; the IDP editor at
+// /coach/web/idps is reachable from the player profile postscript.
 const tabs = [
-  { href: '/coach/web', label: "Coach's Hub", icon: Sparkles, exact: true },
-  { href: '/coach/web/video', label: 'Video', icon: Film },
-  { href: '/coach/web/analysis', label: 'Analysis', icon: BarChart3 },
-  { href: '/coach/web/squad', label: 'Squad', icon: Users },
+  { href: '/coach/web',              label: 'Hub',          icon: Sparkles,  exact: true },
+  { href: '/coach/web/match-center', label: 'Match Center', icon: BarChart3 },
+  { href: '/coach/web/squad',        label: 'Players',      icon: Users },
+  { href: '/coach/web/highlights',   label: 'Highlights',   icon: Film },
 ]
 
 function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
@@ -56,7 +59,9 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   const isBrandedRoute =
     pathname.startsWith('/coach/web/match/') ||
     pathname === '/coach/web/squad' ||
-    pathname.startsWith('/coach/web/player/')
+    pathname.startsWith('/coach/web/player/') ||
+    pathname.startsWith('/coach/web/match-center') ||
+    pathname.startsWith('/coach/web/highlights')
   const colors = isBrandedRoute ? { ...themeColors, ...BRAND_CHROME } : themeColors
   // Brand fonts are now the default across every coach/web route (chrome
   // unification — Slice 6 polish), even on routes whose body still uses
