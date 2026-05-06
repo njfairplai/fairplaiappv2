@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BRAND, TYPE } from '@/lib/constants'
 import {
-  FEB_2026_SESSIONS,
+  SESSIONS,
   MATCH_CENTER_HIGHLIGHTS,
   type MatchCenterHighlight,
   type MatchCenterSession,
@@ -49,7 +49,8 @@ export default function CoachHighlightsPage() {
 
   // Toast + modal state mirrors Match Center page.
   const [toast, setToast] = useState<string | null>(null)
-  const [clipPlaying, setClipPlaying] = useState<MatchCenterHighlight | null>(null)
+  const [clipQueue, setClipQueue] = useState<MatchCenterHighlight[] | null>(null)
+  const [clipQueueTitle, setClipQueueTitle] = useState<string | undefined>(undefined)
   const [clipSharing, setClipSharing] = useState<MatchCenterHighlight | null>(null)
 
   const [clientReady, setClientReady] = useState(false)
@@ -97,7 +98,7 @@ export default function CoachHighlightsPage() {
     }
     const days = Array.from(byDay.keys()).sort((a, b) => b - a)
     return days.map(day => {
-      const session = FEB_2026_SESSIONS.find(s => s.day === day)
+      const session = SESSIONS.find(s => s.day === day && s.month === 2 && s.year === 2026)
       return {
         day,
         session: session ?? null,
@@ -257,10 +258,19 @@ export default function CoachHighlightsPage() {
                 session={group.session}
                 clips={group.clips}
                 flaggedClips={flaggedClips}
-                onPlay={setClipPlaying}
+                onPlay={clip => {
+                  setClipQueue([clip])
+                  setClipQueueTitle(undefined)
+                }}
                 onShare={setClipSharing}
                 onFlagToggle={handleClipFlagToggle}
                 onOpenMatch={() => router.push('/coach/web/match-center?session=feb' + group.day)}
+                onPlayReel={() => {
+                  if (group.clips.length === 0) return
+                  setClipQueue(group.clips)
+                  const opp = group.session?.opponent ?? 'Match'
+                  setClipQueueTitle(`vs ${opp} · ${group.clips.length} clips`)
+                }}
               />
             ))}
           </div>
@@ -318,13 +328,18 @@ export default function CoachHighlightsPage() {
 
       {/* Modals + toast */}
       <ClipModal
-        clip={clipPlaying}
-        onClose={() => setClipPlaying(null)}
-        onShare={() => {
-          setClipSharing(clipPlaying)
-          setClipPlaying(null)
+        queue={clipQueue}
+        title={clipQueueTitle}
+        onClose={() => {
+          setClipQueue(null)
+          setClipQueueTitle(undefined)
         }}
-        onFlagToggle={isNowFlagged => {
+        onShare={clip => {
+          setClipSharing(clip)
+          setClipQueue(null)
+          setClipQueueTitle(undefined)
+        }}
+        onFlagChange={(_, isNowFlagged) => {
           setFlagTick(t => t + 1)
           setToast(isNowFlagged ? 'Flagged for follow-up' : 'Unflagged')
         }}
@@ -339,6 +354,14 @@ export default function CoachHighlightsPage() {
   )
 }
 
+/**
+ * Default visible clip count per match group. Long rows past 6 are
+ * collapsed behind a "+N more" expand affordance — the row scrolls
+ * horizontally to 6 and an inline button reveals the rest in a
+ * vertical wrap grid below.
+ */
+const CLIPS_VISIBLE_BEFORE_EXPAND = 6
+
 interface MatchGroupProps {
   day: number
   session: MatchCenterSession | null
@@ -348,6 +371,7 @@ interface MatchGroupProps {
   onShare: (clip: MatchCenterHighlight) => void
   onFlagToggle: (clip: MatchCenterHighlight) => void
   onOpenMatch: () => void
+  onPlayReel: () => void
 }
 
 function MatchGroup({
@@ -359,7 +383,13 @@ function MatchGroup({
   onShare,
   onFlagToggle,
   onOpenMatch,
+  onPlayReel,
 }: MatchGroupProps) {
+  const [expanded, setExpanded] = useState(false)
+  const overflow = clips.length - CLIPS_VISIBLE_BEFORE_EXPAND
+  const visible = expanded ? clips : clips.slice(0, CLIPS_VISIBLE_BEFORE_EXPAND)
+  const showCollapseControls = clips.length > CLIPS_VISIBLE_BEFORE_EXPAND
+
   return (
     <Card style={{ padding: 0 }}>
       <div
@@ -418,19 +448,30 @@ function MatchGroup({
             {session.score}
           </span>
         )}
+        <button
+          type="button"
+          style={{ ...mcButtons.ghost, background: BRAND.yellow, borderColor: BRAND.yellow }}
+          onClick={onPlayReel}
+          aria-label="Play match reel"
+        >
+          ▶ Play match reel
+        </button>
         <button type="button" style={mcButtons.ghost} onClick={onOpenMatch}>
           Open match →
         </button>
       </div>
+
+      {/* Clip row (or wrap grid when expanded) */}
       <div
         style={{
           padding: '14px 20px',
-          display: 'flex',
+          display: expanded ? 'grid' : 'flex',
+          gridTemplateColumns: expanded ? 'repeat(auto-fill, minmax(280px, 1fr))' : undefined,
           gap: 10,
-          overflowX: 'auto',
+          overflowX: expanded ? 'visible' : 'auto',
         }}
       >
-        {clips.map(h => (
+        {visible.map(h => (
           <HighlightCard
             key={h.id}
             h={h}
@@ -441,6 +482,24 @@ function MatchGroup({
           />
         ))}
       </div>
+
+      {showCollapseControls && (
+        <div
+          style={{
+            padding: '0 20px 14px',
+            display: 'flex',
+            justifyContent: 'flex-start',
+          }}
+        >
+          <button
+            type="button"
+            style={mcButtons.text}
+            onClick={() => setExpanded(e => !e)}
+          >
+            {expanded ? '↑ Show fewer' : `+${overflow} more clips ↓`}
+          </button>
+        </div>
+      )}
     </Card>
   )
 }

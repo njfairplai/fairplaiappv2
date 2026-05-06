@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { BRAND, TYPE } from '@/lib/constants'
 import {
   DEFAULT_SELECTED_DAY,
-  SESSIONS_BY_DAY,
+  MATCH_CENTER_HIGHLIGHTS,
+  getSessionsForMonth,
   getStateForSession,
   type MatchCenterHighlight,
   type MatchCenterStatus,
@@ -51,6 +52,8 @@ export default function CoachMatchCenterPage() {
   )
 
   const [view, setView] = useState<'month' | 'week'>('month')
+  const [currentMonth, setCurrentMonth] = useState(2)
+  const [currentYear, setCurrentYear] = useState(2026)
   const [selectedDay, setSelectedDay] = useState<number>(initialDay)
 
   // Classification overrides keyed by sessionId. We re-read from localStorage
@@ -62,9 +65,11 @@ export default function CoachMatchCenterPage() {
     setClientReady(true)
   }, [])
 
-  // Toast + modal state.
+  // Toast + modal state. Clip modal accepts a queue: a single clip
+  // for ▶ on a card; the full match's clips for "Play match reel".
   const [toast, setToast] = useState<string | null>(null)
-  const [clipPlaying, setClipPlaying] = useState<MatchCenterHighlight | null>(null)
+  const [clipQueue, setClipQueue] = useState<MatchCenterHighlight[] | null>(null)
+  const [clipQueueTitle, setClipQueueTitle] = useState<string | undefined>(undefined)
   const [clipSharing, setClipSharing] = useState<MatchCenterHighlight | null>(null)
   const [flagTick, setFlagTick] = useState(0)
 
@@ -74,7 +79,11 @@ export default function CoachMatchCenterPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientReady, flagTick])
 
-  const session = SESSIONS_BY_DAY[selectedDay] ?? null
+  const sessionsThisMonth = useMemo(
+    () => getSessionsForMonth(currentYear, currentMonth),
+    [currentYear, currentMonth],
+  )
+  const session = sessionsThisMonth[selectedDay] ?? null
   const effectiveStatus = useMemo<MatchCenterStatus | null>(() => {
     if (!session) return null
     if (!clientReady) return session.status
@@ -131,18 +140,35 @@ export default function CoachMatchCenterPage() {
       <div style={{ marginTop: 28 }}>
         <Calendar
           view={view}
+          currentMonth={currentMonth}
+          currentYear={currentYear}
           selectedDay={selectedDay}
           onSelect={setSelectedDay}
           onViewChange={setView}
+          onMonthChange={(year, month) => {
+            setCurrentYear(year)
+            setCurrentMonth(month)
+            // Auto-pick the first day with a session in the new month so
+            // the contextual pane below has something to show. If none,
+            // clear the selection.
+            const monthSessions = getSessionsForMonth(year, month)
+            const firstDay = Object.keys(monthSessions)
+              .map(Number)
+              .sort((a, b) => a - b)[0]
+            setSelectedDay(firstDay ?? 0)
+          }}
           onRecord={() => router.push('/coach/web/record')}
         />
       </div>
 
       {/* Contextual pane */}
       <div style={{ marginTop: 28 }}>
-        {state === '1' && (
+        {state === '1' && session && (
           <State1Prep
             sessionId={sessionId}
+            kind={session.kind}
+            opponent={session.opponent}
+            metaLine={formatSessionMeta(session.year, session.month, session.day)}
             onToast={setToast}
             onReclassify={() => handleReclassify()}
           />
@@ -167,9 +193,22 @@ export default function CoachMatchCenterPage() {
             sessionDay={selectedDay}
             flaggedClips={flaggedClips}
             onOpenFullAnalysis={() => router.push('/coach/web/match/session_010')}
-            onClipPlay={setClipPlaying}
+            onClipPlay={clip => {
+              setClipQueue([clip])
+              setClipQueueTitle(undefined)
+            }}
             onClipShare={setClipSharing}
             onClipFlagToggle={handleClipFlagToggle}
+            onPlayMatchReel={() => {
+              const dayClips = MATCH_CENTER_HIGHLIGHTS.filter(
+                h => h.sessionDay === selectedDay,
+              )
+              if (dayClips.length === 0) return
+              setClipQueue(dayClips)
+              setClipQueueTitle(
+                `vs ${session?.opponent ?? 'Match'} · ${dayClips.length} clips`,
+              )
+            }}
           />
         )}
         {state === null && <EmptyDayState />}
@@ -177,13 +216,18 @@ export default function CoachMatchCenterPage() {
 
       {/* Modals + toast */}
       <ClipModal
-        clip={clipPlaying}
-        onClose={() => setClipPlaying(null)}
-        onShare={() => {
-          setClipSharing(clipPlaying)
-          setClipPlaying(null)
+        queue={clipQueue}
+        title={clipQueueTitle}
+        onClose={() => {
+          setClipQueue(null)
+          setClipQueueTitle(undefined)
         }}
-        onFlagToggle={isNowFlagged => {
+        onShare={clip => {
+          setClipSharing(clip)
+          setClipQueue(null)
+          setClipQueueTitle(undefined)
+        }}
+        onFlagChange={(_, isNowFlagged) => {
           setFlagTick(t => t + 1)
           setToast(isNowFlagged ? 'Flagged for follow-up' : 'Unflagged')
         }}
@@ -217,6 +261,12 @@ function EmptyDayState() {
       </div>
     </Card>
   )
+}
+
+const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+function formatSessionMeta(year: number, month: number, day: number): string {
+  const dow = new Date(year, month - 1, day).toLocaleDateString('en-GB', { weekday: 'short' })
+  return `${dow.toUpperCase()} ${day} ${MONTH_SHORT[month - 1]} · 15:00 · PITCH 1`
 }
 
 function parseSessionParam(p: string | null): number | null {

@@ -137,21 +137,28 @@ export default function CoachWebSquadPage() {
           <div
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              letterSpacing: '0.18em',
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: '0.22em',
               color: 'var(--brand-indigo-mute)',
+              textTransform: 'uppercase',
             }}
           >
             SQUAD
           </div>
+          {/* Match-Center / Highlights title vocabulary: TYPE.display at
+           *  64 (desktop) / 40 (mobile), no fontWeight, lineHeight 0.94,
+           *  letterSpacing -0.02em. Aligns the squad header with the
+           *  rest of the brand surfaces so the title font reads as one
+           *  family across tabs. */}
           <div
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: isMobile ? 28 : 40,
-              fontWeight: 700,
-              letterSpacing: '-0.01em',
-              lineHeight: 1.05,
-              marginTop: 4,
+              fontSize: isMobile ? 40 : 64,
+              letterSpacing: '-0.02em',
+              lineHeight: 0.94,
+              color: 'var(--brand-indigo)',
+              marginTop: 6,
             }}
           >
             {roster?.name ?? 'All squads'}

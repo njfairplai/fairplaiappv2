@@ -32,8 +32,12 @@ export type MatchCenterKind = 'match' | 'training' | 'drills'
 export interface MatchCenterSession {
   /** ISO date e.g. 2026-02-24 */
   date: string
-  /** Day-of-month for the active month (Feb 2026 in this mock) */
+  /** Day-of-month within `month`. */
   day: number
+  /** 1-indexed month (1=Jan, 2=Feb, …). */
+  month: number
+  /** Calendar year. */
+  year: number
   kind: MatchCenterKind
   status: MatchCenterStatus
   opponent: string | null
@@ -44,27 +48,72 @@ export interface MatchCenterSession {
 }
 
 /**
- * February 2026 — 28 days. Feb 1 2026 is a Sunday so the grid starts on
- * column 0. Sessions cluster around training days (Tue/Thu) and matches
- * (Sat/Sun). Day 24 is the selected match by default (vs Al Wasl).
+ * Sessions across Feb / Mar / Apr 2026. Mixed types so the calendar
+ * walks the full vocabulary of states + kinds:
+ *
+ *   - Multiple training matches (some analysed, one in-progress, one in prep)
+ *   - Multiple competitive matches (analysed, in-progress, prep)
+ *   - Drills sprinkled
+ *   - One uncategorised pending session
+ *
+ * The Match Center page renders one month at a time and the prev/next
+ * buttons in the Calendar header navigate across months.
  */
-export const FEB_2026_SESSIONS: MatchCenterSession[] = [
-  { date: '2026-02-03', day: 3,  kind: 'training', status: 'ready',         opponent: 'Team A vs Team B', score: 74, motm: 'Saeed K.' },
-  { date: '2026-02-05', day: 5,  kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-08', day: 8,  kind: 'match',    status: 'ready',         opponent: 'Shabab FC',         score: 71, motm: 'Kiyan M.' },
-  { date: '2026-02-10', day: 10, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-12', day: 12, kind: 'match',    status: 'uncategorised', opponent: '— Pitch 2',         score: null },
-  { date: '2026-02-14', day: 14, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-17', day: 17, kind: 'match',    status: 'ready',         opponent: 'Stratford E.',      score: 78, motm: 'Saeed K.' },
-  { date: '2026-02-19', day: 19, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-22', day: 22, kind: 'training', status: 'processing',    opponent: 'Team A vs Team B' },
-  { date: '2026-02-24', day: 24, kind: 'match',    status: 'ready',         opponent: 'Al Wasl Academy',   score: 82, motm: 'Saeed K.' },
-  { date: '2026-02-26', day: 26, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-02-28', day: 28, kind: 'match',    status: 'prep',          opponent: 'Al Wasl Academy' },
+export const SESSIONS: MatchCenterSession[] = [
+  // ── February 2026 ──────────────────────────────────────────────
+  { date: '2026-02-03', day: 3,  month: 2, year: 2026, kind: 'training', status: 'ready',         opponent: 'Team A vs Team B', score: 74, motm: 'Saeed K.' },
+  { date: '2026-02-05', day: 5,  month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-02-08', day: 8,  month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Shabab FC',         score: 71, motm: 'Kiyan M.' },
+  { date: '2026-02-10', day: 10, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-02-12', day: 12, month: 2, year: 2026, kind: 'match',    status: 'uncategorised', opponent: '— Pitch 2',         score: null },
+  { date: '2026-02-14', day: 14, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-02-17', day: 17, month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Stratford E.',      score: 78, motm: 'Saeed K.' },
+  { date: '2026-02-19', day: 19, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-02-22', day: 22, month: 2, year: 2026, kind: 'training', status: 'processing',    opponent: 'Team A vs Team B' },
+  { date: '2026-02-24', day: 24, month: 2, year: 2026, kind: 'match',    status: 'ready',         opponent: 'Al Wasl Academy',   score: 82, motm: 'Saeed K.' },
+  { date: '2026-02-25', day: 25, month: 2, year: 2026, kind: 'training', status: 'prep',          opponent: 'Team A vs Team B' },
+  { date: '2026-02-26', day: 26, month: 2, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-02-28', day: 28, month: 2, year: 2026, kind: 'match',    status: 'prep',          opponent: 'Al Wasl Academy' },
+
+  // ── March 2026 ────────────────────────────────────────────────
+  { date: '2026-03-03', day: 3,  month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-03-05', day: 5,  month: 3, year: 2026, kind: 'training', status: 'prep',          opponent: 'Team A vs Team B' },
+  { date: '2026-03-08', day: 8,  month: 3, year: 2026, kind: 'match',    status: 'prep',          opponent: 'Al Nasr Cubs' },
+  { date: '2026-03-10', day: 10, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-03-12', day: 12, month: 3, year: 2026, kind: 'training', status: 'upcoming',      opponent: 'Team A vs Team B' },
+  { date: '2026-03-15', day: 15, month: 3, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Hatta Academy' },
+  { date: '2026-03-17', day: 17, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-03-22', day: 22, month: 3, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Sharjah Cubs' },
+  { date: '2026-03-24', day: 24, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-03-29', day: 29, month: 3, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Al Wahda U13' },
+
+  // ── April 2026 ────────────────────────────────────────────────
+  { date: '2026-04-02', day: 2,  month: 4, year: 2026, kind: 'training', status: 'upcoming',      opponent: 'Team A vs Team B' },
+  { date: '2026-04-05', day: 5,  month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Dubai Stars' },
+  { date: '2026-04-09', day: 9,  month: 4, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
+  { date: '2026-04-12', day: 12, month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Bani Yas U13' },
+  { date: '2026-04-19', day: 19, month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Cup semi · TBD' },
+  { date: '2026-04-26', day: 26, month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Cup final · TBD' },
 ]
 
-export const SESSIONS_BY_DAY: Record<number, MatchCenterSession> = Object.fromEntries(
-  FEB_2026_SESSIONS.map(s => [s.day, s]),
+/** Backwards-compat alias — was named after the only month that
+ *  existed in the first cut. Kept so other call sites keep working. */
+export const FEB_2026_SESSIONS = SESSIONS.filter(s => s.month === 2)
+
+/** All sessions for a given (year, month), keyed by day-of-month. */
+export function getSessionsForMonth(
+  year: number,
+  month: number,
+): Record<number, MatchCenterSession> {
+  return Object.fromEntries(
+    SESSIONS.filter(s => s.year === year && s.month === month).map(s => [s.day, s]),
+  )
+}
+
+/** Backwards-compat alias for the original Feb 2026 lookup. */
+export const SESSIONS_BY_DAY: Record<number, MatchCenterSession> = getSessionsForMonth(
+  2026,
+  2,
 )
 
 export interface RosterEntry {

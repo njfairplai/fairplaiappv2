@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
-import { MATCH_CENTER_ROSTER } from '@/lib/match-center'
+import { MATCH_CENTER_ROSTER, type MatchCenterKind } from '@/lib/match-center'
 import {
   readPrepAttendance,
   writePrepAttendance,
@@ -27,33 +27,48 @@ import {
 
 /* State 1 — upcoming match prep with attendance / lineup / confirm tabs.
  *
- * All four footer CTAs and every row-level edit (checkbox toggle, jersey
- * input) persist to localStorage via match-center-state helpers. The
- * header status pill flips PREP → CONFIRMED once the coach hits Confirm
- * prep → so a refresh shows the new state immediately. */
+ * Footer CTAs are tab-aware: walking left-to-right uses Next →, the
+ * dedicated Confirm prep → CTA only fires on the Confirm tab. Save
+ * draft is always available. The Lineup tab branches:
+ *
+ *   - Match → 4-3-3 starting-XI on a horizontal pitch
+ *   - Training match → team A / team B picker
+ *
+ * All edits persist to localStorage via match-center-state helpers so
+ * the surface walks like a real product.
+ */
 
 interface State1PrepProps {
   /** Stable session identifier — drives every localStorage key. */
   sessionId: string
+  /** Session kind drives the lineup branch. */
+  kind: MatchCenterKind
+  /** Header title. */
+  opponent: string | null
+  /** Header date/time/pitch line. */
+  metaLine: string
   onToast: (message: string) => void
-  /** Called when the coach reclassifies (Mark as drills only) so the
-   *  parent can swap the contextual pane to a different state. */
   onReclassify: (newStatus: 'drills') => void
 }
 
-export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps) {
-  // Hydrate from localStorage on mount. SSR-safe — helpers return empty
-  // values when window is undefined.
-  const [tab, setTab] = useState<'attendance' | 'lineup' | 'confirm'>('attendance')
+type TabId = 'attendance' | 'lineup' | 'confirm'
+const TAB_ORDER: TabId[] = ['attendance', 'lineup', 'confirm']
+
+export function State1Prep({
+  sessionId,
+  kind,
+  opponent,
+  metaLine,
+  onToast,
+  onReclassify,
+}: State1PrepProps) {
+  const [tab, setTab] = useState<TabId>('attendance')
   const [attendance, setAttendance] = useState<AttendanceMap>({})
   const [jerseys, setJerseys] = useState<JerseyMap>({})
   const [confirmed, setConfirmed] = useState(false)
+  const [teamAssignments, setTeamAssignments] = useState<Record<number, 'A' | 'B'>>({})
 
   useEffect(() => {
-    // SSR-safe localStorage hydration: server renders with empty state,
-    // client mounts and reads persisted values. Synchronous setState in
-    // the effect body is the right shape for this — useSyncExternalStore
-    // is overkill for write-then-read-once-per-session-id.
     /* eslint-disable react-hooks/set-state-in-effect */
     setAttendance(readPrepAttendance(sessionId))
     setJerseys(readPrepJerseys(sessionId))
@@ -63,8 +78,6 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [sessionId])
 
-  // Effective attendance for the header counter — falls back to the
-  // mock roster's `present` flag when the coach hasn't toggled.
   const presentCount = useMemo(() => {
     return MATCH_CENTER_ROSTER.filter(p => {
       const override = attendance[p.num]
@@ -114,6 +127,42 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
     onToast('Marked as drills only')
     onReclassify('drills')
   }
+  function setTeam(playerNum: number, team: 'A' | 'B') {
+    setTeamAssignments(t => ({ ...t, [playerNum]: team }))
+  }
+  function autoSplitTeams() {
+    const present = MATCH_CENTER_ROSTER.filter(p => {
+      const override = attendance[p.num]
+      return override !== undefined ? override : p.present
+    })
+    const next: Record<number, 'A' | 'B'> = {}
+    present.forEach((p, i) => {
+      next[p.num] = i % 2 === 0 ? 'A' : 'B'
+    })
+    setTeamAssignments(next)
+    onToast('Teams auto-split')
+  }
+
+  const tabIdx = TAB_ORDER.indexOf(tab)
+  const isFirstTab = tabIdx === 0
+  const isLastTab = tabIdx === TAB_ORDER.length - 1
+
+  function goNext() {
+    if (!isLastTab) setTab(TAB_ORDER[tabIdx + 1]!)
+  }
+  function goBack() {
+    if (!isFirstTab) setTab(TAB_ORDER[tabIdx - 1]!)
+  }
+
+  const isTraining = kind === 'training'
+  const headerTitle = confirmed
+    ? 'Matchday is set.'
+    : isTraining
+    ? 'Plan your training session'
+    : 'Plan your matchday'
+  const headerSub = isTraining
+    ? 'Confirm attendance and split into Team A / Team B.'
+    : "Confirm attendance and lineup. Bib colours don't apply for competitive matches."
 
   return (
     <Card style={{ padding: 0 }}>
@@ -160,11 +209,11 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
               fontWeight: 700,
             }}
           >
-            VS AL WASL ACADEMY · SAT 28 FEB · 15:00 · PITCH 1
+            {(opponent ? `VS ${opponent.toUpperCase()} · ` : '') + metaLine}
           </span>
         </div>
         <MDisplay size={36} style={{ marginTop: 10 }}>
-          {confirmed ? 'Matchday is set.' : 'Plan your matchday'}
+          {headerTitle}
         </MDisplay>
         <div
           style={{
@@ -174,7 +223,7 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
             marginTop: 6,
           }}
         >
-          Confirm attendance and lineup. Bib colours don&apos;t apply for competitive matches.
+          {headerSub}
         </div>
       </div>
 
@@ -189,7 +238,7 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
           flexWrap: 'wrap',
         }}
       >
-        {(['attendance', 'lineup', 'confirm'] as const).map((t, i) => (
+        {TAB_ORDER.map((t, i) => (
           <button
             key={t}
             type="button"
@@ -208,7 +257,7 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
               textTransform: 'uppercase',
             }}
           >
-            {String(i + 1).padStart(2, '0')} · {t}
+            {String(i + 1).padStart(2, '0')} · {t === 'lineup' && isTraining ? 'TEAMS' : t}
             {tab === t && (
               <span
                 style={{
@@ -248,11 +297,26 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
             onMarkAllPresent={markAllPresent}
           />
         )}
-        {tab === 'lineup' && <PrepLineup />}
-        {tab === 'confirm' && <PrepConfirm presentCount={presentCount} totalCount={totalCount} />}
+        {tab === 'lineup' && isTraining && (
+          <PrepTeams
+            attendance={attendance}
+            assignments={teamAssignments}
+            onAssign={setTeam}
+            onAutoSplit={autoSplitTeams}
+          />
+        )}
+        {tab === 'lineup' && !isTraining && <PrepLineup />}
+        {tab === 'confirm' && (
+          <PrepConfirm
+            presentCount={presentCount}
+            totalCount={totalCount}
+            isTraining={isTraining}
+            opponent={opponent}
+          />
+        )}
       </div>
 
-      {/* Footer CTA bar */}
+      {/* Footer CTA bar — tab-aware */}
       <div
         style={{
           padding: '14px 26px',
@@ -264,29 +328,44 @@ export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps
           flexWrap: 'wrap',
         }}
       >
-        <button type="button" style={mcButtons.text} onClick={markAsDrills}>
-          Mark as drills only ↗
-        </button>
+        {!isTraining && (
+          <button type="button" style={mcButtons.text} onClick={markAsDrills}>
+            Mark as drills only ↗
+          </button>
+        )}
         <span style={{ flex: 1 }} />
         <button type="button" style={mcButtons.ghost} onClick={saveDraft}>
           Save draft
         </button>
-        <button
-          type="button"
-          style={{
-            ...mcButtons.primary,
-            opacity: confirmed ? 0.6 : 1,
-            cursor: confirmed ? 'default' : 'pointer',
-          }}
-          onClick={confirmed ? undefined : confirmPrep}
-          disabled={confirmed}
-        >
-          {confirmed ? 'Confirmed ✓' : 'Confirm prep →'}
-        </button>
+        {!isFirstTab && (
+          <button type="button" style={mcButtons.ghost} onClick={goBack}>
+            ← Back
+          </button>
+        )}
+        {!isLastTab ? (
+          <button type="button" style={mcButtons.primary} onClick={goNext}>
+            Next →
+          </button>
+        ) : (
+          <button
+            type="button"
+            style={{
+              ...mcButtons.primary,
+              opacity: confirmed ? 0.6 : 1,
+              cursor: confirmed ? 'default' : 'pointer',
+            }}
+            onClick={confirmed ? undefined : confirmPrep}
+            disabled={confirmed}
+          >
+            {confirmed ? 'Confirmed ✓' : 'Confirm prep →'}
+          </button>
+        )}
       </div>
     </Card>
   )
 }
+
+// ─── Attendance tab ─────────────────────────────────────────────────
 
 interface PrepAttendanceProps {
   attendance: AttendanceMap
@@ -295,6 +374,8 @@ interface PrepAttendanceProps {
   onJerseyChange: (originalNum: number, newNum: number) => void
   onMarkAllPresent: () => void
 }
+
+const ATT_COL_TEMPLATE = '28px 1fr 38px 60px 28px'
 
 function PrepAttendance({
   attendance,
@@ -322,110 +403,191 @@ function PrepAttendance({
       </div>
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '0 24px',
           border: `1px solid ${BRAND.line}`,
           borderRadius: 4,
           background: '#fff',
+          overflow: 'hidden',
         }}
       >
-        {MATCH_CENTER_ROSTER.map((p, i) => {
-          const present = attendance[p.num] !== undefined ? attendance[p.num] : p.present
-          const jerseyValue = jerseys[p.num] ?? p.num
-          return (
+        {/* Two-column header row mirrors the data grid below. */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '0 24px',
+            background: BRAND.sand,
+            borderBottom: `1px solid ${BRAND.line}`,
+          }}
+        >
+          {[0, 1].map(col => (
             <div
-              key={p.num}
+              key={col}
               style={{
                 display: 'grid',
-                gridTemplateColumns: '28px 1fr 38px 60px 28px',
+                gridTemplateColumns: ATT_COL_TEMPLATE,
                 alignItems: 'center',
                 gap: 10,
                 padding: '8px 12px',
-                borderBottom:
-                  i < MATCH_CENTER_ROSTER.length - 2 ? `1px solid ${BRAND.line}` : 'none',
               }}
             >
-              <MiniAvatar num={p.num} />
-              <div
-                style={{
-                  fontFamily: TYPE.body,
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  color: BRAND.indigo,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {p.name}
-              </div>
+              <span />
               <span
                 style={{
                   fontFamily: TYPE.mono,
                   fontSize: 9,
                   fontWeight: 700,
-                  letterSpacing: '0.16em',
+                  letterSpacing: '0.18em',
                   color: BRAND.indigoMute,
-                  border: `1px solid ${BRAND.line}`,
-                  padding: '2px 4px',
-                  borderRadius: 2,
-                  textAlign: 'center',
                 }}
               >
-                {p.pos}
+                PLAYER
               </span>
-              <input
-                key={`${p.num}-${jerseyValue}`}
-                defaultValue={jerseyValue}
-                onBlur={e => {
-                  const v = parseInt(e.currentTarget.value, 10)
-                  if (Number.isFinite(v) && v > 0) onJerseyChange(p.num, v)
-                  else e.currentTarget.value = String(jerseyValue)
-                }}
+              <span
                 style={{
                   fontFamily: TYPE.mono,
-                  fontSize: 11,
+                  fontSize: 9,
                   fontWeight: 700,
-                  color: BRAND.indigo,
-                  border: `1px solid ${BRAND.line}`,
-                  borderRadius: 3,
-                  padding: '3px 6px',
-                  width: 50,
+                  letterSpacing: '0.18em',
+                  color: BRAND.indigoMute,
                   textAlign: 'center',
-                  background: BRAND.paper,
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => onPresenceChange(p.num, !present)}
-                aria-pressed={present}
-                aria-label={`${p.name} · ${present ? 'present' : 'absent'}`}
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 3,
-                  border: `1.5px solid ${present ? BRAND.indigo : BRAND.line}`,
-                  background: present ? BRAND.indigo : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: BRAND.sand,
-                  fontSize: 12,
-                  lineHeight: 1,
-                  cursor: 'pointer',
-                  padding: 0,
                 }}
               >
-                {present && '✓'}
-              </button>
+                POS
+              </span>
+              <span
+                style={{
+                  fontFamily: TYPE.mono,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: '0.18em',
+                  color: BRAND.indigoMute,
+                  textAlign: 'center',
+                }}
+              >
+                JERSEY
+              </span>
+              <span
+                style={{
+                  fontFamily: TYPE.mono,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: '0.18em',
+                  color: BRAND.indigoMute,
+                  textAlign: 'center',
+                }}
+              >
+                IN
+              </span>
             </div>
-          )
-        })}
+          ))}
+        </div>
+        {/* Data grid */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '0 24px',
+          }}
+        >
+          {MATCH_CENTER_ROSTER.map((p, i) => {
+            const present = attendance[p.num] !== undefined ? attendance[p.num] : p.present
+            const jerseyValue = jerseys[p.num] ?? p.num
+            return (
+              <div
+                key={p.num}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: ATT_COL_TEMPLATE,
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '8px 12px',
+                  borderBottom:
+                    i < MATCH_CENTER_ROSTER.length - 2 ? `1px solid ${BRAND.line}` : 'none',
+                }}
+              >
+                <MiniAvatar num={p.num} />
+                <div
+                  style={{
+                    fontFamily: TYPE.body,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: BRAND.indigo,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {p.name}
+                </div>
+                <span
+                  style={{
+                    fontFamily: TYPE.mono,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.16em',
+                    color: BRAND.indigoMute,
+                    border: `1px solid ${BRAND.line}`,
+                    padding: '2px 4px',
+                    borderRadius: 2,
+                    textAlign: 'center',
+                  }}
+                >
+                  {p.pos}
+                </span>
+                <input
+                  key={`${p.num}-${jerseyValue}`}
+                  defaultValue={jerseyValue}
+                  onBlur={e => {
+                    const v = parseInt(e.currentTarget.value, 10)
+                    if (Number.isFinite(v) && v > 0) onJerseyChange(p.num, v)
+                    else e.currentTarget.value = String(jerseyValue)
+                  }}
+                  style={{
+                    fontFamily: TYPE.mono,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: BRAND.indigo,
+                    border: `1px solid ${BRAND.line}`,
+                    borderRadius: 3,
+                    padding: '3px 6px',
+                    width: 50,
+                    textAlign: 'center',
+                    background: BRAND.paper,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => onPresenceChange(p.num, !present)}
+                  aria-pressed={present}
+                  aria-label={`${p.name} · ${present ? 'present' : 'absent'}`}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 3,
+                    border: `1.5px solid ${present ? BRAND.indigo : BRAND.line}`,
+                    background: present ? BRAND.indigo : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: BRAND.sand,
+                    fontSize: 12,
+                    lineHeight: 1,
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  {present && '✓'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
 }
+
+// ─── Lineup tab (match) ─────────────────────────────────────────────
 
 const FORMATION: [number, number, string, number, string?][] = [
   [0.06, 0.5, 'GK', 1, BRAND.yellow],
@@ -452,7 +614,7 @@ function PrepLineup() {
           marginBottom: 12,
         }}
       >
-        <MEyebrow>FORMATION · 4-3-3</MEyebrow>
+        <MEyebrow>STARTING XI · 4-3-3</MEyebrow>
         <button type="button" style={mcButtons.text}>
           Change formation ↓
         </button>
@@ -556,20 +718,179 @@ function PrepLineup() {
   )
 }
 
+// ─── Lineup tab (training match) — Team A vs Team B ─────────────────
+
+interface PrepTeamsProps {
+  attendance: AttendanceMap
+  assignments: Record<number, 'A' | 'B'>
+  onAssign: (playerNum: number, team: 'A' | 'B') => void
+  onAutoSplit: () => void
+}
+
+function PrepTeams({ attendance, assignments, onAssign, onAutoSplit }: PrepTeamsProps) {
+  const present = MATCH_CENTER_ROSTER.filter(p => {
+    const override = attendance[p.num]
+    return override !== undefined ? override : p.present
+  })
+  const teamA = present.filter(p => assignments[p.num] === 'A')
+  const teamB = present.filter(p => assignments[p.num] === 'B')
+  const unassigned = present.filter(p => !assignments[p.num])
+
+  return (
+    <div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+          flexWrap: 'wrap',
+          gap: 10,
+        }}
+      >
+        <MEyebrow>SPLIT INTO TEAM A / TEAM B · {present.length} PRESENT</MEyebrow>
+        <button type="button" style={mcButtons.text} onClick={onAutoSplit}>
+          Auto split →
+        </button>
+      </div>
+
+      {unassigned.length > 0 && (
+        <>
+          <MEyebrow color={BRAND.coral} style={{ marginBottom: 6 }}>
+            UNASSIGNED · {unassigned.length}
+          </MEyebrow>
+          <TeamGrid players={unassigned} assignments={assignments} onAssign={onAssign} />
+        </>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 18 }}>
+        <div>
+          <MEyebrow>TEAM A · INDIGO · {teamA.length}</MEyebrow>
+          <div style={{ marginTop: 8 }}>
+            <TeamGrid players={teamA} assignments={assignments} onAssign={onAssign} />
+          </div>
+        </div>
+        <div>
+          <MEyebrow color={BRAND.coral}>TEAM B · CORAL · {teamB.length}</MEyebrow>
+          <div style={{ marginTop: 8 }}>
+            <TeamGrid players={teamB} assignments={assignments} onAssign={onAssign} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TeamGrid({
+  players,
+  assignments,
+  onAssign,
+}: {
+  players: typeof MATCH_CENTER_ROSTER
+  assignments: Record<number, 'A' | 'B'>
+  onAssign: (playerNum: number, team: 'A' | 'B') => void
+}) {
+  if (players.length === 0)
+    return (
+      <div
+        style={{
+          fontFamily: TYPE.body,
+          fontSize: 12,
+          color: BRAND.indigoMute,
+          padding: '10px 12px',
+          border: `1px dashed ${BRAND.line}`,
+          borderRadius: 4,
+          textAlign: 'center',
+        }}
+      >
+        No players yet.
+      </div>
+    )
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {players.map(p => {
+        const team = assignments[p.num]
+        return (
+          <div
+            key={p.num}
+            style={{
+              padding: '8px 10px',
+              background: '#fff',
+              border: `1px solid ${BRAND.line}`,
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <MiniAvatar num={p.num} />
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                fontFamily: TYPE.body,
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: BRAND.indigo,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {p.name}
+            </div>
+            <div style={{ display: 'flex', gap: 2 }}>
+              {(['A', 'B'] as const).map(t => {
+                const active = team === t
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => onAssign(p.num, t)}
+                    style={{
+                      padding: '3px 8px',
+                      border: active ? 'none' : `1px solid ${BRAND.line}`,
+                      background: active ? (t === 'A' ? BRAND.indigo : BRAND.coral) : 'transparent',
+                      color: active ? BRAND.sand : BRAND.indigo,
+                      fontFamily: TYPE.mono,
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: '0.16em',
+                      borderRadius: 3,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Confirm tab ────────────────────────────────────────────────────
+
 function PrepConfirm({
   presentCount,
   totalCount,
+  isTraining,
+  opponent,
 }: {
   presentCount: number
   totalCount: number
+  isTraining: boolean
+  opponent: string | null
 }) {
   const rows: [string, string][] = [
-    ['Opponent', 'Al Wasl Academy'],
-    ['Date · time', 'Sat 28 Feb · 15:00'],
-    ['Pitch', 'Pitch 1 · MAK Academy'],
+    ['Type', isTraining ? 'Training match' : 'Match'],
+    ['Opponent', opponent ?? '—'],
     ['Attendees', `${presentCount} of ${totalCount} present`],
-    ['Formation', '4-3-3 (set)'],
-    ['Bibs', '— (competitive match)'],
+    ['Setup', isTraining ? 'Team A vs Team B' : '4-3-3 starting XI'],
+    ['Bibs', isTraining ? 'Indigo / Coral' : '— (competitive)'],
   ]
 
   return (
@@ -630,9 +951,9 @@ function PrepConfirm({
             lineHeight: 1.55,
           }}
         >
-          On Saturday, record the match using the camera. Footage uploads automatically when
-          you&apos;re back on Wi-Fi. Analysis takes ~2 hours; we&apos;ll surface a coloured
-          composite + clips on this page when ready.
+          On the day, record using the camera. Footage uploads automatically when you&apos;re
+          back on Wi-Fi. Analysis takes ~2 hours; we&apos;ll surface a coloured composite +
+          clips on this page when ready.
         </div>
         <div
           style={{
@@ -642,7 +963,7 @@ function PrepConfirm({
             borderRadius: 4,
           }}
         >
-          <MEyebrow color={BRAND.indigo}>★ WHILE YOU WAIT</MEyebrow>
+          <MEyebrow color={BRAND.indigo}>★ TIP</MEyebrow>
           <div
             style={{
               fontFamily: TYPE.body,
@@ -652,8 +973,8 @@ function PrepConfirm({
               lineHeight: 1.5,
             }}
           >
-            You can scrub past matches in the calendar above. Try Feb 17 — Stratford E. just
-            finished processing.
+            Click ← Back to revisit attendance or {isTraining ? 'team split' : 'lineup'}.
+            Save draft any time — your edits persist on this device.
           </div>
         </div>
       </div>

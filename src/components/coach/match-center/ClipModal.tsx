@@ -1,55 +1,91 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
 import type { MatchCenterHighlight } from '@/lib/match-center'
 import { isClipFlagged, toggleFlaggedClip } from '@/lib/match-center-state'
 import { MEyebrow, VideoBlock, mcButtons } from './atoms'
 
-/* Clip modal — renders when the coach clicks ▶ on a HighlightCard.
+/* Clip modal — renders when the coach clicks ▶ on a HighlightCard or
+ * "▶ Play match reel" on a match group header.
  *
- * No real video file (the clip stream lands when the API + CDN ship), so
- * the body is the same brand-chrome `VideoBlock` placeholder we use
- * across Match Center. The modal carries enough metadata (event, player,
- * minute, duration, headline) that the coach can verify they picked the
- * right clip even before video plays. The flag toggle is mirrored in the
- * footer so a coach who's already opened a clip can flag it without
- * dismissing first. */
+ * Single mode (one clip in the queue) shows the clip metadata and a
+ * Done CTA. Reel mode (multiple clips) adds a "Clip N of M" indicator
+ * and ‹ Prev / Next › controls so the modal walks through the queue
+ * sequentially. Flag + share both apply to the currently-visible
+ * clip.
+ *
+ * No real video file (clip stream lands when API + CDN ship), so the
+ * body is the same brand-chrome `VideoBlock` placeholder we use across
+ * Match Center. */
 
 interface ClipModalProps {
-  clip: MatchCenterHighlight | null
+  /** Queue of clips to play. Empty / null closes the modal. Single
+   *  clip = single-clip mode; 2+ clips = reel mode. */
+  queue: MatchCenterHighlight[] | null
+  /** Optional title rendered above the metadata band — e.g. "Match
+   *  reel · vs Al Wasl · 6 clips". Single-clip mode omits this. */
+  title?: string
   onClose: () => void
-  onShare: () => void
-  onFlagToggle: (newFlagged: boolean) => void
+  onShare: (clip: MatchCenterHighlight) => void
+  onFlagChange: (clip: MatchCenterHighlight, isNowFlagged: boolean) => void
 }
 
-export function ClipModal({ clip, onClose, onShare, onFlagToggle }: ClipModalProps) {
+export function ClipModal({
+  queue,
+  title,
+  onClose,
+  onShare,
+  onFlagChange,
+}: ClipModalProps) {
   const backdropRef = useRef<HTMLDivElement>(null)
+  const [index, setIndex] = useState(0)
+  // Bumps when the user toggles flag — forces re-read of localStorage
+  // for the displayed flag state.
+  const [flagTick, setFlagTick] = useState(0)
 
-  // Lock body scroll while the modal is open. `clip` toggles the lock;
-  // the cleanup runs on unmount and on each clip change.
+  // Reset index when the queue identity changes (new clip / reel opens).
   useEffect(() => {
-    if (clip) {
-      const prev = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      return () => {
-        document.body.style.overflow = prev
-      }
+    setIndex(0)
+  }, [queue])
+
+  useEffect(() => {
+    if (!queue) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
     }
-  }, [clip])
+  }, [queue])
 
-  // Esc closes the modal — small UX win for keyboard users.
   useEffect(() => {
-    if (!clip) return
+    if (!queue) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight' && queue.length > 1)
+        setIndex(i => Math.min(queue.length - 1, i + 1))
+      if (e.key === 'ArrowLeft' && queue.length > 1)
+        setIndex(i => Math.max(0, i - 1))
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [clip, onClose])
+  }, [queue, onClose])
 
-  if (!clip) return null
-  const flagged = isClipFlagged(clip.id)
+  const clip = queue && queue.length > 0 ? queue[index] : null
+  const isReel = queue ? queue.length > 1 : false
+  const flagged = useMemo(() => {
+    if (!clip) return false
+    return isClipFlagged(clip.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clip, flagTick])
+
+  if (!queue || !clip) return null
+
+  function handleFlag() {
+    const isNowFlagged = toggleFlaggedClip(clip!.id)
+    setFlagTick(t => t + 1)
+    onFlagChange(clip!, isNowFlagged)
+  }
 
   return (
     <div
@@ -75,7 +111,7 @@ export function ClipModal({ clip, onClose, onShare, onFlagToggle }: ClipModalPro
           border: `1px solid ${BRAND.line}`,
           borderRadius: 8,
           width: '100%',
-          maxWidth: 720,
+          maxWidth: 760,
           maxHeight: '90vh',
           overflowY: 'auto',
           boxShadow: '0 24px 56px rgba(11,8,40,0.4)',
@@ -93,6 +129,22 @@ export function ClipModal({ clip, onClose, onShare, onFlagToggle }: ClipModalPro
             flexWrap: 'wrap',
           }}
         >
+          {isReel && title && (
+            <div style={{ width: '100%' }}>
+              <MEyebrow>MATCH REEL</MEyebrow>
+              <div
+                style={{
+                  fontFamily: TYPE.display,
+                  fontSize: 22,
+                  letterSpacing: '-0.01em',
+                  color: BRAND.indigo,
+                  marginTop: 2,
+                }}
+              >
+                {title}
+              </div>
+            </div>
+          )}
           <span
             style={{
               background: BRAND.yellow,
@@ -119,6 +171,19 @@ export function ClipModal({ clip, onClose, onShare, onFlagToggle }: ClipModalPro
             {clip.minute}&apos; · {clip.dur}S · {clip.player.toUpperCase()} #{clip.num}
           </span>
           <span style={{ flex: 1 }} />
+          {isReel && (
+            <span
+              style={{
+                fontFamily: TYPE.mono,
+                fontSize: 10,
+                letterSpacing: '0.18em',
+                color: BRAND.indigoMute,
+                fontWeight: 700,
+              }}
+            >
+              CLIP {index + 1} OF {queue.length}
+            </span>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -180,10 +245,7 @@ export function ClipModal({ clip, onClose, onShare, onFlagToggle }: ClipModalPro
           >
             <button
               type="button"
-              onClick={() => {
-                const newFlagged = toggleFlaggedClip(clip.id)
-                onFlagToggle(newFlagged)
-              }}
+              onClick={handleFlag}
               style={{
                 ...mcButtons.ghost,
                 background: flagged ? BRAND.indigo : 'transparent',
@@ -193,13 +255,47 @@ export function ClipModal({ clip, onClose, onShare, onFlagToggle }: ClipModalPro
             >
               {flagged ? '⚑ Flagged' : '⚑ Flag clip'}
             </button>
-            <button type="button" style={mcButtons.ghost} onClick={onShare}>
+            <button
+              type="button"
+              style={mcButtons.ghost}
+              onClick={() => onShare(clip)}
+            >
               ↗ Share
             </button>
             <span style={{ flex: 1 }} />
-            <button type="button" style={mcButtons.primary} onClick={onClose}>
-              Done
-            </button>
+            {isReel ? (
+              <>
+                <button
+                  type="button"
+                  style={{
+                    ...mcButtons.ghost,
+                    opacity: index === 0 ? 0.4 : 1,
+                    cursor: index === 0 ? 'default' : 'pointer',
+                  }}
+                  onClick={() => setIndex(i => Math.max(0, i - 1))}
+                  disabled={index === 0}
+                >
+                  ‹ Prev clip
+                </button>
+                {index === queue.length - 1 ? (
+                  <button type="button" style={mcButtons.primary} onClick={onClose}>
+                    Done
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    style={mcButtons.primary}
+                    onClick={() => setIndex(i => Math.min(queue.length - 1, i + 1))}
+                  >
+                    Next clip ›
+                  </button>
+                )}
+              </>
+            ) : (
+              <button type="button" style={mcButtons.primary} onClick={onClose}>
+                Done
+              </button>
+            )}
           </div>
         </div>
       </div>

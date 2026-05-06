@@ -26,6 +26,8 @@ interface State5ReadyProps {
   onClipPlay: (clip: MatchCenterHighlight) => void
   onClipShare: (clip: MatchCenterHighlight) => void
   onClipFlagToggle: (clip: MatchCenterHighlight) => void
+  /** "▶ Play match reel" — plays all clips for this match in sequence. */
+  onPlayMatchReel: () => void
 }
 
 /**
@@ -45,6 +47,7 @@ export function State5Ready({
   onClipPlay,
   onClipShare,
   onClipFlagToggle,
+  onPlayMatchReel,
 }: State5ReadyProps) {
   const clips = MATCH_CENTER_HIGHLIGHTS.filter(h => h.sessionDay === sessionDay)
 
@@ -134,10 +137,26 @@ export function State5Ready({
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: 10,
+              flexWrap: 'wrap',
+              gap: 10,
             }}
           >
             <MEyebrow>HIGHLIGHTS · {clips.length} CLIPS</MEyebrow>
-            <MEyebrow color={BRAND.indigoMute}>◀ SCROLL ▶</MEyebrow>
+            <button
+              type="button"
+              onClick={onPlayMatchReel}
+              disabled={clips.length === 0}
+              style={{
+                ...mcButtons.primary,
+                background: BRAND.yellow,
+                color: BRAND.indigo,
+                opacity: clips.length === 0 ? 0.4 : 1,
+                cursor: clips.length === 0 ? 'default' : 'pointer',
+                padding: '7px 14px',
+              }}
+            >
+              ▶ Play match reel
+            </button>
           </div>
           <div
             style={{

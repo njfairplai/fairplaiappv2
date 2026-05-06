@@ -331,6 +331,14 @@ function Body({
         </Link>
       </div>
 
+      {/* Quick-note editor — collapsed by default. Saves a timestamped
+       *  note to fairplai_player_notes_${id}. Lets the coach jot
+       *  something while they're in the squad context, no full-profile
+       *  navigation. */}
+      <div style={{ padding: '12px 18px 0' }}>
+        <SideRailNoteEditor playerId={player.id} />
+      </div>
+
       {/* Scope dropdown: drives the score, radar, and stats below. Defaults
           to Last session; coach can switch to Last 5 matches or Whole season. */}
       <div style={{ padding: '14px 18px 0' }}>
@@ -510,4 +518,209 @@ function readForPlayer(
   if (season.avg >= 75) return `Holding a high standard at ${season.avg} across ${season.matches} matches.`
   if (season.avg < 60) return `Composite is below the squad's working line. Worth a 1:1 to talk through what's on top of mind.`
   return `Steady. ${season.avg} composite over ${season.matches} matches.`
+}
+
+/* Quick-note editor for the SideRail.
+ *
+ * Default state: a single "+ Add note" link button that shows the
+ * current note count if any exist. Click → expands to a textarea +
+ * Save / Cancel pair. Save persists a timestamped entry to the
+ * fairplai_player_notes_${playerId} array in localStorage. The
+ * count badge updates immediately so the coach sees their note was
+ * captured.
+ *
+ * No external coupling to the full profile yet — that wiring lands
+ * when the player profile note panel reads from the same key. */
+interface PlayerNote {
+  text: string
+  savedAt: string
+}
+
+function readPlayerNotes(playerId: string): PlayerNote[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(`fairplai_player_notes_${playerId}`)
+    return raw ? (JSON.parse(raw) as PlayerNote[]) : []
+  } catch {
+    return []
+  }
+}
+function writePlayerNotes(playerId: string, notes: PlayerNote[]) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(`fairplai_player_notes_${playerId}`, JSON.stringify(notes))
+  } catch {
+    /* ignore */
+  }
+}
+
+function SideRailNoteEditor({ playerId }: { playerId: string }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [notes, setNotes] = useState<PlayerNote[]>([])
+  const [toast, setToast] = useState<string | null>(null)
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setNotes(readPlayerNotes(playerId))
+    setDraft('')
+    setOpen(false)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [playerId])
+
+  // Auto-clear toast after 2.2s.
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 2200)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  function save() {
+    const text = draft.trim()
+    if (!text) return
+    const next: PlayerNote[] = [
+      { text, savedAt: new Date().toISOString() },
+      ...notes,
+    ]
+    writePlayerNotes(playerId, next)
+    setNotes(next)
+    setDraft('')
+    setOpen(false)
+    setToast('Note saved')
+  }
+
+  if (!open) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          style={{
+            width: '100%',
+            padding: 10,
+            background: 'rgba(238, 228, 200, 0.08)',
+            color: 'var(--brand-sand)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 13,
+            fontWeight: 600,
+            border: '1px solid rgba(238, 228, 200, 0.18)',
+            borderRadius: 8,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span>+ Add note</span>
+          {notes.length > 0 && (
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.16em',
+                color: 'rgba(238, 228, 200, 0.7)',
+              }}
+            >
+              {notes.length} SAVED
+            </span>
+          )}
+        </button>
+        {toast && (
+          <div
+            style={{
+              marginTop: 8,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.16em',
+              fontWeight: 700,
+              color: 'var(--brand-yellow)',
+            }}
+          >
+            ✓ {toast.toUpperCase()}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        background: 'rgba(238, 228, 200, 0.05)',
+        border: '1px solid rgba(238, 228, 200, 0.18)',
+        borderRadius: 8,
+        padding: 10,
+      }}
+    >
+      <textarea
+        autoFocus
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        placeholder={`Quick note about this player…`}
+        rows={3}
+        style={{
+          width: '100%',
+          background: 'transparent',
+          color: 'var(--brand-sand)',
+          fontFamily: 'var(--font-body)',
+          fontSize: 13,
+          lineHeight: 1.5,
+          border: 'none',
+          outline: 'none',
+          resize: 'vertical',
+        }}
+      />
+      <div
+        style={{
+          marginTop: 8,
+          display: 'flex',
+          gap: 8,
+          justifyContent: 'flex-end',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setDraft('')
+            setOpen(false)
+          }}
+          style={{
+            padding: '6px 12px',
+            background: 'transparent',
+            color: 'rgba(238, 228, 200, 0.7)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10.5,
+            fontWeight: 700,
+            letterSpacing: '0.16em',
+            border: 'none',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={draft.trim().length === 0}
+          style={{
+            padding: '6px 14px',
+            background: draft.trim() ? 'var(--brand-yellow)' : 'rgba(238, 228, 200, 0.12)',
+            color: draft.trim() ? '#0B0828' : 'rgba(238, 228, 200, 0.4)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10.5,
+            fontWeight: 700,
+            letterSpacing: '0.16em',
+            border: 'none',
+            borderRadius: 4,
+            cursor: draft.trim() ? 'pointer' : 'default',
+            textTransform: 'uppercase',
+          }}
+        >
+          Save note
+        </button>
+      </div>
+    </div>
+  )
 }

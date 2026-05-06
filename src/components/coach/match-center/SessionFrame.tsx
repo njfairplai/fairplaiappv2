@@ -98,9 +98,13 @@ function CellFrame({
   selected: boolean
   onClick?: () => void
 }) {
-  // Training sessions render with the yellow TRAINING chip irrespective of
-  // status — kind is the dominant signal there.
-  if (s.kind === 'training') {
+  // Training sessions render the yellow TRAINING chip ONLY when their
+  // analysis is ready or upcoming — when training is processing, the
+  // status (gray IN PROGRESS, pulsing) takes precedence. Otherwise a
+  // training match in-progress and a training match analysed look
+  // identical in the calendar, which makes scrubbing miss the active
+  // work.
+  if (s.kind === 'training' && s.status !== 'processing') {
     return (
       <SingleLineCell
         topLabel="TRAINING"
