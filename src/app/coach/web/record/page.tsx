@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CSSProperties } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { players, pitches } from '@/lib/mockData'
 import {
   Card,
@@ -82,6 +83,7 @@ const ACADEMY_PLAYERS = players
 
 export default function CoachRecordPage() {
   const router = useRouter()
+  const isMobile = useIsMobile()
 
   const [sessionType, setSessionType] = useState<SessionType | null>(null)
   const [opponentName, setOpponentName] = useState('')
@@ -152,13 +154,13 @@ export default function CoachRecordPage() {
       style={{
         background: BRAND.sand,
         minHeight: '100%',
-        padding: '32px 36px',
+        padding: isMobile ? '20px 14px' : '32px 36px',
         color: BRAND.indigo,
       }}
     >
       <div>
         <MEyebrow>NEW SESSION</MEyebrow>
-        <MDisplay size={56} style={{ marginTop: 6 }}>
+        <MDisplay size={isMobile ? 32 : 56} style={{ marginTop: 6 }}>
           Set up your session
         </MDisplay>
         <div
@@ -365,6 +367,7 @@ function SetupStep({
   selectedPitch,
   onPitchChange,
 }: SetupStepProps) {
+  const isMobile = useIsMobile()
   return (
     <div>
       <MEyebrow>SESSION TYPE</MEyebrow>
@@ -372,7 +375,7 @@ function SetupStep({
         style={{
           marginTop: 12,
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
           gap: 10,
         }}
       >
@@ -435,7 +438,7 @@ function SetupStep({
         style={{
           marginTop: 22,
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
           gap: 16,
         }}
       >
@@ -465,7 +468,7 @@ function SetupStep({
           style={{
             marginTop: 10,
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
             gap: 8,
           }}
         >
@@ -542,6 +545,7 @@ interface AttendanceStepProps {
 }
 
 function AttendanceStep({ attendance, onChange }: AttendanceStepProps) {
+  const isMobile = useIsMobile()
   function setPresence(playerId: string, present: boolean) {
     const cur = attendance[playerId] ?? { present: false, jerseyNumber: 0 }
     onChange({ ...attendance, [playerId]: { ...cur, present } })
@@ -580,7 +584,7 @@ function AttendanceStep({ attendance, onChange }: AttendanceStepProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
           gap: '0 24px',
           border: `1px solid ${BRAND.line}`,
           borderRadius: 4,
@@ -698,6 +702,7 @@ function SplitTeamsStep({
   onChange,
   attendance,
 }: SplitTeamsStepProps) {
+  const isMobile = useIsMobile()
   const presentPlayers = ACADEMY_PLAYERS.filter(p => attendance[p.id]?.present)
   function assign(playerId: string, team: TeamAssignment) {
     onChange({ ...teamAssignments, [playerId]: team })
@@ -730,7 +735,7 @@ function SplitTeamsStep({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
           gap: 8,
           alignItems: 'flex-start',
         }}
@@ -823,6 +828,7 @@ function ConfirmStep({
   selectedPitch,
   attendance,
 }: ConfirmStepProps) {
+  const isMobile = useIsMobile()
   const presentCount = Object.values(attendance).filter(a => a.present).length
   const pitch = pitches.find(p => p.id === selectedPitch)
 
@@ -847,7 +853,7 @@ function ConfirmStep({
   ]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 18 : 24 }}>
       <div>
         <MEyebrow>SUMMARY</MEyebrow>
         <div

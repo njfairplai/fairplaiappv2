@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { MatchCenterHighlight } from '@/lib/match-center'
 import { isClipFlagged, toggleFlaggedClip } from '@/lib/match-center-state'
 import { MEyebrow, VideoBlock, mcButtons } from './atoms'
@@ -38,6 +39,7 @@ export function ClipModal({
   onShare,
   onFlagChange,
 }: ClipModalProps) {
+  const isMobile = useIsMobile()
   const backdropRef = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
   // Bumps when the user toggles flag — forces re-read of localStorage
@@ -102,7 +104,7 @@ export function ClipModal({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 90,
-        padding: 24,
+        padding: isMobile ? 12 : 24,
       }}
     >
       <div
@@ -120,7 +122,7 @@ export function ClipModal({
         {/* Header band */}
         <div
           style={{
-            padding: '16px 22px',
+            padding: isMobile ? '14px 16px' : '16px 22px',
             background: BRAND.yellowSoft,
             borderBottom: `1px solid ${BRAND.line}`,
             display: 'flex',
@@ -203,9 +205,9 @@ export function ClipModal({
         </div>
 
         {/* Body */}
-        <div style={{ padding: '20px 22px' }}>
+        <div style={{ padding: isMobile ? '16px 16px' : '20px 22px' }}>
           <VideoBlock
-            height={320}
+            height={isMobile ? 220 : 320}
             label={`${clip.ev} · ${clip.minute}'`}
             sub={`${clip.player.toUpperCase()} #${clip.num}`}
           />

@@ -408,6 +408,12 @@ body {
   100% { opacity: 1; transform: translateY(0);   }
 }
 
+/* BottomSheet entrance — slides up from below the viewport. */
+@keyframes mcSheetIn {
+  0%   { transform: translateY(100%); }
+  100% { transform: translateY(0);    }
+}
+
 /* ── Stat card shadow ── */
 .card-shadow {
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);

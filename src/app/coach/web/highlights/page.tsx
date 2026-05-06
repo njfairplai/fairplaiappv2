@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   SESSIONS,
   MATCH_CENTER_HIGHLIGHTS,
@@ -42,6 +43,7 @@ const PAGE_SIZE = 5
 
 export default function CoachHighlightsPage() {
   const router = useRouter()
+  const isMobile = useIsMobile()
 
   const [eventFilter, setEventFilter] = useState<EventFilter>('ALL')
   const [playerFilter, setPlayerFilter] = useState<string>('ALL')
@@ -127,13 +129,13 @@ export default function CoachHighlightsPage() {
       style={{
         background: BRAND.sand,
         minHeight: '100%',
-        padding: '32px 36px',
+        padding: isMobile ? '20px 14px' : '32px 36px',
         color: BRAND.indigo,
       }}
     >
       <div>
         <MEyebrow>SPRING 2026 SEASON</MEyebrow>
-        <MDisplay size={64} style={{ marginTop: 6 }}>
+        <MDisplay size={isMobile ? 36 : 64} style={{ marginTop: 6 }}>
           Highlights
         </MDisplay>
         <div

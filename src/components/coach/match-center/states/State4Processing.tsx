@@ -1,6 +1,7 @@
 'use client'
 
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   Card,
   MEyebrow,
@@ -16,8 +17,9 @@ import {
  * map to ProcessingStatus.stages[].
  */
 export function State4Processing() {
+  const isMobile = useIsMobile()
   return (
-    <Card style={{ padding: 26 }}>
+    <Card style={{ padding: isMobile ? 16 : 26 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <MStatusPill status="processing" animated />
         <span
@@ -36,13 +38,13 @@ export function State4Processing() {
         style={{
           marginTop: 14,
           display: 'grid',
-          gridTemplateColumns: '1.4fr 1fr',
-          gap: 24,
+          gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr',
+          gap: isMobile ? 14 : 24,
           alignItems: 'stretch',
         }}
       >
         <VideoBlock
-          height={300}
+          height={isMobile ? 200 : 300}
           label="MATCH FOOTAGE"
           sub="SUN 22 FEB · UPLOADED 18:24"
           playable={false}

@@ -2,23 +2,29 @@
 
 import type { CSSProperties } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { getSessionsForMonth } from '@/lib/match-center'
 import { MEyebrow } from './atoms'
 import { SessionFrame } from './SessionFrame'
 
-/* The Calendar primitive is built once and rendered in two views:
+/* The Calendar primitive renders one of two views, picked by viewport:
  *
- *   view="month" — 5×7 grid showing the active month at-a-glance
- *   view="week"  — horizontal filmstrip with 7 framed days
+ *   desktop (≥768px) — 5×N month grid showing the active month
+ *   mobile  (<768px) — horizontal week filmstrip
  *
- * Tapping a session in either view sets the selectedDay; the
- * contextual pane below the calendar keys off that day + month + year.
- * Prev/Next arrows in the header swap month — the surface re-renders
- * with that month's session set without leaving the page.
+ * No user-facing view toggle. Each platform gets the right primitive;
+ * the wrong-platform pattern (week on desktop, full-card month on phone)
+ * was actively unhelpful in user testing. The status-dot variant we
+ * trialled briefly is gone too — week filmstrip won the comparison.
+ *
+ * Navigation:
+ *   desktop — prev/next advance the month
+ *   mobile  — prev/next advance the WEEK. Crosses month boundaries
+ *             (Feb 22-28 → Mar 1-7) so the coach can scrub the season
+ *             without being month-locked.
  */
 
 interface CalendarProps {
-  view: 'month' | 'week'
   /** 1-indexed month, 1=Jan. */
   currentMonth: number
   currentYear: number
@@ -28,8 +34,11 @@ interface CalendarProps {
    *  hit "Confirm prep →" in State 1. */
   confirmedSessions: Set<string>
   onSelect: (day: number) => void
-  onViewChange: (view: 'month' | 'week') => void
+  /** Desktop-mode month change. Clamped to the seeded data range. */
   onMonthChange: (year: number, month: number) => void
+  /** Mobile-mode week change. The handler receives the new week's
+   *  anchor day + month/year so the page can update selection too. */
+  onWeekChange?: (year: number, month: number, anchorDay: number) => void
   onToday?: () => void
   onRecord?: () => void
 }
@@ -60,6 +69,7 @@ const MONTH_NAMES = [
   'NOVEMBER',
   'DECEMBER',
 ]
+const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
 /** Clamp month/year navigation to the months we have data for. The
  *  flat SESSIONS array currently spans Feb–Apr 2026; navigating
@@ -72,78 +82,134 @@ function compareMonths(a: { year: number; month: number }, b: { year: number; mo
   return a.month - b.month
 }
 
+/** Compute the Sunday-anchored start of the week containing a given date. */
+function weekStartFor(year: number, month: number, day: number): {
+  year: number
+  month: number
+  day: number
+} {
+  const dow = new Date(year, month - 1, day).getDay()
+  const startMs = new Date(year, month - 1, day - dow).getTime()
+  const start = new Date(startMs)
+  return { year: start.getFullYear(), month: start.getMonth() + 1, day: start.getDate() }
+}
+
+/** Shift a week by ±7 days and return the new Sunday anchor. */
+function shiftWeek(
+  anchor: { year: number; month: number; day: number },
+  deltaDays: number,
+): { year: number; month: number; day: number } {
+  const t = new Date(anchor.year, anchor.month - 1, anchor.day + deltaDays)
+  return { year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate() }
+}
+
 export function Calendar({
-  view,
   currentMonth,
   currentYear,
   selectedDay,
   confirmedSessions,
   onSelect,
-  onViewChange,
   onMonthChange,
+  onWeekChange,
   onToday,
   onRecord,
 }: CalendarProps) {
+  const isMobile = useIsMobile()
   const canGoPrev = compareMonths({ year: currentYear, month: currentMonth }, MIN_MONTH) > 0
   const canGoNext = compareMonths({ year: currentYear, month: currentMonth }, MAX_MONTH) < 0
 
+  // Mobile prev/next moves the week; desktop moves the month.
   function goPrev() {
+    if (isMobile && onWeekChange) {
+      const anchor = weekStartFor(currentYear, currentMonth, selectedDay ?? 1)
+      const next = shiftWeek(anchor, -7)
+      // Clamp: don't allow weeks whose month is outside data range.
+      if (compareMonths({ year: next.year, month: next.month }, MIN_MONTH) < 0) return
+      onWeekChange(next.year, next.month, next.day)
+      return
+    }
     if (!canGoPrev) return
     if (currentMonth === 1) onMonthChange(currentYear - 1, 12)
     else onMonthChange(currentYear, currentMonth - 1)
   }
   function goNext() {
+    if (isMobile && onWeekChange) {
+      const anchor = weekStartFor(currentYear, currentMonth, selectedDay ?? 1)
+      const next = shiftWeek(anchor, 7)
+      if (compareMonths({ year: next.year, month: next.month }, MAX_MONTH) > 0) return
+      onWeekChange(next.year, next.month, next.day)
+      return
+    }
     if (!canGoNext) return
     if (currentMonth === 12) onMonthChange(currentYear + 1, 1)
     else onMonthChange(currentYear, currentMonth + 1)
   }
 
+  // Header label: desktop shows "FEBRUARY 2026", mobile shows the
+  // week range "FEB 22 — FEB 28" (or cross-month "FEB 22 — MAR 7").
+  const headerLabel = (() => {
+    if (!isMobile) {
+      return (
+        <>
+          {MONTH_NAMES[currentMonth - 1]}{' '}
+          <span style={{ color: BRAND.indigoMute }}>{currentYear}</span>
+        </>
+      )
+    }
+    const anchor = weekStartFor(currentYear, currentMonth, selectedDay ?? 1)
+    const end = shiftWeek(anchor, 6)
+    if (anchor.month === end.month) {
+      return (
+        <>
+          {MONTH_SHORT[anchor.month - 1]} {anchor.day} —{' '}
+          {MONTH_SHORT[end.month - 1]} {end.day}
+        </>
+      )
+    }
+    return (
+      <>
+        {MONTH_SHORT[anchor.month - 1]} {anchor.day} —{' '}
+        {MONTH_SHORT[end.month - 1]} {end.day}
+      </>
+    )
+  })()
+
   return (
     <div>
-      {/* Header — month label, prev/next, view toggle, record CTA */}
+      {/* Header — month/week label, prev/next, today, record CTA. No
+       *  view toggle: each platform gets one primitive. */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
+          gap: isMobile ? 8 : 16,
           marginBottom: 14,
           flexWrap: 'wrap',
         }}
       >
         <button
           type="button"
-          style={{
-            ...btnIconStyle,
-            opacity: canGoPrev ? 1 : 0.4,
-            cursor: canGoPrev ? 'pointer' : 'default',
-          }}
-          aria-label="Previous month"
+          style={btnIconStyle}
+          aria-label={isMobile ? 'Previous week' : 'Previous month'}
           onClick={goPrev}
-          disabled={!canGoPrev}
         >
           ◀
         </button>
         <div
           style={{
             fontFamily: TYPE.display,
-            fontSize: 28,
+            fontSize: isMobile ? 18 : 28,
             letterSpacing: '-0.01em',
             color: BRAND.indigo,
           }}
         >
-          {MONTH_NAMES[currentMonth - 1]}{' '}
-          <span style={{ color: BRAND.indigoMute }}>{currentYear}</span>
+          {headerLabel}
         </div>
         <button
           type="button"
-          style={{
-            ...btnIconStyle,
-            opacity: canGoNext ? 1 : 0.4,
-            cursor: canGoNext ? 'pointer' : 'default',
-          }}
-          aria-label="Next month"
+          style={btnIconStyle}
+          aria-label={isMobile ? 'Next week' : 'Next month'}
           onClick={goNext}
-          disabled={!canGoNext}
         >
           ▶
         </button>
@@ -172,50 +238,12 @@ export function Calendar({
 
         <span style={{ flex: 1 }} />
 
-        {/* View toggle */}
-        <div
-          style={{
-            display: 'inline-flex',
-            background: BRAND.paper,
-            border: `1px solid ${BRAND.line}`,
-            borderRadius: 4,
-            padding: 3,
-            gap: 0,
-          }}
-        >
-          {(['month', 'week'] as const).map(v => {
-            const active = v === view
-            return (
-              <button
-                key={v}
-                type="button"
-                onClick={() => onViewChange(v)}
-                style={{
-                  padding: '5px 12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: active ? BRAND.indigo : 'transparent',
-                  color: active ? BRAND.sand : BRAND.indigo,
-                  fontFamily: TYPE.mono,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  borderRadius: 2,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {v}
-              </button>
-            )
-          })}
-        </div>
-
         {/* Record session CTA */}
         <button
           type="button"
           onClick={onRecord}
           style={{
-            padding: '8px 14px',
+            padding: isMobile ? '8px 10px' : '8px 14px',
             background: BRAND.indigo,
             color: BRAND.sand,
             border: 'none',
@@ -227,23 +255,23 @@ export function Calendar({
             letterSpacing: '0.16em',
           }}
         >
-          + RECORD SESSION
+          {isMobile ? '+ RECORD' : '+ RECORD SESSION'}
         </button>
       </div>
 
-      {view === 'month' ? (
+      {isMobile ? (
+        <WeekFilmstrip
+          year={currentYear}
+          month={currentMonth}
+          selectedDay={selectedDay}
+          onSelect={onSelect}
+        />
+      ) : (
         <MonthGrid
           year={currentYear}
           month={currentMonth}
           selectedDay={selectedDay}
           confirmedSessions={confirmedSessions}
-          onSelect={onSelect}
-        />
-      ) : (
-        <WeekFilmstrip
-          year={currentYear}
-          month={currentMonth}
-          selectedDay={selectedDay}
           onSelect={onSelect}
         />
       )}
@@ -269,10 +297,8 @@ function MonthGrid({
   confirmedSessions: Set<string>
   onSelect: (day: number) => void
 }) {
-  // Sun=0, Mon=1, ... Sat=6. Calendar starts on Sunday.
   const firstDow = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
-  // Total cells: leading blanks + days + trailing blanks to reach 35 or 42.
   const minCells = firstDow + daysInMonth
   const totalRows = Math.ceil(minCells / 7)
   const totalCells = totalRows * 7
@@ -377,7 +403,7 @@ function MonthGrid({
                   s={session}
                   shape="cell"
                   selected={isSelected}
-                  prepConfirmed={confirmedSessions.has(`${session.year}-${session.month}-${session.day}`)}
+                  prepConfirmed={confirmedSessions.has(`${session.year}-${String(session.month).padStart(2, '0')}-${String(session.day).padStart(2, '0')}`)}
                   onClick={() => onSelect(session.day)}
                 />
               )}
@@ -390,8 +416,9 @@ function MonthGrid({
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Week filmstrip — anchored to the week containing `selectedDay` if
-// possible, else the first 7 days that have sessions.
+// Week filmstrip — primary mobile primitive. Anchors on the week
+// containing `selectedDay`. Rendered horizontally with snap-scroll.
+// Cells span months when the week crosses a boundary.
 // ─────────────────────────────────────────────────────────────────────
 function WeekFilmstrip({
   year,
@@ -404,30 +431,26 @@ function WeekFilmstrip({
   selectedDay: number | null
   onSelect: (day: number) => void
 }) {
-  const sessionsByDay = getSessionsForMonth(year, month)
-  const daysInMonth = new Date(year, month, 0).getDate()
-
-  // Find the week containing `selectedDay` (Sunday-anchored). Fallback:
-  // the first week that has at least one session.
-  let weekStart = 1
-  if (selectedDay && selectedDay >= 1 && selectedDay <= daysInMonth) {
-    const dow = new Date(year, month - 1, selectedDay).getDay()
-    weekStart = Math.max(1, selectedDay - dow)
-  } else {
-    const sessionDays = Object.keys(sessionsByDay).map(Number).sort((a, b) => a - b)
-    if (sessionDays.length > 0) {
-      const dow = new Date(year, month - 1, sessionDays[0]!).getDay()
-      weekStart = Math.max(1, sessionDays[0]! - dow)
+  // Anchor on the Sunday of the week containing selectedDay (or month
+  // start if no selection yet). The 7 cards may span months — pull each
+  // card's session from the month it actually belongs to.
+  const anchor = (() => {
+    if (selectedDay && selectedDay >= 1) {
+      return weekStartFor(year, month, selectedDay)
     }
-  }
-  const weekDays: number[] = []
+    return weekStartFor(year, month, 1)
+  })()
+
+  const cards: { year: number; month: number; day: number; dowIndex: number }[] = []
   for (let i = 0; i < 7; i++) {
-    const d = weekStart + i
-    if (d <= daysInMonth) weekDays.push(d)
+    const t = new Date(anchor.year, anchor.month - 1, anchor.day + i)
+    cards.push({
+      year: t.getFullYear(),
+      month: t.getMonth() + 1,
+      day: t.getDate(),
+      dowIndex: t.getDay(),
+    })
   }
-  const weekLabel = weekDays.length
-    ? `${MONTH_NAMES[month - 1].slice(0, 3)} ${weekDays[0]} — ${MONTH_NAMES[month - 1].slice(0, 3)} ${weekDays[weekDays.length - 1]}`
-    : 'EMPTY WEEK'
 
   return (
     <div
@@ -435,63 +458,35 @@ function WeekFilmstrip({
         background: BRAND.paper,
         border: `1px solid ${BRAND.line}`,
         borderRadius: 6,
-        padding: '18px 20px',
+        padding: '14px 14px',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <MEyebrow>{weekLabel.toUpperCase()}</MEyebrow>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {LEGEND.map(([l, c]) => (
-            <span
-              key={l}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                fontFamily: TYPE.mono,
-                fontSize: 9,
-                letterSpacing: '0.18em',
-                color: BRAND.indigoMute,
-                fontWeight: 600,
-              }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: c,
-                }}
-              />
-              {l.toUpperCase()}
-            </span>
-          ))}
-        </div>
-      </div>
+      <MEyebrow style={{ marginBottom: 10 }}>
+        WEEK · {MONTH_SHORT[anchor.month - 1]} {anchor.day} —{' '}
+        {MONTH_SHORT[cards[6]!.month - 1]} {cards[6]!.day}
+      </MEyebrow>
       <div
         style={{
           display: 'flex',
           gap: 10,
           alignItems: 'stretch',
           overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          paddingBottom: 4,
         }}
       >
-        {weekDays.map((d, i) => {
-          const session = sessionsByDay[d]
-          const dowName = DAY_LABELS[(weekStart + i - 1 + new Date(year, month - 1, weekStart).getDay()) % 7]
+        {cards.map(c => {
+          const monthSessions = getSessionsForMonth(c.year, c.month)
+          const session = monthSessions[c.day]
+          const isSelected =
+            session != null &&
+            c.year === year &&
+            c.month === month &&
+            c.day === selectedDay
           if (!session) {
             return (
               <div
-                key={d}
+                key={`${c.year}-${c.month}-${c.day}`}
                 style={{
                   width: 156,
                   minWidth: 156,
@@ -504,6 +499,7 @@ function WeekFilmstrip({
                   alignItems: 'center',
                   justifyContent: 'center',
                   opacity: 0.7,
+                  scrollSnapAlign: 'start',
                 }}
               >
                 <div
@@ -515,7 +511,7 @@ function WeekFilmstrip({
                     fontWeight: 700,
                   }}
                 >
-                  {dowName}
+                  {DAY_LABELS[c.dowIndex]}
                 </div>
                 <div
                   style={{
@@ -525,7 +521,7 @@ function WeekFilmstrip({
                     marginTop: 4,
                   }}
                 >
-                  {d}
+                  {c.day}
                 </div>
                 <div
                   style={{
@@ -542,26 +538,23 @@ function WeekFilmstrip({
             )
           }
           return (
-            <SessionFrame
-              key={d}
-              s={{
-                ...session,
-                dateLabel: `${MONTH_NAMES[month - 1].slice(0, 3)} ${String(d).padStart(2, '0')}`,
-              }}
-              shape="frame"
-              selected={d === selectedDay}
-              onClick={() => onSelect(d)}
-            />
+            <div
+              key={`${c.year}-${c.month}-${c.day}`}
+              style={{ scrollSnapAlign: 'start' }}
+            >
+              <SessionFrame
+                s={{
+                  ...session,
+                  dateLabel: `${MONTH_SHORT[c.month - 1]} ${String(c.day).padStart(2, '0')}`,
+                }}
+                shape="frame"
+                selected={isSelected}
+                onClick={() => onSelect(c.day)}
+              />
+            </div>
           )
         })}
       </div>
     </div>
   )
 }
-
-const LEGEND: [string, string][] = [
-  ['Ready', BRAND.indigo],
-  ['Processing', BRAND.indigoMute],
-  ['Drills', BRAND.sandDeeper],
-  ['Prep', BRAND.coral],
-]

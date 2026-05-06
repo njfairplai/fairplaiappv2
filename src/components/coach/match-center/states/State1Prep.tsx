@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { MATCH_CENTER_ROSTER, type MatchCenterKind } from '@/lib/match-center'
 import {
   readPrepAttendance,
@@ -420,6 +421,7 @@ function PrepAttendance({
   onJerseyChange,
   onMarkAllPresent,
 }: PrepAttendanceProps) {
+  const isMobile = useIsMobile()
   return (
     <div>
       <div
@@ -445,17 +447,19 @@ function PrepAttendance({
           overflow: 'hidden',
         }}
       >
-        {/* Two-column header row mirrors the data grid below. */}
+        {/* Two-column header row mirrors the data grid below. Single
+         *  column on mobile so each row gets the full width and the
+         *  inputs don't crash into each other. */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
             gap: '0 24px',
             background: BRAND.sand,
             borderBottom: `1px solid ${BRAND.line}`,
           }}
         >
-          {[0, 1].map(col => (
+          {(isMobile ? [0] : [0, 1]).map(col => (
             <div
               key={col}
               style={{
@@ -521,7 +525,7 @@ function PrepAttendance({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
             gap: '0 24px',
           }}
         >
@@ -666,6 +670,7 @@ function PrepLineup({
   onFormatChange,
   onToggleBench,
 }: PrepLineupProps) {
+  const isMobile = useIsMobile()
   const present = MATCH_CENTER_ROSTER.filter(p => {
     const override = attendance[p.num]
     return override !== undefined ? override : p.present
@@ -770,7 +775,7 @@ function PrepLineup({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '28px 1fr 60px 60px 28px',
+            gridTemplateColumns: isMobile ? '24px 1fr 44px 44px 22px' : '28px 1fr 60px 60px 28px',
             alignItems: 'center',
             gap: 12,
             padding: '8px 12px',
@@ -849,7 +854,7 @@ function PrepLineup({
                 key={p.num}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '28px 1fr 60px 60px 28px',
+                  gridTemplateColumns: isMobile ? '24px 1fr 44px 44px 22px' : '28px 1fr 60px 60px 28px',
                   alignItems: 'center',
                   gap: 12,
                   padding: '8px 12px',
@@ -944,6 +949,7 @@ interface PrepTeamsProps {
 }
 
 function PrepTeams({ attendance, assignments, onAssign, onAutoSplit }: PrepTeamsProps) {
+  const isMobile = useIsMobile()
   const present = MATCH_CENTER_ROSTER.filter(p => {
     const override = attendance[p.num]
     return override !== undefined ? override : p.present
@@ -979,7 +985,7 @@ function PrepTeams({ attendance, assignments, onAssign, onAutoSplit }: PrepTeams
         </>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginTop: 18 }}>
         <div>
           <MEyebrow>TEAM A · INDIGO · {teamA.length}</MEyebrow>
           <div style={{ marginTop: 8 }}>
@@ -1105,6 +1111,7 @@ function PrepConfirm({
   format: LineupFormat
   startingCount: number
 }) {
+  const isMobile = useIsMobile()
   const target = LINEUP_FORMAT_TARGET[format]
   const rows: [string, string][] = [
     ['Type', isTraining ? 'Training match' : 'Match'],
@@ -1117,7 +1124,7 @@ function PrepConfirm({
   ]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 18 : 24 }}>
       <div>
         <MEyebrow>SUMMARY</MEyebrow>
         <div

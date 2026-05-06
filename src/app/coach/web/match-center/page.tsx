@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   DEFAULT_SELECTED_DAY,
   MATCH_CENTER_HIGHLIGHTS,
@@ -53,7 +54,7 @@ export default function CoachMatchCenterPage() {
     [sessionParam],
   )
 
-  const [view, setView] = useState<'month' | 'week'>('month')
+  const isMobile = useIsMobile()
   const [currentMonth, setCurrentMonth] = useState(2)
   const [currentYear, setCurrentYear] = useState(2026)
   const [selectedDay, setSelectedDay] = useState<number>(initialDay)
@@ -126,25 +127,82 @@ export default function CoachMatchCenterPage() {
     setToast(isNowFlagged ? 'Flagged for follow-up' : 'Unflagged')
   }, [])
 
+  // Pane content extracted for clarity. Renders inline below the
+  // calendar across both breakpoints.
+  const paneContent = (
+    <>
+      {state === '1' && session && (
+        <State1Prep
+          sessionId={sessionId}
+          kind={session.kind}
+          opponent={session.opponent}
+          metaLine={formatSessionMeta(session.year, session.month, session.day)}
+          onToast={setToast}
+          onReclassify={() => handleReclassify()}
+          onConfirmedChange={() => handleReclassify()}
+        />
+      )}
+      {state === '2' && (
+        <State2Categorise
+          sessionId={sessionId}
+          onToast={setToast}
+          onReclassify={() => handleReclassify()}
+        />
+      )}
+      {state === '3' && (
+        <State3Drills
+          sessionId={sessionId}
+          onToast={setToast}
+          onReclassify={() => handleReclassify()}
+        />
+      )}
+      {state === '4' && <State4Processing />}
+      {state === '5' && session && (
+        <State5Ready
+          session={session}
+          flaggedClips={flaggedClips}
+          onOpenFullAnalysis={() => router.push('/coach/web/match/session_010')}
+          onClipPlay={clip => {
+            setClipQueue([clip])
+            setClipQueueTitle(undefined)
+          }}
+          onClipShare={setClipSharing}
+          onClipFlagToggle={handleClipFlagToggle}
+          onPlayMatchReel={() => {
+            const dayClips = MATCH_CENTER_HIGHLIGHTS.filter(
+              h => h.sessionDay === selectedDay,
+            )
+            if (dayClips.length === 0) return
+            setClipQueue(dayClips)
+            setClipQueueTitle(
+              `vs ${session?.opponent ?? 'Match'} · ${dayClips.length} clips`,
+            )
+          }}
+        />
+      )}
+      {state === null && <EmptyDayState />}
+    </>
+  )
+
   return (
     <div
       style={{
         background: BRAND.sand,
         minHeight: '100%',
-        padding: '32px 36px',
+        padding: isMobile ? '20px 14px' : '32px 36px',
         color: BRAND.indigo,
       }}
     >
       {/* Page header */}
       <div>
         <MEyebrow>SPRING 2026 SEASON</MEyebrow>
-        <MDisplay size={64} style={{ marginTop: 6 }}>
+        <MDisplay size={isMobile ? 36 : 64} style={{ marginTop: 6 }}>
           Match Center
         </MDisplay>
         <div
           style={{
             fontFamily: TYPE.body,
-            fontSize: 14,
+            fontSize: isMobile ? 12.5 : 14,
             color: BRAND.indigoMid,
             marginTop: 4,
           }}
@@ -153,16 +211,15 @@ export default function CoachMatchCenterPage() {
         </div>
       </div>
 
-      {/* Calendar primitive */}
-      <div style={{ marginTop: 28 }}>
+      {/* Calendar primitive — month grid on desktop, week filmstrip
+       *  on mobile. Driven by viewport, not page state. */}
+      <div style={{ marginTop: isMobile ? 18 : 28 }}>
         <Calendar
-          view={view}
           currentMonth={currentMonth}
           currentYear={currentYear}
           selectedDay={selectedDay}
           confirmedSessions={confirmedSessions}
           onSelect={setSelectedDay}
-          onViewChange={setView}
           onMonthChange={(year, month) => {
             setCurrentYear(year)
             setCurrentMonth(month)
@@ -172,10 +229,40 @@ export default function CoachMatchCenterPage() {
               .sort((a, b) => a - b)[0]
             setSelectedDay(firstDay ?? 0)
           }}
+          onWeekChange={(year, month, anchorDay) => {
+            // Mobile prev/next bumps the week anchor. We update the
+            // currentMonth/Year to track which month the new selectedDay
+            // belongs to (might cross a boundary). The selected day is
+            // the first session in the new week, or the anchor if none.
+            // Look across all 7 cards in the new week for a session.
+            let pickedYear = year
+            let pickedMonth = month
+            let pickedDay = anchorDay
+            let foundSession = false
+            for (let i = 0; i < 7; i++) {
+              const t = new Date(year, month - 1, anchorDay + i)
+              const dayMonth = t.getMonth() + 1
+              const dayYear = t.getFullYear()
+              const dayD = t.getDate()
+              const monthSessions = getSessionsForMonth(dayYear, dayMonth)
+              if (monthSessions[dayD]) {
+                pickedYear = dayYear
+                pickedMonth = dayMonth
+                pickedDay = dayD
+                foundSession = true
+                break
+              }
+            }
+            if (!foundSession) {
+              pickedYear = year
+              pickedMonth = month
+              pickedDay = anchorDay
+            }
+            setCurrentYear(pickedYear)
+            setCurrentMonth(pickedMonth)
+            setSelectedDay(pickedDay)
+          }}
           onToday={() => {
-            // Demo "today" anchored to a date inside our seeded data
-            // range so the button has somewhere to land. Real wiring
-            // uses `new Date()` once May/Jun/Jul fixtures exist.
             setCurrentYear(DEMO_TODAY.year)
             setCurrentMonth(DEMO_TODAY.month)
             setSelectedDay(DEMO_TODAY.day)
@@ -184,59 +271,8 @@ export default function CoachMatchCenterPage() {
         />
       </div>
 
-      {/* Contextual pane */}
-      <div style={{ marginTop: 28 }}>
-        {state === '1' && session && (
-          <State1Prep
-            sessionId={sessionId}
-            kind={session.kind}
-            opponent={session.opponent}
-            metaLine={formatSessionMeta(session.year, session.month, session.day)}
-            onToast={setToast}
-            onReclassify={() => handleReclassify()}
-            onConfirmedChange={() => handleReclassify()}
-          />
-        )}
-        {state === '2' && (
-          <State2Categorise
-            sessionId={sessionId}
-            onToast={setToast}
-            onReclassify={() => handleReclassify()}
-          />
-        )}
-        {state === '3' && (
-          <State3Drills
-            sessionId={sessionId}
-            onToast={setToast}
-            onReclassify={() => handleReclassify()}
-          />
-        )}
-        {state === '4' && <State4Processing />}
-        {state === '5' && session && (
-          <State5Ready
-            session={session}
-            flaggedClips={flaggedClips}
-            onOpenFullAnalysis={() => router.push('/coach/web/match/session_010')}
-            onClipPlay={clip => {
-              setClipQueue([clip])
-              setClipQueueTitle(undefined)
-            }}
-            onClipShare={setClipSharing}
-            onClipFlagToggle={handleClipFlagToggle}
-            onPlayMatchReel={() => {
-              const dayClips = MATCH_CENTER_HIGHLIGHTS.filter(
-                h => h.sessionDay === selectedDay,
-              )
-              if (dayClips.length === 0) return
-              setClipQueue(dayClips)
-              setClipQueueTitle(
-                `vs ${session?.opponent ?? 'Match'} · ${dayClips.length} clips`,
-              )
-            }}
-          />
-        )}
-        {state === null && <EmptyDayState />}
-      </div>
+      {/* Contextual pane — inline below the calendar on both platforms. */}
+      <div style={{ marginTop: isMobile ? 18 : 28 }}>{paneContent}</div>
 
       {/* Modals + toast */}
       <ClipModal

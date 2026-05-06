@@ -1,6 +1,7 @@
 'use client'
 
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { writeSessionClassify } from '@/lib/match-center-state'
 import { Card, MStatusPill, VideoBlock, mcButtons } from '../atoms'
 
@@ -16,6 +17,7 @@ interface State3DrillsProps {
  * swaps the pane to State 1 Prep.
  */
 export function State3Drills({ sessionId, onToast, onReclassify }: State3DrillsProps) {
+  const isMobile = useIsMobile()
   function markAsMatch() {
     writeSessionClassify(sessionId, 'prep')
     onToast('Reclassified as match')
@@ -23,7 +25,7 @@ export function State3Drills({ sessionId, onToast, onReclassify }: State3DrillsP
   }
 
   return (
-    <Card style={{ padding: 26 }}>
+    <Card style={{ padding: isMobile ? 16 : 26 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <MStatusPill status="drills" />
         <span
@@ -39,7 +41,7 @@ export function State3Drills({ sessionId, onToast, onReclassify }: State3DrillsP
         </span>
       </div>
       <div style={{ marginTop: 14 }}>
-        <VideoBlock height={340} label="DRILLS SESSION" sub="WED 14 FEB · PITCH 2" />
+        <VideoBlock height={isMobile ? 220 : 340} label="DRILLS SESSION" sub="WED 14 FEB · PITCH 2" />
       </div>
       <div style={{ marginTop: 16, textAlign: 'center' }}>
         <div

@@ -1,6 +1,7 @@
 'use client'
 
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { writeSessionClassify } from '@/lib/match-center-state'
 import {
   Card,
@@ -25,6 +26,7 @@ interface State2CategoriseProps {
  * the appropriate state.
  */
 export function State2Categorise({ sessionId, onToast, onReclassify }: State2CategoriseProps) {
+  const isMobile = useIsMobile()
   function markAsMatch() {
     writeSessionClassify(sessionId, 'prep')
     onToast('Marked as match — set the lineup')
@@ -37,7 +39,7 @@ export function State2Categorise({ sessionId, onToast, onReclassify }: State2Cat
   }
 
   return (
-    <Card style={{ padding: 26 }}>
+    <Card style={{ padding: isMobile ? 16 : 26 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <MStatusPill status="uncategorised" />
         <span
@@ -56,12 +58,12 @@ export function State2Categorise({ sessionId, onToast, onReclassify }: State2Cat
         style={{
           marginTop: 14,
           display: 'grid',
-          gridTemplateColumns: '1.4fr 1fr',
-          gap: 24,
+          gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr',
+          gap: isMobile ? 16 : 24,
         }}
       >
         <VideoBlock
-          height={320}
+          height={isMobile ? 200 : 320}
           label="UNCATEGORISED FOOTAGE"
           sub="MON 12 FEB · PITCH 2"
           playable={false}

@@ -1,6 +1,7 @@
 'use client'
 
 import { BRAND, TYPE } from '@/lib/constants'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   MATCH_CENTER_HIGHLIGHTS,
   type MatchCenterHighlight,
@@ -72,6 +73,7 @@ export function State5Ready({
   onClipFlagToggle,
   onPlayMatchReel,
 }: State5ReadyProps) {
+  const isMobile = useIsMobile()
   const clips = MATCH_CENTER_HIGHLIGHTS.filter(h => h.sessionDay === session.day)
   const isTraining = session.kind === 'training'
   const ourScore = DEMO_OUR_SCORE[session.day] ?? null
@@ -96,7 +98,7 @@ export function State5Ready({
       {/* Header */}
       <div
         style={{
-          padding: '20px 26px',
+          padding: isMobile ? '16px 16px' : '20px 26px',
           borderBottom: `1px solid ${BRAND.line}`,
           background: BRAND.yellowSoft,
         }}
@@ -155,12 +157,12 @@ export function State5Ready({
             flexWrap: 'wrap',
           }}
         >
-          <MDisplay size={56}>{headline}</MDisplay>
+          <MDisplay size={isMobile ? 32 : 56}>{headline}</MDisplay>
           {!isTraining && ourScore != null && oppScore != null && (
             <span
               style={{
                 fontFamily: TYPE.display,
-                fontSize: 56,
+                fontSize: isMobile ? 32 : 56,
                 color: BRAND.indigoMute,
                 lineHeight: 0.94,
               }}
@@ -182,9 +184,9 @@ export function State5Ready({
       </div>
 
       {/* Body */}
-      <div style={{ padding: '20px 26px' }}>
+      <div style={{ padding: isMobile ? '16px 16px' : '20px 26px' }}>
         <VideoBlock
-          height={300}
+          height={isMobile ? 200 : 300}
           label={`MATCH FOOTAGE${session.day === 24 ? ' · 84M' : ''}`}
           sub={`${dateLabel(session)} · 15:00 · PITCH 1`}
         />
@@ -255,13 +257,15 @@ export function State5Ready({
           )}
         </div>
 
-        {/* Two-column summary */}
+        {/* Two-column summary on desktop, stacked on mobile so the
+         *  training summary table + top performers list each get the
+         *  full width of the surface. */}
         <div
           style={{
             marginTop: 28,
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 24,
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+            gap: isMobile ? 18 : 24,
           }}
         >
           <div>
@@ -326,7 +330,13 @@ export function State5Ready({
                   key={p.num}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '20px 28px 1fr 30px 38px 60px',
+                    /* Mobile drops the POS chip + dashed scout-slot
+                     * columns to keep the row from overflowing on phone
+                     * widths. The scout-slot reservation moves to a
+                     * single-line footer note below. */
+                    gridTemplateColumns: isMobile
+                      ? '20px 28px 1fr 36px'
+                      : '20px 28px 1fr 30px 38px 60px',
                     alignItems: 'center',
                     gap: 10,
                     padding: '10px 14px',
@@ -351,6 +361,9 @@ export function State5Ready({
                       fontSize: 13,
                       fontWeight: 600,
                       color: BRAND.indigo,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
                     {p.name}{' '}
@@ -358,46 +371,51 @@ export function State5Ready({
                       <span style={{ color: BRAND.yellow, marginLeft: 2 }}>★</span>
                     )}
                   </span>
-                  <span
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: '0.14em',
-                      color: BRAND.indigoMute,
-                      border: `1px solid ${BRAND.line}`,
-                      padding: '1px 4px',
-                      borderRadius: 2,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {p.pos}
-                  </span>
+                  {!isMobile && (
+                    <span
+                      style={{
+                        fontFamily: TYPE.mono,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        letterSpacing: '0.14em',
+                        color: BRAND.indigoMute,
+                        border: `1px solid ${BRAND.line}`,
+                        padding: '1px 4px',
+                        borderRadius: 2,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {p.pos}
+                    </span>
+                  )}
                   <span
                     style={{
                       fontFamily: TYPE.display,
-                      fontSize: 22,
+                      fontSize: isMobile ? 18 : 22,
                       color: BRAND.indigo,
+                      textAlign: 'right',
                     }}
                   >
                     {p.score}
                   </span>
-                  <span
-                    style={{
-                      height: 18,
-                      border: '1px dashed rgba(27,21,80,0.18)',
-                      borderRadius: 2,
-                      fontFamily: TYPE.mono,
-                      fontSize: 8,
-                      color: 'rgba(27,21,80,0.28)',
-                      letterSpacing: '0.14em',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    —
-                  </span>
+                  {!isMobile && (
+                    <span
+                      style={{
+                        height: 18,
+                        border: '1px dashed rgba(27,21,80,0.18)',
+                        borderRadius: 2,
+                        fontFamily: TYPE.mono,
+                        fontSize: 8,
+                        color: 'rgba(27,21,80,0.28)',
+                        letterSpacing: '0.14em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      —
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -411,7 +429,7 @@ export function State5Ready({
                 fontWeight: 700,
               }}
             >
-              ↑ DASHED SLOTS = RESERVED FOR SCOUT-WATCH CHIPS (V2)
+              ↑ {isMobile ? 'SCOUT-WATCH CHIPS RESERVED' : 'DASHED SLOTS = RESERVED FOR SCOUT-WATCH CHIPS'} (V2)
             </div>
           </div>
         </div>
@@ -420,7 +438,7 @@ export function State5Ready({
           style={{
             marginTop: 24,
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: isMobile ? 'stretch' : 'flex-end',
           }}
         >
           <button
@@ -430,6 +448,7 @@ export function State5Ready({
               ...mcButtons.primary,
               padding: '12px 20px',
               fontSize: 11.5,
+              width: isMobile ? '100%' : 'auto',
             }}
           >
             Open full match analysis →
