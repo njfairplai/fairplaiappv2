@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import {
@@ -64,6 +65,12 @@ function dateLabel(s: MatchCenterSession): string {
  *   - Competitive match → "vs <Opp>" headline, scoreline, MOTM badge
  *   - Training match    → "Internal training" headline, no scoreline
  */
+/** Default visible clip count before the "+N more" expand fires.
+ *  Past this we'd be asking the coach to scroll right through a long
+ *  horizontal row, which loses scannability — same threshold the
+ *  Highlights match groups use. */
+const CLIPS_VISIBLE_BEFORE_EXPAND = 6
+
 export function State5Ready({
   session,
   flaggedClips,
@@ -75,6 +82,21 @@ export function State5Ready({
 }: State5ReadyProps) {
   const isMobile = useIsMobile()
   const clips = MATCH_CENTER_HIGHLIGHTS.filter(h => h.sessionDay === session.day)
+
+  // Reset the expanded state whenever the selected day changes — a
+  // coach scrubbing across matches expects each new day to open
+  // collapsed.
+  const [expanded, setExpanded] = useState(false)
+  useEffect(() => {
+    // Reset on session change. Synchronous setState in an effect is
+    // the right shape here — we're syncing local state with an
+    // external prop change, not chasing a render.
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
+    setExpanded(false)
+  }, [session.day])
+  const overflow = clips.length - CLIPS_VISIBLE_BEFORE_EXPAND
+  const showCollapseControls = clips.length > CLIPS_VISIBLE_BEFORE_EXPAND
+  const visibleClips = expanded ? clips : clips.slice(0, CLIPS_VISIBLE_BEFORE_EXPAND)
   const isTraining = session.kind === 'training'
   const ourScore = DEMO_OUR_SCORE[session.day] ?? null
   const oppScore = DEMO_OPP_SCORE[session.day] ?? null
@@ -87,11 +109,12 @@ export function State5Ready({
     : null
   const motm = session.motm ?? clips[0]?.player.split(' ')[0]
   const headline = isTraining ? 'Internal training' : `vs ${session.opponent ?? 'Opponent'}`
+  // Meta line carries the date + venue. Opponent + scoreline are
+  // already in the hero (headline + score chip below) — repeating them
+  // here was the duplication you flagged.
   const metaLine = isTraining
     ? `${dateLabel(session)} · TEAM A vs TEAM B`
-    : `VS ${(session.opponent ?? 'OPPONENT').toUpperCase()} · ${dateLabel(session)}${
-        result ? ` · ${ourScore}-${oppScore} ${result}` : ''
-      }`
+    : `${dateLabel(session)} · 15:00 · PITCH 1`
 
   return (
     <Card style={{ padding: 0 }}>
@@ -235,25 +258,45 @@ export function State5Ready({
               No clips tagged for this session yet.
             </div>
           ) : (
-            <div
-              style={{
-                display: 'flex',
-                gap: 10,
-                overflowX: 'auto',
-                paddingBottom: 4,
-              }}
-            >
-              {clips.map(h => (
-                <HighlightCard
-                  key={h.id}
-                  h={h}
-                  flagged={flaggedClips.has(h.id)}
-                  onPlay={() => onClipPlay(h)}
-                  onShare={() => onClipShare(h)}
-                  onFlagToggle={() => onClipFlagToggle(h)}
-                />
-              ))}
-            </div>
+            <>
+              <div
+                style={{
+                  /* Collapsed: horizontal scroll. Expanded: vertical
+                   * wrap grid so the coach can scan all clips at a
+                   * glance without swiping. Same pattern as the
+                   * Highlights match-group rows. */
+                  display: expanded ? 'grid' : 'flex',
+                  gridTemplateColumns: expanded
+                    ? 'repeat(auto-fill, minmax(280px, 1fr))'
+                    : undefined,
+                  gap: 10,
+                  overflowX: expanded ? 'visible' : 'auto',
+                  paddingBottom: 4,
+                }}
+              >
+                {visibleClips.map(h => (
+                  <HighlightCard
+                    key={h.id}
+                    h={h}
+                    flagged={flaggedClips.has(h.id)}
+                    onPlay={() => onClipPlay(h)}
+                    onShare={() => onClipShare(h)}
+                    onFlagToggle={() => onClipFlagToggle(h)}
+                  />
+                ))}
+              </div>
+              {showCollapseControls && (
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(e => !e)}
+                    style={mcButtons.text}
+                  >
+                    {expanded ? '↑ Show fewer' : `+${overflow} more clips ↓`}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
