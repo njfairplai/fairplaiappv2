@@ -32,13 +32,61 @@ export function SessionFrame({ s, shape = 'frame', selected = false, onClick }: 
   return <FullFrame s={s} selected={selected} onClick={onClick} />
 }
 
-const STATUS_DOT_COLOR: Record<string, string> = {
-  prep: BRAND.coral,
-  processing: BRAND.indigoMute,
-  ready: BRAND.indigo,
-  drills: BRAND.sandDeeper,
-  upcoming: BRAND.indigoMute,
-  uncategorised: BRAND.coral,
+/* Explicit per-status encoding for the month-grid cell. The previous
+ * dot-only signal was too quiet — coaches couldn't scan the month and
+ * tell at a glance which matches were analysed vs upcoming vs pending
+ * categorisation. Each status now gets a literal word in mono caps
+ * (line 1) and the opponent or footage meta below it (line 2).
+ *
+ * `drills` and `training` collapse to a single-line chip — there's no
+ * opponent to render on a second line. */
+function getCellEncoding(s: MatchCenterSession): {
+  topLabel: string
+  topColor: string
+  topBg?: string
+  bottomLabel?: string
+  pulse?: boolean
+} {
+  switch (s.status) {
+    case 'ready':
+      return {
+        topLabel: s.score != null ? `ANALYSED · ${s.score}` : 'ANALYSED',
+        topColor: BRAND.indigo,
+        bottomLabel: s.opponent ?? undefined,
+      }
+    case 'processing':
+      return {
+        topLabel: 'IN PROGRESS',
+        topColor: BRAND.indigoMute,
+        bottomLabel: s.opponent ?? undefined,
+        pulse: true,
+      }
+    case 'prep':
+      return {
+        topLabel: 'PREP',
+        topColor: BRAND.coral,
+        bottomLabel: s.opponent ?? undefined,
+      }
+    case 'uncategorised':
+      return {
+        topLabel: 'PENDING',
+        topColor: BRAND.coral,
+        bottomLabel: s.opponent ?? undefined,
+      }
+    case 'drills':
+      return {
+        topLabel: 'DRILLS',
+        topColor: BRAND.indigo,
+        topBg: BRAND.sandDeep,
+      }
+    case 'upcoming':
+      return {
+        topLabel: 'UPCOMING',
+        topColor: BRAND.indigoMute,
+      }
+    default:
+      return { topLabel: '—', topColor: BRAND.indigoMute }
+  }
 }
 
 function CellFrame({
@@ -50,16 +98,37 @@ function CellFrame({
   selected: boolean
   onClick?: () => void
 }) {
-  const dotColor = STATUS_DOT_COLOR[s.status] ?? BRAND.indigoMute
-  const labelText =
-    s.kind === 'drills'
-      ? 'DRILLS'
-      : s.kind === 'training'
-      ? 'TRAINING'
-      : s.opponent
-      ? s.opponent.split(' ').slice(0, 2).join(' ')
-      : '—'
+  // Training sessions render with the yellow TRAINING chip irrespective of
+  // status — kind is the dominant signal there.
+  if (s.kind === 'training') {
+    return (
+      <SingleLineCell
+        topLabel="TRAINING"
+        topColor={BRAND.indigo}
+        topBg={BRAND.yellow}
+        selected={selected}
+        onClick={onClick}
+      />
+    )
+  }
 
+  const enc = getCellEncoding(s)
+
+  // Drills + upcoming: collapse to a single-line chip — no opponent to show.
+  if (!enc.bottomLabel) {
+    return (
+      <SingleLineCell
+        topLabel={enc.topLabel}
+        topColor={selected ? BRAND.sand : enc.topColor}
+        topBg={selected ? undefined : enc.topBg}
+        selected={selected}
+        pulse={enc.pulse}
+        onClick={onClick}
+      />
+    )
+  }
+
+  // Match cells with status: two-line — status word on top, opponent below.
   return (
     <button
       type="button"
@@ -73,8 +142,9 @@ function CellFrame({
         borderRadius: 3,
         cursor: 'pointer',
         display: 'flex',
-        alignItems: 'center',
-        gap: 5,
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 1,
         boxShadow: selected ? '0 6px 14px rgba(11,8,40,0.25)' : 'none',
         width: '100%',
         textAlign: 'left',
@@ -82,28 +152,113 @@ function CellFrame({
     >
       <span
         style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: dotColor,
-          flexShrink: 0,
-          ...(s.status === 'processing'
-            ? { animation: 'mcPulse 1.4s ease-in-out infinite' }
-            : {}),
+          fontFamily: TYPE.mono,
+          fontSize: 8,
+          letterSpacing: '0.16em',
+          fontWeight: 700,
+          color: selected ? BRAND.yellow : enc.topColor,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          maxWidth: '100%',
         }}
-      />
+      >
+        {enc.pulse && (
+          <span
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              background: selected ? BRAND.yellow : enc.topColor,
+              animation: 'mcPulse 1.4s ease-in-out infinite',
+              flexShrink: 0,
+            }}
+          />
+        )}
+        {enc.topLabel}
+      </span>
+      <span
+        style={{
+          fontFamily: TYPE.body,
+          fontSize: 10.5,
+          fontWeight: 600,
+          color: selected ? BRAND.sand : BRAND.indigo,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: '100%',
+        }}
+      >
+        {enc.bottomLabel}
+      </span>
+    </button>
+  )
+}
+
+/** Single-line chip variant for kind-driven cells (TRAINING / DRILLS / UPCOMING). */
+function SingleLineCell({
+  topLabel,
+  topColor,
+  topBg,
+  pulse,
+  selected,
+  onClick,
+}: {
+  topLabel: string
+  topColor: string
+  topBg?: string
+  pulse?: boolean
+  selected: boolean
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        marginTop: 4,
+        padding: '4px 6px',
+        background: selected ? BRAND.indigo : topBg ?? BRAND.paper,
+        color: selected ? BRAND.sand : BRAND.indigo,
+        border: `1px solid ${selected ? BRAND.indigo : BRAND.line}`,
+        borderRadius: 3,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 5,
+        boxShadow: selected ? '0 6px 14px rgba(11,8,40,0.25)' : 'none',
+        width: '100%',
+        textAlign: 'left',
+      }}
+    >
+      {pulse && (
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: selected ? BRAND.yellow : topColor,
+            animation: 'mcPulse 1.4s ease-in-out infinite',
+            flexShrink: 0,
+          }}
+        />
+      )}
       <span
         style={{
           fontFamily: TYPE.mono,
           fontSize: 8.5,
-          letterSpacing: '0.04em',
-          fontWeight: 600,
+          letterSpacing: '0.16em',
+          fontWeight: 700,
+          color: selected ? BRAND.sand : topColor,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}
       >
-        {labelText}
+        {topLabel}
       </span>
     </button>
   )

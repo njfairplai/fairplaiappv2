@@ -400,6 +400,14 @@ body {
   50%      { opacity: 0.45; transform: scale(0.85); }
 }
 
+/* Match Center toast entrance — used by <Toast/>. Fades + lifts in
+ * from below so a quick action confirmation reads as a peripheral
+ * acknowledgement, not a modal. */
+@keyframes mcToastIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0);   }
+}
+
 /* ── Stat card shadow ── */
 .card-shadow {
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);

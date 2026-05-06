@@ -1,7 +1,10 @@
 'use client'
 
 import { BRAND, TYPE } from '@/lib/constants'
-import { MATCH_CENTER_HIGHLIGHTS } from '@/lib/match-center'
+import {
+  MATCH_CENTER_HIGHLIGHTS,
+  type MatchCenterHighlight,
+} from '@/lib/match-center'
 import {
   Card,
   MEyebrow,
@@ -13,22 +16,38 @@ import {
 import { HighlightCard } from '../HighlightCard'
 
 interface State5ReadyProps {
-  /** Where the "Open full match analysis →" CTA navigates. Defaults to the
-   *  existing match drill-in route. The handoff brief calls out this round-
-   *  trip explicitly. */
+  /** February day-of-month for the match being shown. Drives clip filtering. */
+  sessionDay?: number
+  /** Set of currently flagged clip IDs — drives the ⚑ icon's filled state. */
+  flaggedClips: Set<string>
+  /** "Open full match analysis →" CTA target. */
   onOpenFullAnalysis?: () => void
+  /** Highlights row callbacks routed to the page so one modal serves them all. */
+  onClipPlay: (clip: MatchCenterHighlight) => void
+  onClipShare: (clip: MatchCenterHighlight) => void
+  onClipFlagToggle: (clip: MatchCenterHighlight) => void
 }
 
 /**
  * State 5 — analysis ready (the populated landing state).
  *
- * Header band carries the MOTM chip and scoreline; body has the match
- * footage, a horizontal highlights row, and a two-column summary
- * (team summary + top performers). The single CTA out of this surface
- * is "Open full match analysis →" — keep it bold (per the post-it note
- * in the design canvas).
+ * For now Feb 24 (vs Al Wasl Academy · 3-1 W) is hardcoded as the
+ * reference match — the header text, scoreline, and team-summary stats
+ * stay fixed. The highlights row, however, filters MATCH_CENTER_HIGHLIGHTS
+ * to the passed `sessionDay` so picking a different ready match in the
+ * calendar will show that match's clips. When the API layer ships and the
+ * header data becomes dynamic, the rest of this component will follow.
  */
-export function State5Ready({ onOpenFullAnalysis }: State5ReadyProps = {}) {
+export function State5Ready({
+  sessionDay = 24,
+  flaggedClips,
+  onOpenFullAnalysis,
+  onClipPlay,
+  onClipShare,
+  onClipFlagToggle,
+}: State5ReadyProps) {
+  const clips = MATCH_CENTER_HIGHLIGHTS.filter(h => h.sessionDay === sessionDay)
+
   return (
     <Card style={{ padding: 0 }}>
       {/* Header */}
@@ -117,7 +136,7 @@ export function State5Ready({ onOpenFullAnalysis }: State5ReadyProps = {}) {
               marginBottom: 10,
             }}
           >
-            <MEyebrow>HIGHLIGHTS · {MATCH_CENTER_HIGHLIGHTS.length} CLIPS</MEyebrow>
+            <MEyebrow>HIGHLIGHTS · {clips.length} CLIPS</MEyebrow>
             <MEyebrow color={BRAND.indigoMute}>◀ SCROLL ▶</MEyebrow>
           </div>
           <div
@@ -128,8 +147,15 @@ export function State5Ready({ onOpenFullAnalysis }: State5ReadyProps = {}) {
               paddingBottom: 4,
             }}
           >
-            {MATCH_CENTER_HIGHLIGHTS.map(h => (
-              <HighlightCard key={h.id} h={h} />
+            {clips.map(h => (
+              <HighlightCard
+                key={h.id}
+                h={h}
+                flagged={flaggedClips.has(h.id)}
+                onPlay={() => onClipPlay(h)}
+                onShare={() => onClipShare(h)}
+                onFlagToggle={() => onClipFlagToggle(h)}
+              />
             ))}
           </div>
         </div>
@@ -274,7 +300,6 @@ export function State5Ready({ onOpenFullAnalysis }: State5ReadyProps = {}) {
                   >
                     {p.score}
                   </span>
-                  {/* Reserved Scout-watch slot — v2 */}
                   <span
                     style={{
                       height: 18,
@@ -309,7 +334,6 @@ export function State5Ready({ onOpenFullAnalysis }: State5ReadyProps = {}) {
           </div>
         </div>
 
-        {/* Open full match analysis CTA */}
         <div
           style={{
             marginTop: 24,

@@ -1,6 +1,7 @@
 'use client'
 
 import { BRAND, TYPE } from '@/lib/constants'
+import { writeSessionClassify } from '@/lib/match-center-state'
 import {
   Card,
   MEyebrow,
@@ -10,13 +11,31 @@ import {
   mcButtons,
 } from '../atoms'
 
+interface State2CategoriseProps {
+  sessionId: string
+  onToast: (message: string) => void
+  onReclassify: (newStatus: 'prep' | 'drills') => void
+}
+
 /**
  * State 2 — past session, AI couldn't tell match vs drill from the
- * footage alone. The coach has to categorise so the system knows
- * whether to run match analysis or shelve it. Two-column layout:
- * uncategorised footage on the left, prompt + CTAs on the right.
+ * footage alone. Coach must categorise so we know whether to run match
+ * analysis or shelve it. Both CTAs persist a classification override
+ * (so a refresh respects the choice) and swap the contextual pane to
+ * the appropriate state.
  */
-export function State2Categorise() {
+export function State2Categorise({ sessionId, onToast, onReclassify }: State2CategoriseProps) {
+  function markAsMatch() {
+    writeSessionClassify(sessionId, 'prep')
+    onToast('Marked as match — set the lineup')
+    onReclassify('prep')
+  }
+  function markAsDrills() {
+    writeSessionClassify(sessionId, 'drills')
+    onToast('Marked as drills only')
+    onReclassify('drills')
+  }
+
   return (
     <Card style={{ padding: 26 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -82,10 +101,18 @@ export function State2Categorise() {
               gap: 8,
             }}
           >
-            <button type="button" style={{ ...mcButtons.primary, padding: '11px 14px' }}>
+            <button
+              type="button"
+              style={{ ...mcButtons.primary, padding: '11px 14px' }}
+              onClick={markAsMatch}
+            >
               Mark as match · enter lineup →
             </button>
-            <button type="button" style={{ ...mcButtons.ghost, padding: '11px 14px' }}>
+            <button
+              type="button"
+              style={{ ...mcButtons.ghost, padding: '11px 14px' }}
+              onClick={markAsDrills}
+            >
               Mark as drills only
             </button>
           </div>

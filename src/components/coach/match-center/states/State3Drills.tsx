@@ -1,14 +1,27 @@
 'use client'
 
 import { BRAND, TYPE } from '@/lib/constants'
+import { writeSessionClassify } from '@/lib/match-center-state'
 import { Card, MStatusPill, VideoBlock, mcButtons } from '../atoms'
 
+interface State3DrillsProps {
+  sessionId: string
+  onToast: (message: string) => void
+  onReclassify: (newStatus: 'prep') => void
+}
+
 /**
- * State 3 — drills session, no analysis. The coach can review the
- * footage but no match analysis runs. An escape hatch lets them
- * re-categorise if the AI got it wrong.
+ * State 3 — drills session, no analysis. Escape hatch lets the coach
+ * reclassify to match if the AI got it wrong. Reclassify persists +
+ * swaps the pane to State 1 Prep.
  */
-export function State3Drills() {
+export function State3Drills({ sessionId, onToast, onReclassify }: State3DrillsProps) {
+  function markAsMatch() {
+    writeSessionClassify(sessionId, 'prep')
+    onToast('Reclassified as match')
+    onReclassify('prep')
+  }
+
   return (
     <Card style={{ padding: 26 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -39,7 +52,11 @@ export function State3Drills() {
           Drills session.{' '}
           <span style={{ color: BRAND.indigoMute }}>No analysis.</span>
         </div>
-        <button type="button" style={{ ...mcButtons.text, marginTop: 8, fontSize: 11 }}>
+        <button
+          type="button"
+          style={{ ...mcButtons.text, marginTop: 8, fontSize: 11 }}
+          onClick={markAsMatch}
+        >
           Actually it was a match → enter lineup
         </button>
       </div>

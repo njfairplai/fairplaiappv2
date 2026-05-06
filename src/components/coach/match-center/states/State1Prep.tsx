@@ -1,8 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
 import { MATCH_CENTER_ROSTER } from '@/lib/match-center'
+import {
+  readPrepAttendance,
+  writePrepAttendance,
+  readPrepJerseys,
+  writePrepJerseys,
+  readPrepDraft,
+  writePrepDraft,
+  readPrepConfirmation,
+  writePrepConfirmation,
+  writeSessionClassify,
+  type AttendanceMap,
+  type JerseyMap,
+} from '@/lib/match-center-state'
 import {
   Card,
   MEyebrow,
@@ -12,19 +25,95 @@ import {
   mcButtons,
 } from '../atoms'
 
-/* State 1 — upcoming match prep.
+/* State 1 — upcoming match prep with attendance / lineup / confirm tabs.
  *
- * Three tabs (Bibs hidden for competitive matches):
- *   01 · Attendance — roster check, jersey numbers, present checkbox
- *   02 · Lineup     — drag onto a 4-3-3 (or skip and let AI infer)
- *   03 · Confirm    — summary + what-happens-next
- *
- * Shares the eyebrow / display / mono-meta / pill rhythm with the other
- * four states. The footer CTA bar is sticky-feeling at the bottom of
- * the card. */
+ * All four footer CTAs and every row-level edit (checkbox toggle, jersey
+ * input) persist to localStorage via match-center-state helpers. The
+ * header status pill flips PREP → CONFIRMED once the coach hits Confirm
+ * prep → so a refresh shows the new state immediately. */
 
-export function State1Prep() {
+interface State1PrepProps {
+  /** Stable session identifier — drives every localStorage key. */
+  sessionId: string
+  onToast: (message: string) => void
+  /** Called when the coach reclassifies (Mark as drills only) so the
+   *  parent can swap the contextual pane to a different state. */
+  onReclassify: (newStatus: 'drills') => void
+}
+
+export function State1Prep({ sessionId, onToast, onReclassify }: State1PrepProps) {
+  // Hydrate from localStorage on mount. SSR-safe — helpers return empty
+  // values when window is undefined.
   const [tab, setTab] = useState<'attendance' | 'lineup' | 'confirm'>('attendance')
+  const [attendance, setAttendance] = useState<AttendanceMap>({})
+  const [jerseys, setJerseys] = useState<JerseyMap>({})
+  const [confirmed, setConfirmed] = useState(false)
+
+  useEffect(() => {
+    // SSR-safe localStorage hydration: server renders with empty state,
+    // client mounts and reads persisted values. Synchronous setState in
+    // the effect body is the right shape for this — useSyncExternalStore
+    // is overkill for write-then-read-once-per-session-id.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setAttendance(readPrepAttendance(sessionId))
+    setJerseys(readPrepJerseys(sessionId))
+    const draft = readPrepDraft(sessionId)
+    if (draft?.tab) setTab(draft.tab)
+    setConfirmed(readPrepConfirmation(sessionId) != null)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [sessionId])
+
+  // Effective attendance for the header counter — falls back to the
+  // mock roster's `present` flag when the coach hasn't toggled.
+  const presentCount = useMemo(() => {
+    return MATCH_CENTER_ROSTER.filter(p => {
+      const override = attendance[p.num]
+      return override !== undefined ? override : p.present
+    }).length
+  }, [attendance])
+  const totalCount = MATCH_CENTER_ROSTER.length
+
+  function setPresence(num: number, present: boolean) {
+    const next = { ...attendance, [num]: present }
+    setAttendance(next)
+    writePrepAttendance(sessionId, next)
+  }
+  function setJersey(originalNum: number, newNum: number) {
+    if (newNum === originalNum) {
+      const next = { ...jerseys }
+      delete next[originalNum]
+      setJerseys(next)
+      writePrepJerseys(sessionId, next)
+      return
+    }
+    const next = { ...jerseys, [originalNum]: newNum }
+    setJerseys(next)
+    writePrepJerseys(sessionId, next)
+  }
+  function markAllPresent() {
+    const next: AttendanceMap = {}
+    for (const p of MATCH_CENTER_ROSTER) next[p.num] = true
+    setAttendance(next)
+    writePrepAttendance(sessionId, next)
+    onToast('All marked present')
+  }
+  function saveDraft() {
+    writePrepDraft(sessionId, { tab, savedAt: new Date().toISOString() })
+    onToast('Draft saved')
+  }
+  function confirmPrep() {
+    writePrepConfirmation(sessionId, {
+      confirmed: true,
+      confirmedAt: new Date().toISOString(),
+    })
+    setConfirmed(true)
+    onToast('Prep confirmed — see you at kickoff')
+  }
+  function markAsDrills() {
+    writeSessionClassify(sessionId, 'drills')
+    onToast('Marked as drills only')
+    onReclassify('drills')
+  }
 
   return (
     <Card style={{ padding: 0 }}>
@@ -33,7 +122,7 @@ export function State1Prep() {
         style={{
           padding: '20px 26px',
           borderBottom: `1px solid ${BRAND.line}`,
-          background: 'rgba(235,77,109,0.10)',
+          background: confirmed ? BRAND.yellowSoft : 'rgba(235,77,109,0.10)',
         }}
       >
         <div
@@ -44,7 +133,24 @@ export function State1Prep() {
             flexWrap: 'wrap',
           }}
         >
-          <MStatusPill status="prep" />
+          {confirmed ? (
+            <span
+              style={{
+                background: BRAND.yellow,
+                color: BRAND.indigo,
+                fontFamily: TYPE.mono,
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.18em',
+                padding: '3px 7px',
+                borderRadius: 3,
+              }}
+            >
+              ✓ CONFIRMED
+            </span>
+          ) : (
+            <MStatusPill status="prep" />
+          )}
           <span
             style={{
               color: BRAND.indigoMute,
@@ -58,7 +164,7 @@ export function State1Prep() {
           </span>
         </div>
         <MDisplay size={36} style={{ marginTop: 10 }}>
-          Plan your matchday
+          {confirmed ? 'Matchday is set.' : 'Plan your matchday'}
         </MDisplay>
         <div
           style={{
@@ -127,15 +233,23 @@ export function State1Prep() {
             letterSpacing: '0.18em',
           }}
         >
-          14 PRESENT · 2 OUT
+          {presentCount} PRESENT · {totalCount - presentCount} OUT
         </span>
       </div>
 
       {/* Tab content */}
       <div style={{ padding: '20px 26px', minHeight: 380 }}>
-        {tab === 'attendance' && <PrepAttendance />}
+        {tab === 'attendance' && (
+          <PrepAttendance
+            attendance={attendance}
+            jerseys={jerseys}
+            onPresenceChange={setPresence}
+            onJerseyChange={setJersey}
+            onMarkAllPresent={markAllPresent}
+          />
+        )}
         {tab === 'lineup' && <PrepLineup />}
-        {tab === 'confirm' && <PrepConfirm />}
+        {tab === 'confirm' && <PrepConfirm presentCount={presentCount} totalCount={totalCount} />}
       </div>
 
       {/* Footer CTA bar */}
@@ -150,22 +264,45 @@ export function State1Prep() {
           flexWrap: 'wrap',
         }}
       >
-        <button type="button" style={mcButtons.text}>
+        <button type="button" style={mcButtons.text} onClick={markAsDrills}>
           Mark as drills only ↗
         </button>
         <span style={{ flex: 1 }} />
-        <button type="button" style={mcButtons.ghost}>
+        <button type="button" style={mcButtons.ghost} onClick={saveDraft}>
           Save draft
         </button>
-        <button type="button" style={mcButtons.primary}>
-          Confirm prep →
+        <button
+          type="button"
+          style={{
+            ...mcButtons.primary,
+            opacity: confirmed ? 0.6 : 1,
+            cursor: confirmed ? 'default' : 'pointer',
+          }}
+          onClick={confirmed ? undefined : confirmPrep}
+          disabled={confirmed}
+        >
+          {confirmed ? 'Confirmed ✓' : 'Confirm prep →'}
         </button>
       </div>
     </Card>
   )
 }
 
-function PrepAttendance() {
+interface PrepAttendanceProps {
+  attendance: AttendanceMap
+  jerseys: JerseyMap
+  onPresenceChange: (num: number, present: boolean) => void
+  onJerseyChange: (originalNum: number, newNum: number) => void
+  onMarkAllPresent: () => void
+}
+
+function PrepAttendance({
+  attendance,
+  jerseys,
+  onPresenceChange,
+  onJerseyChange,
+  onMarkAllPresent,
+}: PrepAttendanceProps) {
   return (
     <div>
       <div
@@ -179,7 +316,7 @@ function PrepAttendance() {
         }}
       >
         <MEyebrow>ROSTER · 16 PLAYERS</MEyebrow>
-        <button type="button" style={mcButtons.text}>
+        <button type="button" style={mcButtons.text} onClick={onMarkAllPresent}>
           Mark all present →
         </button>
       </div>
@@ -193,89 +330,103 @@ function PrepAttendance() {
           background: '#fff',
         }}
       >
-        {MATCH_CENTER_ROSTER.map((p, i) => (
-          <div
-            key={p.num}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '28px 1fr 38px 60px 28px',
-              alignItems: 'center',
-              gap: 10,
-              padding: '8px 12px',
-              borderBottom:
-                i < MATCH_CENTER_ROSTER.length - 2 ? `1px solid ${BRAND.line}` : 'none',
-            }}
-          >
-            <MiniAvatar num={p.num} />
+        {MATCH_CENTER_ROSTER.map((p, i) => {
+          const present = attendance[p.num] !== undefined ? attendance[p.num] : p.present
+          const jerseyValue = jerseys[p.num] ?? p.num
+          return (
             <div
+              key={p.num}
               style={{
-                fontFamily: TYPE.body,
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: BRAND.indigo,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {p.name}
-            </div>
-            <span
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                color: BRAND.indigoMute,
-                border: `1px solid ${BRAND.line}`,
-                padding: '2px 4px',
-                borderRadius: 2,
-                textAlign: 'center',
-              }}
-            >
-              {p.pos}
-            </span>
-            <input
-              defaultValue={p.num}
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 11,
-                fontWeight: 700,
-                color: BRAND.indigo,
-                border: `1px solid ${BRAND.line}`,
-                borderRadius: 3,
-                padding: '3px 6px',
-                width: 50,
-                textAlign: 'center',
-                background: BRAND.paper,
-              }}
-            />
-            <span
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: 3,
-                border: `1.5px solid ${p.present ? BRAND.indigo : BRAND.line}`,
-                background: p.present ? BRAND.indigo : 'transparent',
-                display: 'flex',
+                display: 'grid',
+                gridTemplateColumns: '28px 1fr 38px 60px 28px',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: BRAND.sand,
-                fontSize: 12,
-                lineHeight: 1,
+                gap: 10,
+                padding: '8px 12px',
+                borderBottom:
+                  i < MATCH_CENTER_ROSTER.length - 2 ? `1px solid ${BRAND.line}` : 'none',
               }}
             >
-              {p.present && '✓'}
-            </span>
-          </div>
-        ))}
+              <MiniAvatar num={p.num} />
+              <div
+                style={{
+                  fontFamily: TYPE.body,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: BRAND.indigo,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {p.name}
+              </div>
+              <span
+                style={{
+                  fontFamily: TYPE.mono,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: '0.16em',
+                  color: BRAND.indigoMute,
+                  border: `1px solid ${BRAND.line}`,
+                  padding: '2px 4px',
+                  borderRadius: 2,
+                  textAlign: 'center',
+                }}
+              >
+                {p.pos}
+              </span>
+              <input
+                key={`${p.num}-${jerseyValue}`}
+                defaultValue={jerseyValue}
+                onBlur={e => {
+                  const v = parseInt(e.currentTarget.value, 10)
+                  if (Number.isFinite(v) && v > 0) onJerseyChange(p.num, v)
+                  else e.currentTarget.value = String(jerseyValue)
+                }}
+                style={{
+                  fontFamily: TYPE.mono,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: BRAND.indigo,
+                  border: `1px solid ${BRAND.line}`,
+                  borderRadius: 3,
+                  padding: '3px 6px',
+                  width: 50,
+                  textAlign: 'center',
+                  background: BRAND.paper,
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => onPresenceChange(p.num, !present)}
+                aria-pressed={present}
+                aria-label={`${p.name} · ${present ? 'present' : 'absent'}`}
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 3,
+                  border: `1.5px solid ${present ? BRAND.indigo : BRAND.line}`,
+                  background: present ? BRAND.indigo : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: BRAND.sand,
+                  fontSize: 12,
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                {present && '✓'}
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-/* Vertical pitch isn't used here per the design — the lineup tab uses a
- * landscape pitch with 4-3-3 dots. */
 const FORMATION: [number, number, string, number, string?][] = [
   [0.06, 0.5, 'GK', 1, BRAND.yellow],
   [0.22, 0.18, 'LB', 5],
@@ -405,12 +556,18 @@ function PrepLineup() {
   )
 }
 
-function PrepConfirm() {
+function PrepConfirm({
+  presentCount,
+  totalCount,
+}: {
+  presentCount: number
+  totalCount: number
+}) {
   const rows: [string, string][] = [
     ['Opponent', 'Al Wasl Academy'],
     ['Date · time', 'Sat 28 Feb · 15:00'],
     ['Pitch', 'Pitch 1 · MAK Academy'],
-    ['Attendees', '14 of 16 present'],
+    ['Attendees', `${presentCount} of ${totalCount} present`],
     ['Formation', '4-3-3 (set)'],
     ['Bibs', '— (competitive match)'],
   ]

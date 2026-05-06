@@ -61,7 +61,8 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
     pathname === '/coach/web/squad' ||
     pathname.startsWith('/coach/web/player/') ||
     pathname.startsWith('/coach/web/match-center') ||
-    pathname.startsWith('/coach/web/highlights')
+    pathname.startsWith('/coach/web/highlights') ||
+    pathname.startsWith('/coach/web/record')
   const colors = isBrandedRoute ? { ...themeColors, ...BRAND_CHROME } : themeColors
   // Brand fonts are now the default across every coach/web route (chrome
   // unification — Slice 6 polish), even on routes whose body still uses

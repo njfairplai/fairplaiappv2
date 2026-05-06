@@ -8,9 +8,9 @@ import { mcButtons } from './atoms'
  *   - State 5 ready pane: horizontal scrolling row, fixed 280px width
  *   - Highlights surface: compact full-width column
  *
- * Event badge encoding (yellow on indigo for goals, indigo on sand for
- * key passes, coral for tackles, etc.) keeps the row scannable at a
- * glance without forcing the coach to read every label. */
+ * All three controls (play / share / flag) emit callbacks; the parent
+ * owns the modal + share-menu state so multiple cards can share one
+ * modal instance and the flagged state stays consistent. */
 
 const EVENT_TOKENS: Record<
   MatchCenterHighlight['ev'],
@@ -23,13 +23,23 @@ const EVENT_TOKENS: Record<
   SPRINT: { bg: 'rgba(27,21,80,0.7)',     ink: BRAND.sand   },
 }
 
+interface HighlightCardProps {
+  h: MatchCenterHighlight
+  compact?: boolean
+  flagged?: boolean
+  onPlay?: () => void
+  onShare?: () => void
+  onFlagToggle?: () => void
+}
+
 export function HighlightCard({
   h,
   compact = false,
-}: {
-  h: MatchCenterHighlight
-  compact?: boolean
-}) {
+  flagged = false,
+  onPlay,
+  onShare,
+  onFlagToggle,
+}: HighlightCardProps) {
   const tokens = EVENT_TOKENS[h.ev]
   return (
     <div
@@ -47,6 +57,7 @@ export function HighlightCard({
     >
       <button
         type="button"
+        onClick={onPlay}
         aria-label={`Play clip · ${h.ev} · ${h.player}`}
         style={{
           width: 32,
@@ -110,10 +121,26 @@ export function HighlightCard({
         </div>
       </div>
       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-        <button type="button" style={mcButtons.iconGhost} aria-label="Share clip">
+        <button
+          type="button"
+          onClick={onShare}
+          style={mcButtons.iconGhost}
+          aria-label="Share clip"
+        >
           ↗
         </button>
-        <button type="button" style={mcButtons.iconGhost} aria-label="Flag clip">
+        <button
+          type="button"
+          onClick={onFlagToggle}
+          aria-label={flagged ? 'Unflag clip' : 'Flag clip for follow-up'}
+          aria-pressed={flagged}
+          style={{
+            ...mcButtons.iconGhost,
+            background: flagged ? BRAND.indigo : 'transparent',
+            color: flagged ? BRAND.sand : BRAND.indigoMute,
+            borderColor: flagged ? BRAND.indigo : BRAND.line,
+          }}
+        >
           ⚑
         </button>
       </div>

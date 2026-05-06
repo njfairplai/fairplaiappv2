@@ -103,6 +103,9 @@ export type HighlightEvent = 'GOAL' | 'KEY' | 'TACKLE' | 'SAVE' | 'SPRINT'
 
 export interface MatchCenterHighlight {
   id: string
+  /** February day-of-month the clip belongs to. Lets the Highlights page
+   *  group clips by match without a separate join. */
+  sessionDay: number
   ev: HighlightEvent
   player: string
   num: number
@@ -114,16 +117,37 @@ export interface MatchCenterHighlight {
 }
 
 /**
- * Six tagged clips for the Feb 24 match (vs Al Wasl Academy · 3-1 W).
- * Used by the State 5 horizontal row + the Highlights surface's clip list.
+ * Tagged clips across the four analysed matches in February. Used by
+ * State 5's horizontal row (filtered to the selected day) and by the
+ * coach Highlights surface (grouped by match, season-wide reel browser).
  */
 export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
-  { id: 'h1', ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 11, dur: 38, headline: 'Right-foot driven · 1-0' },
-  { id: 'h2', ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 28, dur: 22, headline: 'Press-break carry, then split' },
-  { id: 'h3', ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1' },
-  { id: 'h4', ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 56, dur: 12, headline: 'Last-ditch tackle on edge' },
-  { id: 'h5', ev: 'GOAL',   player: 'Kiyan Makkawi',    num: 6, minute: 71, dur: 36, headline: 'Box arrival · 3-1' },
-  { id: 'h6', ev: 'SPRINT', player: 'Saeed Khalifa',    num: 7, minute: 78, dur: 14, headline: '7.4 m/s recovery' },
+  // ── Feb 24 · vs Al Wasl Academy · 3-1 W (the populated reference match)
+  { id: 'h-24-1', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 11, dur: 38, headline: 'Right-foot driven · 1-0' },
+  { id: 'h-24-2', sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 28, dur: 22, headline: 'Press-break carry, then split' },
+  { id: 'h-24-3', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1' },
+  { id: 'h-24-4', sessionDay: 24, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 56, dur: 12, headline: 'Last-ditch tackle on edge' },
+  { id: 'h-24-5', sessionDay: 24, ev: 'GOAL',   player: 'Kiyan Makkawi',    num: 6, minute: 71, dur: 36, headline: 'Box arrival · 3-1' },
+  { id: 'h-24-6', sessionDay: 24, ev: 'SPRINT', player: 'Saeed Khalifa',    num: 7, minute: 78, dur: 14, headline: '7.4 m/s recovery' },
+
+  // ── Feb 17 · vs Stratford E. · composite 78
+  { id: 'h-17-1', sessionDay: 17, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 14, dur: 32, headline: 'Header from the corner' },
+  { id: 'h-17-2', sessionDay: 17, ev: 'KEY',    player: 'Hamad Al-Mansoori',num: 10, minute: 31, dur: 18, headline: 'Through-ball between CBs' },
+  { id: 'h-17-3', sessionDay: 17, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 38, dur: 9,  headline: 'Reflex stop at near post' },
+  { id: 'h-17-4', sessionDay: 17, ev: 'GOAL',   player: 'Ahmed Hassan',     num: 9, minute: 64, dur: 28, headline: 'Composed finish · 2-0' },
+  { id: 'h-17-5', sessionDay: 17, ev: 'TACKLE', player: 'Rashid Al-Marri',  num: 3, minute: 72, dur: 11, headline: 'Slide tackle on the break' },
+
+  // ── Feb 08 · vs Shabab FC · composite 71
+  { id: 'h-08-1', sessionDay: 8, ev: 'GOAL',   player: 'Kiyan Makkawi',    num: 6, minute: 22, dur: 30, headline: 'Free-kick whipped in · 1-0' },
+  { id: 'h-08-2', sessionDay: 8, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 35, dur: 12, headline: 'Tipped over the bar' },
+  { id: 'h-08-3', sessionDay: 8, ev: 'KEY',    player: 'Saeed Khalifa',    num: 7, minute: 51, dur: 16, headline: 'Cut-back to the penalty spot' },
+  { id: 'h-08-4', sessionDay: 8, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 67, dur: 10, headline: 'Block on the edge of the box' },
+
+  // ── Feb 03 · training match · composite 74 (internal A-vs-B)
+  { id: 'h-03-1', sessionDay: 3, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 9,  dur: 24, headline: 'Volley after a switch' },
+  { id: 'h-03-2', sessionDay: 3, ev: 'SPRINT', player: 'Salem Al-Dhaheri', num: 11, minute: 17, dur: 13, headline: '6.9 m/s wing chase' },
+  { id: 'h-03-3', sessionDay: 3, ev: 'KEY',    player: 'Yousef Al-Zaabi',  num: 8, minute: 26, dur: 19, headline: 'Line-breaker into the half-space' },
+  { id: 'h-03-4', sessionDay: 3, ev: 'GOAL',   player: 'Mansoor Al-Falasi',num: 17, minute: 41, dur: 26, headline: 'Far-post tap-in' },
 ]
 
 /** Default selected day on first render (the populated Ready state). */
