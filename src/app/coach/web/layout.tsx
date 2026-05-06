@@ -6,6 +6,7 @@ import { Sparkles, Film, Users, ChevronDown, Smartphone, BarChart3 } from 'lucid
 import { useTeam } from '@/contexts/TeamContext'
 import { CoachThemeProvider, useCoachTheme } from '@/contexts/CoachThemeContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
+import BottomNav from '@/components/ui/BottomNav'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { BRAND, TYPE } from '@/lib/constants'
 import { Logo } from '@/components/shared/Logo'
@@ -169,16 +170,19 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Tab bar (horizontally scrollable on mobile, icon-only) */}
+      {/* Top tab bar — desktop only. On mobile the same four tabs
+       *  surface as a fixed bottom bar at the foot of the viewport
+       *  (BottomNav portal="coachWeb"). Hiding the top tabs on mobile
+       *  avoids duplicate navigation and reclaims vertical space for
+       *  the page content. */}
       <nav style={{
-        height: isMobile ? 44 : 48, flexShrink: 0,
+        height: 48, flexShrink: 0,
         background: colors.tabBarBg,
-        display: 'flex', alignItems: 'stretch',
-        padding: isMobile ? '0 4px' : '0 24px',
-        gap: isMobile ? 0 : 4,
+        display: isMobile ? 'none' : 'flex',
+        alignItems: 'stretch',
+        padding: '0 24px',
+        gap: 4,
         borderBottom: `1px solid ${colors.tabBarBorder}`,
-        overflowX: isMobile ? 'auto' : 'visible',
-        WebkitOverflowScrolling: 'touch',
       }}>
         {tabs.map(tab => {
           const isActive = tab.exact
@@ -191,13 +195,13 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
               key={tab.href}
               onClick={() => router.push(tab.href)}
               style={{
-                display: 'flex', alignItems: 'center', gap: isMobile ? 5 : 8,
-                padding: isMobile ? '0 10px' : '0 16px',
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '0 16px',
                 border: 'none', cursor: 'pointer',
                 background: 'transparent',
                 color: isActive ? colors.tabTextActive : colors.tabText,
-                fontSize: isMobile ? 12 : (isBrandedRoute ? 12.5 : 14),
-                fontWeight: isActive ? (isBrandedRoute ? 700 : 700) : (tabFontWeight ?? 500),
+                fontSize: isBrandedRoute ? 12.5 : 14,
+                fontWeight: isActive ? 700 : (tabFontWeight ?? 500),
                 fontFamily: TYPE.body,
                 letterSpacing: isBrandedRoute ? '0.06em' : 'normal',
                 textTransform: isBrandedRoute ? ('uppercase' as const) : ('none' as const),
@@ -213,19 +217,30 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
                 if (!isActive) e.currentTarget.style.color = colors.tabText
               }}
             >
-              <Icon size={isMobile ? 14 : 16} />
+              <Icon size={16} />
               {tab.label}
             </button>
           )
         })}
       </nav>
 
-      {/* Content */}
-      <main style={{ flex: 1, overflow: 'auto' }}>
+      {/* Content. On mobile we pad the bottom of the scroll area to
+       *  match the BottomNav height so the last surface row never sits
+       *  hidden behind the fixed bar. */}
+      <main
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          paddingBottom: isMobile ? 72 : 0,
+        }}
+      >
         {children}
       </main>
 
-      <FeedbackOverlay bottomOffset={16} />
+      {/* Mobile bottom nav — same four tabs as the desktop top bar. */}
+      {isMobile && <BottomNav portal="coachWeb" />}
+
+      <FeedbackOverlay bottomOffset={isMobile ? 80 : 16} />
     </div>
   )
 }

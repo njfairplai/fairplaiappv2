@@ -1,13 +1,17 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User, BarChart3, MessageSquare } from 'lucide-react'
+import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User, BarChart3, MessageSquare, Sparkles, Film } from 'lucide-react'
 
 interface NavItem {
   id: string
   label: string
   href: string
   icon: React.ElementType
+  /** When true, active state is `pathname === href`. When false (default),
+   *  active state matches `pathname.startsWith(href)` so child routes
+   *  (e.g. /coach/web/match-center?session=feb24) light up the parent tab. */
+  exact?: boolean
 }
 
 // Parent + player share the same 5-tab structure (single portal, two
@@ -37,10 +41,28 @@ const coachNav: NavItem[] = [
   { id: 'settings', label: 'Settings', href: '/coach/settings', icon: Settings },
 ]
 
-export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'player' }) {
+/** Coach web app — same four tabs as the desktop top nav, surfaced as
+ *  a bottom bar on mobile. The desktop top nav handles >=768px; this
+ *  component only mounts <768px and the layout hides the top tabs to
+ *  avoid duplicate navigation. */
+const coachWebNav: NavItem[] = [
+  { id: 'hub', label: 'Hub', href: '/coach/web', icon: Sparkles, exact: true },
+  { id: 'match-center', label: 'Match', href: '/coach/web/match-center', icon: BarChart3 },
+  { id: 'players', label: 'Players', href: '/coach/web/squad', icon: Users },
+  { id: 'highlights', label: 'Highlights', href: '/coach/web/highlights', icon: Film },
+]
+
+export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'coachWeb' | 'player' }) {
   const pathname = usePathname()
   const router = useRouter()
-  const items = portal === 'player' ? playerNav : portal === 'parent' ? parentNav : coachNav
+  const items =
+    portal === 'player'
+      ? playerNav
+      : portal === 'parent'
+      ? parentNav
+      : portal === 'coachWeb'
+      ? coachWebNav
+      : coachNav
 
   return (
     <nav
@@ -66,7 +88,9 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'pl
         }}
       >
         {items.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
           return (
             <button
