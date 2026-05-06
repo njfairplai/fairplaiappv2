@@ -1,15 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Footprints } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import {
   getFatigueSamplesForPlayer,
   getOpenPPEFlagsForPlayer,
-  fatigueTier,
-  type FatigueTier,
 } from '@/lib/parent-portal'
 import type { FatigueSample, PPEFlag } from '@/lib/types'
 import { BRAND, TYPE } from '@/lib/constants'
+import { FatigueTile } from '@/components/welfare/FatigueTile'
 
 /**
  * Welfare cards for the parent /development page.
@@ -40,7 +39,6 @@ export function WelfareCards({ playerId, gearAnchor = 'gear' }: WelfareCardsProp
 
   const sortedSamples = [...samples].sort((a, b) => a.date.localeCompare(b.date))
   const latest = sortedSamples[sortedSamples.length - 1]
-  const tier: FatigueTier | null = latest ? fatigueTier(latest.load) : null
 
   if (!latest && openPpe.length === 0) return null
 
@@ -49,23 +47,7 @@ export function WelfareCards({ playerId, gearAnchor = 'gear' }: WelfareCardsProp
       {latest && (
         <section style={{ padding: '20px 16px 0' }}>
           <ParentCard label="WORKLOAD">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <FatiguePill tier={tier!} value={latest.load} />
-              <span
-                style={{
-                  fontFamily: TYPE.body,
-                  fontSize: 12.5,
-                  color: BRAND.indigoMute,
-                }}
-              >
-                {tier === 'high'
-                  ? 'High load — coach is monitoring.'
-                  : tier === 'moderate'
-                  ? 'Steady, manageable load.'
-                  : 'Comfortable load this week.'}
-              </span>
-            </div>
-            <FatigueLine samples={sortedSamples} />
+            <FatigueTile samples={sortedSamples} size="wide" />
             <div
               style={{
                 display: 'grid',
@@ -165,37 +147,6 @@ function ParentCard({
   )
 }
 
-function FatiguePill({ tier, value }: { tier: FatigueTier; value: number }) {
-  const color = tier === 'high' ? BRAND.coral : tier === 'moderate' ? BRAND.yellow : BRAND.indigo
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '4px 10px',
-        background: tier === 'low' ? BRAND.indigoSoft : `${color}22`,
-        border: `1px solid ${color}`,
-        borderRadius: 999,
-      }}
-    >
-      <Footprints size={12} color={tier === 'low' ? BRAND.indigo : color} />
-      <span
-        style={{
-          fontFamily: TYPE.mono,
-          fontSize: 10,
-          letterSpacing: '0.16em',
-          color: tier === 'low' ? BRAND.indigo : color,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-        }}
-      >
-        {tier} · {value}
-      </span>
-    </span>
-  )
-}
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div
@@ -217,26 +168,3 @@ function Stat({ label, value }: { label: string; value: string }) {
   )
 }
 
-function FatigueLine({ samples }: { samples: FatigueSample[] }) {
-  const W = 320
-  const H = 64
-  const padX = 8
-  const padY = 8
-  if (samples.length === 0) return null
-  const pts = samples.map((s, i) => {
-    const x = padX + (i / Math.max(1, samples.length - 1)) * (W - 2 * padX)
-    const y = H - padY - (s.load / 100) * (H - 2 * padY)
-    return { x, y }
-  })
-  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
-  const fillPath = `${path} L ${pts[pts.length - 1].x.toFixed(1)} ${(H - padY).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(H - padY).toFixed(1)} Z`
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
-      <path d={fillPath} fill="var(--brand-indigo)" opacity={0.10} />
-      <path d={path} stroke="var(--brand-indigo)" strokeWidth={1.6} fill="none" />
-      {pts.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={2} fill="var(--brand-indigo)" />
-      ))}
-    </svg>
-  )
-}

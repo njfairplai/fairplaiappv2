@@ -80,6 +80,54 @@ export default function ParentNotificationsPage() {
     >
       <PortalTopBar title="Notifications" showBack />
 
+      {/* Legend — small dot+label rail so the inbox dots are decodable.
+       *  Kinds that don't surface for this kid still render so the user
+       *  has a stable mental model. Scrolls horizontally on narrow widths. */}
+      <div
+        style={{
+          padding: '10px 16px',
+          display: 'flex',
+          gap: 10,
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+          borderBottom: '1px solid var(--brand-line)',
+        }}
+      >
+        {NOTIFICATION_KINDS.map(k => (
+          <div
+            key={k}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: dotColorForKind(k),
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 9,
+                letterSpacing: '0.16em',
+                color: 'var(--brand-indigo-mute)',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {legendLabelForKind(k)}
+            </span>
+          </div>
+        ))}
+      </div>
+
       <div
         style={{
           padding: '14px 16px',
@@ -219,31 +267,38 @@ function NotificationDot({ kind }: { kind: PortalNotification['kind'] }) {
   )
 }
 
+/* Each NotificationKind gets a distinct dot colour so the inbox at-a-glance
+ * tells you what's new without reading. Mostly brand tokens; a couple of
+ * functional accents (amber, teal, purple) for kinds that would otherwise
+ * collide. The NOTIFICATION_LEGEND below mirrors this map — keep them in
+ * sync. */
 function dotColorForKind(kind: PortalNotification['kind']): string {
   switch (kind) {
-    case 'clips':
-      return 'var(--brand-indigo)'
-    case 'coach_note':
-      return 'var(--brand-yellow)'
-    case 'idp_update':
-      return 'var(--brand-coral)'
-    case 'attendance_milestone':
-      return 'var(--brand-yellow)'
-    case 'session_scheduled':
-      return 'var(--brand-indigo-mute)'
-    // Welfare-stream additions
-    case 'shared_clip':
-      return 'var(--brand-indigo)'
-    case 'coach_cam':
-      return 'var(--brand-yellow)'
-    case 'injury':
-      return 'var(--brand-coral)'
-    case 'ppe':
-      return 'var(--brand-coral)'
-    default:
-      return 'var(--brand-indigo-mute)'
+    case 'clips':                 return 'var(--brand-indigo)'         // deep indigo
+    case 'shared_clip':           return '#7C3AED'                     // purple
+    case 'coach_cam':             return '#14B8A6'                     // teal
+    case 'coach_note':            return 'var(--brand-yellow)'         // yellow
+    case 'idp_update':            return 'var(--brand-indigo-mid)'     // mid indigo
+    case 'attendance_milestone':  return 'var(--brand-yellow-soft)'    // pale yellow
+    case 'session_scheduled':     return 'var(--brand-indigo-mute)'    // gray-purple
+    case 'injury':                return 'var(--brand-coral)'          // coral
+    case 'ppe':                   return '#E89A45'                     // amber
+    default:                      return 'var(--brand-indigo-mute)'
   }
 }
+
+/** Kinds that ever surface in the inbox today, in display order for the legend. */
+const NOTIFICATION_KINDS: PortalNotification['kind'][] = [
+  'clips',
+  'shared_clip',
+  'coach_cam',
+  'coach_note',
+  'idp_update',
+  'attendance_milestone',
+  'session_scheduled',
+  'injury',
+  'ppe',
+]
 
 function labelForKind(kind: PortalNotification['kind']): string {
   switch (kind) {
@@ -267,5 +322,22 @@ function labelForKind(kind: PortalNotification['kind']): string {
       return 'GEAR · WELFARE'
     default:
       return 'UPDATE'
+  }
+}
+
+/** Legend uses tighter labels (no "WELFARE" suffix) so the chip rail
+ *  fits on narrower mobile viewports. */
+function legendLabelForKind(kind: PortalNotification['kind']): string {
+  switch (kind) {
+    case 'clips':                 return 'CLIPS'
+    case 'shared_clip':           return 'SHARED'
+    case 'coach_cam':             return 'COACH CAM'
+    case 'coach_note':            return 'NOTE'
+    case 'idp_update':            return 'IDP'
+    case 'attendance_milestone':  return 'MILESTONE'
+    case 'session_scheduled':     return 'SCHEDULE'
+    case 'injury':                return 'INJURY'
+    case 'ppe':                   return 'GEAR'
+    default:                      return 'UPDATE'
   }
 }

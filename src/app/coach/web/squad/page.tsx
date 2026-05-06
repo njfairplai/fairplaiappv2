@@ -11,7 +11,11 @@ import { getSeasonScoresFor, scoreColor } from '@/lib/squad-season-score'
 import { Pitch } from '@/components/coach/squad-grass/Pitch'
 import { PlayerToken } from '@/components/coach/squad-grass/PlayerToken'
 import { SideRail } from '@/components/coach/squad-grass/SideRail'
-import { getLatestFatigueByPlayer, fatigueTier } from '@/lib/parent-portal'
+import {
+  getAllInjuryFlags,
+  getLatestFatigueByPlayer,
+  fatigueTier,
+} from '@/lib/parent-portal'
 
 /** A player's IDP draft is "stale" if it was last saved more than this many
  *  days ago — or never started. Matches the heuristic the IDPs editor uses. */
@@ -39,7 +43,12 @@ export default function CoachWebSquadPage() {
   const { selectedRosterId } = useTeam()
   const isMobile = useIsMobile()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [idpFilterOn, setIdpFilterOn] = useState(false)
+  // Token-dimming filter. `all` is the default — no token gets dimmed.
+  // The other three pills focus the squad on welfare slices: IDP stale,
+  // high fatigue, recent injuries. Pills are mutually exclusive (toggle
+  // back to 'all' by tapping the active pill).
+  type SquadFilter = 'all' | 'idp_stale' | 'high_fatigue' | 'injuries'
+  const [activeFilter, setActiveFilter] = useState<SquadFilter>('all')
 
   // Read IDP drafts from localStorage. Players whose draft is missing OR older
   // than IDP_STALE_DAYS surface as "needs review" when the filter is on.
@@ -76,14 +85,38 @@ export default function CoachWebSquadPage() {
     [rosterPlayers],
   )
 
-  // Welfare overlay — most-recent fatigue sample per player. Read on
-  // mount via state so the SSR pass returns an empty map (deterministic).
+  // Welfare overlay — most-recent fatigue sample per player + injury
+  // flags from the last 30 days. Read post-mount so SSR is deterministic.
   const [fatigueByPlayer, setFatigueByPlayer] = useState<
     ReturnType<typeof getLatestFatigueByPlayer>
   >({})
+  const [recentInjuryIds, setRecentInjuryIds] = useState<Set<string>>(new Set())
   useEffect(() => {
     setFatigueByPlayer(getLatestFatigueByPlayer())
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000
+    const ids = new Set<string>()
+    for (const inj of getAllInjuryFlags()) {
+      if (new Date(inj.createdAt).getTime() >= cutoff) ids.add(inj.playerId)
+    }
+    setRecentInjuryIds(ids)
   }, [])
+
+  // Player-ID sets per filter. Computed inline so they re-react when the
+  // dependent stores update.
+  const highFatigueIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const [pid, sample] of Object.entries(fatigueByPlayer)) {
+      if (fatigueTier(sample.load) === 'high') ids.add(pid)
+    }
+    return ids
+  }, [fatigueByPlayer])
+  const filterMatchIds = useMemo<Set<string> | null>(() => {
+    if (activeFilter === 'all') return null
+    if (activeFilter === 'idp_stale') return staleIds
+    if (activeFilter === 'high_fatigue') return highFatigueIds
+    if (activeFilter === 'injuries') return recentInjuryIds
+    return null
+  }, [activeFilter, staleIds, highFatigueIds, recentInjuryIds])
 
   // Group every roster player into their cluster, then lay out positions.
   const positioned = useMemo(() => {
@@ -217,73 +250,71 @@ export default function CoachWebSquadPage() {
         </div>
       </div>
 
-      {/* "Needs IDP review" filter — when on, dim every token whose IDP is up
-          to date so the coach instantly sees who's overdue for an IDP touch. */}
+      {/* Squad filter pills — focus the pitch on a welfare slice. Tokens
+       *  not matching the active filter dim out. Pills are mutually
+       *  exclusive; tap the active pill again to return to "All". */}
       <div
         style={{
           padding: isMobile ? '0 16px' : '0 28px',
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 8,
           flexWrap: 'wrap',
         }}
       >
-        <button
-          type="button"
-          onClick={() => setIdpFilterOn(v => !v)}
-          aria-pressed={idpFilterOn}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 14px',
-            borderRadius: 999,
-            border: idpFilterOn
-              ? '1px solid var(--brand-indigo)'
-              : '1px solid var(--brand-line)',
-            background: idpFilterOn ? 'var(--brand-indigo)' : 'transparent',
-            color: idpFilterOn ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-            fontFamily: 'var(--font-body)',
-            fontSize: 12.5,
-            fontWeight: 600,
-            cursor: 'pointer',
-            letterSpacing: '0.02em',
-          }}
-        >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: idpFilterOn ? 'var(--brand-yellow)' : 'var(--brand-coral)',
-              display: 'inline-block',
-            }}
-          />
-          Needs IDP review
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.12em',
-              opacity: 0.7,
-            }}
-          >
-            {staleIds.size}
-          </span>
-        </button>
-        {idpFilterOn && (
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.18em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
-            DIMMED · {rosterPlayers.length - rosterPlayers.filter(p => staleIds.has(p.id)).length} UP-TO-DATE
-          </span>
-        )}
+        {[
+          { id: 'all' as const, label: 'All', count: rosterPlayers.length, dot: 'var(--brand-indigo)' },
+          { id: 'idp_stale' as const, label: 'IDP stale', count: staleIds.size, dot: 'var(--brand-coral)' },
+          { id: 'high_fatigue' as const, label: 'High fatigue', count: highFatigueIds.size, dot: 'var(--brand-coral)' },
+          { id: 'injuries' as const, label: 'Injuries this month', count: recentInjuryIds.size, dot: '#E89A45' },
+        ].map(pill => {
+          const isActive = activeFilter === pill.id
+          return (
+            <button
+              key={pill.id}
+              type="button"
+              onClick={() => setActiveFilter(isActive ? 'all' : pill.id)}
+              aria-pressed={isActive}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 14px',
+                borderRadius: 999,
+                border: isActive ? '1px solid var(--brand-indigo)' : '1px solid var(--brand-line)',
+                background: isActive ? 'var(--brand-indigo)' : 'transparent',
+                color: isActive ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 12.5,
+                fontWeight: 600,
+                cursor: 'pointer',
+                letterSpacing: '0.02em',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {pill.id !== 'all' && (
+                <span
+                  style={{
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: isActive ? 'var(--brand-yellow)' : pill.dot,
+                    display: 'inline-block',
+                  }}
+                />
+              )}
+              {pill.label}
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  opacity: 0.7,
+                }}
+              >
+                {pill.count}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* pitch — full-width on every breakpoint; the player panel pops out
@@ -298,7 +329,7 @@ export default function CoachWebSquadPage() {
           <Pitch>
             {positioned.map(({ player, x, y }) => {
               const score = seasonScores[player.id]?.avg ?? 0
-              const dimmed = idpFilterOn && !staleIds.has(player.id)
+              const dimmed = filterMatchIds !== null && !filterMatchIds.has(player.id)
               const sample = fatigueByPlayer[player.id]
               const tier = sample ? fatigueTier(sample.load) : undefined
               return (

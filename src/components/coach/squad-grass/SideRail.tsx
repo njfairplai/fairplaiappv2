@@ -138,7 +138,12 @@ export function SideRail({ player, season, open, onClose }: SideRailProps) {
               }
             : {
                 position: 'fixed',
-                top: 0,
+                // Sit below the layout header (60px desktop) so the sticky
+                // chrome doesn't clip the panel's top section. The tab bar
+                // (48px) lives directly under the header so we tuck under
+                // it too — the sidebar reads as anchored to the content
+                // area, not the chrome.
+                top: 108,
                 right: 0,
                 bottom: 0,
                 width: 'min(420px, 92vw)',

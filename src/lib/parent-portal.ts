@@ -446,7 +446,9 @@ export function readClientNotifications(playerId: string): PortalNotification[] 
           shortDate: formatShortDate(
             new Date(note.savedAt).toISOString().slice(0, 10),
           ),
-          href: '/parent/stats',
+          // Land on the per-match page where the note renders inline via
+          // ReadOnlyNoteRenderer — /parent/stats has no per-session note.
+          href: `/parent/match/${sessionId}`,
         })
       }
     }

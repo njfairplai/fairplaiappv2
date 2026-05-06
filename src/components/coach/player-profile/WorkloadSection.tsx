@@ -1,16 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Footprints, Plus } from 'lucide-react'
+import { AlertTriangle, Plus, Send } from 'lucide-react'
 import { BRAND, TYPE } from '@/lib/constants'
 import {
   getFatigueSamplesForPlayer,
   getPPEFlagsForPlayer,
-  fatigueTier,
-  type FatigueTier,
 } from '@/lib/parent-portal'
 import { flagPPE } from '@/lib/match-center'
 import type { FatigueSample, PPEFlag, PPEGearType } from '@/lib/types'
+import { SendClipSheet } from './SendClipSheet'
+import { Toast } from '@/components/coach/match-center/Toast'
+import { FatigueTile } from '@/components/welfare/FatigueTile'
 
 /* Workload + PPE section for the coach player profile. Lives below the
  * IDP postscript so it doesn't fight the match/season story above it.
@@ -39,6 +40,8 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
   const [samples, setSamples] = useState<FatigueSample[]>([])
   const [ppe, setPpe] = useState<PPEFlag[]>([])
   const [ppeOpen, setPpeOpen] = useState(false)
+  const [sendClipOpen, setSendClipOpen] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   // Hydrate from localStorage post-mount so SSR is stable.
   useEffect(() => {
@@ -49,7 +52,6 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
 
   const sorted = [...samples].sort((a, b) => a.date.localeCompare(b.date))
   const latest = sorted[sorted.length - 1]
-  const tier: FatigueTier | null = latest ? fatigueTier(latest.load) : null
   const openPpe = ppe.filter(f => f.status === 'open')
 
   return (
@@ -66,6 +68,8 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: 14,
+          gap: 10,
+          flexWrap: 'wrap',
         }}
       >
         <div
@@ -79,9 +83,21 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
         >
           WORKLOAD &amp; GEAR
         </div>
-        {tier && (
-          <FatiguePill tier={tier} value={latest!.load} />
-        )}
+        <button
+          type="button"
+          onClick={() => setSendClipOpen(true)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 12px',
+            border: `1px solid ${BRAND.indigo}`, borderRadius: 6,
+            background: 'transparent', color: BRAND.indigo,
+            fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.16em', fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          <Send size={11} />
+          SEND A CLIP
+        </button>
       </div>
 
       <div
@@ -91,54 +107,17 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
           gap: 14,
         }}
       >
-        {/* Fatigue trend card */}
-        <div
-          style={{
-            background: BRAND.paper,
-            border: `1px solid ${BRAND.line}`,
-            borderRadius: 12,
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 10,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 10,
-                letterSpacing: '0.22em',
-                color: BRAND.indigoMute,
-                fontWeight: 700,
-              }}
-            >
-              FATIGUE LOAD · LAST {sorted.length}
-            </span>
-            {latest && (
-              <span style={{ fontFamily: TYPE.body, fontSize: 11.5, color: BRAND.indigoMute }}>
-                Latest {latest.load}
-              </span>
-            )}
-          </div>
-          {sorted.length > 0 ? (
-            <FatigueLine samples={sorted} />
-          ) : (
-            <div style={{ fontFamily: TYPE.body, fontSize: 12.5, color: BRAND.indigoMute }}>
-              No samples yet.
-            </div>
-          )}
+        {/* Fatigue tile — single big number + tier + trend chip. The
+         *  detail stats (top sprint, sprints, dist/min) sit underneath
+         *  as small stat cards. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <FatigueTile samples={sorted} size="wide" />
           {latest && (
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr 1fr',
                 gap: 8,
-                marginTop: 12,
               }}
             >
               <Stat label="Top sprint" value={`${latest.topSprintKmh.toFixed(1)} km/h`} />
@@ -242,34 +221,17 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
           onSaved={() => setTick(t => t + 1)}
         />
       )}
-    </section>
-  )
-}
-
-function FatiguePill({ tier, value }: { tier: FatigueTier; value: number }) {
-  const color =
-    tier === 'high' ? BRAND.coral : tier === 'moderate' ? BRAND.yellow : BRAND.indigo
-  return (
-    <div
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '4px 10px',
-        background: tier === 'low' ? BRAND.indigoSoft : `${color}22`,
-        border: `1px solid ${color}`,
-        borderRadius: 999,
-      }}
-    >
-      <Footprints size={12} color={tier === 'low' ? BRAND.indigo : color} />
-      <span
-        style={{
-          fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.16em',
-          color: tier === 'low' ? BRAND.indigo : color, fontWeight: 700,
-          textTransform: 'uppercase',
+      <SendClipSheet
+        open={sendClipOpen}
+        playerId={playerId}
+        playerName={playerName}
+        onClose={() => setSendClipOpen(false)}
+        onSent={parentName => {
+          setToast(parentName ? `Sent to ${parentName}` : 'Clip uploaded')
         }}
-      >
-        {tier} · {value}
-      </span>
-    </div>
+      />
+      <Toast message={toast} onDismiss={() => setToast(null)} />
+    </section>
   )
 }
 
@@ -279,51 +241,6 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div style={{ fontFamily: TYPE.display, fontSize: 15, fontWeight: 700, color: BRAND.indigo, letterSpacing: '-0.01em' }}>{value}</div>
       <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 4, fontWeight: 700 }}>{label.toUpperCase()}</div>
     </div>
-  )
-}
-
-function FatigueLine({ samples }: { samples: FatigueSample[] }) {
-  const W = 320
-  const H = 80
-  const padX = 8
-  const padY = 10
-  const min = 0
-  const max = 100
-  const pts = samples.map((s, i) => {
-    const x = padX + (i / Math.max(1, samples.length - 1)) * (W - 2 * padX)
-    const y = H - padY - ((s.load - min) / (max - min)) * (H - 2 * padY)
-    return { x, y, load: s.load, date: s.date }
-  })
-  const path = pts
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
-    .join(' ')
-  const fillPath = `${path} L ${pts[pts.length - 1].x.toFixed(1)} ${(H - padY).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(H - padY).toFixed(1)} Z`
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
-      {/* baseline + threshold gridlines */}
-      <line x1={padX} y1={H - padY} x2={W - padX} y2={H - padY} stroke="var(--brand-line)" strokeWidth={1} />
-      <line
-        x1={padX}
-        y1={H - padY - ((75 - min) / (max - min)) * (H - 2 * padY)}
-        x2={W - padX}
-        y2={H - padY - ((75 - min) / (max - min)) * (H - 2 * padY)}
-        stroke="var(--brand-coral)"
-        strokeDasharray="2 4"
-        strokeWidth={1}
-        opacity={0.6}
-      />
-      <path d={fillPath} fill="var(--brand-indigo)" opacity={0.10} />
-      <path d={path} stroke="var(--brand-indigo)" strokeWidth={1.6} fill="none" />
-      {pts.map(p => (
-        <circle
-          key={p.date}
-          cx={p.x}
-          cy={p.y}
-          r={2.5}
-          fill="var(--brand-indigo)"
-        />
-      ))}
-    </svg>
   )
 }
 

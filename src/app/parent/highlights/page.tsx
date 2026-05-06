@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Play, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Play, ChevronLeft, ChevronRight, Camera, Send } from 'lucide-react'
 import { highlights as allHighlights, sessions } from '@/lib/mockData'
 import {
   getKidsForParent,
@@ -13,13 +13,38 @@ import {
   mergeNotifications,
   type PortalNotification,
 } from '@/lib/parent-portal'
+import { MATCH_CENTER_HIGHLIGHTS } from '@/lib/match-center'
+import {
+  getSharedClipsForPlayer,
+  getCoachCamClipsForPlayer,
+  type SharedClipRecord,
+} from '@/lib/parent-portal'
+import type { CoachCamClip } from '@/lib/types'
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
-import { CoachClipsRail } from '@/components/parent-portal/CoachClipsRail'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
 import type { Highlight } from '@/lib/types'
 
 const PAGE_SIZE = 5
+
+/** Shared + Coach-Cam clips drop out of the parent's view this many ms
+ *  after the coach pushed them. The underlying records stay in
+ *  localStorage so we have a real backend swap-in path; the UI just
+ *  filters them out. 15 days per product brief. */
+const COACH_CLIP_EXPIRY_MS = 15 * 24 * 60 * 60 * 1000
+
+/** Discriminated union for the "From your coach" group rows. */
+type CoachTouchedRow =
+  | {
+      kind: 'shared'
+      clip: Highlight
+      record: SharedClipRecord
+      headline: string
+    }
+  | {
+      kind: 'coach_cam'
+      cam: CoachCamClip
+    }
 
 type EventFilter = 'all' | 'goal' | 'shot' | 'key_pass' | 'def' | 'save'
 
@@ -76,6 +101,40 @@ export default function ParentHighlightsPage() {
         const bd = sessions.find(s => s.id === b.sessionId)?.date ?? ''
         return bd.localeCompare(ad)
       })
+  }, [activeKid])
+
+  // Coach-touched clips — clips the coach forwarded via Share Clip OR
+  // uploaded via Coach Cam. Both surface at the TOP of the highlights
+  // grid as a single "From your coach" group, with a per-clip badge
+  // distinguishing source. Records older than 15 days drop off.
+  const [coachTouched, setCoachTouched] = useState<CoachTouchedRow[]>([])
+  useEffect(() => {
+    if (!activeKid) return
+    const cutoff = Date.now() - COACH_CLIP_EXPIRY_MS
+    const rows: CoachTouchedRow[] = []
+
+    for (const rec of getSharedClipsForPlayer(activeKid.id)) {
+      if (new Date(rec.sentAt).getTime() < cutoff) continue
+      const clip = allHighlights.find(h => h.id === rec.highlightId)
+      if (!clip) continue
+      const mc = MATCH_CENTER_HIGHLIGHTS.find(m => m.id === rec.highlightId)
+      rows.push({
+        kind: 'shared',
+        clip,
+        record: rec,
+        headline: mc?.headline ?? rec.message ?? 'Coach shared this clip',
+      })
+    }
+    for (const cam of getCoachCamClipsForPlayer(activeKid.id)) {
+      if (new Date(cam.uploadedAt).getTime() < cutoff) continue
+      rows.push({ kind: 'coach_cam', cam })
+    }
+    rows.sort((a, b) => {
+      const aDate = a.kind === 'shared' ? a.record.sentAt : a.cam.uploadedAt
+      const bDate = b.kind === 'shared' ? b.record.sentAt : b.cam.uploadedAt
+      return bDate.localeCompare(aDate)
+    })
+    setCoachTouched(rows)
   }, [activeKid])
 
   const filtered = useMemo(
@@ -176,11 +235,6 @@ export default function ParentHighlightsPage() {
         activeKidId={activeKidId}
         onSwitch={setActiveKidId}
       />
-
-      {/* Coach's clips — sat above the season-reel hero so the
-       *  "things the coach picked out for you" surface is the first
-       *  thing the parent sees on this tab. Auto-hides when empty. */}
-      <CoachClipsRail playerId={activeKid.id} />
 
       {/* Season reel hero */}
       {playerHighlights.length > 0 && (
@@ -312,6 +366,59 @@ export default function ParentHighlightsPage() {
           gap: 18,
         }}
       >
+        {/* "From your coach" group — promoted to the top of the grid
+         *  when the coach has shared clips or uploaded Coach Cam clips
+         *  in the last 15 days. Only shows when the filter is `all` so
+         *  the AI event filters apply only to the AI grid below. */}
+        {filter === 'all' && coachTouched.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9.5,
+                  letterSpacing: '0.18em',
+                  color: 'var(--brand-indigo-mute)',
+                  fontWeight: 700,
+                }}
+              >
+                FROM YOUR COACH
+              </div>
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: '0.18em',
+                  color: 'var(--brand-indigo)',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {coachTouched.length} {coachTouched.length === 1 ? 'CLIP' : 'CLIPS'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {coachTouched.map(row => (
+                <CoachTouchedClipRow
+                  key={row.kind === 'shared' ? row.record.id : row.cam.id}
+                  row={row}
+                  onOpen={() => {
+                    const id = row.kind === 'shared' ? row.clip.id : row.cam.id
+                    router.push(`/parent/clips/${id}?source=${row.kind}`)
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {grouped.length === 0 ? (
           <div
             style={{
@@ -453,6 +560,121 @@ export default function ParentHighlightsPage() {
         )}
       </section>
     </div>
+  )
+}
+
+/**
+ * Card row for a coach-touched clip (Share Clip OR Coach Cam). Same row
+ * height as ClipRow so the "From your coach" group reads as part of the
+ * highlights grid, just with a source badge that distinguishes it from
+ * AI clips. Tap routes through to /parent/clips/[clipId].
+ */
+function CoachTouchedClipRow({
+  row,
+  onOpen,
+}: {
+  row: CoachTouchedRow
+  onOpen: () => void
+}) {
+  const isShared = row.kind === 'shared'
+  const sourceColor = isShared ? '#7C3AED' : '#14B8A6'
+  const sourceLabel = isShared ? 'SHARED' : 'COACH CAM'
+  const SourceIcon = isShared ? Send : Camera
+  const title = isShared ? row.headline : row.cam.caption ?? 'Coach Cam clip'
+  const meta = isShared
+    ? `${row.clip.eventType.toUpperCase()} · ${row.clip.durationSeconds}S`
+    : `${(row.cam.tag ?? 'moment').toUpperCase()} · ${row.cam.durationSeconds}S`
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto',
+        alignItems: 'center',
+        gap: 10,
+        background: 'var(--brand-paper)',
+        border: '1px solid var(--brand-line)',
+        borderLeft: `3px solid ${sourceColor}`,
+        borderRadius: 8,
+        padding: '10px 12px',
+        cursor: 'pointer',
+        textAlign: 'left',
+      }}
+    >
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          background: 'var(--brand-indigo)',
+          color: 'var(--brand-sand)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Play size={14} fill="currentColor" />
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '2px 6px',
+              borderRadius: 3,
+              background: `${sourceColor}1A`,
+              color: sourceColor,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              letterSpacing: '0.16em',
+              fontWeight: 800,
+              lineHeight: 1,
+            }}
+          >
+            <SourceIcon size={9} />
+            {sourceLabel}
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 13,
+              color: 'var(--brand-indigo)',
+              fontWeight: 600,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {title}
+          </span>
+        </div>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 9.5,
+            letterSpacing: '0.16em',
+            color: 'var(--brand-indigo-mute)',
+            fontWeight: 700,
+            marginTop: 4,
+          }}
+        >
+          {meta}
+        </div>
+      </div>
+      <span
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 14,
+          color: 'var(--brand-indigo-mute)',
+        }}
+      >
+        →
+      </span>
+    </button>
   )
 }
 

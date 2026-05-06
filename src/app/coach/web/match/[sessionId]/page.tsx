@@ -11,10 +11,12 @@ import { getKeyStats } from '@/lib/squad-position-stats'
 import {
   getInjuryFlagsForSession,
   getLatestFatigueByPlayer,
+  getFatigueSamplesForPlayer,
   fatigueTier,
   type FatigueTier,
 } from '@/lib/parent-portal'
 import { InjurySheet } from '@/components/coach/match-center/InjurySheet'
+import { FatigueTile } from '@/components/welfare/FatigueTile'
 
 const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
 
@@ -683,6 +685,19 @@ function V3PlayerDetail({
   const [injurySheetOpen, setInjurySheetOpen] = useState(false)
   const playerInjuries = sessionInjuries.filter(i => i.playerId === p.id)
 
+  // Fatigue samples (mock 0–100 from welfare-store) — hydrated client-side
+  // so SSR + client match. Sorted oldest → newest for FatigueTile's trend.
+  const [fatigueSamples, setFatigueSamples] = useState<
+    ReturnType<typeof getFatigueSamplesForPlayer>
+  >([])
+  useEffect(() => {
+    setFatigueSamples(
+      [...getFatigueSamplesForPlayer(p.id)].sort((s1, s2) =>
+        s1.date.localeCompare(s2.date),
+      ),
+    )
+  }, [p.id])
+
   // Season average not tracked per-match in mock data — use composite as a placeholder.
   // Real implementation will pull this from PlayerSeasonStats.
   const radarData = [
@@ -795,6 +810,11 @@ function V3PlayerDetail({
             }}>★ MOTM</div>
           )}
         </div>
+      </div>
+
+      {/* Fatigue tile — sits below the composite band as a peer metric. */}
+      <div style={{ padding: '0 24px 20px', borderBottom: `1px solid ${BRAND.line}` }}>
+        <FatigueTile samples={fatigueSamples} size="wide" />
       </div>
 
       {/* Performance Radar */}

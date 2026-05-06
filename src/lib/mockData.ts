@@ -424,6 +424,10 @@ export const matchAnalyses: MatchAnalysis[] = [
       session_027: r1, session_037: r1, session_038: r1, session_039: r1,
       session_040: r1, session_041: r1, session_042: r1, session_043: r1, session_044: r1,
       session_045: r1,
+      // ── March match-center sessions (053–056) — added with the
+      // welfare slice. Without these, the new March drill-ins render an
+      // empty roster and parents see no Mar data on /parent/stats.
+      session_053: r1, session_054: r1, session_055: r1, session_056: r1,
       // roster_002 — 028..032 are now `cancelled` (orphan analyses; same as r1).
       session_028: r2, session_029: r2, session_030: r2, session_031: r2, session_032: r2,
       // roster_002 — remaining live comp sessions (010, 033, 034, 035).

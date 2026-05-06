@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User, BarChart3, MessageSquare, Sparkles, Film, Camera } from 'lucide-react'
+import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User, BarChart3, MessageSquare, Sparkles, Film } from 'lucide-react'
 
 interface NavItem {
   id: string
@@ -48,9 +48,6 @@ const coachNav: NavItem[] = [
 const coachWebNav: NavItem[] = [
   { id: 'hub', label: 'Hub', href: '/coach/web', icon: Sparkles, exact: true },
   { id: 'match-center', label: 'Match', href: '/coach/web/match-center', icon: BarChart3 },
-  // Coach Cam — centered camera affordance. Replaces the WhatsApp side-
-  // channel for sending phone-captured clips/photos to parents.
-  { id: 'coach-cam', label: 'Cam', href: '/coach/web/coach-cam', icon: Camera },
   { id: 'players', label: 'Players', href: '/coach/web/squad', icon: Users },
   { id: 'highlights', label: 'Highlights', href: '/coach/web/highlights', icon: Film },
 ]
