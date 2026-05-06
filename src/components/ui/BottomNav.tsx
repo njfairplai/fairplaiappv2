@@ -1,9 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User } from 'lucide-react'
-import { COLORS } from '@/lib/constants'
-import { playerTokens } from '@/styles/player-tokens'
+import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User, BarChart3, MessageSquare } from 'lucide-react'
 
 interface NavItem {
   id: string
@@ -12,19 +10,24 @@ interface NavItem {
   icon: React.ElementType
 }
 
+// Parent + player share the same 5-tab structure (single portal, two
+// audiences). Settings lives behind the avatar menu, not as a tab.
+// Schedule folds into Stats (forward-looking match-list) + Home (next-up
+// footer card) — no dedicated tab.
 const parentNav: NavItem[] = [
   { id: 'home', label: 'Home', href: '/parent/home', icon: Home },
+  { id: 'stats', label: 'Stats', href: '/parent/stats', icon: BarChart3 },
   { id: 'highlights', label: 'Highlights', href: '/parent/highlights', icon: Play },
-  { id: 'matches', label: 'Schedule', href: '/parent/matches', icon: Calendar },
   { id: 'development', label: 'Progress', href: '/parent/development', icon: TrendingUp },
-  { id: 'settings', label: 'Settings', href: '/parent/settings', icon: Settings },
+  { id: 'hub', label: 'Hub', href: '/parent/hub', icon: MessageSquare },
 ]
 
 const playerNav: NavItem[] = [
   { id: 'home', label: 'Home', href: '/player/home', icon: Home },
-  { id: 'development', label: 'Progress', href: '/player/development', icon: TrendingUp },
+  { id: 'stats', label: 'Stats', href: '/player/stats', icon: BarChart3 },
   { id: 'highlights', label: 'Highlights', href: '/player/highlights', icon: Play },
-  { id: 'sessions', label: 'Sessions', href: '/player/sessions', icon: Calendar },
+  { id: 'development', label: 'Progress', href: '/player/development', icon: TrendingUp },
+  { id: 'hub', label: 'Hub', href: '/player/hub', icon: MessageSquare },
 ]
 
 const coachNav: NavItem[] = [
@@ -38,7 +41,6 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'pl
   const pathname = usePathname()
   const router = useRouter()
   const items = portal === 'player' ? playerNav : portal === 'parent' ? parentNav : coachNav
-  const accentColor = portal === 'player' ? playerTokens.primary : COLORS.primary
 
   return (
     <nav
@@ -48,9 +50,9 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'pl
         left: 0,
         right: 0,
         zIndex: 50,
-        background: '#fff',
-        borderTop: '1px solid rgba(0,0,0,0.08)',
-        boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
+        background: 'var(--brand-paper)',
+        borderTop: '1px solid var(--brand-line)',
+        boxShadow: '0 -2px 16px rgba(11, 8, 40, 0.06)',
       }}
     >
       <div
@@ -93,18 +95,23 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'pl
                     transform: 'translateX(-50%)',
                     width: 24,
                     height: 3,
-                    background: accentColor,
+                    background: 'var(--brand-yellow)',
                     borderRadius: '0 0 3px 3px',
                   }}
                 />
               )}
-              <Icon size={22} color={isActive ? accentColor : COLORS.muted} strokeWidth={isActive ? 2.2 : 1.7} />
+              <Icon
+                size={22}
+                color={isActive ? 'var(--brand-indigo)' : 'var(--brand-indigo-mute)'}
+                strokeWidth={isActive ? 2.2 : 1.7}
+              />
               <span
                 style={{
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 9,
-                  fontWeight: 600,
-                  color: isActive ? COLORS.primary : COLORS.muted,
-                  letterSpacing: '0.02em',
+                  fontWeight: 700,
+                  color: isActive ? 'var(--brand-indigo)' : 'var(--brand-indigo-mute)',
+                  letterSpacing: '0.08em',
                   whiteSpace: 'nowrap',
                 }}
               >
