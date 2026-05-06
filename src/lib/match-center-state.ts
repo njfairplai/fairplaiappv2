@@ -44,9 +44,11 @@ function writeJson(key: string, value: unknown): void {
   }
 }
 
-/** Stable session identifier used by all the per-session keys below. */
-export function sessionIdForDay(day: number): string {
-  return `feb-${String(day).padStart(2, '0')}`
+/** Stable session identifier used by all the per-session keys below.
+ *  Encodes year + month + day so sessions across months don't collide
+ *  on the same day-of-month. */
+export function sessionIdForDay(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
 // ─── Attendance ─────────────────────────────────────────────────────

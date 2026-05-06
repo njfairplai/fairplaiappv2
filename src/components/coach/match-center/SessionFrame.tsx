@@ -22,12 +22,22 @@ interface SessionFrameProps {
   s: MatchCenterSession & { dateLabel?: string }
   shape?: 'cell' | 'frame'
   selected?: boolean
+  /** True if this session's prep has been confirmed (read from
+   *  `fairplai_prep_confirmed_${id}` in the parent). Drives the PREP
+   *  → PREPPED label switch in the cell encoding. */
+  prepConfirmed?: boolean
   onClick?: () => void
 }
 
-export function SessionFrame({ s, shape = 'frame', selected = false, onClick }: SessionFrameProps) {
+export function SessionFrame({
+  s,
+  shape = 'frame',
+  selected = false,
+  prepConfirmed = false,
+  onClick,
+}: SessionFrameProps) {
   if (shape === 'cell') {
-    return <CellFrame s={s} selected={selected} onClick={onClick} />
+    return <CellFrame s={s} selected={selected} prepConfirmed={prepConfirmed} onClick={onClick} />
   }
   return <FullFrame s={s} selected={selected} onClick={onClick} />
 }
@@ -40,7 +50,10 @@ export function SessionFrame({ s, shape = 'frame', selected = false, onClick }: 
  *
  * `drills` and `training` collapse to a single-line chip — there's no
  * opponent to render on a second line. */
-function getCellEncoding(s: MatchCenterSession): {
+function getCellEncoding(
+  s: MatchCenterSession,
+  prepConfirmed: boolean,
+): {
   topLabel: string
   topColor: string
   topBg?: string
@@ -62,11 +75,22 @@ function getCellEncoding(s: MatchCenterSession): {
         pulse: true,
       }
     case 'prep':
-      return {
-        topLabel: 'PREP',
-        topColor: BRAND.coral,
-        bottomLabel: s.opponent ?? undefined,
-      }
+      // Once the coach hits "Confirm prep →" in State 1, the cell flips
+      // from coral PREP (urgent / needs-attention) to a yellow PREPPED
+      // chip. Distinguishes upcoming-but-handled from upcoming-but-still-
+      // needs-work in the month overview.
+      return prepConfirmed
+        ? {
+            topLabel: '✓ PREPPED',
+            topColor: BRAND.indigo,
+            topBg: BRAND.yellow,
+            bottomLabel: s.opponent ?? undefined,
+          }
+        : {
+            topLabel: 'PREP',
+            topColor: BRAND.coral,
+            bottomLabel: s.opponent ?? undefined,
+          }
     case 'uncategorised':
       return {
         topLabel: 'PENDING',
@@ -92,19 +116,19 @@ function getCellEncoding(s: MatchCenterSession): {
 function CellFrame({
   s,
   selected,
+  prepConfirmed,
   onClick,
 }: {
   s: MatchCenterSession
   selected: boolean
+  prepConfirmed: boolean
   onClick?: () => void
 }) {
   // Training sessions render the yellow TRAINING chip ONLY when their
-  // analysis is ready or upcoming — when training is processing, the
-  // status (gray IN PROGRESS, pulsing) takes precedence. Otherwise a
-  // training match in-progress and a training match analysed look
-  // identical in the calendar, which makes scrubbing miss the active
-  // work.
-  if (s.kind === 'training' && s.status !== 'processing') {
+  // analysis is ready — when training is processing OR awaiting prep,
+  // the status takes precedence so coaches can see what still needs
+  // their attention.
+  if (s.kind === 'training' && s.status === 'ready') {
     return (
       <SingleLineCell
         topLabel="TRAINING"
@@ -116,7 +140,7 @@ function CellFrame({
     )
   }
 
-  const enc = getCellEncoding(s)
+  const enc = getCellEncoding(s, prepConfirmed)
 
   // Drills + upcoming: collapse to a single-line chip — no opponent to show.
   if (!enc.bottomLabel) {

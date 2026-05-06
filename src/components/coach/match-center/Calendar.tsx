@@ -23,9 +23,14 @@ interface CalendarProps {
   currentMonth: number
   currentYear: number
   selectedDay: number | null
+  /** Set of confirmed-prep session IDs. Drives the PREP→PREPPED label
+   *  switch on cells where status === 'prep' and the coach has already
+   *  hit "Confirm prep →" in State 1. */
+  confirmedSessions: Set<string>
   onSelect: (day: number) => void
   onViewChange: (view: 'month' | 'week') => void
   onMonthChange: (year: number, month: number) => void
+  onToday?: () => void
   onRecord?: () => void
 }
 
@@ -72,9 +77,11 @@ export function Calendar({
   currentMonth,
   currentYear,
   selectedDay,
+  confirmedSessions,
   onSelect,
   onViewChange,
   onMonthChange,
+  onToday,
   onRecord,
 }: CalendarProps) {
   const canGoPrev = compareMonths({ year: currentYear, month: currentMonth }, MIN_MONTH) > 0
@@ -140,6 +147,28 @@ export function Calendar({
         >
           ▶
         </button>
+
+        {onToday && (
+          <button
+            type="button"
+            onClick={onToday}
+            style={{
+              padding: '6px 12px',
+              background: 'transparent',
+              border: `1px solid ${BRAND.line}`,
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: TYPE.mono,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.18em',
+              color: BRAND.indigo,
+              textTransform: 'uppercase',
+            }}
+          >
+            Today
+          </button>
+        )}
 
         <span style={{ flex: 1 }} />
 
@@ -207,6 +236,7 @@ export function Calendar({
           year={currentYear}
           month={currentMonth}
           selectedDay={selectedDay}
+          confirmedSessions={confirmedSessions}
           onSelect={onSelect}
         />
       ) : (
@@ -230,11 +260,13 @@ function MonthGrid({
   year,
   month,
   selectedDay,
+  confirmedSessions,
   onSelect,
 }: {
   year: number
   month: number
   selectedDay: number | null
+  confirmedSessions: Set<string>
   onSelect: (day: number) => void
 }) {
   // Sun=0, Mon=1, ... Sat=6. Calendar starts on Sunday.
@@ -345,6 +377,7 @@ function MonthGrid({
                   s={session}
                   shape="cell"
                   selected={isSelected}
+                  prepConfirmed={confirmedSessions.has(`${session.year}-${session.month}-${session.day}`)}
                   onClick={() => onSelect(session.day)}
                 />
               )}

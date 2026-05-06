@@ -80,20 +80,20 @@ export const SESSIONS: MatchCenterSession[] = [
   { date: '2026-03-05', day: 5,  month: 3, year: 2026, kind: 'training', status: 'prep',          opponent: 'Team A vs Team B' },
   { date: '2026-03-08', day: 8,  month: 3, year: 2026, kind: 'match',    status: 'prep',          opponent: 'Al Nasr Cubs' },
   { date: '2026-03-10', day: 10, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-03-12', day: 12, month: 3, year: 2026, kind: 'training', status: 'upcoming',      opponent: 'Team A vs Team B' },
-  { date: '2026-03-15', day: 15, month: 3, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Hatta Academy' },
+  { date: '2026-03-12', day: 12, month: 3, year: 2026, kind: 'training', status: 'prep',      opponent: 'Team A vs Team B' },
+  { date: '2026-03-15', day: 15, month: 3, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Hatta Academy' },
   { date: '2026-03-17', day: 17, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-03-22', day: 22, month: 3, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Sharjah Cubs' },
+  { date: '2026-03-22', day: 22, month: 3, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Sharjah Cubs' },
   { date: '2026-03-24', day: 24, month: 3, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-03-29', day: 29, month: 3, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Al Wahda U13' },
+  { date: '2026-03-29', day: 29, month: 3, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Al Wahda U13' },
 
   // ── April 2026 ────────────────────────────────────────────────
-  { date: '2026-04-02', day: 2,  month: 4, year: 2026, kind: 'training', status: 'upcoming',      opponent: 'Team A vs Team B' },
-  { date: '2026-04-05', day: 5,  month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Dubai Stars' },
+  { date: '2026-04-02', day: 2,  month: 4, year: 2026, kind: 'training', status: 'prep',      opponent: 'Team A vs Team B' },
+  { date: '2026-04-05', day: 5,  month: 4, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Dubai Stars' },
   { date: '2026-04-09', day: 9,  month: 4, year: 2026, kind: 'drills',   status: 'drills',        opponent: null },
-  { date: '2026-04-12', day: 12, month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Bani Yas U13' },
-  { date: '2026-04-19', day: 19, month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Cup semi · TBD' },
-  { date: '2026-04-26', day: 26, month: 4, year: 2026, kind: 'match',    status: 'upcoming',      opponent: 'Cup final · TBD' },
+  { date: '2026-04-12', day: 12, month: 4, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Bani Yas U13' },
+  { date: '2026-04-19', day: 19, month: 4, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Cup semi · TBD' },
+  { date: '2026-04-26', day: 26, month: 4, year: 2026, kind: 'match',    status: 'prep',      opponent: 'Cup final · TBD' },
 ]
 
 /** Backwards-compat alias — was named after the only month that
@@ -169,15 +169,32 @@ export interface MatchCenterHighlight {
  * Tagged clips across the four analysed matches in February. Used by
  * State 5's horizontal row (filtered to the selected day) and by the
  * coach Highlights surface (grouped by match, season-wide reel browser).
+ *
+ * Feb 24 carries 20 clips so the Highlights expand UI ("+N more clips")
+ * has something to demo against. The other matches stay tighter.
  */
 export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
   // ── Feb 24 · vs Al Wasl Academy · 3-1 W (the populated reference match)
-  { id: 'h-24-1', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 11, dur: 38, headline: 'Right-foot driven · 1-0' },
-  { id: 'h-24-2', sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 28, dur: 22, headline: 'Press-break carry, then split' },
-  { id: 'h-24-3', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1' },
-  { id: 'h-24-4', sessionDay: 24, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 56, dur: 12, headline: 'Last-ditch tackle on edge' },
-  { id: 'h-24-5', sessionDay: 24, ev: 'GOAL',   player: 'Kiyan Makkawi',    num: 6, minute: 71, dur: 36, headline: 'Box arrival · 3-1' },
-  { id: 'h-24-6', sessionDay: 24, ev: 'SPRINT', player: 'Saeed Khalifa',    num: 7, minute: 78, dur: 14, headline: '7.4 m/s recovery' },
+  { id: 'h-24-1',  sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 4,  dur: 32, headline: 'Opener inside 5 minutes' },
+  { id: 'h-24-2',  sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 8,  dur: 18, headline: 'Through-ball off the kickoff' },
+  { id: 'h-24-3',  sessionDay: 24, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 11, dur: 11, headline: 'Crunching tackle, ball recovered' },
+  { id: 'h-24-4',  sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 14, dur: 38, headline: 'Right-foot driven · 1-0' },
+  { id: 'h-24-5',  sessionDay: 24, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 19, dur: 12, headline: 'Reflex stop, near post' },
+  { id: 'h-24-6',  sessionDay: 24, ev: 'KEY',    player: 'Hamad Al-Mansoori',num: 10,minute: 23, dur: 16, headline: 'Switch to the far flank' },
+  { id: 'h-24-7',  sessionDay: 24, ev: 'SPRINT', player: 'Salem Al-Dhaheri', num: 11,minute: 26, dur: 10, headline: '6.8 m/s wing chase' },
+  { id: 'h-24-8',  sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 28, dur: 22, headline: 'Press-break carry, then split' },
+  { id: 'h-24-9',  sessionDay: 24, ev: 'TACKLE', player: 'Rashid Al-Marri',  num: 3, minute: 33, dur: 9,  headline: 'Block on the half-turn' },
+  { id: 'h-24-10', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 38, dur: 28, headline: 'Volley from the cutback · 2-0' },
+  { id: 'h-24-11', sessionDay: 24, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 42, dur: 14, headline: 'Tipped over the bar' },
+  { id: 'h-24-12', sessionDay: 24, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1' },
+  { id: 'h-24-13', sessionDay: 24, ev: 'KEY',    player: 'Yousef Al-Zaabi',  num: 8, minute: 51, dur: 17, headline: 'Line-breaking carry' },
+  { id: 'h-24-14', sessionDay: 24, ev: 'TACKLE', player: 'Khalid Al-Naqbi',  num: 4, minute: 56, dur: 12, headline: 'Last-ditch tackle on edge' },
+  { id: 'h-24-15', sessionDay: 24, ev: 'SPRINT', player: 'Saeed Khalifa',    num: 7, minute: 60, dur: 11, headline: 'Counter-press recovery' },
+  { id: 'h-24-16', sessionDay: 24, ev: 'KEY',    player: 'Kiyan Makkawi',    num: 6, minute: 65, dur: 19, headline: 'No-look pass, knife-edge' },
+  { id: 'h-24-17', sessionDay: 24, ev: 'SAVE',   player: 'Omar Al-Sayed',    num: 1, minute: 68, dur: 8,  headline: 'Smothered at feet' },
+  { id: 'h-24-18', sessionDay: 24, ev: 'GOAL',   player: 'Kiyan Makkawi',    num: 6, minute: 71, dur: 36, headline: 'Box arrival · 3-1' },
+  { id: 'h-24-19', sessionDay: 24, ev: 'TACKLE', player: 'Faisal Mansour',   num: 2, minute: 75, dur: 10, headline: 'Slide tackle on the touchline' },
+  { id: 'h-24-20', sessionDay: 24, ev: 'SPRINT', player: 'Saeed Khalifa',    num: 7, minute: 78, dur: 14, headline: '7.4 m/s recovery' },
 
   // ── Feb 17 · vs Stratford E. · composite 78
   { id: 'h-17-1', sessionDay: 17, ev: 'GOAL',   player: 'Saeed Khalifa',    num: 7, minute: 14, dur: 32, headline: 'Header from the corner' },

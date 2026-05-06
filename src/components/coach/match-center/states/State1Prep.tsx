@@ -49,6 +49,9 @@ interface State1PrepProps {
   metaLine: string
   onToast: (message: string) => void
   onReclassify: (newStatus: 'drills') => void
+  /** Fired when the coach confirms prep — lets the parent rebuild
+   *  the confirmed-prep set so the calendar flips PREP→PREPPED. */
+  onConfirmedChange?: () => void
 }
 
 type TabId = 'attendance' | 'lineup' | 'confirm'
@@ -61,12 +64,14 @@ export function State1Prep({
   metaLine,
   onToast,
   onReclassify,
+  onConfirmedChange,
 }: State1PrepProps) {
   const [tab, setTab] = useState<TabId>('attendance')
   const [attendance, setAttendance] = useState<AttendanceMap>({})
   const [jerseys, setJerseys] = useState<JerseyMap>({})
   const [confirmed, setConfirmed] = useState(false)
   const [teamAssignments, setTeamAssignments] = useState<Record<number, 'A' | 'B'>>({})
+  const [lineup, setLineup] = useState<Record<number, LineupPosition>>({})
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -121,6 +126,7 @@ export function State1Prep({
     })
     setConfirmed(true)
     onToast('Prep confirmed — see you at kickoff')
+    onConfirmedChange?.()
   }
   function markAsDrills() {
     writeSessionClassify(sessionId, 'drills')
@@ -130,6 +136,10 @@ export function State1Prep({
   function setTeam(playerNum: number, team: 'A' | 'B') {
     setTeamAssignments(t => ({ ...t, [playerNum]: team }))
   }
+  function setPlayerPosition(num: number, pos: LineupPosition) {
+    setLineup(l => ({ ...l, [num]: pos }))
+  }
+
   function autoSplitTeams() {
     const present = MATCH_CENTER_ROSTER.filter(p => {
       const override = attendance[p.num]
@@ -305,7 +315,9 @@ export function State1Prep({
             onAutoSplit={autoSplitTeams}
           />
         )}
-        {tab === 'lineup' && !isTraining && <PrepLineup />}
+        {tab === 'lineup' && !isTraining && (
+          <PrepLineup attendance={attendance} lineup={lineup} onAssign={setPlayerPosition} />
+        )}
         {tab === 'confirm' && (
           <PrepConfirm
             presentCount={presentCount}
@@ -587,23 +599,46 @@ function PrepAttendance({
   )
 }
 
-// ─── Lineup tab (match) ─────────────────────────────────────────────
+// ─── Lineup tab (match) — position picker per present player ────────
+//
+// Earlier we showed a fixed 4-3-3 pitch with player dots. The academy
+// rarely plays 11-a-side though — formations vary by age group and
+// match format (5v5, 7v7, 11v11). A formation-locked pitch is more
+// theatre than utility.
+//
+// New shape: each present player gets a position select. The header
+// shows a live tally (1 GK · 4 DEF · 3 MID · 3 ATT · N BENCH) so the
+// coach can see the formation emerge without picking one upfront.
 
-const FORMATION: [number, number, string, number, string?][] = [
-  [0.06, 0.5, 'GK', 1, BRAND.yellow],
-  [0.22, 0.18, 'LB', 5],
-  [0.22, 0.40, 'CB', 4],
-  [0.22, 0.60, 'CB', 3],
-  [0.22, 0.82, 'RB', 2],
-  [0.45, 0.28, 'CM', 6],
-  [0.45, 0.50, 'CM', 8],
-  [0.45, 0.72, 'CAM', 10],
-  [0.72, 0.20, 'LW', 11],
-  [0.72, 0.50, 'ST', 9],
-  [0.72, 0.80, 'RW', 7],
-]
+const POSITIONS = ['GK', 'LB', 'CB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'ST', 'RW', 'BENCH'] as const
+type LineupPosition = (typeof POSITIONS)[number]
 
-function PrepLineup() {
+function positionGroup(pos: LineupPosition): 'GK' | 'DEF' | 'MID' | 'ATT' | 'BENCH' {
+  if (pos === 'GK') return 'GK'
+  if (pos === 'LB' || pos === 'CB' || pos === 'RB') return 'DEF'
+  if (pos === 'CDM' || pos === 'CM' || pos === 'CAM') return 'MID'
+  if (pos === 'LW' || pos === 'ST' || pos === 'RW') return 'ATT'
+  return 'BENCH'
+}
+
+function PrepLineup({
+  attendance,
+  lineup,
+  onAssign,
+}: {
+  attendance: AttendanceMap
+  lineup: Record<number, LineupPosition>
+  onAssign: (playerNum: number, pos: LineupPosition) => void
+}) {
+  const present = MATCH_CENTER_ROSTER.filter(p => {
+    const override = attendance[p.num]
+    return override !== undefined ? override : p.present
+  })
+  const tally = { GK: 0, DEF: 0, MID: 0, ATT: 0, BENCH: 0 }
+  for (const p of present) {
+    const pos = lineup[p.num]
+    if (pos) tally[positionGroup(pos)]++
+  }
   return (
     <div>
       <div
@@ -612,107 +647,108 @@ function PrepLineup() {
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: 12,
+          flexWrap: 'wrap',
+          gap: 10,
         }}
       >
-        <MEyebrow>STARTING XI · 4-3-3</MEyebrow>
-        <button type="button" style={mcButtons.text}>
-          Change formation ↓
-        </button>
-      </div>
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          height: 320,
-          background: BRAND.indigo,
-          borderRadius: 6,
-          overflow: 'hidden',
-          backgroundImage:
-            'repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 40px, rgba(255,255,255,0.07) 40px 80px)',
-        }}
-      >
-        <svg
-          width="100%"
-          height="100%"
-          style={{ position: 'absolute', inset: 0 }}
-          preserveAspectRatio="none"
-        >
-          <rect
-            x="8"
-            y="8"
-            width="calc(100% - 16px)"
-            height="calc(100% - 16px)"
-            fill="none"
-            stroke="rgba(238,228,200,0.4)"
-            strokeWidth={1.5}
-          />
-          <line
-            x1="50%"
-            y1="8"
-            x2="50%"
-            y2="calc(100% - 8px)"
-            stroke="rgba(238,228,200,0.4)"
-            strokeWidth={1.5}
-          />
-          <circle cx="50%" cy="50%" r="36" fill="none" stroke="rgba(238,228,200,0.4)" strokeWidth={1.5} />
-        </svg>
-        {FORMATION.map(([x, y, pos, num, color], i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left: `${x * 100}%`,
-              top: `${y * 100}%`,
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-            }}
-          >
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: '50%',
-                background: color || BRAND.sand,
-                color: BRAND.indigo,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: TYPE.display,
-                fontSize: 16,
-                fontWeight: 700,
-                border: `2px solid ${BRAND.paper}`,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-              }}
-            >
-              {num}
-            </div>
-            <div
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 8.5,
-                letterSpacing: '0.18em',
-                color: BRAND.sand,
-                fontWeight: 700,
-                marginTop: 4,
-              }}
-            >
-              {pos}
-            </div>
-          </div>
-        ))}
-        <div
+        <MEyebrow>LINEUP · {present.length} PRESENT</MEyebrow>
+        <span
           style={{
-            position: 'absolute',
-            bottom: 10,
-            right: 12,
             fontFamily: TYPE.mono,
-            fontSize: 9,
+            fontSize: 10,
+            fontWeight: 700,
             letterSpacing: '0.18em',
-            color: 'rgba(238,228,200,0.55)',
+            color: BRAND.indigoMute,
           }}
         >
-          DRAG PRESENT PLAYERS INTO SLOTS · OR SKIP TO LET AI INFER
-        </div>
+          {tally.GK} GK · {tally.DEF} DEF · {tally.MID} MID · {tally.ATT} ATT
+          {tally.BENCH > 0 ? ` · ${tally.BENCH} BENCH` : ''}
+        </span>
+      </div>
+
+      <div
+        style={{
+          border: `1px solid ${BRAND.line}`,
+          borderRadius: 4,
+          background: '#fff',
+          overflow: 'hidden',
+        }}
+      >
+        {present.map((p, i) => {
+          const pos = lineup[p.num]
+          return (
+            <div
+              key={p.num}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '28px 1fr auto',
+                alignItems: 'center',
+                gap: 12,
+                padding: '8px 12px',
+                borderBottom: i < present.length - 1 ? `1px solid ${BRAND.line}` : 'none',
+              }}
+            >
+              <MiniAvatar num={p.num} />
+              <div
+                style={{
+                  fontFamily: TYPE.body,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: BRAND.indigo,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {p.name}{' '}
+                <span
+                  style={{
+                    fontFamily: TYPE.mono,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.16em',
+                    color: BRAND.indigoMute,
+                    marginLeft: 6,
+                  }}
+                >
+                  PRIMARY {p.pos}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                {POSITIONS.map(opt => {
+                  const active = pos === opt
+                  const isBench = opt === 'BENCH'
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => onAssign(p.num, opt)}
+                      aria-pressed={active}
+                      style={{
+                        padding: '3px 7px',
+                        border: active ? 'none' : `1px solid ${BRAND.line}`,
+                        background: active
+                          ? isBench
+                            ? BRAND.indigoMute
+                            : BRAND.indigo
+                          : 'transparent',
+                        color: active ? BRAND.sand : BRAND.indigo,
+                        fontFamily: TYPE.mono,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        letterSpacing: '0.12em',
+                        borderRadius: 3,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

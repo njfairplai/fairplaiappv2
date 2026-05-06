@@ -6,6 +6,7 @@ import { BRAND, TYPE } from '@/lib/constants'
 import {
   DEFAULT_SELECTED_DAY,
   MATCH_CENTER_HIGHLIGHTS,
+  SESSIONS,
   getSessionsForMonth,
   getStateForSession,
   type MatchCenterHighlight,
@@ -14,6 +15,7 @@ import {
 import {
   readSessionClassify,
   readFlaggedClips,
+  readPrepConfirmation,
   toggleFlaggedClip,
   sessionIdForDay,
 } from '@/lib/match-center-state'
@@ -56,14 +58,29 @@ export default function CoachMatchCenterPage() {
   const [currentYear, setCurrentYear] = useState(2026)
   const [selectedDay, setSelectedDay] = useState<number>(initialDay)
 
-  // Classification overrides keyed by sessionId. We re-read from localStorage
-  // on mount and bump a counter when a state component reclassifies so the
-  // pane updates immediately without a page refresh.
+  // Classification overrides + prep confirmations keyed by sessionId.
+  // We re-read from localStorage on mount and bump a counter when a
+  // state component reclassifies / confirms so the pane and calendar
+  // both update immediately without a page refresh.
   const [classifyTick, setClassifyTick] = useState(0)
   const [clientReady, setClientReady] = useState(false)
   useEffect(() => {
     setClientReady(true)
   }, [])
+
+  // Build the confirmed-prep set whenever the classify tick bumps. The
+  // calendar reads this to render PREPPED instead of PREP for cells the
+  // coach has already walked through to confirmation.
+  const confirmedSessions = useMemo(() => {
+    if (!clientReady) return new Set<string>()
+    const out = new Set<string>()
+    for (const s of SESSIONS) {
+      const id = sessionIdForDay(s.year, s.month, s.day)
+      if (readPrepConfirmation(id)) out.add(id)
+    }
+    return out
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientReady, classifyTick])
 
   // Toast + modal state. Clip modal accepts a queue: a single clip
   // for ▶ on a card; the full match's clips for "Play match reel".
@@ -87,7 +104,7 @@ export default function CoachMatchCenterPage() {
   const effectiveStatus = useMemo<MatchCenterStatus | null>(() => {
     if (!session) return null
     if (!clientReady) return session.status
-    const override = readSessionClassify(sessionIdForDay(session.day))
+    const override = readSessionClassify(sessionIdForDay(session.year, session.month, session.day))
     return override ?? session.status
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, clientReady, classifyTick])
@@ -97,7 +114,7 @@ export default function CoachMatchCenterPage() {
     return getStateForSession({ ...session, status: effectiveStatus ?? session.status })
   }, [session, effectiveStatus])
 
-  const sessionId = session ? sessionIdForDay(session.day) : ''
+  const sessionId = session ? sessionIdForDay(session.year, session.month, session.day) : ''
 
   const handleReclassify = useCallback(() => {
     setClassifyTick(t => t + 1)
@@ -143,19 +160,25 @@ export default function CoachMatchCenterPage() {
           currentMonth={currentMonth}
           currentYear={currentYear}
           selectedDay={selectedDay}
+          confirmedSessions={confirmedSessions}
           onSelect={setSelectedDay}
           onViewChange={setView}
           onMonthChange={(year, month) => {
             setCurrentYear(year)
             setCurrentMonth(month)
-            // Auto-pick the first day with a session in the new month so
-            // the contextual pane below has something to show. If none,
-            // clear the selection.
             const monthSessions = getSessionsForMonth(year, month)
             const firstDay = Object.keys(monthSessions)
               .map(Number)
               .sort((a, b) => a - b)[0]
             setSelectedDay(firstDay ?? 0)
+          }}
+          onToday={() => {
+            // Demo "today" anchored to a date inside our seeded data
+            // range so the button has somewhere to land. Real wiring
+            // uses `new Date()` once May/Jun/Jul fixtures exist.
+            setCurrentYear(DEMO_TODAY.year)
+            setCurrentMonth(DEMO_TODAY.month)
+            setSelectedDay(DEMO_TODAY.day)
           }}
           onRecord={() => router.push('/coach/web/record')}
         />
@@ -171,6 +194,7 @@ export default function CoachMatchCenterPage() {
             metaLine={formatSessionMeta(session.year, session.month, session.day)}
             onToast={setToast}
             onReclassify={() => handleReclassify()}
+            onConfirmedChange={() => handleReclassify()}
           />
         )}
         {state === '2' && (
@@ -188,9 +212,9 @@ export default function CoachMatchCenterPage() {
           />
         )}
         {state === '4' && <State4Processing />}
-        {state === '5' && (
+        {state === '5' && session && (
           <State5Ready
-            sessionDay={selectedDay}
+            session={session}
             flaggedClips={flaggedClips}
             onOpenFullAnalysis={() => router.push('/coach/web/match/session_010')}
             onClipPlay={clip => {
@@ -262,6 +286,11 @@ function EmptyDayState() {
     </Card>
   )
 }
+
+/** Demo "today" — used by the Calendar's Today button. Hardcoded
+ *  inside the seeded data range (Feb–Apr 2026) so the button always
+ *  lands somewhere with content. Bump when fixture data extends. */
+const DEMO_TODAY = { year: 2026, month: 3, day: 21 }
 
 const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 function formatSessionMeta(year: number, month: number, day: number): string {

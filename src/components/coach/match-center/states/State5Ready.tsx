@@ -4,6 +4,7 @@ import { BRAND, TYPE } from '@/lib/constants'
 import {
   MATCH_CENTER_HIGHLIGHTS,
   type MatchCenterHighlight,
+  type MatchCenterSession,
 } from '@/lib/match-center'
 import {
   Card,
@@ -16,32 +17,54 @@ import {
 import { HighlightCard } from '../HighlightCard'
 
 interface State5ReadyProps {
-  /** February day-of-month for the match being shown. Drives clip filtering. */
-  sessionDay?: number
+  /** The session being shown — drives header, scoreline, MOTM, footage label. */
+  session: MatchCenterSession
   /** Set of currently flagged clip IDs — drives the ⚑ icon's filled state. */
   flaggedClips: Set<string>
   /** "Open full match analysis →" CTA target. */
   onOpenFullAnalysis?: () => void
-  /** Highlights row callbacks routed to the page so one modal serves them all. */
   onClipPlay: (clip: MatchCenterHighlight) => void
   onClipShare: (clip: MatchCenterHighlight) => void
   onClipFlagToggle: (clip: MatchCenterHighlight) => void
-  /** "▶ Play match reel" — plays all clips for this match in sequence. */
   onPlayMatchReel: () => void
 }
 
+/* Tiny per-day "demo" data we embellish on top of the bare session.
+ * Lets a training session render an internal-training framing while
+ * a competitive match renders the scoreline + MOTM. Real wiring (full
+ * MatchAnalysis records joined from the API) lands in a follow-up. */
+const DEMO_OUR_SCORE: Record<number, number> = {
+  3: 4,
+  8: 1,
+  17: 2,
+  22: 3,
+  24: 3,
+}
+const DEMO_OPP_SCORE: Record<number, number> = {
+  3: 2,
+  8: 0,
+  17: 0,
+  22: 1,
+  24: 1,
+}
+
+const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+function dateLabel(s: MatchCenterSession): string {
+  const dow = new Date(s.year, s.month - 1, s.day).toLocaleDateString('en-GB', {
+    weekday: 'short',
+  })
+  return `${dow.toUpperCase()} ${s.day} ${MONTH_SHORT[s.month - 1]}`
+}
+
 /**
- * State 5 — analysis ready (the populated landing state).
+ * State 5 — analysis ready. Dynamic header, scoreline, footage label
+ * driven by the passed `session`. Two-mode framing:
  *
- * For now Feb 24 (vs Al Wasl Academy · 3-1 W) is hardcoded as the
- * reference match — the header text, scoreline, and team-summary stats
- * stay fixed. The highlights row, however, filters MATCH_CENTER_HIGHLIGHTS
- * to the passed `sessionDay` so picking a different ready match in the
- * calendar will show that match's clips. When the API layer ships and the
- * header data becomes dynamic, the rest of this component will follow.
+ *   - Competitive match → "vs <Opp>" headline, scoreline, MOTM badge
+ *   - Training match    → "Internal training" headline, no scoreline
  */
 export function State5Ready({
-  sessionDay = 24,
+  session,
   flaggedClips,
   onOpenFullAnalysis,
   onClipPlay,
@@ -49,7 +72,24 @@ export function State5Ready({
   onClipFlagToggle,
   onPlayMatchReel,
 }: State5ReadyProps) {
-  const clips = MATCH_CENTER_HIGHLIGHTS.filter(h => h.sessionDay === sessionDay)
+  const clips = MATCH_CENTER_HIGHLIGHTS.filter(h => h.sessionDay === session.day)
+  const isTraining = session.kind === 'training'
+  const ourScore = DEMO_OUR_SCORE[session.day] ?? null
+  const oppScore = DEMO_OPP_SCORE[session.day] ?? null
+  const result = ourScore != null && oppScore != null
+    ? ourScore > oppScore
+      ? 'W'
+      : ourScore < oppScore
+      ? 'L'
+      : 'D'
+    : null
+  const motm = session.motm ?? clips[0]?.player.split(' ')[0]
+  const headline = isTraining ? 'Internal training' : `vs ${session.opponent ?? 'Opponent'}`
+  const metaLine = isTraining
+    ? `${dateLabel(session)} · TEAM A vs TEAM B`
+    : `VS ${(session.opponent ?? 'OPPONENT').toUpperCase()} · ${dateLabel(session)}${
+        result ? ` · ${ourScore}-${oppScore} ${result}` : ''
+      }`
 
   return (
     <Card style={{ padding: 0 }}>
@@ -62,20 +102,38 @@ export function State5Ready({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span
-            style={{
-              background: BRAND.yellow,
-              color: BRAND.indigo,
-              fontFamily: TYPE.mono,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              padding: '3px 7px',
-              borderRadius: 3,
-            }}
-          >
-            ★ MOTM SAEED KHALIFA
-          </span>
+          {!isTraining && motm && (
+            <span
+              style={{
+                background: BRAND.yellow,
+                color: BRAND.indigo,
+                fontFamily: TYPE.mono,
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.18em',
+                padding: '3px 7px',
+                borderRadius: 3,
+              }}
+            >
+              ★ MOTM {motm.toUpperCase()}
+            </span>
+          )}
+          {isTraining && (
+            <span
+              style={{
+                background: BRAND.yellow,
+                color: BRAND.indigo,
+                fontFamily: TYPE.mono,
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.18em',
+                padding: '3px 7px',
+                borderRadius: 3,
+              }}
+            >
+              TRAINING
+            </span>
+          )}
           <span
             style={{
               color: BRAND.indigo,
@@ -85,7 +143,7 @@ export function State5Ready({
               fontWeight: 700,
             }}
           >
-            VS AL WASL ACADEMY · SUN 24 FEB · 3-1 W
+            {metaLine}
           </span>
         </div>
         <div
@@ -97,27 +155,29 @@ export function State5Ready({
             flexWrap: 'wrap',
           }}
         >
-          <MDisplay size={56}>Al Wasl Academy</MDisplay>
-          <span
-            style={{
-              fontFamily: TYPE.display,
-              fontSize: 56,
-              color: BRAND.indigoMute,
-              lineHeight: 0.94,
-            }}
-          >
+          <MDisplay size={56}>{headline}</MDisplay>
+          {!isTraining && ourScore != null && oppScore != null && (
             <span
               style={{
-                background: BRAND.yellow,
-                color: BRAND.indigo,
-                padding: '0 8px',
+                fontFamily: TYPE.display,
+                fontSize: 56,
+                color: BRAND.indigoMute,
+                lineHeight: 0.94,
               }}
             >
-              3
+              <span
+                style={{
+                  background: ourScore >= oppScore ? BRAND.yellow : 'transparent',
+                  color: BRAND.indigo,
+                  padding: '0 8px',
+                }}
+              >
+                {ourScore}
+              </span>
+              <span style={{ margin: '0 6px' }}>—</span>
+              <span style={{ color: BRAND.indigoMute }}>{oppScore}</span>
             </span>
-            <span style={{ margin: '0 6px' }}>—</span>
-            <span style={{ color: BRAND.indigoMute }}>1</span>
-          </span>
+          )}
         </div>
       </div>
 
@@ -125,8 +185,8 @@ export function State5Ready({
       <div style={{ padding: '20px 26px' }}>
         <VideoBlock
           height={300}
-          label="MATCH FOOTAGE · 84M"
-          sub="SUN 24 FEB · 15:00 · PITCH 1"
+          label={`MATCH FOOTAGE${session.day === 24 ? ' · 84M' : ''}`}
+          sub={`${dateLabel(session)} · 15:00 · PITCH 1`}
         />
 
         {/* Highlights row */}
@@ -158,25 +218,41 @@ export function State5Ready({
               ▶ Play match reel
             </button>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: 10,
-              overflowX: 'auto',
-              paddingBottom: 4,
-            }}
-          >
-            {clips.map(h => (
-              <HighlightCard
-                key={h.id}
-                h={h}
-                flagged={flaggedClips.has(h.id)}
-                onPlay={() => onClipPlay(h)}
-                onShare={() => onClipShare(h)}
-                onFlagToggle={() => onClipFlagToggle(h)}
-              />
-            ))}
-          </div>
+          {clips.length === 0 ? (
+            <div
+              style={{
+                fontFamily: TYPE.body,
+                fontSize: 13,
+                color: BRAND.indigoMute,
+                padding: '14px 16px',
+                border: `1px dashed ${BRAND.line}`,
+                borderRadius: 4,
+                textAlign: 'center',
+              }}
+            >
+              No clips tagged for this session yet.
+            </div>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                overflowX: 'auto',
+                paddingBottom: 4,
+              }}
+            >
+              {clips.map(h => (
+                <HighlightCard
+                  key={h.id}
+                  h={h}
+                  flagged={flaggedClips.has(h.id)}
+                  onPlay={() => onClipPlay(h)}
+                  onShare={() => onClipShare(h)}
+                  onFlagToggle={() => onClipFlagToggle(h)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Two-column summary */}
@@ -189,7 +265,7 @@ export function State5Ready({
           }}
         >
           <div>
-            <MEyebrow>TEAM SUMMARY</MEyebrow>
+            <MEyebrow>{isTraining ? 'TRAINING SUMMARY' : 'TEAM SUMMARY'}</MEyebrow>
             <div
               style={{
                 marginTop: 12,
@@ -198,16 +274,7 @@ export function State5Ready({
                 background: '#fff',
               }}
             >
-              {(
-                [
-                  ['Squad avg composite', '76'],
-                  ['MOTM', 'Saeed Khalifa · 82'],
-                  ['Goals', '3 (2 by Saeed · 1 by Kiyan)'],
-                  ['Assists', '2'],
-                  ['Possession', '62%'],
-                  ['Pass accuracy', '78%'],
-                ] as [string, string][]
-              ).map(([k, v], i, arr) => (
+              {summaryRows(session, ourScore, oppScore, motm).map(([k, v], i, arr) => (
                 <div
                   key={k}
                   style={{
@@ -245,7 +312,7 @@ export function State5Ready({
           </div>
 
           <div>
-            <MEyebrow>TOP PERFORMERS THIS MATCH</MEyebrow>
+            <MEyebrow>TOP PERFORMERS THIS SESSION</MEyebrow>
             <div
               style={{
                 marginTop: 12,
@@ -254,11 +321,7 @@ export function State5Ready({
                 background: '#fff',
               }}
             >
-              {[
-                { rank: 1, name: 'Saeed Khalifa', num: 7, pos: 'RW', score: 82, motm: true },
-                { rank: 2, name: 'Kiyan Makkawi', num: 6, pos: 'CM', score: 79, motm: false },
-                { rank: 3, name: 'Ahmed Hassan',  num: 9, pos: 'ST', score: 76, motm: false },
-              ].map((p, i, arr) => (
+              {topPerformersFor(session).map((p, i, arr) => (
                 <div
                   key={p.num}
                   style={{
@@ -375,4 +438,60 @@ export function State5Ready({
       </div>
     </Card>
   )
+}
+
+function summaryRows(
+  session: MatchCenterSession,
+  ourScore: number | null,
+  oppScore: number | null,
+  motm: string | undefined,
+): [string, string][] {
+  const rows: [string, string][] = [['Squad avg composite', String(session.score ?? 76)]]
+  if (session.kind === 'training') {
+    rows.push(['Setup', 'Team A vs Team B'])
+    rows.push(['Bibs', 'Indigo / Coral'])
+  } else {
+    rows.push(['MOTM', motm ? `${motm} · ${session.score ?? 82}` : '—'])
+    if (ourScore != null && oppScore != null) {
+      rows.push(['Goals', `${ourScore} (we) · ${oppScore} (them)`])
+    }
+  }
+  rows.push(['Possession', '62%'])
+  rows.push(['Pass accuracy', '78%'])
+  return rows
+}
+
+function topPerformersFor(
+  session: MatchCenterSession,
+): Array<{ rank: number; name: string; num: number; pos: string; score: number; motm: boolean }> {
+  // Static demo set, lightly differentiated per-day so each session reads
+  // distinctly. Real wiring joins MatchAnalysis records when the API ships.
+  const motmName = session.motm ?? 'Saeed K.'
+  if (session.day === 3) {
+    return [
+      { rank: 1, name: motmName,         num: 7,  pos: 'RW', score: 78, motm: true },
+      { rank: 2, name: 'Yousef Al-Zaabi', num: 8,  pos: 'CM', score: 75, motm: false },
+      { rank: 3, name: 'Salem Al-Dhaheri',num: 11, pos: 'LW', score: 73, motm: false },
+    ]
+  }
+  if (session.day === 17) {
+    return [
+      { rank: 1, name: motmName,           num: 7,  pos: 'RW', score: 80, motm: true },
+      { rank: 2, name: 'Hamad Al-Mansoori', num: 10, pos: 'CAM', score: 77, motm: false },
+      { rank: 3, name: 'Ahmed Hassan',     num: 9,  pos: 'ST', score: 75, motm: false },
+    ]
+  }
+  if (session.day === 8) {
+    return [
+      { rank: 1, name: motmName,         num: 6, pos: 'CM', score: 76, motm: true },
+      { rank: 2, name: 'Saeed Khalifa',  num: 7, pos: 'RW', score: 73, motm: false },
+      { rank: 3, name: 'Khalid Al-Naqbi',num: 4, pos: 'CB', score: 70, motm: false },
+    ]
+  }
+  // Default — Feb 24 vs Al Wasl populated demo
+  return [
+    { rank: 1, name: 'Saeed Khalifa', num: 7, pos: 'RW', score: 82, motm: true },
+    { rank: 2, name: 'Kiyan Makkawi', num: 6, pos: 'CM', score: 79, motm: false },
+    { rank: 3, name: 'Ahmed Hassan',  num: 9, pos: 'ST', score: 76, motm: false },
+  ]
 }
