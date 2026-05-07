@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import type { TourStep } from '@/lib/demo-tour-steps'
 import { useTour } from './TourProvider'
 
@@ -20,18 +21,66 @@ const CARD_WIDTH = 360
 
 export function TourTooltip({ step }: { step: TourStep }) {
   const tour = useTour()
+  // Drag offset relative to the default top-left anchor. Persists
+  // across step changes (we don't reset on step.id) so the user only
+  // re-positions once per session. Touch + mouse via pointer events.
+  const [offset, setOffset] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 })
+  const dragState = useRef<{ startX: number; startY: number; baseDx: number; baseDy: number } | null>(null)
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Don't intercept clicks on interactive elements — Next/Back/Hide
+    // buttons need to fire normally. closest() walks the DOM up to the
+    // card root.
+    const target = e.target as HTMLElement
+    if (target.closest('button, a, input, textarea, select')) return
+    dragState.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      baseDx: offset.dx,
+      baseDy: offset.dy,
+    }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const s = dragState.current
+    if (!s) return
+    const nextDx = s.baseDx + (e.clientX - s.startX)
+    const nextDy = s.baseDy + (e.clientY - s.startY)
+    // Clamp to viewport — keep at least a corner of the card visible.
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1024
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 768
+    const minDx = -10  // can go slightly off the left edge
+    const maxDx = vw - CARD_WIDTH - 30
+    const minDy = -10
+    const maxDy = vh - 100
+    setOffset({
+      dx: Math.max(minDx, Math.min(maxDx, nextDx)),
+      dy: Math.max(minDy, Math.min(maxDy, nextDy)),
+    })
+  }
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragState.current = null
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+  }
+
+  const isDragging = !!dragState.current
 
   return (
     <div
       role="dialog"
       aria-label="Demo tour narrator"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
       style={{
         position: 'fixed',
         // Top-left so we don't collide with notifications bell (parent
-        // top-right), team selector + Mobile + avatar (coach top-right),
-        // or the End demo pill (bottom-right).
+        // top-right), team selector + avatar (coach top-right), or the
+        // End demo pill (bottom-right). User can drag anywhere from here.
         top: 'max(20px, env(safe-area-inset-top, 20px))',
         left: 20,
+        transform: `translate(${offset.dx}px, ${offset.dy}px)`,
         width: CARD_WIDTH,
         maxWidth: 'calc(100vw - 40px)',
         background: 'var(--brand-paper)',
@@ -39,10 +88,17 @@ export function TourTooltip({ step }: { step: TourStep }) {
         border: '1px solid var(--brand-indigo)',
         borderRadius: 14,
         padding: '16px 18px',
-        boxShadow: '0 16px 40px rgba(11, 8, 40, 0.22)',
+        boxShadow: isDragging
+          ? '0 24px 56px rgba(11, 8, 40, 0.32)'
+          : '0 16px 40px rgba(11, 8, 40, 0.22)',
         zIndex: 1001,
         fontFamily: 'var(--font-satoshi), system-ui, sans-serif',
-        animation: 'tourTooltipIn 220ms cubic-bezier(.2,.7,.2,1) both',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        userSelect: 'none',
+        touchAction: 'none',
+        animation: offset.dx === 0 && offset.dy === 0
+          ? 'tourTooltipIn 220ms cubic-bezier(.2,.7,.2,1) both'
+          : undefined,
       }}
     >
       <style>{`
