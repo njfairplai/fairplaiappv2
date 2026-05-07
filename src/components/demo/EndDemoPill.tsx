@@ -4,20 +4,24 @@ import { useEffect, useState } from 'react'
 import { useTour } from './TourProvider'
 
 /**
- * Always-visible "End demo" affordance during a tour. Sits bottom-right.
+ * Tour floating action — bottom-right pill, persistent during the tour.
  *
- * The user can click this at any point — including after they've hidden
- * the tour tooltip via × — to wrap up and land on /demo/end.
+ * Label + behaviour switch by the current step's CTA:
+ *   - normal stops      → "Next →"        (tour.next() advances)
+ *   - transition stop   → "Continue →"    (tour.next() shows interstitial)
+ *   - last stop (finish)→ "End demo →"    (tour.next() routes to /demo/end)
  *
- * Hidden when there's no active persona (i.e. before the tour starts or
- * after it's been completed). Post-completion the SoftLockBanner takes
- * over with a different message.
+ * The historical "End demo always visible" pill was confusing on mobile —
+ * after hiding the tooltip card, End demo was the ONLY action visible,
+ * which tempted testers to wrap up early. Making the pill Next-by-default
+ * keeps the natural flow available even when the tooltip is hidden, and
+ * reserves the End demo label for the actual last step.
+ *
+ * Hidden when there's no active persona (before tour / after completion).
+ * Hidden inside iframes (palette voting context).
  */
 export function EndDemoPill() {
   const tour = useTour()
-  // Iframe guard — palette voting renders /parent/* or /coach/web/*
-  // inside an iframe; the End-demo pill is for the live tour, not for
-  // the palette preview context.
   const [inIframe, setInIframe] = useState(false)
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -25,12 +29,22 @@ export function EndDemoPill() {
   }, [])
 
   if (inIframe) return null
-  if (!tour.persona) return null
+  if (!tour.persona || !tour.step) return null
+
+  const cta = tour.step.cta
+  const label =
+    cta === 'finish' ? 'End demo →' :
+    cta === 'transition' ? 'Continue →' :
+    'Next →'
+
+  // Last stop gets a stronger visual treatment so the user knows this is
+  // the wrap-up action, not just the next step.
+  const isFinal = cta === 'finish'
 
   return (
     <button
       type="button"
-      onClick={tour.skip}
+      onClick={tour.next}
       style={{
         position: 'fixed',
         bottom: 'max(20px, env(safe-area-inset-bottom, 20px))',
@@ -39,20 +53,23 @@ export function EndDemoPill() {
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
-        padding: '9px 16px',
-        background: 'var(--brand-indigo)',
-        color: 'var(--brand-sand)',
+        padding: '11px 20px',
+        background: isFinal ? 'var(--brand-yellow)' : 'var(--brand-indigo)',
+        color: 'var(--brand-indigo)',
+        // Indigo bg needs sand text for contrast; yellow bg keeps indigo text.
+        ...(isFinal ? {} : { color: 'var(--brand-sand)' }),
         border: 'none',
         borderRadius: 999,
         boxShadow: '0 8px 22px rgba(11, 8, 40, 0.32)',
         fontFamily: 'var(--font-satoshi), system-ui, sans-serif',
         fontWeight: 700,
-        fontSize: 12.5,
+        fontSize: 13,
         cursor: 'pointer',
         letterSpacing: '0.02em',
+        transition: 'all 180ms ease',
       }}
     >
-      End demo →
+      {label}
     </button>
   )
 }
