@@ -68,7 +68,7 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
     setter(set.includes(key) ? set.filter(k => k !== key) : [...set, key])
   }
 
-  function submit() {
+  async function submit() {
     // Lightweight validation: at least all four agreement scales answered.
     const missing = AGREEMENT_QUESTIONS.find(q => agreement[q.key] == null)
     if (missing) {
@@ -86,7 +86,7 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
       submittedAt: new Date().toISOString(),
     }
 
-    // Persist locally so we have a record even if mailto fails.
+    // Persist locally so we have a record even if backend / mailto fails.
     try {
       const raw = localStorage.getItem('fairplai_demo_feedback')
       const list = raw ? (JSON.parse(raw) as FeedbackResponse[]) : []
@@ -96,7 +96,68 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
       /* ignore */
     }
 
-    // Open the user's email composer with the responses prefilled.
+    // Read tester identity (name / email / persona) stashed at /demo/persona.
+    let tester: { name?: string; email?: string; persona?: string; startedAt?: string } | null = null
+    try {
+      const raw = localStorage.getItem('fairplai_demo_tester')
+      if (raw) tester = JSON.parse(raw)
+    } catch { /* ignore */ }
+
+    // Read palette vote (palette_vote is required by the existing
+    // /api/feedback schema). Fall back to 'demo_no_vote' if the user
+    // jumped here via /user-testing shortcut and didn't vote.
+    let paletteVote = 'demo_no_vote'
+    try {
+      const raw = localStorage.getItem('fairplai-testing-palette')
+      if (raw) {
+        const parsed = JSON.parse(raw) as { palette_vote?: string }
+        if (parsed.palette_vote) paletteVote = parsed.palette_vote
+      }
+    } catch { /* ignore */ }
+
+    // POST to /api/feedback so the row lands in the Vercel Postgres
+    // (NEON-backed) `feedback_responses` table. The schema's `responses`
+    // field is JSONB so we add `tour_persona` + `agreement` as new keys
+    // alongside the original favourite_features / kill_features / nps
+    // shape — distinguishable from palette-only rows by `tour_persona`
+    // being set.
+    let dbOk = false
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          palette_vote: paletteVote,
+          responses: {
+            agreement,
+            favourite_features: use,
+            kill_features: drop,
+            nps,
+            tour_persona: tester?.persona ?? null,
+            tester_name: tester?.name ?? null,
+          },
+          whats_missing: payload.open || null,
+          role: tester?.persona ?? null,
+          email: tester?.email ?? null,
+        }),
+      })
+      dbOk = res.ok
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        // 503 = DB not configured (expected in some preview / local dev
+        // setups). Other errors get logged for debugging but never block
+        // the user from finishing the form.
+        // eslint-disable-next-line no-console
+        console.warn('[demo feedback] /api/feedback non-OK:', res.status, text)
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[demo feedback] /api/feedback fetch failed:', err)
+    }
+
+    // Mailto backup — fires after the POST so the founder always gets
+    // a copy regardless of DB state. Skipped on the success path? No —
+    // belt and braces; small inbox cost is fine vs. losing a response.
     const lines: string[] = ['= AGREEMENT (1–5) =']
     for (const q of AGREEMENT_QUESTIONS) {
       lines.push(`${q.label}  →  ${agreement[q.key] ?? '(blank)'}`)
@@ -116,12 +177,11 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
     lines.push('', `= NPS = ${nps} / 10`)
     lines.push('', '= OPEN COMMENTS =', payload.open || '(blank)')
     lines.push('', `— Submitted ${payload.submittedAt}`)
+    lines.push(`— DB write: ${dbOk ? 'OK' : 'FAILED (mailto fallback only)'}`)
 
-    // Stitch in tester identity if available
-    try {
-      const tester = localStorage.getItem('fairplai_demo_tester')
-      if (tester) lines.unshift(`= TESTER =\n${tester}\n`)
-    } catch { /* ignore */ }
+    if (tester) {
+      lines.unshift(`= TESTER =\n${JSON.stringify(tester, null, 2)}\n`)
+    }
 
     const subject = encodeURIComponent('Fairplai demo feedback')
     const body = encodeURIComponent(lines.join('\n'))

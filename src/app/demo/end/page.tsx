@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { Logo } from '@/components/shared/Logo'
 import { DemoFeedbackForm } from '@/components/demo/DemoFeedbackForm'
 
@@ -93,22 +92,6 @@ export default function DemoEndPage() {
         ) : (
           <DemoFeedbackForm onSubmitted={() => setSubmitted(true)} />
         )}
-
-        <div style={{ marginTop: 40, textAlign: 'center' }}>
-          <Link
-            href="/coach/web"
-            style={{
-              fontFamily: 'var(--font-fragment)',
-              fontSize: 11,
-              letterSpacing: '0.18em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-              textDecoration: 'underline',
-            }}
-          >
-            KEEP CLICKING AROUND →
-          </Link>
-        </div>
       </div>
     </main>
   )

@@ -73,6 +73,13 @@ export function useTour(): TourContextValue {
   return ctx
 }
 
+/** Null-safe variant for components that may render outside the
+ *  TourProvider tree (e.g. BottomNav rendered in a route that doesn't
+ *  yet share the root layout). Returns null instead of throwing. */
+export function useTourSafe(): TourContextValue | null {
+  return useContext(TourContext)
+}
+
 const LS_PERSONA = 'fairplai_demo_active'
 const LS_STEP = 'fairplai_demo_step'
 const LS_COMPLETED = 'fairplai_demo_completed'
@@ -134,15 +141,20 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   )
   const step = steps[stepIndex] ?? null
 
-  // If we're on the right route already, skip to it. If not, push the
-  // route. The tooltip then renders against whatever's on the page.
+  // Auto-navigate to the current step's route. Runs on STEP CHANGE
+  // only — NOT on every pathname tick — so the user can navigate
+  // freely off-route once the step has been delivered. Without this
+  // fence, hiding the tooltip + manually navigating would yank them
+  // back to the step's route (the bug surfaced in v3 walkthrough).
   useEffect(() => {
     if (!persona || !step) return
     if (showTransition) return
-    if (pathname !== step.route) {
+    if (typeof window === 'undefined') return
+    if (window.location.pathname !== step.route) {
       router.push(step.route)
     }
-  }, [persona, step, showTransition, pathname, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persona, stepIndex, showTransition])
 
   // Tour is "active" when persona is set + we're not on an ignored route.
   const onIgnoredRoute = TOUR_IGNORED_PREFIXES.some(p =>

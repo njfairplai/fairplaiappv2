@@ -156,7 +156,9 @@ export default function DemoPersonaPage() {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: 14,
-            alignItems: 'start',
+            // stretch so all 3 cards match the tallest — visually consistent
+            // even when one card's body text is longer than the others.
+            alignItems: 'stretch',
           }}
         >
           {PERSONAS.map(({ id, label, sub, Icon, firstRoute }) => {
@@ -194,6 +196,8 @@ export default function DemoPersonaPage() {
                     textAlign: 'left',
                     fontFamily: 'inherit',
                     color: 'inherit',
+                    flex: 1,           // fill card vertically
+                    width: '100%',
                   }}
                 >
                   <div
@@ -233,7 +237,8 @@ export default function DemoPersonaPage() {
                   {!expandedHere && (
                     <div
                       style={{
-                        marginTop: 6,
+                        marginTop: 'auto',          // anchor to bottom of card
+                        paddingTop: 12,
                         fontFamily: 'var(--font-fragment)',
                         fontSize: 10.5,
                         letterSpacing: '0.18em',

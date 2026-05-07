@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User, BarChart3, MessageSquare, Sparkles, Film } from 'lucide-react'
+import { useTourSafe } from '@/components/demo/TourProvider'
 
 interface NavItem {
   id: string
@@ -55,6 +56,7 @@ const coachWebNav: NavItem[] = [
 export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'coachWeb' | 'player' }) {
   const pathname = usePathname()
   const router = useRouter()
+  const tour = useTourSafe()
   const items =
     portal === 'player'
       ? playerNav
@@ -63,6 +65,15 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'co
       : portal === 'coachWeb'
       ? coachWebNav
       : coachNav
+
+  // When the tour is active, every tab except the current step's `tab`
+  // gets greyed out + disabled. Keeps the user on the curated path
+  // without dimming things they CAN click (within-page elements). Only
+  // applies to portals the tour actually walks (parent + coachWeb).
+  const tourActiveLockedTab =
+    tour?.active && tour.step?.tab && (portal === 'parent' || portal === 'coachWeb')
+      ? tour.step.tab
+      : null
 
   return (
     <nav
@@ -92,10 +103,20 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'co
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
+          // Tour locks navigation: only the current step's tab is
+          // clickable. The "live" tab still shows as active; others
+          // dim down + the click is suppressed.
+          const tourLocked = tourActiveLockedTab !== null && tourActiveLockedTab !== item.id
           return (
             <button
               key={item.id}
-              onClick={() => router.push(item.href)}
+              onClick={() => {
+                if (tourLocked) return
+                router.push(item.href)
+              }}
+              disabled={tourLocked}
+              aria-disabled={tourLocked}
+              title={tourLocked ? 'Locked during the guided tour. Use Next → in the tour card to advance.' : undefined}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -106,8 +127,10 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'co
                 flex: 1,
                 background: 'none',
                 border: 'none',
-                cursor: 'pointer',
+                cursor: tourLocked ? 'not-allowed' : 'pointer',
                 position: 'relative',
+                opacity: tourLocked ? 0.32 : 1,
+                transition: 'opacity 180ms ease',
               }}
             >
               {isActive && (

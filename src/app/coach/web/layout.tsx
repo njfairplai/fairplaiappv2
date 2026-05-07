@@ -14,6 +14,7 @@ import { Logo } from '@/components/shared/Logo'
 import { seedWelfareIfEmpty } from '@/lib/welfare-store'
 import { SoftLockBanner } from '@/components/demo/SoftLockBanner'
 import { PortalToggleFab } from '@/components/demo/PortalToggleFab'
+import { useTourSafe } from '@/components/demo/TourProvider'
 
 /**
  * Brand chrome override for the redesigned Coach Match Analysis route.
@@ -45,10 +46,10 @@ const BRAND_CHROME = {
 // Per-player profiles live at /coach/web/player/[id]; the IDP editor at
 // /coach/web/idps is reachable from the player profile postscript.
 const tabs = [
-  { href: '/coach/web',              label: 'Hub',          icon: Sparkles,  exact: true },
-  { href: '/coach/web/match-center', label: 'Match Center', icon: BarChart3 },
-  { href: '/coach/web/squad',        label: 'Players',      icon: Users },
-  { href: '/coach/web/highlights',   label: 'Highlights',   icon: Film },
+  { href: '/coach/web',              label: 'Hub',          icon: Sparkles,  exact: true, tourTab: 'hub' as const },
+  { href: '/coach/web/match-center', label: 'Match Center', icon: BarChart3,              tourTab: 'match-center' as const },
+  { href: '/coach/web/squad',        label: 'Players',      icon: Users,                  tourTab: 'players' as const },
+  { href: '/coach/web/highlights',   label: 'Highlights',   icon: Film,                   tourTab: 'highlights' as const },
 ]
 
 function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
@@ -57,6 +58,8 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   const { selectedRosterId, setSelectedRosterId, availableRosters } = useTeam()
   const { mode, colors: themeColors } = useCoachTheme()
   const isMobile = useIsMobile()
+  const tour = useTourSafe()
+  const tourLockedTab = tour?.active && tour.step?.tab ? tour.step.tab : null
 
   // Seed welfare demo data on first visit so the smart-flag rail + fatigue
   // chips have shape immediately. Idempotent.
@@ -210,15 +213,23 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
             ? pathname === tab.href
             : pathname.startsWith(tab.href)
           const Icon = tab.icon
+          // Tour locks navigation: only the current step's tab is clickable.
+          const tourLocked = tourLockedTab !== null && tourLockedTab !== tab.tourTab
 
           return (
             <button
               key={tab.href}
-              onClick={() => router.push(tab.href)}
+              onClick={() => {
+                if (tourLocked) return
+                router.push(tab.href)
+              }}
+              disabled={tourLocked}
+              aria-disabled={tourLocked}
+              title={tourLocked ? 'Locked during the guided tour. Use Next → in the tour card to advance.' : undefined}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '0 16px',
-                border: 'none', cursor: 'pointer',
+                border: 'none', cursor: tourLocked ? 'not-allowed' : 'pointer',
                 background: 'transparent',
                 color: isActive ? colors.tabTextActive : colors.tabText,
                 fontSize: isBrandedRoute ? 12.5 : 14,
@@ -230,12 +241,13 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
                 transition: 'all 0.15s ease',
                 marginBottom: -1, flexShrink: 0,
                 whiteSpace: 'nowrap',
+                opacity: tourLocked ? 0.32 : 1,
               }}
               onMouseEnter={e => {
-                if (!isActive) e.currentTarget.style.color = colors.textSecondary
+                if (!isActive && !tourLocked) e.currentTarget.style.color = colors.textSecondary
               }}
               onMouseLeave={e => {
-                if (!isActive) e.currentTarget.style.color = colors.tabText
+                if (!isActive && !tourLocked) e.currentTarget.style.color = colors.tabText
               }}
             >
               <Icon size={16} />
