@@ -82,7 +82,12 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const [showTransition, setShowTransition] = useState(false)
   const [hydrated, setHydrated] = useState(false)
 
-  // Hydrate persona + step from localStorage on mount.
+  // Hydrate persona + step from localStorage on mount AND on every
+  // pathname change. The pathname dependency is critical: when
+  // /demo/persona writes the persona and routes to a tour route, this
+  // hook re-runs after navigation and picks up the new persona. Without
+  // it, the provider's state would stay stale because mount happened
+  // earlier (at app root) before the persona was selected.
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
@@ -91,12 +96,15 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       if (p === 'coach' || p === 'parent' || p === 'misc') {
         setPersona(p)
         setStepIndex(s ? Math.max(0, Number(s) || 0) : 0)
+      } else {
+        setPersona(null)
+        setStepIndex(0)
       }
     } catch {
       /* ignore */
     }
     setHydrated(true)
-  }, [])
+  }, [pathname])
 
   // Persist step index whenever it changes.
   useEffect(() => {

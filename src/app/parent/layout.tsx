@@ -6,6 +6,7 @@ import BottomNav from '@/components/ui/BottomNav'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 import { seedWelfareIfEmpty } from '@/lib/welfare-store'
 import { SoftLockBanner } from '@/components/demo/SoftLockBanner'
+import { PortalToggleFab } from '@/components/demo/PortalToggleFab'
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       {children}
       <BottomNav portal="parent" />
       <FeedbackOverlay bottomOffset={90} />
+      <PortalToggleFab />
     </div>
   )
 }

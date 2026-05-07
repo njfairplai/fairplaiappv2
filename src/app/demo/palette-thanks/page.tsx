@@ -5,8 +5,9 @@ import { Logo } from '@/components/shared/Logo'
 
 /**
  * /demo/palette-thanks — terminal screen for users who picked a palette
- * but don't want to walk through the demo tour. Tiny thanks + a Calendly
- * link in case they change their mind.
+ * but don't want to walk through the demo tour. Clean thanks; no Calendly
+ * CTA because testers only land on this surface after they've already
+ * booked a call (the demo link is the prequel, not the entry point).
  */
 export default function PaletteThanksPage() {
   return (
@@ -54,52 +55,27 @@ export default function PaletteThanksPage() {
         </h1>
 
         <p style={{ fontSize: 16, lineHeight: 1.55, marginBottom: 32, maxWidth: 460, margin: '0 auto 32px' }}>
-          That&apos;s all we needed. If you&apos;d like to see the actual coach + parent
-          experience next time, book a demo with the founder and we&apos;ll walk you through it.
+          That&apos;s all we needed from you here. We&apos;ll talk through the rest on our call.
         </p>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a
-            href="https://calendly.com/fairplai-demo"
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '12px 20px',
-              background: 'var(--brand-indigo)',
-              color: 'var(--brand-sand)',
-              border: 'none',
-              borderRadius: 8,
-              fontFamily: 'var(--font-satoshi)',
-              fontWeight: 600,
-              fontSize: 14,
-              textDecoration: 'none',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
-            }}
-          >
-            Book a demo →
-          </a>
-          <Link
-            href="/"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '12px 20px',
-              background: 'transparent',
-              color: 'var(--brand-indigo)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 8,
-              fontFamily: 'var(--font-satoshi)',
-              fontWeight: 600,
-              fontSize: 14,
-              textDecoration: 'none',
-            }}
-          >
-            Back to start
-          </Link>
-        </div>
+        <Link
+          href="/"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '12px 20px',
+            background: 'transparent',
+            color: 'var(--brand-indigo)',
+            border: '1px solid var(--brand-line)',
+            borderRadius: 8,
+            fontFamily: 'inherit',
+            fontWeight: 600,
+            fontSize: 14,
+            textDecoration: 'none',
+          }}
+        >
+          ← Back to start
+        </Link>
       </div>
     </main>
   )

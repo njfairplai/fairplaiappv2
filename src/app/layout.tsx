@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { FeedbackProvider } from '@/contexts/FeedbackContext'
-import FloatingNav from '@/components/ui/FloatingNav'
 import { TourProvider } from '@/components/demo/TourProvider'
 import './globals.css'
 
@@ -49,7 +48,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <FeedbackProvider>
             <TourProvider>
               {children}
-              <FloatingNav />
             </TourProvider>
           </FeedbackProvider>
         </AuthProvider>

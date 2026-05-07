@@ -5,20 +5,20 @@ import { X } from 'lucide-react'
 
 /**
  * Soft-lock banner — sits at the top of every coach/parent surface AFTER
- * the demo tour has completed. Suggests booking a call without actually
- * blocking interaction (the user can keep clicking around the app).
+ * the demo tour has completed. Reminds the user the call is the next
+ * step. No Calendly CTA: testers only land on these surfaces via a
+ * pre-booked call, so a "book a call" button doesn't make sense.
  *
  * Activation:
  *   - Reads `fairplai_demo_completed` from localStorage
  *   - Hidden if not present, OR if the user dismissed it this session
  *
  * Dismissal is per-session (sessionStorage) so a refresh shows it again
- * if the user opens a new tab. That's deliberate: the banner is the only
- * thing nudging them back to the call, so we don't want it to disappear
- * forever after one tap of ×.
+ * if the user opens a new tab. Deliberate: the banner is the only thing
+ * reminding them the tour ended, so we don't want it to disappear forever
+ * after one tap of ×.
  */
 
-const CALENDLY_URL = 'https://calendly.com/fairplai-demo'
 const SS_DISMISSED = 'fairplai_demo_banner_dismissed'
 
 export function SoftLockBanner() {
@@ -69,29 +69,8 @@ export function SoftLockBanner() {
         TOUR COMPLETE
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
-        Click around freely — when you&apos;re ready, book a call to discuss what you saw.
+        Click around freely — see you on the call to talk through it.
       </span>
-      <a
-        href={CALENDLY_URL}
-        target="_blank"
-        rel="noreferrer"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 12px',
-          background: 'var(--brand-yellow)',
-          color: 'var(--brand-indigo)',
-          borderRadius: 6,
-          fontFamily: 'inherit',
-          fontWeight: 700,
-          fontSize: 12,
-          textDecoration: 'none',
-          flexShrink: 0,
-        }}
-      >
-        Book a call →
-      </a>
       <button
         type="button"
         aria-label="Dismiss banner"

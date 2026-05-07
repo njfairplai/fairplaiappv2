@@ -13,6 +13,7 @@ import { BRAND, TYPE } from '@/lib/constants'
 import { Logo } from '@/components/shared/Logo'
 import { seedWelfareIfEmpty } from '@/lib/welfare-store'
 import { SoftLockBanner } from '@/components/demo/SoftLockBanner'
+import { PortalToggleFab } from '@/components/demo/PortalToggleFab'
 
 /**
  * Brand chrome override for the redesigned Coach Match Analysis route.
@@ -261,6 +262,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
       {isMobile && <BottomNav portal="coachWeb" />}
 
       <FeedbackOverlay bottomOffset={isMobile ? 80 : 16} />
+      <PortalToggleFab />
     </div>
   )
 }

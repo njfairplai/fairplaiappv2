@@ -188,53 +188,23 @@ const PARENT_STOPS: TourStep[] = [
   },
 ]
 
-// ─── MISC TOUR (stakeholder / evaluator) ─────────────────
-// 3 marquee stops across both portals. No persona depth — just the
-// "look at what this product is" highlight reel.
-const MISC_STOPS: TourStep[] = [
-  {
-    id: 'misc-1-coach-match',
-    route: '/coach/web/match/session_007',
-    anchor: '[data-tour-id="match-drillin-roster"]',
-    position: 'top',
-    headline: "AI footage analysis.",
-    body: "Every player ranked, every moment tagged, every welfare signal surfaced — from a single tactical camera, no chest straps or pods.",
-    cta: 'next',
-  },
-  {
-    id: 'misc-2-parent-home',
-    route: '/parent/home',
-    anchor: '[data-tour-id="parent-home-clip"]',
-    position: 'bottom',
-    headline: "Parents stay in the loop.",
-    body: "One feed: clips, coach notes, welfare alerts. Replaces the WhatsApp + spreadsheet sprawl most academies live with today.",
-    cta: 'next',
-  },
-  {
-    id: 'misc-3-mikel',
-    route: '/coach/web',
-    anchor: '[data-tour-id="coach-hub-input"]',
-    position: 'top',
-    headline: "Coach Mikel — the AI co-pilot.",
-    body: "Coaches don't read dashboards — they ask questions. Mikel turns the analysis layer into a conversation.",
-    cta: 'finish',
-  },
-]
-
 // ─── ASSEMBLE PER-PERSONA STEPS ──────────────────────────
-/** Returns the ordered step list for a given persona. The COACH persona
- *  gets the coach stops + the parent stops appended (with the transition
- *  card between them, surfaced via `cta === 'transition'` on coach step
- *  7). Parent and Misc are standalone. */
+/** Returns the ordered step list for a given persona.
+ *
+ *   coach  → coach 7 + parent 7 = 14 stops (transition card between)
+ *   misc   → same as coach (stakeholders need to see both portals)
+ *   parent → parent 7 only
+ *
+ * The standalone 3-stop misc tour was dropped after walkthrough feedback
+ * — stakeholders watching the demo ARE doing it because they want to
+ * understand the product in depth, so feeding them the same 14-stop
+ * coach + parent tour is a better fit than a marketing-style highlight
+ * reel. The persona label itself is preserved for analytics. */
 export function stepsForPersona(persona: TourPersona): TourStep[] {
-  if (persona === 'coach') {
-    // Coach gets the coach 7 + parent 7 = 14 total. Coach step 7's cta
-    // is `transition` which renders the interstitial before advancing
-    // to parent step 1.
+  if (persona === 'coach' || persona === 'misc') {
     return [...COACH_STOPS, ...PARENT_STOPS]
   }
-  if (persona === 'parent') return PARENT_STOPS
-  return MISC_STOPS
+  return PARENT_STOPS
 }
 
 /** Total stops count (excluding the interstitial card). */
