@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { FeedbackProvider } from '@/contexts/FeedbackContext'
 import FloatingNav from '@/components/ui/FloatingNav'
+import { TourProvider } from '@/components/demo/TourProvider'
 import './globals.css'
 
 const inter = Inter({
@@ -44,7 +45,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className="antialiased" style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}>
-        <AuthProvider><FeedbackProvider>{children}<FloatingNav /></FeedbackProvider></AuthProvider>
+        <AuthProvider>
+          <FeedbackProvider>
+            <TourProvider>
+              {children}
+              <FloatingNav />
+            </TourProvider>
+          </FeedbackProvider>
+        </AuthProvider>
       </body>
     </html>
   )

@@ -185,6 +185,7 @@ export default function CoachWebHubPage() {
             display: 'flex',
             justifyContent: 'center',
           }}
+          data-tour-id="coach-hub-input"
         >
           <HubChatInput
             ref={inputHandle}

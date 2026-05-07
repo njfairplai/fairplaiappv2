@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { BRAND, TYPE } from '@/lib/constants'
 import { Logo } from '@/components/shared/Logo'
 import { seedWelfareIfEmpty } from '@/lib/welfare-store'
+import { SoftLockBanner } from '@/components/demo/SoftLockBanner'
 
 /**
  * Brand chrome override for the redesigned Coach Match Analysis route.
@@ -85,6 +86,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   // on the parent covers the original concern.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', fontFamily: fontFamilyBody }}>
+      <SoftLockBanner />
       {/* Header bar — sticky so the logo + team selector + avatar
        *  stay visible as the page content scrolls beneath. */}
       <header style={{

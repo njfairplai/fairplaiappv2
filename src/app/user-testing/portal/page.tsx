@@ -106,7 +106,23 @@ export default function PortalExplorePage() {
         <div style={{ flex: 1 }} />
 
         <button
-          onClick={() => router.push('/user-testing/feedback')}
+          onClick={() => router.push('/demo/palette-thanks')}
+          style={{
+            background: 'transparent',
+            color: 'var(--brand-indigo)',
+            border: '1px solid var(--brand-line)',
+            padding: '8px 14px',
+            borderRadius: 7,
+            fontFamily: 'var(--font-satoshi)',
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          Stop here
+        </button>
+        <button
+          onClick={() => router.push('/demo/persona')}
           style={{
             background: 'var(--brand-yellow)',
             color: 'var(--brand-indigo)',
@@ -120,7 +136,7 @@ export default function PortalExplorePage() {
             boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
           }}
         >
-          Done exploring → Give feedback →
+          Continue to demo →
         </button>
       </div>
 
@@ -133,7 +149,7 @@ export default function PortalExplorePage() {
         color: 'var(--brand-indigo-mute)',
         textAlign: 'center',
       }}>
-        Click around the page below. When you&apos;re done, hit <strong>Give feedback</strong> above.
+        Click around the page below. When you&apos;re ready, <strong>Continue to demo</strong> for the guided tour or <strong>Stop here</strong> to wrap up.
       </div>
 
       <iframe

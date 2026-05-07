@@ -191,7 +191,9 @@ export default function ParentDevelopmentPage() {
       {/* Workload + Gear — welfare cards. Auto-hide if no fatigue / PPE
        *  data exists for this kid, so the page stays clean for kids
        *  without flags. */}
-      <WelfareCards playerId={activeKid.id} />
+      <div data-tour-id="parent-development-welfare">
+        <WelfareCards playerId={activeKid.id} />
+      </div>
 
       {/* Coach's plan (IDP read-only) */}
       {(dev || feedback) && (

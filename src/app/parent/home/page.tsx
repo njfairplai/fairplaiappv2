@@ -111,14 +111,16 @@ export default function ParentHomePage() {
         onSwitch={setActiveKidId}
       />
 
-      <HomeHero
-        player={activeKid}
-        match={latestMatch}
-        matchAnalysis={matchAnalysis}
-        bestClip={bestClip}
-        seasonAnalyses={seasonAnalyses}
-        role="parent"
-      />
+      <div data-tour-id="parent-home-clip">
+        <HomeHero
+          player={activeKid}
+          match={latestMatch}
+          matchAnalysis={matchAnalysis}
+          bestClip={bestClip}
+          seasonAnalyses={seasonAnalyses}
+          role="parent"
+        />
+      </div>
 
       {/* Lately — preview of the top notifications. Full list lives at
           /parent/notifications via the bell icon. */}

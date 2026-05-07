@@ -84,6 +84,7 @@ export default function ParentNotificationsPage() {
        *  Kinds that don't surface for this kid still render so the user
        *  has a stable mental model. Scrolls horizontally on narrow widths. */}
       <div
+        data-tour-id="parent-notifications-legend"
         style={{
           padding: '10px 16px',
           display: 'flex',
