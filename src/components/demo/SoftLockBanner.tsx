@@ -26,6 +26,13 @@ export function SoftLockBanner() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    // Iframe guard: palette voting renders /parent/* or /coach/web/*
+    // inside an iframe. The banner is for post-tour exploration of the
+    // live app — never the right context for a palette preview iframe.
+    if (window.self !== window.top) {
+      setShow(false)
+      return
+    }
     try {
       const completed = window.localStorage.getItem('fairplai_demo_completed') === 'true'
       const dismissed = window.sessionStorage.getItem(SS_DISMISSED) === 'true'

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useTour } from './TourProvider'
 
 /**
@@ -14,7 +15,16 @@ import { useTour } from './TourProvider'
  */
 export function EndDemoPill() {
   const tour = useTour()
+  // Iframe guard — palette voting renders /parent/* or /coach/web/*
+  // inside an iframe; the End-demo pill is for the live tour, not for
+  // the palette preview context.
+  const [inIframe, setInIframe] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setInIframe(window.self !== window.top)
+  }, [])
 
+  if (inIframe) return null
   if (!tour.persona) return null
 
   return (

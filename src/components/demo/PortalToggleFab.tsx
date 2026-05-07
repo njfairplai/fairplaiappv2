@@ -30,6 +30,12 @@ export function PortalToggleFab() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    // Iframe guard — palette voting renders /parent or /coach inside
+    // an iframe; portal-toggle FAB doesn't belong there.
+    if (window.self !== window.top) {
+      setShow(false)
+      return
+    }
     try {
       const completed = window.localStorage.getItem('fairplai_demo_completed') === 'true'
       // The persona localStorage key is cleared on tour completion (in
