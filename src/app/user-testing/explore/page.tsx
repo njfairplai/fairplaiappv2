@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { THEMES, applyTheme } from '@/lib/themes'
 import { StepBar } from '@/components/user-testing/StepBar'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 /**
  * /user-testing/explore?step=N — the sequential walkthrough.
@@ -26,6 +27,13 @@ export default function UserTestingExplorePage() {
   }, [stepParam])
   const theme = THEMES[step - 1]
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  // Device-aware iframe target. Parent home is mobile-first (480px max-
+  // width column) so it looks small on a desktop. Coach Highlights is
+  // desktop-first and palette-rich. Pick by viewport so testers see a
+  // surface that uses their full screen.
+  const isMobile = useIsMobile()
+  const iframeSrc = isMobile ? '/parent/home' : '/coach/web/highlights'
+  const iframeTitle = isMobile ? 'Parent home preview' : 'Coach highlights preview'
 
   // Apply the palette to the OUTER document (so the StepBar adopts it),
   // and also push it into the iframe's document each time the theme
@@ -81,12 +89,8 @@ export default function UserTestingExplorePage() {
       />
       <iframe
         ref={iframeRef}
-        // Parent home was picked over the coach match-analysis page for
-        // palette voting: it tells the consumer-side brand story (clip
-        // + season radar + lately) in a way non-coach testers grok
-        // instantly. The match-analysis page felt like work.
-        src="/parent/home"
-        title="Parent home preview"
+        src={iframeSrc}
+        title={iframeTitle}
         onLoad={onIframeLoad}
         style={{
           display: 'block',
