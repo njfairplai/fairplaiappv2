@@ -14,6 +14,7 @@ import {
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { StatsRadarSection } from '@/components/parent-portal/StatsRadarSection'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
+import { parentScoreColor } from '@/lib/parent-score-color'
 import type { Highlight } from '@/lib/types'
 
 /* Locked event vocabulary across the app: goal · shot · key (key_pass)
@@ -178,7 +179,12 @@ export default function ParentMatchDetailPage() {
               flexWrap: 'wrap',
             }}
           >
-            <span>Composite {analysis.compositeScore}</span>
+            <span>
+              Composite{' '}
+              <span style={{ color: parentScoreColor(analysis.compositeScore), fontWeight: 700 }}>
+                {analysis.compositeScore}
+              </span>
+            </span>
             <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
             <span>{analysis.minutesPlayed ?? '—'} mins</span>
           </div>

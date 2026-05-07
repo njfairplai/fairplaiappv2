@@ -15,6 +15,7 @@ import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { MatchFilmstripCard } from '@/components/parent-portal/MatchFilmstripCard'
 import { StatsRadarSection } from '@/components/parent-portal/StatsRadarSection'
+import { parentScoreColor } from '@/lib/parent-score-color'
 
 /**
  * Parent Stats — split-screen: horizontal filmstrip top, radar bottom.
@@ -260,7 +261,10 @@ export default function ParentStatsPage() {
                 fontWeight: 600,
               }}
             >
-              COMPOSITE {selectedAnalysis.compositeScore}
+              COMPOSITE{' '}
+              <span style={{ color: parentScoreColor(selectedAnalysis.compositeScore), fontWeight: 700 }}>
+                {selectedAnalysis.compositeScore}
+              </span>
             </span>
           )}
         </div>

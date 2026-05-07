@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Calendar as CalendarIcon, ChevronRight } from 'lucide-react'
 import { matchAnalyses, squadScores } from '@/lib/mockData'
+import { parentScoreColor } from '@/lib/parent-score-color'
 import {
   getKidsForParent,
   getDefaultKid,
@@ -125,12 +126,7 @@ export default function ParentHomePage() {
       {(() => {
         const score = activeKid ? squadScores[activeKid.id] : null
         if (!score) return null
-        const color =
-          score.compositeScore >= 75
-            ? 'var(--brand-yellow)'
-            : score.compositeScore >= 60
-            ? 'var(--brand-indigo)'
-            : 'var(--brand-coral)'
+        const color = parentScoreColor(score.compositeScore)
         return (
           <section style={{ padding: '14px 16px 0' }}>
             <div

@@ -3,6 +3,7 @@
 import { Play } from 'lucide-react'
 import type { Player, Session, MatchAnalysis, Highlight } from '@/lib/types'
 import { PolyRadar, type RadarCategory } from '@/components/coach/player-profile/PolyRadar'
+import { parentScoreColor } from '@/lib/parent-score-color'
 
 /* TODO: design-refinement-target — Pack 3 will refine visual treatment.
  * Current is a vertical 2-card hero: clip on top, radar below. Both halves
@@ -145,7 +146,12 @@ export function HomeHero({
         >
           <span>{formatShortDate(match.date)}</span>
           <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
-          <span>Composite {matchAnalysis.compositeScore}</span>
+          <span>
+            Composite{' '}
+            <span style={{ color: parentScoreColor(matchAnalysis.compositeScore), fontWeight: 700 }}>
+              {matchAnalysis.compositeScore}
+            </span>
+          </span>
           {matchAnalysis.minutesPlayed !== undefined && (
             <>
               <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />

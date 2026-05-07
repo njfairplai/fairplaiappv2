@@ -2,6 +2,7 @@
 
 import { Star } from 'lucide-react'
 import type { Session, MatchAnalysis } from '@/lib/types'
+import { parentScoreColor } from '@/lib/parent-score-color'
 
 /* TODO: design-refinement-target — Pack 3 will refine.
  * Compact horizontal-filmstrip card used on parent/player Stats. Used in
@@ -31,16 +32,11 @@ export function MatchFilmstripCard({
   const composite = analysis?.compositeScore ?? 0
   const isTraining = session.type === 'training_match'
 
-  // Color the score by tier; selected state overrides to sand-on-indigo.
+  // Traffic-light score: green ≥80 / amber ≥60 / red <60. Selected
+  // state overrides to sand-on-indigo for legibility on the dark fill.
   const scoreColor = selected
     ? 'var(--brand-sand)'
-    : composite >= 80
-    ? 'var(--brand-yellow)'
-    : composite >= 70
-    ? 'var(--brand-indigo)'
-    : composite >= 60
-    ? 'var(--brand-indigo-mute)'
-    : 'var(--brand-coral)'
+    : parentScoreColor(composite)
 
   const surfaceColor = selected
     ? 'var(--brand-indigo)'

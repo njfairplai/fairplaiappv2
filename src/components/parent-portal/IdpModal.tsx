@@ -7,6 +7,7 @@ import type {
   CoachFeedback,
   SeasonReviewData,
 } from '@/lib/types'
+import { parentScoreColor } from '@/lib/parent-score-color'
 
 /**
  * IDP modal — the parent's "Individual Development Plan" document.
@@ -63,14 +64,7 @@ export function IdpModal({
 
   if (!open) return null
 
-  const compositeColor =
-    composite == null
-      ? 'var(--brand-indigo-mute)'
-      : composite >= 75
-      ? 'var(--brand-yellow)'
-      : composite >= 60
-      ? 'var(--brand-indigo)'
-      : 'var(--brand-coral)'
+  const compositeColor = parentScoreColor(composite)
 
   function handlePrint() {
     if (typeof window === 'undefined') return

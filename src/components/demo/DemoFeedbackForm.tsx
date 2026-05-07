@@ -113,17 +113,13 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
       }
     } catch { /* ignore */ }
 
-    // POST to /api/feedback so the row lands in the Vercel Postgres
-    // (NEON-backed) `feedback_responses` table. The schema's `responses`
-    // field is JSONB so we add `tour_persona` + `agreement` as new keys
-    // alongside the original favourite_features / kill_features / nps
-    // shape — distinguishable from palette-only rows by `tour_persona`
-    // being set.
+    // POST to /api/feedback. Best-effort — if the DB isn't set up yet
+    // (503) or the network fails, we don't block the tester. Their
+    // responses are still in localStorage (above), and the call is the
+    // primary feedback mechanism anyway.
     //
-    // The previous mailto fallback was removed: Vercel preview blocks
-    // mailto: navigation, which surfaced as a confusing "blocked" error
-    // even when the DB write succeeded. DB is now the only persistence
-    // path. If it fails we show an inline error and don't proceed.
+    // Diagnostics for the founder live in the browser console so we
+    // can debug without surfacing an error to the tester.
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
@@ -147,20 +143,18 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
         const text = await res.text().catch(() => '')
         // eslint-disable-next-line no-console
         console.warn('[demo feedback] /api/feedback non-OK:', res.status, text)
-        if (res.status === 503) {
-          setError("Couldn't save responses — the feedback database isn't configured on this deploy. Tell us on the call instead.")
-        } else {
-          setError("Couldn't save responses — please tell us on the call. (Saved locally as backup.)")
-        }
-        return
+      } else {
+        // eslint-disable-next-line no-console
+        console.info('[demo feedback] saved to DB')
       }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.warn('[demo feedback] /api/feedback fetch failed:', err)
-      setError("Couldn't reach the feedback server — please tell us on the call. (Saved locally as backup.)")
-      return
     }
 
+    // Always succeed from the tester's POV — the row's in localStorage,
+    // and we can pick it up either via the DB (if it landed) or on the
+    // call. No need to surface backend status to a non-technical tester.
     onSubmitted()
   }
 
