@@ -263,9 +263,9 @@ export const sessions: Session[] = [
   { id: 'session_014', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-01-31', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Ajman FC', competition: 'Cup', creditsConsumed: 40, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 89, autoTriggeredAnalysis: true },
 
   // Tournament fixture sessions — UAE U12 Spring Cup
-  { id: 'session_015', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-15', startTime: '10:00', endTime: '11:30', type: 'match', status: 'scheduled', opponent: 'Al Wahda FC', competition: 'UAE U12 Spring Cup', participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_001' },
-  { id: 'session_016', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-16', startTime: '14:00', endTime: '15:30', type: 'match', status: 'scheduled', opponent: 'Sharjah Youth', competition: 'UAE U12 Spring Cup', participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_002' },
-  { id: 'session_017', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-17', startTime: '16:00', endTime: '17:30', type: 'match', status: 'scheduled', opponent: 'Abu Dhabi Stars', competition: 'UAE U12 Spring Cup', participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_003' },
+  { id: 'session_015', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-15', startTime: '10:00', endTime: '11:30', type: 'match', status: 'analysed', opponent: 'Al Wahda FC', competition: 'UAE U12 Spring Cup', creditsConsumed: 38, participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_001', aiMatchConfidence: 88, autoTriggeredAnalysis: true },
+  { id: 'session_016', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-16', startTime: '14:00', endTime: '15:30', type: 'match', status: 'analysed', opponent: 'Sharjah Youth', competition: 'UAE U12 Spring Cup', creditsConsumed: 36, participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_002', aiMatchConfidence: 90, autoTriggeredAnalysis: true },
+  { id: 'session_017', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-04-17', startTime: '16:00', endTime: '17:30', type: 'match', status: 'analysed', opponent: 'Abu Dhabi Stars', competition: 'UAE U12 Spring Cup', creditsConsumed: 40, participatingPlayerIds: [...u12RedPlayerIds], tournamentFixtureId: 'fixture_003', aiMatchConfidence: 85, autoTriggeredAnalysis: true },
 
   // Ad hoc session (standalone, not from a program)
   { id: 'session_018', facilityId: 'facility_001', pitchId: 'pitch_003', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-03-10', startTime: '16:00', endTime: '17:30', type: 'drill', status: 'scheduled', participatingPlayerIds: [...u12RedPlayerIds], isAdHoc: true },
@@ -420,6 +420,14 @@ export const matchAnalyses: MatchAnalysis[] = [
       session_008: r1,
       session_013: r1,
       session_014: r1,
+      // ── April Spring Cup matches (15-17). Flipped from `scheduled`
+      // to `analysed` so the parent stats filmstrip shows scores for
+      // dates past the wall-clock today (May+). Without these the
+      // April cards rendered with no score, making Kiyan look like
+      // he hasn't played in a month.
+      session_015: r1,
+      session_016: r1,
+      session_017: r1,
       // Training matches for roster_001 (session_027 + 037..044 + new 045)
       session_027: r1, session_037: r1, session_038: r1, session_039: r1,
       session_040: r1, session_041: r1, session_042: r1, session_043: r1, session_044: r1,

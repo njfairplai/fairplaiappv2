@@ -19,6 +19,8 @@ import {
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { WelfareCards } from '@/components/parent-portal/WelfareCards'
+import { IdpModal } from '@/components/parent-portal/IdpModal'
+import { ChevronRight } from 'lucide-react'
 
 /**
  * Parent Development — read-only IDP summary, attendance record, soft-
@@ -58,6 +60,7 @@ export default function ParentDevelopmentPage() {
   )
   const [clientNotifications, setClientNotifications] = useState<PortalNotification[]>([])
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const [idpOpen, setIdpOpen] = useState(false)
   useEffect(() => {
     if (typeof window === 'undefined' || !activeKid) return
     setClientNotifications(readClientNotifications(activeKid.id))
@@ -193,139 +196,69 @@ export default function ParentDevelopmentPage() {
        *  without flags. */}
       <WelfareCards playerId={activeKid.id} />
 
-      {/* Coach's plan (IDP read-only) */}
-      {(dev || feedback) && (
-        <section style={{ padding: '20px 16px 0' }}>
-          <Card label="COACH'S PLAN">
-            {dev?.coachNotes && (
-              <p
+      {/* Open Development Plan — single CTA that opens the IdpModal.
+       *  Replaces the previously-inline coach plan + soft-skills + season
+       *  composite + season summary content (which was bloating this
+       *  page). The full document lives in the modal with a Download
+       *  PDF button (window.print() under the hood). */}
+      {(dev || feedback || score) && (
+        <section style={{ padding: '24px 16px 0' }}>
+          <button
+            type="button"
+            onClick={() => setIdpOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 14,
+              width: '100%',
+              padding: '16px 18px',
+              background: 'var(--brand-indigo)',
+              color: 'var(--brand-sand)',
+              border: 'none',
+              borderRadius: 12,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(11, 8, 40, 0.18)',
+              textAlign: 'left',
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-fragment)',
+                  fontSize: 10,
+                  letterSpacing: '0.22em',
+                  color: 'var(--brand-yellow)',
+                  fontWeight: 700,
+                  marginBottom: 4,
+                }}
+              >
+                INDIVIDUAL DEVELOPMENT PLAN
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-clash)',
+                  fontSize: 22,
+                  letterSpacing: '-0.01em',
+                  lineHeight: 1.1,
+                }}
+              >
+                Open development plan
+              </div>
+              <div
                 style={{
                   fontFamily: 'var(--font-body)',
-                  fontSize: 14,
-                  color: 'var(--brand-indigo)',
-                  lineHeight: 1.55,
-                  margin: 0,
+                  fontSize: 12.5,
+                  color: 'rgba(238, 228, 200, 0.7)',
+                  marginTop: 4,
                 }}
               >
-                “{dev.coachNotes}”
-              </p>
-            )}
-            {review?.strengthAreas && review!.strengthAreas.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 9.5,
-                    letterSpacing: '0.18em',
-                    color: 'var(--brand-indigo-mute)',
-                    fontWeight: 700,
-                  }}
-                >
-                  STRENGTHS
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                  {review!.strengthAreas.map(s => (
-                    <span
-                      key={s}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        padding: '4px 10px',
-                        borderRadius: 999,
-                        background: 'var(--brand-yellow-soft)',
-                        color: 'var(--brand-indigo)',
-                        border: '1px solid var(--brand-yellow)',
-                      }}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
+                Coach plan, strengths, soft skills, season summary. PDF download inside.
               </div>
-            )}
-            {review?.improvementAreas && review!.improvementAreas.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 9.5,
-                    letterSpacing: '0.18em',
-                    color: 'var(--brand-indigo-mute)',
-                    fontWeight: 700,
-                  }}
-                >
-                  WORKING ON
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                  {review!.improvementAreas.map(s => (
-                    <span
-                      key={s}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        padding: '4px 10px',
-                        borderRadius: 999,
-                        background: 'transparent',
-                        color: 'var(--brand-coral)',
-                        border: '1px solid var(--brand-coral)',
-                      }}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Card>
-        </section>
-      )}
-
-      {/* Soft skills */}
-      {feedback && (
-        <section style={{ padding: '20px 16px 0' }}>
-          <Card label="SOFT SKILLS">
-            <SoftSkillBar label="Attitude" value={feedback.attitude} />
-            <SoftSkillBar label="Effort" value={feedback.effort} />
-            <SoftSkillBar label="Coachability" value={feedback.coachability} />
-            <SoftSkillBar label="Sportsmanship" value={feedback.sportsmanship} />
-          </Card>
-        </section>
-      )}
-
-      {/* Performance summary (composite) */}
-      {score && (
-        <section style={{ padding: '20px 16px 0' }}>
-          <Card label="SEASON COMPOSITE">
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 38,
-                  color:
-                    score.compositeScore >= 75
-                      ? 'var(--brand-yellow)'
-                      : score.compositeScore >= 60
-                      ? 'var(--brand-indigo)'
-                      : 'var(--brand-coral)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                }}
-              >
-                {score.compositeScore}
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                }}
-              >
-                SEASON AVG · {score.avgScore}
-              </span>
             </div>
-          </Card>
+            <ChevronRight size={20} color="var(--brand-yellow)" />
+          </button>
         </section>
       )}
 
@@ -344,6 +277,16 @@ export default function ParentDevelopmentPage() {
           from the Hub.
         </p>
       </section>
+
+      <IdpModal
+        open={idpOpen}
+        onClose={() => setIdpOpen(false)}
+        player={activeKid}
+        dev={dev}
+        feedback={feedback}
+        composite={score?.compositeScore ?? null}
+        review={review}
+      />
     </div>
   )
 }

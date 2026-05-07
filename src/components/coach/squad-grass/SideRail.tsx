@@ -10,6 +10,7 @@ import type { Player, MatchAnalysis, RadarDataItem } from '@/lib/types'
 import { matchAnalyses, sessions } from '@/lib/mockData'
 import { scoreColor, type SeasonScore } from '@/lib/squad-season-score'
 import { getKeyStats, aggregateSeasonAnalysis } from '@/lib/squad-position-stats'
+import { getLatestFatigueByPlayer, fatigueTier } from '@/lib/parent-portal'
 
 // Recharts is heavy + client-only — load on demand. Same component the
 // match + player pages use so the radar reads identically across the app.
@@ -506,6 +507,11 @@ function Body({
           {readForPlayer(player, season, last, isLast)}
         </div>
 
+        {/* Fatigue chip — pulled from welfare-store. Sits between the
+         *  Fairplai read and the radar so welfare lives next to
+         *  performance on every player view. */}
+        <FatigueChip playerId={player.id} />
+
         {/* radar — 6 categories, identical to the analysis page */}
         <div style={{ background: 'rgba(238, 228, 200, 0.04)', borderRadius: 12, padding: '8px 4px' }}>
           <RadarChartDynamic data={radarData} height={260} />
@@ -766,6 +772,89 @@ function SideRailNoteEditor({ playerId }: { playerId: string }) {
         >
           Save note
         </button>
+      </div>
+    </div>
+  )
+}
+
+
+/** Inline fatigue chip styled for the dark indigo SideRail surface.
+ *  Reads the latest fatigue sample from welfare-store. Hidden when no
+ *  sample exists for the player. */
+function FatigueChip({ playerId }: { playerId: string }) {
+  const [load, setLoad] = useState<number | null>(null)
+  useEffect(() => {
+    const map = getLatestFatigueByPlayer()
+    const sample = map[playerId]
+    setLoad(sample ? sample.load : null)
+  }, [playerId])
+  if (load == null) return null
+  const tier = fatigueTier(load)
+  const color =
+    tier === 'high' ? 'var(--brand-coral)' :
+    tier === 'moderate' ? '#E89A45' : '#9BD08A'
+  const tierLabel = tier === 'high' ? 'HIGH' : tier === 'moderate' ? 'MOD' : 'LOW'
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 14px',
+        background: 'rgba(238, 228, 200, 0.04)',
+        border: `1px solid ${color}55`,
+        borderRadius: 12,
+      }}
+    >
+      <div>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            letterSpacing: '0.18em',
+            color: 'rgba(238, 228, 200, 0.6)',
+            fontWeight: 700,
+            marginBottom: 4,
+          }}
+        >
+          FATIGUE LOAD
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 28,
+              color,
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
+            }}
+          >
+            {load}
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.18em',
+              color,
+              fontWeight: 700,
+            }}
+          >
+            {tierLabel}
+          </span>
+        </div>
+      </div>
+      <div
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 11.5,
+          color: 'rgba(238, 228, 200, 0.5)',
+          textAlign: 'right',
+          maxWidth: 140,
+          lineHeight: 1.4,
+        }}
+      >
+        From sprint count + distance per minute over the last 7 days.
       </div>
     </div>
   )

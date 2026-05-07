@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Sparkles, Film, Users, ChevronDown, Smartphone, BarChart3 } from 'lucide-react'
+import { Sparkles, Film, Users, ChevronDown, BarChart3 } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { CoachThemeProvider, useCoachTheme } from '@/contexts/CoachThemeContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
@@ -75,7 +75,8 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
     pathname.startsWith('/coach/web/player/') ||
     pathname.startsWith('/coach/web/match-center') ||
     pathname.startsWith('/coach/web/highlights') ||
-    pathname.startsWith('/coach/web/record')
+    pathname.startsWith('/coach/web/record') ||
+    pathname.startsWith('/coach/web/idps')
   const colors = isBrandedRoute ? { ...themeColors, ...BRAND_CHROME } : themeColors
   // Brand fonts are now the default across every coach/web route (chrome
   // unification — Slice 6 polish), even on routes whose body still uses
@@ -144,28 +145,9 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
             <ChevronDown size={isMobile ? 11 : 13} color={colors.textMuted} style={{ position: 'absolute', right: isMobile ? 6 : 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
           </div>
 
-          {/* Switch to Mobile (icon only on mobile) */}
-          <button
-            onClick={() => {
-              localStorage.setItem('fairplai_switch_from', pathname)
-              router.push('/coach/home')
-            }}
-            title="Switch to mobile app"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: isMobile ? 0 : '6px 12px',
-              width: isMobile ? 32 : 'auto', height: isMobile ? 32 : 'auto',
-              justifyContent: 'center',
-              borderRadius: 8,
-              background: isBrandedRoute ? BRAND.indigoSoft : (mode === 'light' ? 'rgba(74,74,255,0.06)' : 'rgba(74,74,255,0.12)'),
-              border: `1px solid ${isBrandedRoute ? 'rgba(27,21,80,0.18)' : (mode === 'light' ? 'rgba(74,74,255,0.15)' : 'rgba(74,74,255,0.25)')}`,
-              cursor: 'pointer', transition: 'all 0.15s ease', flexShrink: 0,
-              fontFamily: TYPE.body,
-            }}
-          >
-            <Smartphone size={isMobile ? 14 : 14} color={isBrandedRoute ? BRAND.indigo : '#4A4AFF'} />
-            {!isMobile && <span style={{ fontSize: 12, fontWeight: 600, color: isBrandedRoute ? BRAND.indigo : '#4A4AFF' }}>Mobile</span>}
-          </button>
+          {/* Mobile-app switch button intentionally removed for the demo
+           *  build — mobile coach app isn't part of the demo scope and
+           *  the button confuses testers. Keep the import out too. */}
 
           {/* Coach label (avatar only on mobile) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>

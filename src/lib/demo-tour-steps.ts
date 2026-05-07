@@ -59,9 +59,11 @@ export type TourStep = {
   cta: 'next' | 'transition' | 'finish'
 }
 
-// ─── COACH TOUR (4 tabs · 6 substeps) ───────────────────
+// ─── COACH TOUR (4 stops · one per nav tab) ─────────────
+// No auto-routed substeps. Each stop = a tab. Drill-ins (match detail,
+// player profile) are mentioned in the body but the user does the
+// clicking themselves — auto-routing them felt jarring in walkthrough.
 const COACH_STOPS: TourStep[] = [
-  // Hub tab
   {
     id: 'coach-hub',
     route: '/coach/web',
@@ -71,52 +73,31 @@ const COACH_STOPS: TourStep[] = [
     tryThis: 'Try a suggestion chip.',
     cta: 'next',
   },
-  // Match Center tab — 2 substeps
   {
     id: 'coach-match-center',
     route: '/coach/web/match-center',
     tab: 'match-center',
     headline: 'Match Center — every session in one calendar.',
-    body: 'Days light up as matches move from PREP → READY. Drills, training matches, fixtures — all here.',
-    tryThis: 'Click any green ready cell to drill in.',
+    body: 'Days light up as matches move from PREP → READY. Drills, training matches, fixtures — all here. Click any green READY cell to drill into the per-player analysis.',
+    tryThis: 'Click a green READY cell.',
     cta: 'next',
   },
-  {
-    id: 'coach-match-drillin',
-    route: '/coach/web/match/session_007',
-    tab: 'match-center',
-    headline: 'Match drill-in — performance + welfare per player.',
-    body: 'Composite scores, radar shape, key stats. Click any roster row to open a player detail with their fatigue tile, injury moments, and one-tap "send a clip to the parent."',
-    tryThis: 'Click a roster row to open a player.',
-    cta: 'next',
-  },
-  // Players tab — 2 substeps
   {
     id: 'coach-squad',
     route: '/coach/web/squad',
     tab: 'players',
     headline: 'Squad as pitch — formation + welfare overlays.',
-    body: 'Your team in their positions, scored. Filter for high fatigue, IDP-stale, recent injuries — non-matching players dim out so flags surface fast.',
+    body: 'Your team in their positions, scored. Filter for high fatigue, IDP-stale, recent injuries — non-matching players dim out so flags surface fast. Click any player token for their full profile.',
     tryThis: 'Try the High fatigue or Injuries filter.',
     cta: 'next',
   },
-  {
-    id: 'coach-player-profile',
-    route: '/coach/web/player/player_001',
-    tab: 'players',
-    headline: 'Player profile — one page, season-deep.',
-    body: 'Filmstrip of every match, performance radar, workload trend, gear flags, IDP. Send a clip directly to the parent from the welfare section.',
-    tryThis: 'Scroll to the WORKLOAD & GEAR section.',
-    cta: 'next',
-  },
-  // Highlights tab
   {
     id: 'coach-highlights',
     route: '/coach/web/highlights',
     tab: 'highlights',
     headline: 'Highlights — share clips with parents.',
-    body: 'Every AI-tagged moment across the season, grouped by match. Forward a clip to a parent in one tap — replaces WhatsApp side-channels.',
-    tryThis: 'Try the ↗ button on any clip.',
+    body: 'Every AI-tagged moment across the season, grouped by match. Forward a clip to a parent in one tap — replaces WhatsApp side-channels. Use "+ Coach Cam" top-right to upload a phone clip.',
+    tryThis: 'Try the ↗ share button on any clip.',
     cta: 'transition',
   },
 ]
@@ -128,36 +109,28 @@ export const COACH_TO_PARENT_TRANSITION = {
   cta: 'Continue →',
 }
 
-// ─── PARENT TOUR (5 tabs · 6 substeps) ──────────────────
+// ─── PARENT TOUR (5 stops · one per nav tab) ────────────
+// No auto-routed substeps. Match detail (/parent/match/[id]) is only
+// reachable via deep links from notifications by design — the tour
+// shouldn't teleport users there.
 const PARENT_STOPS: TourStep[] = [
-  // Home tab
   {
     id: 'parent-home',
     route: '/parent/home',
     tab: 'home',
     headline: 'Home — your kid at a glance.',
-    body: "Most-recent match clip + season radar shape. The 'how's my kid doing?' answer in two seconds. Tap the bell at top to see your full inbox.",
+    body: "Most-recent match clip + season composite + season radar. The 'how's my kid doing?' answer in two seconds. Tap the bell at top to see your full inbox.",
     cta: 'next',
   },
-  // Stats tab — 2 substeps
   {
     id: 'parent-stats',
     route: '/parent/stats',
     tab: 'stats',
     headline: 'Stats — match-by-match performance.',
-    body: 'Filmstrip of every match + an interactive radar that updates per match. Tap any match card to drill into the full analysis.',
+    body: "Filmstrip of every match + an interactive radar that updates per match. Tap any match card and the radar redraws to that match's shape — see how your kid's profile shifts game-to-game.",
     tryThis: 'Tap a match in the filmstrip.',
     cta: 'next',
   },
-  {
-    id: 'parent-match',
-    route: '/parent/match/session_054',
-    tab: 'stats',
-    headline: 'Match detail — stats + welfare in context.',
-    body: "Your kid's composite + key clips, plus a 'moments to know' section if the coach flagged anything during the match. Welfare lives next to performance.",
-    cta: 'next',
-  },
-  // Highlights tab
   {
     id: 'parent-highlights',
     route: '/parent/highlights',
@@ -167,16 +140,14 @@ const PARENT_STOPS: TourStep[] = [
     tryThis: 'Open a clip from the FROM YOUR COACH row.',
     cta: 'next',
   },
-  // Progress / Development tab
   {
     id: 'parent-development',
     route: '/parent/development',
     tab: 'development',
     headline: 'Progress — workload + gear + IDP.',
-    body: "Fatigue trend so you know if your kid's overloaded. Gear flags from the coach. The full development plan one tap away.",
+    body: "Fatigue trend so you know if your kid's overloaded. Gear flags from the coach. The full development plan opens in a tap — read it or download as PDF.",
     cta: 'next',
   },
-  // Hub tab (last stop)
   {
     id: 'parent-hub',
     route: '/parent/hub',

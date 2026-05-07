@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Camera } from 'lucide-react'
 import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { SendClipSheet } from '@/components/coach/player-profile/SendClipSheet'
 import {
   SESSIONS,
   MATCH_CENTER_HIGHLIGHTS,
@@ -56,6 +58,7 @@ export default function CoachHighlightsPage() {
 
   // Toast + modal state mirrors Match Center page.
   const [toast, setToast] = useState<string | null>(null)
+  const [sendClipOpen, setSendClipOpen] = useState(false)
   const [clipQueue, setClipQueue] = useState<MatchCenterHighlight[] | null>(null)
   const [clipQueueTitle, setClipQueueTitle] = useState<string | undefined>(undefined)
   const [clipSharing, setClipSharing] = useState<MatchCenterHighlight | null>(null)
@@ -150,21 +153,54 @@ export default function CoachHighlightsPage() {
         color: BRAND.indigo,
       }}
     >
-      <div>
-        <MEyebrow>SPRING 2026 SEASON</MEyebrow>
-        <MDisplay size={isMobile ? 36 : 64} style={{ marginTop: 6 }}>
-          Highlights
-        </MDisplay>
-        <div
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 16,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <MEyebrow>SPRING 2026 SEASON</MEyebrow>
+          <MDisplay size={isMobile ? 36 : 64} style={{ marginTop: 6 }}>
+            Highlights
+          </MDisplay>
+          <div
+            style={{
+              fontFamily: TYPE.body,
+              fontSize: 14,
+              color: BRAND.indigoMid,
+              marginTop: 4,
+            }}
+          >
+            Every clip we&apos;ve tagged this season. Filter by event, narrow to a player.
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSendClipOpen(true)}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '10px 16px',
+            border: `1px solid ${BRAND.indigo}`,
+            borderRadius: 8,
+            background: BRAND.indigo,
+            color: BRAND.sand,
             fontFamily: TYPE.body,
-            fontSize: 14,
-            color: BRAND.indigoMid,
-            marginTop: 4,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(11, 8, 40, 0.18)',
+            flexShrink: 0,
           }}
         >
-          Every clip we&apos;ve tagged this season. Filter by event, narrow to a player.
-        </div>
+          <Camera size={14} />
+          + Coach Cam
+        </button>
       </div>
 
       {/* Filters */}
@@ -377,6 +413,11 @@ export default function CoachHighlightsPage() {
         onAction={msg => setToast(msg)}
       />
       <Toast message={toast} onDismiss={() => setToast(null)} />
+      <SendClipSheet
+        open={sendClipOpen}
+        onClose={() => setSendClipOpen(false)}
+        onSent={parentName => setToast(parentName ? `Sent to ${parentName}` : 'Coach Cam clip uploaded')}
+      />
     </div>
   )
 }

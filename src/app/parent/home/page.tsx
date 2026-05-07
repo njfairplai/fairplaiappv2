@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Calendar as CalendarIcon, ChevronRight } from 'lucide-react'
-import { matchAnalyses } from '@/lib/mockData'
+import { matchAnalyses, squadScores } from '@/lib/mockData'
 import {
   getKidsForParent,
   getDefaultKid,
@@ -119,6 +119,69 @@ export default function ParentHomePage() {
         seasonAnalyses={seasonAnalyses}
         role="parent"
       />
+
+      {/* Season composite — promoted from /parent/development. Headline
+       *  number for the parent. Auto-hides if no squadScore exists. */}
+      {(() => {
+        const score = activeKid ? squadScores[activeKid.id] : null
+        if (!score) return null
+        const color =
+          score.compositeScore >= 75
+            ? 'var(--brand-yellow)'
+            : score.compositeScore >= 60
+            ? 'var(--brand-indigo)'
+            : 'var(--brand-coral)'
+        return (
+          <section style={{ padding: '14px 16px 0' }}>
+            <div
+              style={{
+                background: 'var(--brand-paper)',
+                border: '1px solid var(--brand-line)',
+                borderRadius: 12,
+                padding: '14px 16px',
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 14,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10.5,
+                  letterSpacing: '0.22em',
+                  color: 'var(--brand-indigo-mute)',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                SEASON
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 44,
+                  color,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1,
+                }}
+              >
+                {score.compositeScore}
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 12.5,
+                  color: 'var(--brand-indigo-mute)',
+                  marginLeft: 'auto',
+                  textAlign: 'right',
+                }}
+              >
+                Composite score across<br />all matches this season.
+              </span>
+            </div>
+          </section>
+        )
+      })()}
 
       {/* Lately — preview of the top notifications. Full list lives at
           /parent/notifications via the bell icon. */}

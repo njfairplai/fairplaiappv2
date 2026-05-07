@@ -27,8 +27,11 @@ export function TourTooltip({ step }: { step: TourStep }) {
       aria-label="Demo tour narrator"
       style={{
         position: 'fixed',
+        // Top-left so we don't collide with notifications bell (parent
+        // top-right), team selector + Mobile + avatar (coach top-right),
+        // or the End demo pill (bottom-right).
         top: 'max(20px, env(safe-area-inset-top, 20px))',
-        right: 20,
+        left: 20,
         width: CARD_WIDTH,
         maxWidth: 'calc(100vw - 40px)',
         background: 'var(--brand-paper)',

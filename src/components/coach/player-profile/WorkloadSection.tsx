@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Plus, Send } from 'lucide-react'
+import { AlertTriangle, Plus } from 'lucide-react'
 import { BRAND, TYPE } from '@/lib/constants'
 import {
   getFatigueSamplesForPlayer,
@@ -9,7 +9,6 @@ import {
 } from '@/lib/parent-portal'
 import { flagPPE } from '@/lib/match-center'
 import type { FatigueSample, PPEFlag, PPEGearType } from '@/lib/types'
-import { SendClipSheet } from './SendClipSheet'
 import { Toast } from '@/components/coach/match-center/Toast'
 import { FatigueTile } from '@/components/welfare/FatigueTile'
 
@@ -40,7 +39,6 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
   const [samples, setSamples] = useState<FatigueSample[]>([])
   const [ppe, setPpe] = useState<PPEFlag[]>([])
   const [ppeOpen, setPpeOpen] = useState(false)
-  const [sendClipOpen, setSendClipOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   // Hydrate from localStorage post-mount so SSR is stable.
@@ -83,21 +81,6 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
         >
           WORKLOAD &amp; GEAR
         </div>
-        <button
-          type="button"
-          onClick={() => setSendClipOpen(true)}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '6px 12px',
-            border: `1px solid ${BRAND.indigo}`, borderRadius: 6,
-            background: 'transparent', color: BRAND.indigo,
-            fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.16em', fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          <Send size={11} />
-          SEND A CLIP
-        </button>
       </div>
 
       <div
@@ -221,15 +204,6 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
           onSaved={() => setTick(t => t + 1)}
         />
       )}
-      <SendClipSheet
-        open={sendClipOpen}
-        playerId={playerId}
-        playerName={playerName}
-        onClose={() => setSendClipOpen(false)}
-        onSent={parentName => {
-          setToast(parentName ? `Sent to ${parentName}` : 'Clip uploaded')
-        }}
-      />
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </section>
   )

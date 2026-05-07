@@ -19,8 +19,11 @@ import { players, parents } from '@/lib/mockData'
 
 interface SendClipSheetProps {
   open: boolean
-  playerId: string
-  playerName: string
+  /** Pre-selected player. When omitted, the sheet shows an inline
+   *  player picker (used by the Highlights-tab "+ Coach Cam" entry
+   *  point where there's no player context). */
+  playerId?: string
+  playerName?: string
   onClose: () => void
   onSent: (parentName: string | null) => void
 }
@@ -42,6 +45,12 @@ export function SendClipSheet({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [tag, setTag] = useState<CoachCamTag>('drill')
   const [caption, setCaption] = useState('')
+  const [pickedPlayerId, setPickedPlayerId] = useState<string>(playerId ?? '')
+
+  // Player picker is only shown when playerId is undefined (e.g. opened
+  // from /coach/web/highlights with no player context). When playerId
+  // is preset, the picker is hidden and submission uses that player.
+  const needsPicker = !playerId
 
   useEffect(() => {
     if (!open) return
@@ -72,11 +81,13 @@ export function SendClipSheet({
 
   function send() {
     if (!file) return
-    const player = players.find(p => p.id === playerId)
+    const effectivePlayerId = playerId ?? pickedPlayerId
+    if (!effectivePlayerId) return
+    const player = players.find(p => p.id === effectivePlayerId)
     const parentId = player?.parentIds[0]
     const parent = parentId ? parents.find(p => p.id === parentId) : null
     const clip = uploadCoachCam({
-      playerId,
+      playerId: effectivePlayerId,
       coachId: 'coach_001',
       caption: caption.trim() || undefined,
       tag,
@@ -87,7 +98,7 @@ export function SendClipSheet({
     if (parent) {
       sendClipToParent({
         highlightId: clip.id,
-        playerId,
+        playerId: effectivePlayerId,
         parentId: parent.id,
         coachId: 'coach_001',
         message: caption.trim() || `${tag.charAt(0).toUpperCase()}${tag.slice(1)} clip`,
@@ -125,8 +136,36 @@ export function SendClipSheet({
             color: BRAND.indigoMute, fontWeight: 700,
           }}
         >
-          SEND A CLIP · {playerName.toUpperCase()}
+          SEND A CLIP{playerName ? ` · ${playerName.toUpperCase()}` : ''}
         </div>
+
+        {/* Player picker — only when not preselected */}
+        {needsPicker && (
+          <div style={{ marginTop: 14 }}>
+            <Label>Send to player</Label>
+            <select
+              value={pickedPlayerId}
+              onChange={e => setPickedPlayerId(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                border: `1px solid ${BRAND.line}`, borderRadius: 6,
+                fontFamily: TYPE.body, fontSize: 13.5, color: BRAND.indigo,
+                background: BRAND.sand, outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            >
+              <option value="">— Pick a player —</option>
+              {players
+                .filter(p => p.parentIds.length > 0)
+                .map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.firstName} {p.lastName} · #{p.jerseyNumber}
+                  </option>
+                ))}
+            </select>
+          </div>
+        )}
 
         {/* Upload */}
         <div style={{ marginTop: 14 }}>
@@ -270,7 +309,7 @@ export function SendClipSheet({
           <button
             type="button"
             onClick={send}
-            disabled={!file}
+            disabled={!file || (needsPicker && !pickedPlayerId)}
             style={{
               padding: '10px 16px',
               border: 'none', borderRadius: 6,

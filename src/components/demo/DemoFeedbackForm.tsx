@@ -19,8 +19,6 @@ import { BRAND, TYPE } from '@/lib/constants'
  * Submission target: localStorage + mailto. No backend.
  */
 
-const FOUNDER_EMAIL = 'naheljar@gmail.com'
-
 const AGREEMENT_QUESTIONS = [
   { key: 'professional', label: 'The product looks professional.' },
   { key: 'scan',         label: 'The pages are easy to scan.' },
@@ -121,7 +119,11 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
     // alongside the original favourite_features / kill_features / nps
     // shape — distinguishable from palette-only rows by `tour_persona`
     // being set.
-    let dbOk = false
+    //
+    // The previous mailto fallback was removed: Vercel preview blocks
+    // mailto: navigation, which surfaced as a confusing "blocked" error
+    // even when the DB write succeeded. DB is now the only persistence
+    // path. If it fails we show an inline error and don't proceed.
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
@@ -141,53 +143,24 @@ export function DemoFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
           email: tester?.email ?? null,
         }),
       })
-      dbOk = res.ok
       if (!res.ok) {
         const text = await res.text().catch(() => '')
-        // 503 = DB not configured (expected in some preview / local dev
-        // setups). Other errors get logged for debugging but never block
-        // the user from finishing the form.
         // eslint-disable-next-line no-console
         console.warn('[demo feedback] /api/feedback non-OK:', res.status, text)
+        if (res.status === 503) {
+          setError("Couldn't save responses — the feedback database isn't configured on this deploy. Tell us on the call instead.")
+        } else {
+          setError("Couldn't save responses — please tell us on the call. (Saved locally as backup.)")
+        }
+        return
       }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.warn('[demo feedback] /api/feedback fetch failed:', err)
+      setError("Couldn't reach the feedback server — please tell us on the call. (Saved locally as backup.)")
+      return
     }
 
-    // Mailto backup — fires after the POST so the founder always gets
-    // a copy regardless of DB state. Skipped on the success path? No —
-    // belt and braces; small inbox cost is fine vs. losing a response.
-    const lines: string[] = ['= AGREEMENT (1–5) =']
-    for (const q of AGREEMENT_QUESTIONS) {
-      lines.push(`${q.label}  →  ${agreement[q.key] ?? '(blank)'}`)
-    }
-    lines.push('', '= FEATURES YOU\'D USE =')
-    if (use.length === 0) lines.push('(none picked)')
-    for (const k of use) {
-      const f = FEATURES.find(f => f.key === k)
-      lines.push(`- ${f?.label ?? k}`)
-    }
-    lines.push('', '= FEATURES TO DROP / CONFUSING =')
-    if (drop.length === 0) lines.push('(none picked)')
-    for (const k of drop) {
-      const f = FEATURES.find(f => f.key === k)
-      lines.push(`- ${f?.label ?? k}`)
-    }
-    lines.push('', `= NPS = ${nps} / 10`)
-    lines.push('', '= OPEN COMMENTS =', payload.open || '(blank)')
-    lines.push('', `— Submitted ${payload.submittedAt}`)
-    lines.push(`— DB write: ${dbOk ? 'OK' : 'FAILED (mailto fallback only)'}`)
-
-    if (tester) {
-      lines.unshift(`= TESTER =\n${JSON.stringify(tester, null, 2)}\n`)
-    }
-
-    const subject = encodeURIComponent('Fairplai demo feedback')
-    const body = encodeURIComponent(lines.join('\n'))
-    if (typeof window !== 'undefined') {
-      window.location.href = `mailto:${FOUNDER_EMAIL}?subject=${subject}&body=${body}`
-    }
     onSubmitted()
   }
 
