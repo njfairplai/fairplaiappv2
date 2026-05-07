@@ -46,11 +46,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (Date.now() < session.expiresAt) {
           setUser(session)
         } else {
-          // Session expired
+          // Session expired. Clear it. Normally we'd kick the user to
+          // /login from any non-public path, but during a guided demo
+          // tour the tour owns navigation — auth-gating mid-tour
+          // bounces the tester unexpectedly.
           localStorage.removeItem(AUTH_KEY)
           localStorage.removeItem('fairplai_role')
           localStorage.removeItem('fairplai_consented')
-          if (!isPublicPath(pathname)) {
+          const demoActive = localStorage.getItem('fairplai_demo_active')
+          if (!demoActive && !isPublicPath(pathname)) {
             router.replace('/login')
           }
         }

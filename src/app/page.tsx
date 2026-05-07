@@ -17,6 +17,16 @@ export default function UserTestingLandingPage() {
     applyTheme('almanac')
     // Reset any prior dwell tracking from a previous session
     try { localStorage.removeItem('fairplai-testing-dwell') } catch { /* noop */ }
+    // Wipe stale auth state from prior testing sessions. Without this,
+    // a tester who previously logged in as coach has fairplai_role +
+    // fairplai_auth_session lingering — which causes the palette
+    // iframes (loading /parent/home) to bounce to /login mid-voting.
+    // The demo entry is a fresh session by definition.
+    try {
+      localStorage.removeItem('fairplai_role')
+      localStorage.removeItem('fairplai_auth_session')
+      localStorage.removeItem('fairplai_consented')
+    } catch { /* noop */ }
   }, [])
 
   return (

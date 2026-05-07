@@ -81,8 +81,12 @@ export default function UserTestingExplorePage() {
       />
       <iframe
         ref={iframeRef}
-        src="/coach/web/match/session_007"
-        title="Coach portal preview"
+        // Parent home was picked over the coach match-analysis page for
+        // palette voting: it tells the consumer-side brand story (clip
+        // + season radar + lately) in a way non-coach testers grok
+        // instantly. The match-analysis page felt like work.
+        src="/parent/home"
+        title="Parent home preview"
         onLoad={onIframeLoad}
         style={{
           display: 'block',
