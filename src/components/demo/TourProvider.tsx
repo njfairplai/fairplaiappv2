@@ -16,24 +16,24 @@ import {
   type TourStep,
 } from '@/lib/demo-tour-steps'
 import { TourTooltip } from './TourTooltip'
-import { TourDimOverlay } from './TourDimOverlay'
-import { TourProgressDots } from './TourProgressDots'
 import { TourTransitionCard } from './TourTransitionCard'
+import { EndDemoPill } from './EndDemoPill'
 
 /**
  * TourProvider — sits at the app root, wraps every page.
  *
  * Activates whenever `fairplai_demo_active` localStorage holds a persona.
- * When active, renders the dim overlay + tooltip + progress dots over
- * the live UI. Steps are defined in `lib/demo-tour-steps.ts`.
+ * When active, renders a floating top-right narrator card + a bottom-
+ * right End Demo pill over the live UI. The page underneath stays fully
+ * interactive — no dim, no spotlight, no blocked clicks.
  *
  * Navigation contract:
- *   - Each step has a `route` and an `anchor` selector
- *   - Advancing to a step where `route !== current pathname` triggers
- *     `router.push(route)` first, then re-anchors after the new route
- *     mounts
- *   - The TourTooltip uses MutationObserver to wait for the anchor to
- *     appear (the page may render asynchronously)
+ *   - Each step has a `route`. Advancing where `route !== current
+ *     pathname` triggers `router.push(route)` first, then re-shows the
+ *     tooltip on the new surface
+ *   - `hide()` collapses the tooltip for the current stop only; the
+ *     next route change brings it back. The EndDemoPill stays visible
+ *   - `skip()` ends the demo: marks completed, routes to /demo/end
  *
  * Routes ignored by the tour:
  *   - `/`, `/welcome`, `/demo/*`, `/login`, `/user-testing/*`
@@ -57,7 +57,11 @@ interface TourContextValue {
   active: boolean
   next: () => void
   back: () => void
+  /** End the demo entirely — sets `completed` + routes to /demo/end. */
   skip: () => void
+  /** Hide the tooltip for the current stop only. The pill stays visible
+   *  and the tooltip returns on the next route change. */
+  hide: () => void
   resume: () => void
 }
 
@@ -80,6 +84,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const [persona, setPersona] = useState<TourPersona | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   const [showTransition, setShowTransition] = useState(false)
+  const [tooltipHidden, setTooltipHidden] = useState(false)
   const [hydrated, setHydrated] = useState(false)
 
   // Hydrate persona + step from localStorage on mount AND on every
@@ -104,6 +109,9 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
     setHydrated(true)
+    // Tooltip hidden state resets on every route change so a new stop's
+    // narration always shows even if the user × dismissed the prior one.
+    setTooltipHidden(false)
   }, [pathname])
 
   // Persist step index whenever it changes.
@@ -127,7 +135,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const step = steps[stepIndex] ?? null
 
   // If we're on the right route already, skip to it. If not, push the
-  // route. The tooltip itself handles waiting for the anchor to appear.
+  // route. The tooltip then renders against whatever's on the page.
   useEffect(() => {
     if (!persona || !step) return
     if (showTransition) return
@@ -136,9 +144,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     }
   }, [persona, step, showTransition, pathname, router])
 
-  // Tour is "active" when persona is set + we're not on an ignored route
-  // (i.e. we ARE on a tour route). Avoids the overlay flashing during
-  // demo gateway / palette pages.
+  // Tour is "active" when persona is set + we're not on an ignored route.
   const onIgnoredRoute = TOUR_IGNORED_PREFIXES.some(p =>
     p === pathname ? true : pathname.startsWith(`${p}/`),
   ) || pathname === '/'
@@ -156,6 +162,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     setPersona(null)
     setStepIndex(0)
     setShowTransition(false)
+    setTooltipHidden(false)
     router.push('/demo/end')
   }, [router])
 
@@ -170,6 +177,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       return
     }
     setShowTransition(false)
+    setTooltipHidden(false)
     setStepIndex(i => Math.min(i + 1, steps.length - 1))
   }, [step, showTransition, steps.length, finish])
 
@@ -178,6 +186,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       setShowTransition(false)
       return
     }
+    setTooltipHidden(false)
     setStepIndex(i => Math.max(0, i - 1))
   }, [showTransition])
 
@@ -185,9 +194,14 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     finish()
   }, [finish])
 
+  const hide = useCallback(() => {
+    setTooltipHidden(true)
+  }, [])
+
   const resume = useCallback(() => {
     if (!step) return
     if (pathname !== step.route) router.push(step.route)
+    setTooltipHidden(false)
   }, [step, pathname, router])
 
   const value: TourContextValue = {
@@ -200,20 +214,18 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     next,
     back,
     skip,
+    hide,
     resume,
   }
 
   return (
     <TourContext.Provider value={value}>
       {children}
-      {hydrated && active && !showTransition && (
-        <>
-          <TourDimOverlay anchor={step!.anchor} />
-          <TourTooltip step={step!} />
-          <TourProgressDots />
-        </>
+      {hydrated && active && !showTransition && !tooltipHidden && (
+        <TourTooltip step={step!} />
       )}
       {hydrated && active && showTransition && <TourTransitionCard />}
+      {hydrated && active && <EndDemoPill />}
     </TourContext.Provider>
   )
 }

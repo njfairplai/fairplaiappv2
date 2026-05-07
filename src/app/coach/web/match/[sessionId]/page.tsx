@@ -1227,17 +1227,15 @@ export default function CoachMatchAnalysisPage() {
           </div>
         </div>
 
-        <div data-tour-id="match-drillin-roster">
-          {isTeamSplit ? (
-            <>
-              <V3RosterSection title="Team A" rows={teamARows} avg={teamAvg(teamARows)} accent="A" isMobile={isMobile} onSelect={setSelectedPlayerId} />
-              <div style={{ height: 18 }} />
-              <V3RosterSection title="Team B" rows={teamBRows} avg={teamAvg(teamBRows)} accent="B" isMobile={isMobile} onSelect={setSelectedPlayerId} />
-            </>
-          ) : (
-            <V3RosterSection rows={sortedPlayerRows} isMobile={isMobile} onSelect={setSelectedPlayerId} />
-          )}
-        </div>
+        {isTeamSplit ? (
+          <>
+            <V3RosterSection title="Team A" rows={teamARows} avg={teamAvg(teamARows)} accent="A" isMobile={isMobile} onSelect={setSelectedPlayerId} />
+            <div style={{ height: 18 }} />
+            <V3RosterSection title="Team B" rows={teamBRows} avg={teamAvg(teamBRows)} accent="B" isMobile={isMobile} onSelect={setSelectedPlayerId} />
+          </>
+        ) : (
+          <V3RosterSection rows={sortedPlayerRows} isMobile={isMobile} onSelect={setSelectedPlayerId} />
+        )}
       </div>
 
       {/* Player detail panel (slide-in on desktop, takeover on mobile) */}

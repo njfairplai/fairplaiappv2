@@ -361,7 +361,6 @@ function MonthGrid({
           return (
             <div
               key={i}
-              data-tour-id={session?.status === 'ready' ? 'match-center-day-cell-ready' : undefined}
               style={{
                 borderRight: `1px solid ${BRAND.line}`,
                 borderBottom: i < (totalRows - 1) * 7 ? `1px solid ${BRAND.line}` : 'none',

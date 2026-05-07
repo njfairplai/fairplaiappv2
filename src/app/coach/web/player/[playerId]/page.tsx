@@ -299,13 +299,11 @@ export default function CoachWebPlayerPage() {
       )}
 
       {/* Workload + gear — match-agnostic, sits between scope content and IDP */}
-      <div data-tour-id="player-profile-workload">
-        <WorkloadSection
-          playerId={player.id}
-          playerName={`${player.firstName} ${player.lastName}`}
-          isMobile={isMobile}
-        />
-      </div>
+      <WorkloadSection
+        playerId={player.id}
+        playerName={`${player.firstName} ${player.lastName}`}
+        isMobile={isMobile}
+      />
 
       {/* IDP — match-agnostic, lives in both modes */}
       <IdpPostscript player={player} />

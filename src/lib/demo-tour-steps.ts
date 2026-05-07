@@ -1,14 +1,15 @@
 /**
- * Demo tour step lists.
+ * Demo tour step lists — page-level narrator.
  *
- * Three tours:
- *   coach  — 7 stops on coach surfaces, then transition to parent (+7)
- *   parent — 7 stops on parent surfaces only
- *   misc   — 3 marquee stops across both portals
+ * The tour is no longer a spotlight overlay; it's a floating top-right
+ * "narrator" card that explains what the surface in front of you DOES.
+ * The user is free to click around the page while reading. Each stop
+ * corresponds to one whole product surface, not an element.
  *
- * Each step is anchored to a `data-tour-id` attribute on the live UI.
- * The TourProvider navigates to the step's route, waits for the anchor
- * to mount, then positions the tooltip relative to it.
+ * Three personas:
+ *   coach  → coach 5 + parent 5 = 10 stops (transition card between)
+ *   parent → parent 5 only
+ *   misc   → same as coach (stakeholders need to see both portals)
  *
  * Adding/removing/reordering: just edit the arrays. The progress dots,
  * tooltip header (`STOP n / N`), and route navigation all derive from
@@ -20,186 +21,123 @@ export type TourPersona = 'coach' | 'parent' | 'misc'
 
 export type TourStep = {
   id: string
-  /** Route the user must be on for this step's anchor to exist. The
-   *  TourProvider auto-navigates here if needed. */
+  /** Route the surface lives on. The TourProvider auto-navigates here. */
   route: string
-  /** CSS selector for the anchor element. Conventionally
-   *  `[data-tour-id="..."]`; can be any selector. */
-  anchor: string
-  /** Where the tooltip card sits relative to the anchor. */
-  position: 'top' | 'bottom' | 'left' | 'right' | 'center'
-  /** ≤6 words. */
+  /** ≤8 words. */
   headline: string
-  /** ≤32 words. */
+  /** ≤40 words. Frame the surface as a feature with a story; nudge the
+   *  user toward what to click while they read. */
   body: string
-  /** What the next button does:
+  /** Optional inline call-to-try-this cue, shown smaller below the body
+   *  in mono caps. e.g. "Try clicking a suggestion chip." */
+  tryThis?: string
+  /** What the Next button does:
    *   `next`       — advance to the next step
-   *   `transition` — show an interstitial card before advancing
+   *   `transition` — show an interstitial card before advancing (used
+   *                  between coach + parent tours for coach/misc personas)
    *   `finish`     — set demo_completed and route to /demo/end */
   cta: 'next' | 'transition' | 'finish'
 }
 
-// ─── COACH TOUR ──────────────────────────────────────────
-// 7 stops on the coach surfaces. After step 7, a `transition` card
-// hands off to the parent tour (which is appended below).
+// ─── COACH TOUR (5 stops) ────────────────────────────────
 const COACH_STOPS: TourStep[] = [
   {
     id: 'coach-1-hub',
     route: '/coach/web',
-    anchor: '[data-tour-id="coach-hub-input"]',
-    position: 'top',
-    headline: "Mikel — your AI assistant.",
-    body: "Ask anything about your squad, a player, last week's match, tactics. Mikel reads your team data and replies in coach voice.",
+    headline: 'Mikel — your AI assistant.',
+    body: "Ask anything about your squad, last week's match, who needs prep, what drill to run. Mikel reads your team data and replies in coach voice. The whole season starts as a conversation.",
+    tryThis: 'Try a suggestion chip.',
     cta: 'next',
   },
   {
     id: 'coach-2-match-center',
     route: '/coach/web/match-center',
-    anchor: '[data-tour-id="match-center-day-cell-ready"]',
-    position: 'right',
-    headline: "Match Center — where the season lives.",
-    body: "Calendar of every session. Days light up as matches move from prep → ready. Tap a ready day to drill into the analysis.",
+    headline: 'Match Center — every session in one calendar.',
+    body: 'Days light up as matches move from PREP → READY. Drills, training matches, fixtures — all here. Tap a green ready cell to drill into the analysis.',
+    tryThis: 'Click any analysed day cell.',
     cta: 'next',
   },
   {
-    id: 'coach-3-match-composite',
+    id: 'coach-3-match-drillin',
     route: '/coach/web/match/session_007',
-    anchor: '[data-tour-id="match-drillin-roster"]',
-    position: 'top',
-    headline: "Roster + composite scores.",
-    body: "Every player who featured, ranked by composite score. Tap a row to drill into them — radar, key stats, fatigue.",
+    headline: 'Match drill-in — performance + welfare per player.',
+    body: 'Composite scores, radar shape, key stats. Click any roster row to open a player detail with their fatigue tile, injury moments, and one-tap "send a clip to the parent."',
+    tryThis: 'Click a roster row to open a player.',
     cta: 'next',
   },
   {
-    id: 'coach-4-fatigue',
-    route: '/coach/web/match/session_007',
-    anchor: '[data-tour-id="match-drillin-roster"]',
-    position: 'left',
-    headline: "Fatigue from footage.",
-    body: "Sprint speed, sprint count, distance per minute fold into a single fatigue load 0–100. Surfaces on every player view.",
-    cta: 'next',
-  },
-  {
-    id: 'coach-5-share-clip',
-    route: '/coach/web/highlights',
-    anchor: '[data-tour-id="match-drillin-share-clip"]',
-    position: 'bottom',
-    headline: "Share a clip with the parent.",
-    body: "Forward an AI-tagged moment to the kid's parent. Lands in their inbox with a 15-day expiry. Replaces the WhatsApp side-channel.",
-    cta: 'next',
-  },
-  {
-    id: 'coach-6-squad-filters',
+    id: 'coach-4-squad',
     route: '/coach/web/squad',
-    anchor: '[data-tour-id="squad-filter-row"]',
-    position: 'bottom',
-    headline: "Squad as pitch + filters.",
-    body: "Team in formation. Filter for IDP-stale, high-fatigue, or recent injuries — non-matching players dim out so welfare flags surface fast.",
+    headline: 'Squad as pitch — formation + welfare overlays.',
+    body: 'Your team in their positions, scored. Filter for high fatigue, IDP-stale, recent injuries — non-matching players dim out so flags surface fast.',
+    tryThis: 'Try the High fatigue or Injuries filter.',
     cta: 'next',
   },
   {
-    id: 'coach-7-player-workload',
+    id: 'coach-5-player-profile',
     route: '/coach/web/player/player_001',
-    anchor: '[data-tour-id="player-profile-workload"]',
-    position: 'top',
-    headline: "Workload + gear flags per player.",
-    body: "Fatigue trend, top sprint, gear concerns the coach has flagged. Send-a-clip lives here too. Parents see a curated version.",
+    headline: 'Player profile — one page, season-deep.',
+    body: 'Filmstrip of every match, performance radar, workload trend, gear flags, IDP. Send a clip directly to the parent from the welfare section.',
+    tryThis: 'Scroll to the WORKLOAD & GEAR section.',
     cta: 'transition',
   },
 ]
 
 // ─── COACH→PARENT TRANSITION ─────────────────────────────
 // Rendered as a full-screen interstitial between the coach tour and the
-// parent tour, ONLY when persona === 'coach' (so coaches see what their
-// parents see). Parents don't get to see the coach side per the
-// asymmetric persona rule.
+// parent tour, ONLY when persona === 'coach' or 'misc' (asymmetric rule
+// — parents don't see the coach side).
 export const COACH_TO_PARENT_TRANSITION = {
-  headline: "Now — what the parent sees.",
-  body: "You've seen the coach side. Same player, same match. Here's how it lands for Kiyan's parent.",
-  cta: "Continue →",
+  headline: 'Now — what the parent sees.',
+  body: "You've seen the coach side. Same player, same season. Here's how it lands for the parent.",
+  cta: 'Continue →',
 }
 
-// ─── PARENT TOUR ─────────────────────────────────────────
-// Standalone for the parent persona; appended after coach tour for the
-// coach persona.
+// ─── PARENT TOUR (5 stops) ───────────────────────────────
 const PARENT_STOPS: TourStep[] = [
   {
     id: 'parent-1-home',
     route: '/parent/home',
-    anchor: '[data-tour-id="parent-home-clip"]',
-    position: 'bottom',
-    headline: "The home screen.",
-    body: "One clip from the most recent match + the season radar. The parent's at-a-glance answer to 'how's my kid doing?'",
+    headline: 'Home — your kid at a glance.',
+    body: "Most-recent match clip + season radar shape. The 'how's my kid doing?' answer in two seconds. Fresh notifications stack underneath.",
     cta: 'next',
   },
   {
     id: 'parent-2-notifications',
     route: '/parent/notifications',
-    anchor: '[data-tour-id="parent-notifications-legend"]',
-    position: 'bottom',
-    headline: "One inbox for everything.",
-    body: "Clips, coach notes, IDP updates, injury alerts, gear flags. Each kind has its own colour. No app switching, no missed messages.",
+    headline: 'One inbox for everything from the coach.',
+    body: 'Clips, notes, IDP refreshes, injury alerts, gear flags — all in one stream. Filter chips at the top let you focus on what you care about.',
+    tryThis: 'Tap a filter chip to focus the inbox.',
     cta: 'next',
   },
   {
-    id: 'parent-3-coach-group',
+    id: 'parent-3-highlights',
     route: '/parent/highlights',
-    anchor: '[data-tour-id="parent-highlights-coach-group"]',
-    position: 'bottom',
-    headline: "Clips the coach picked.",
-    body: "Forwarded clips + Coach Cam uploads sit at the top of Highlights, distinct from AI-tagged clips below. Hand-picked moments first.",
+    headline: "Highlights — coach-picked clips at the top.",
+    body: 'Clips the coach forwarded or filmed on their phone sit above the AI-tagged season grid. Each clip is source-tagged so you know if it was hand-picked.',
+    tryThis: 'Open a clip from the FROM YOUR COACH row.',
     cta: 'next',
   },
   {
-    id: 'parent-4-coach-row',
-    route: '/parent/highlights',
-    anchor: '[data-tour-id="parent-highlights-coach-row"]',
-    position: 'bottom',
-    headline: "Source-tagged clips.",
-    body: "SHARED = an AI clip the coach forwarded. COACH CAM = a phone clip the coach shot themselves. Both expire after 15 days.",
-    cta: 'next',
-  },
-  {
-    id: 'parent-5-moments',
+    id: 'parent-4-match',
     route: '/parent/match/session_054',
-    anchor: '[data-tour-id="parent-match-moments"]',
-    position: 'top',
-    headline: "Moments to know about.",
-    body: "When the coach flags an injury during a match, the parent sees what happened, when, and how serious. No more 'they didn't tell me.'",
+    headline: 'Match detail — stats + welfare in context.',
+    body: "Your kid's composite + key clips, plus a 'moments to know' section if the coach flagged anything during the match. Welfare lives next to performance.",
     cta: 'next',
   },
   {
-    id: 'parent-6-development',
+    id: 'parent-5-development',
     route: '/parent/development',
-    anchor: '[data-tour-id="parent-development-welfare"]',
-    position: 'top',
-    headline: "Workload + gear notes.",
-    body: "Fatigue trend so the parent knows if the kid's overloaded. Gear flags ('boots are smoothing out') when the coach spots an issue.",
-    cta: 'next',
-  },
-  {
-    id: 'parent-7-match-score',
-    route: '/parent/match/session_007',
-    anchor: '[data-tour-id="parent-match-score"]',
-    position: 'bottom',
-    headline: "Match-level read.",
-    body: "Composite score, radar, key clips, coach notes. Same data the coach saw — through a parent lens, not a tactical lens.",
+    headline: 'Development — workload + gear + IDP.',
+    body: "Fatigue trend so you know if your kid is overloaded. Gear flags from the coach. The full development plan one tap away.",
     cta: 'finish',
   },
 ]
 
 // ─── ASSEMBLE PER-PERSONA STEPS ──────────────────────────
-/** Returns the ordered step list for a given persona.
- *
- *   coach  → coach 7 + parent 7 = 14 stops (transition card between)
- *   misc   → same as coach (stakeholders need to see both portals)
- *   parent → parent 7 only
- *
- * The standalone 3-stop misc tour was dropped after walkthrough feedback
- * — stakeholders watching the demo ARE doing it because they want to
- * understand the product in depth, so feeding them the same 14-stop
- * coach + parent tour is a better fit than a marketing-style highlight
- * reel. The persona label itself is preserved for analytics. */
+/** Coach + Misc both get the full 10-stop coach + parent tour (with the
+ *  transition card between). Parent gets just the 5 parent stops.
+ *  Asymmetric persona rule from the demo brief. */
 export function stepsForPersona(persona: TourPersona): TourStep[] {
   if (persona === 'coach' || persona === 'misc') {
     return [...COACH_STOPS, ...PARENT_STOPS]

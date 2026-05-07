@@ -254,7 +254,6 @@ export default function CoachWebSquadPage() {
        *  not matching the active filter dim out. Pills are mutually
        *  exclusive; tap the active pill again to return to "All". */}
       <div
-        data-tour-id="squad-filter-row"
         style={{
           padding: isMobile ? '0 16px' : '0 28px',
           display: 'flex',

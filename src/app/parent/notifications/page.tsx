@@ -15,9 +15,14 @@ import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 
 const READ_KEY = 'fairplai_parent_notifications_read'
 
-/* TODO: design-refinement-target — Pack 3 will refine.
- * Plain list of notifications with type-pill, title, body, date.
- * Tappable rows mark-as-read and navigate to the source surface. */
+/* Inbox surface for the parent portal. Composition (top→bottom):
+ *   1. Filter chip rail — All · Clips · Updates · Health · Schedule.
+ *      Chips bundle the 9 underlying NotificationKind values into 4
+ *      meaningful buckets so the parent isn't decoding a colour legend.
+ *   2. Counts row + Mark all read
+ *   3. Notification rows with a small kind dot, title/body, and a
+ *      right-aligned relative date so dates are scannable, not buried.
+ */
 export default function ParentNotificationsPage() {
   const router = useRouter()
   const PARENT_ID = 'parent_001'
@@ -26,6 +31,7 @@ export default function ParentNotificationsPage() {
 
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const [clientNotifs, setClientNotifs] = useState<PortalNotification[]>([])
+  const [filter, setFilter] = useState<FilterId>('all')
 
   useEffect(() => {
     if (typeof window === 'undefined' || !activeKid) return
@@ -46,6 +52,25 @@ export default function ParentNotificationsPage() {
     () => mergeNotifications(baseNotifs, clientNotifs),
     [baseNotifs, clientNotifs],
   )
+  const filtered = useMemo(() => {
+    if (filter === 'all') return all
+    return all.filter(n => filterFor(n.kind) === filter)
+  }, [all, filter])
+
+  const counts = useMemo(() => {
+    const c: Record<FilterId, number> = {
+      all: all.length,
+      clips: 0,
+      updates: 0,
+      health: 0,
+      schedule: 0,
+    }
+    for (const n of all) {
+      const f = filterFor(n.kind)
+      if (f) c[f]++
+    }
+    return c
+  }, [all])
 
   const markAllRead = () => {
     const ids = new Set(all.map(n => n.id))
@@ -69,6 +94,8 @@ export default function ParentNotificationsPage() {
     router.push(n.href)
   }
 
+  const unreadCount = filtered.filter(n => !readIds.has(n.id)).length
+
   return (
     <div
       style={{
@@ -80,58 +107,73 @@ export default function ParentNotificationsPage() {
     >
       <PortalTopBar title="Notifications" showBack />
 
-      {/* Legend — small dot+label rail so the inbox dots are decodable.
-       *  Kinds that don't surface for this kid still render so the user
-       *  has a stable mental model. Scrolls horizontally on narrow widths. */}
+      {/* Filter chip rail — bundles fine-grained kinds into 4 buckets so
+       *  parents focus by topic, not by decoding a colour legend. */}
       <div
-        data-tour-id="parent-notifications-legend"
         style={{
-          padding: '10px 16px',
+          padding: '12px 16px',
           display: 'flex',
-          gap: 10,
+          gap: 8,
           overflowX: 'auto',
           scrollbarWidth: 'none',
           borderBottom: '1px solid var(--brand-line)',
         }}
       >
-        {NOTIFICATION_KINDS.map(k => (
-          <div
-            key={k}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              flexShrink: 0,
-            }}
-          >
-            <span
+        {FILTER_DEFS.map(f => {
+          const isActive = filter === f.id
+          const count = counts[f.id]
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFilter(f.id)}
+              aria-pressed={isActive}
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: dotColorForKind(k),
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '7px 13px',
+                borderRadius: 999,
+                border: isActive ? '1px solid var(--brand-indigo)' : '1px solid var(--brand-line)',
+                background: isActive ? 'var(--brand-indigo)' : 'transparent',
+                color: isActive ? 'var(--brand-sand)' : 'var(--brand-indigo)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 12.5,
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
                 flexShrink: 0,
               }}
-            />
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9,
-                letterSpacing: '0.16em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
-              }}
             >
-              {legendLabelForKind(k)}
-            </span>
-          </div>
-        ))}
+              {f.id !== 'all' && (
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    background: isActive ? 'var(--brand-yellow)' : f.dot,
+                  }}
+                />
+              )}
+              {f.label}
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  opacity: 0.7,
+                }}
+              >
+                {count}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       <div
         style={{
-          padding: '14px 16px',
+          padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -147,9 +189,9 @@ export default function ParentNotificationsPage() {
             fontWeight: 700,
           }}
         >
-          {all.length} TOTAL · {all.filter(n => !readIds.has(n.id)).length} UNREAD
+          {unreadCount} UNREAD
         </span>
-        {all.length > 0 && (
+        {filtered.length > 0 && (
           <button
             type="button"
             onClick={markAllRead}
@@ -170,7 +212,7 @@ export default function ParentNotificationsPage() {
         )}
       </div>
 
-      {all.length === 0 ? (
+      {filtered.length === 0 ? (
         <div
           style={{
             padding: '60px 24px',
@@ -180,20 +222,22 @@ export default function ParentNotificationsPage() {
             color: 'var(--brand-indigo-mute)',
           }}
         >
-          No notifications yet. New clips, coach notes, and updates will land here.
+          {filter === 'all'
+            ? 'No notifications yet. New clips, coach notes, and updates will land here.'
+            : `Nothing in ${FILTER_DEFS.find(f => f.id === filter)?.label.toLowerCase()} this week.`}
         </div>
       ) : (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {all.map(n => (
+          {filtered.map(n => (
             <li key={n.id}>
               <button
                 type="button"
                 onClick={() => open(n)}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'auto 1fr auto',
-                  alignItems: 'center',
-                  gap: 14,
+                  gridTemplateColumns: 'auto 1fr auto auto',
+                  alignItems: 'flex-start',
+                  gap: 12,
                   width: '100%',
                   background: readIds.has(n.id) ? 'transparent' : 'var(--brand-paper)',
                   border: 'none',
@@ -239,8 +283,30 @@ export default function ParentNotificationsPage() {
                       marginTop: 4,
                     }}
                   >
-                    {labelForKind(n.kind)} · {n.shortDate.toUpperCase()}
+                    {labelForKind(n.kind)}
                   </div>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: 2,
+                    minWidth: 78,
+                    paddingTop: 2,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: 'var(--brand-indigo)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {relativeDate(n.date)}
+                  </span>
                 </div>
                 <ChevronRight size={16} color="var(--brand-indigo-mute)" />
               </button>
@@ -262,83 +328,91 @@ function NotificationDot({ kind }: { kind: PortalNotification['kind'] }) {
         borderRadius: '50%',
         background: color,
         flexShrink: 0,
-        marginTop: 4,
+        marginTop: 6,
       }}
     />
   )
 }
 
-/* Each NotificationKind gets a distinct dot colour so the inbox at-a-glance
- * tells you what's new without reading. Mostly brand tokens; a couple of
- * functional accents (amber, teal, purple) for kinds that would otherwise
- * collide. The NOTIFICATION_LEGEND below mirrors this map — keep them in
- * sync. */
+// ─── Filter buckets ──────────────────────────────────────
+type FilterId = 'all' | 'clips' | 'updates' | 'health' | 'schedule'
+
+const FILTER_DEFS: { id: FilterId; label: string; dot: string }[] = [
+  { id: 'all',      label: 'All',      dot: 'var(--brand-indigo)' },
+  { id: 'clips',    label: 'Clips',    dot: '#7C3AED' },
+  { id: 'updates',  label: 'Updates',  dot: 'var(--brand-yellow)' },
+  { id: 'health',   label: 'Health',   dot: 'var(--brand-coral)' },
+  { id: 'schedule', label: 'Schedule', dot: 'var(--brand-indigo-mute)' },
+]
+
+/** Maps the fine-grained NotificationKind to one of the 5 inbox filter
+ *  buckets. Keep in sync with FILTER_DEFS. */
+function filterFor(kind: PortalNotification['kind']): Exclude<FilterId, 'all'> {
+  switch (kind) {
+    case 'clips':
+    case 'shared_clip':
+    case 'coach_cam':
+      return 'clips'
+    case 'coach_note':
+    case 'idp_update':
+    case 'attendance_milestone':
+      return 'updates'
+    case 'injury':
+    case 'ppe':
+      return 'health'
+    case 'session_scheduled':
+      return 'schedule'
+    default:
+      return 'updates'
+  }
+}
+
 function dotColorForKind(kind: PortalNotification['kind']): string {
   switch (kind) {
-    case 'clips':                 return 'var(--brand-indigo)'         // deep indigo
-    case 'shared_clip':           return '#7C3AED'                     // purple
-    case 'coach_cam':             return '#14B8A6'                     // teal
-    case 'coach_note':            return 'var(--brand-yellow)'         // yellow
-    case 'idp_update':            return 'var(--brand-indigo-mid)'     // mid indigo
-    case 'attendance_milestone':  return 'var(--brand-yellow-soft)'    // pale yellow
-    case 'session_scheduled':     return 'var(--brand-indigo-mute)'    // gray-purple
-    case 'injury':                return 'var(--brand-coral)'          // coral
-    case 'ppe':                   return '#E89A45'                     // amber
+    case 'clips':                 return 'var(--brand-indigo)'
+    case 'shared_clip':           return '#7C3AED'
+    case 'coach_cam':             return '#14B8A6'
+    case 'coach_note':            return 'var(--brand-yellow)'
+    case 'idp_update':            return 'var(--brand-indigo-mid)'
+    case 'attendance_milestone':  return 'var(--brand-yellow-soft)'
+    case 'session_scheduled':     return 'var(--brand-indigo-mute)'
+    case 'injury':                return 'var(--brand-coral)'
+    case 'ppe':                   return '#E89A45'
     default:                      return 'var(--brand-indigo-mute)'
   }
 }
 
-/** Kinds that ever surface in the inbox today, in display order for the legend. */
-const NOTIFICATION_KINDS: PortalNotification['kind'][] = [
-  'clips',
-  'shared_clip',
-  'coach_cam',
-  'coach_note',
-  'idp_update',
-  'attendance_milestone',
-  'session_scheduled',
-  'injury',
-  'ppe',
-]
-
 function labelForKind(kind: PortalNotification['kind']): string {
   switch (kind) {
-    case 'clips':
-      return 'CLIPS'
-    case 'coach_note':
-      return 'COACH NOTE'
-    case 'idp_update':
-      return 'PROGRESS PLAN'
-    case 'attendance_milestone':
-      return 'MILESTONE'
-    case 'session_scheduled':
-      return 'SCHEDULE'
-    case 'shared_clip':
-      return 'SHARED CLIP'
-    case 'coach_cam':
-      return 'COACH CAM'
-    case 'injury':
-      return 'INJURY · WELFARE'
-    case 'ppe':
-      return 'GEAR · WELFARE'
-    default:
-      return 'UPDATE'
-  }
-}
-
-/** Legend uses tighter labels (no "WELFARE" suffix) so the chip rail
- *  fits on narrower mobile viewports. */
-function legendLabelForKind(kind: PortalNotification['kind']): string {
-  switch (kind) {
     case 'clips':                 return 'CLIPS'
-    case 'shared_clip':           return 'SHARED'
-    case 'coach_cam':             return 'COACH CAM'
-    case 'coach_note':            return 'NOTE'
-    case 'idp_update':            return 'IDP'
+    case 'coach_note':            return 'COACH NOTE'
+    case 'idp_update':            return 'PROGRESS PLAN'
     case 'attendance_milestone':  return 'MILESTONE'
     case 'session_scheduled':     return 'SCHEDULE'
+    case 'shared_clip':           return 'SHARED CLIP'
+    case 'coach_cam':             return 'COACH CAM'
     case 'injury':                return 'INJURY'
     case 'ppe':                   return 'GEAR'
     default:                      return 'UPDATE'
   }
+}
+
+// ─── Relative date formatter ─────────────────────────────
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Today / Yesterday / N days ago / "Apr 28" — switches to calendar
+ *  date once we pass a week. Tighter than the old mono-caps "TUE MAY 5"
+ *  format and easier to scan. */
+function relativeDate(iso: string): string {
+  // Some entries are 'Recently' literal — pass through.
+  if (!/^\d{4}-\d{2}-\d{2}/.test(iso)) return iso
+  const d = new Date(`${iso}T00:00:00`)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const days = Math.round((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+  if (days <= 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+  // Older than a week → calendar date "Apr 28"
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`
 }

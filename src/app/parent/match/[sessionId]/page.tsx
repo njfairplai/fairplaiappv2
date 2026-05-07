@@ -178,7 +178,7 @@ export default function ParentMatchDetailPage() {
               flexWrap: 'wrap',
             }}
           >
-            <span data-tour-id="parent-match-score">Composite {analysis.compositeScore}</span>
+            <span>Composite {analysis.compositeScore}</span>
             <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
             <span>{analysis.minutesPlayed ?? '—'} mins</span>
           </div>
@@ -275,7 +275,7 @@ export default function ParentMatchDetailPage() {
        *  When a parent lands here from a `?focusInjury=<id>` notification
        *  link, the matched row scrolls into view + flashes briefly. */}
       {playerInjuries.length > 0 && (
-        <section data-tour-id="parent-match-moments" style={{ padding: '20px 16px 0' }}>
+        <section style={{ padding: '20px 16px 0' }}>
           <div
             style={{
               fontFamily: 'var(--font-mono)',

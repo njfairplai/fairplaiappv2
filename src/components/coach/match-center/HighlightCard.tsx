@@ -130,7 +130,6 @@ export function HighlightCard({
           onClick={onShare}
           style={mcButtons.iconGhost}
           aria-label="Share clip"
-          data-tour-id="match-drillin-share-clip"
         >
           ↗
         </button>

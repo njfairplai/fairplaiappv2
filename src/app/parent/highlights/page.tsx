@@ -373,7 +373,6 @@ export default function ParentHighlightsPage() {
         {filter === 'all' && coachTouched.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div
-              data-tour-id="parent-highlights-coach-group"
               style={{
                 display: 'flex',
                 alignItems: 'baseline',
@@ -406,19 +405,15 @@ export default function ParentHighlightsPage() {
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {coachTouched.map((row, idx) => (
-                <div
+              {coachTouched.map(row => (
+                <CoachTouchedClipRow
                   key={row.kind === 'shared' ? row.record.id : row.cam.id}
-                  data-tour-id={idx === 0 ? 'parent-highlights-coach-row' : undefined}
-                >
-                  <CoachTouchedClipRow
-                    row={row}
-                    onOpen={() => {
-                      const id = row.kind === 'shared' ? row.clip.id : row.cam.id
-                      router.push(`/parent/clips/${id}?source=${row.kind}`)
-                    }}
-                  />
-                </div>
+                  row={row}
+                  onOpen={() => {
+                    const id = row.kind === 'shared' ? row.clip.id : row.cam.id
+                    router.push(`/parent/clips/${id}?source=${row.kind}`)
+                  }}
+                />
               ))}
             </div>
           </div>

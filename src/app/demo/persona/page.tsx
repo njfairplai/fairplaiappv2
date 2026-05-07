@@ -55,8 +55,6 @@ const PERSONAS: {
   },
 ]
 
-const FOUNDER_EMAIL = 'naheljar@gmail.com'
-
 export default function DemoPersonaPage() {
   const router = useRouter()
   const [expanded, setExpanded] = useState<Persona | null>(null)
@@ -68,7 +66,10 @@ export default function DemoPersonaPage() {
     if (!name.trim() || !email.trim()) return
 
     // Stash identity + persona to localStorage so TourProvider picks it
-    // up on the next pathname change.
+    // up on the next pathname change. The tester record is bundled with
+    // feedback at /demo/end so we don't fire a mailto here — Vercel
+    // preview environments block mailto: navigation, and we don't need
+    // a real-time signal anyway (the call is the prequel).
     try {
       localStorage.setItem('fairplai_demo_persona', persona)
       localStorage.setItem('fairplai_demo_active', persona)
@@ -85,28 +86,6 @@ export default function DemoPersonaPage() {
       )
     } catch {
       /* ignore */
-    }
-
-    // Fire a mailto with the tester record so we have a real-time signal
-    // a new walkthrough started. Best-effort — opens in a new tab so it
-    // doesn't block the route push.
-    const subject = encodeURIComponent('Fairplai demo — new tester started')
-    const body = encodeURIComponent(
-      [
-        `Name: ${name.trim()}`,
-        `Email: ${email.trim()}`,
-        `Persona: ${persona}`,
-        `Started: ${new Date().toISOString()}`,
-      ].join('\n'),
-    )
-    try {
-      const a = document.createElement('a')
-      a.href = `mailto:${FOUNDER_EMAIL}?subject=${subject}&body=${body}`
-      a.target = '_blank'
-      a.rel = 'noopener'
-      a.click()
-    } catch {
-      /* ignore — non-critical */
     }
 
     router.push(firstRoute)
