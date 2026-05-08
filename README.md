@@ -18,6 +18,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+### Environment (Postgres / feedback)
+
+The `/api/feedback` route writes to a Vercel-Neon Postgres on the `fairplaiappv2` project. Pull the env vars locally once with `npx vercel link` and `npx vercel env pull .env.local`, then restart the dev server. Without `POSTGRES_URL` the route returns a 503 with a setup hint and the form surfaces the message.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

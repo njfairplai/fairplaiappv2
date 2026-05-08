@@ -26,7 +26,7 @@ export default function FeedbackPage() {
   // screen for a calm finish.
   useEffect(() => {
     if (submitted) {
-      applyTheme('almanac')
+      applyTheme('touchline')
     } else {
       applyTheme(readStoredTheme())
     }
