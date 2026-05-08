@@ -22,16 +22,16 @@
  * [data-theme="name"] block, change the colour values. Done.
  */
 /*
- * Palette directions for the user-testing flow (Slice 4.5).
+ * Palette directions for the user-testing flow.
  * All palettes share the same type system (Clash Display + Satoshi +
  * Fragment Mono) so the test isolates colour as the only variable.
  * Switch via `data-theme="<id>"` on any wrapper element.
  *
- *   1. almanac          — incumbent — sand + indigo + yellow
- *   2. cloudline        — brand     — cool light + AHOY blue
- *   3. voltage          — brand     — Phantom dark + Active blue
- *   4. touchline-cards  — beyond    — sage cards on warm cream
- *   5. touchline-page   — beyond    — sage page background + cream cards
+ *   1. touchline  — DEFAULT — sage cards on warm cream
+ *   2. almanac    — sand + indigo + yellow
+ *   3. cloudline  — cool light + AHOY blue
+ *   4. twilight   — deep navy-purple dusk + lavender + warm gold
+ *   5. programme  — cream programme cover + linen cards + coral
  *
  * Note on var naming: --brand-yellow is the SEMANTIC accent slot, not
  * literally yellow. In Voltage it's blue; in others it varies.
@@ -41,33 +41,58 @@
  */
 
 :root,
+[data-theme="touchline"] {
+  /* Touchline — default. Sage-tinted cards on warm cream. */
+  --brand-sand:        #F1EFE4;  /* page base — warm cream */
+  --brand-sand-deep:   #E2DFCE;
+  --brand-sand-deeper: #C9C5AE;
+  --brand-paper:       #DCE8D4;  /* sage-tinted card surface */
+  --brand-paper-hi:    #ECF2E5;  /* lighter sage for raised/hover */
+  --brand-indigo:      #1E3527;  /* deep pitch-green for text/structure */
+  --brand-indigo-mid:  #6FA77B;  /* sage for secondary chips/sub-headers */
+  --brand-indigo-soft: rgba(30, 53, 39, 0.10);
+  --brand-indigo-mute: rgba(30, 53, 39, 0.55);
+  --brand-yellow:      #4F8C5A;  /* mid-sage as the accent (CTAs, active) */
+  --brand-yellow-soft: rgba(79, 140, 90, 0.18);
+  --brand-coral:       #C8482D;  /* terracotta retained for warnings */
+  --brand-ink:         #0E1A12;
+  --brand-line:        #C9D6BE;
+  --brand-line-soft:   rgba(30, 53, 39, 0.06);
+
+  /* Cloud — sage-leaning gray for training frames. */
+  --brand-cloud:       #C2CFB7;
+  --brand-cloud-deep:  #9CB18E;
+
+  /* Logo inversion: black wordmark renders as-is on light themes. Dark
+     themes (e.g. Voltage) override to invert(1) to render it white. */
+  --logo-invert: none;
+
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body:    "Satoshi", system-ui, sans-serif;
+  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
+}
+
 [data-theme="almanac"] {
-  /* Almanac — incumbent. Sand-first, indigo structure, yellow accent. */
-  --brand-sand:        #EEE4C8;  /* surface */
+  /* Almanac — sand-first, indigo structure, yellow accent. */
+  --brand-sand:        #EEE4C8;
   --brand-sand-deep:   #E0D2A8;
   --brand-sand-deeper: #D4C290;
-  --brand-paper:       #F8F2DE;  /* raised card */
+  --brand-paper:       #F8F2DE;
   --brand-paper-hi:    #FBF6E6;
-  --brand-indigo:      #1B1550;  /* structure / text */
+  --brand-indigo:      #1B1550;
   --brand-indigo-mid:  #2E2674;
   --brand-indigo-soft: rgba(27, 21, 80, 0.10);
   --brand-indigo-mute: rgba(27, 21, 80, 0.55);
-  --brand-yellow:      #FCD718;  /* accent */
+  --brand-yellow:      #FCD718;
   --brand-yellow-soft: rgba(252, 215, 24, 0.18);
   --brand-coral:       #EB4D6D;
   --brand-ink:         #0B0828;
   --brand-line:        rgba(27, 21, 80, 0.12);
   --brand-line-soft:   rgba(27, 21, 80, 0.06);
 
-  /* Cloud — third surface used for training-match frames in the filmstrip,
-     so they read as a distinct kind of card (not a faded sand match, not a
-     selected indigo match). Indigo-tinted cool gray that belongs to the
-     palette family without competing with sand or indigo. */
   --brand-cloud:       #C7CADC;
   --brand-cloud-deep:  #A9B0C5;
 
-  /* Logo inversion: black wordmark renders as-is on light themes. Dark
-     themes (e.g. Voltage) override to invert(1) to render it white. */
   --logo-invert: none;
 
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
@@ -102,30 +127,27 @@
   --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
 }
 
-/* Voltage — brand-anchored, DARK. Phantom + Active Blue + Periwinkle. */
-[data-theme="voltage"] {
-  --brand-sand:        #1E1E24;
-  --brand-sand-deep:   #18181D;
-  --brand-sand-deeper: #000000;
-  --brand-paper:       #000000;
-  --brand-paper-hi:    #2A2A30;
-  --brand-indigo:      #F5F6FC;
-  --brand-indigo-mid:  #C2CEFF;
-  --brand-indigo-soft: rgba(245, 246, 252, 0.10);
-  --brand-indigo-mute: rgba(245, 246, 252, 0.55);
-  --brand-yellow:      #4536F5;  /* Active Blue as the accent slot */
-  --brand-yellow-soft: rgba(69, 54, 245, 0.20);
-  --brand-coral:       #C2CEFF;
+/* Twilight — dark keeper. Deep navy-purple dusk + lavender white + warm gold. */
+[data-theme="twilight"] {
+  --brand-sand:        #14131F;  /* deep navy-purple page */
+  --brand-sand-deep:   #100F1A;
+  --brand-sand-deeper: #06050D;
+  --brand-paper:       #1F1D2C;  /* raised tile */
+  --brand-paper-hi:    #28253A;
+  --brand-indigo:      #E8E5F5;  /* lavender white */
+  --brand-indigo-mid:  #B8B3D5;
+  --brand-indigo-soft: rgba(232, 229, 245, 0.10);
+  --brand-indigo-mute: rgba(232, 229, 245, 0.55);
+  --brand-yellow:      #FFB75A;  /* warm gold accent */
+  --brand-yellow-soft: rgba(255, 183, 90, 0.20);
+  --brand-coral:       #E8B5C7;  /* dusty pink for warnings */
   --brand-ink:         #FFFFFF;
-  --brand-line:        #40424D;
-  --brand-line-soft:   rgba(245, 246, 252, 0.06);
+  --brand-line:        #2C2A40;
+  --brand-line-soft:   rgba(232, 229, 245, 0.06);
 
-  /* Cloud — on dark theme, a slightly raised gray-blue so training frames
-     still read as a distinct surface against the near-black sand. */
-  --brand-cloud:       #303440;
-  --brand-cloud-deep:  #4A5063;
+  --brand-cloud:       #2A2840;
+  --brand-cloud-deep:  #46436C;
 
-  /* Dark theme — invert the black-on-transparent wordmark to render white. */
   --logo-invert: invert(1);
 
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
@@ -133,54 +155,28 @@
   --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
 }
 
-/* Touchline · Cards — beyond brand. Sage-tinted cards on warm cream. */
-[data-theme="touchline-cards"] {
-  --brand-sand:        #F1EFE4;  /* page base — warm cream */
-  --brand-sand-deep:   #E2DFCE;
-  --brand-sand-deeper: #C9C5AE;
-  --brand-paper:       #DCE8D4;  /* sage-tinted card surface (the move) */
-  --brand-paper-hi:    #ECF2E5;  /* lighter sage for raised/hover */
-  --brand-indigo:      #1E3527;  /* deep pitch-green for text/structure */
-  --brand-indigo-mid:  #6FA77B;  /* sage for secondary chips/sub-headers */
-  --brand-indigo-soft: rgba(30, 53, 39, 0.10);
-  --brand-indigo-mute: rgba(30, 53, 39, 0.55);
-  --brand-yellow:      #4F8C5A;  /* mid-sage as the accent (CTAs, active) */
-  --brand-yellow-soft: rgba(79, 140, 90, 0.18);
-  --brand-coral:       #C8482D;  /* terracotta retained for warnings */
-  --brand-ink:         #0E1A12;
-  --brand-line:        #C9D6BE;
-  --brand-line-soft:   rgba(30, 53, 39, 0.06);
+/* Programme — 5th keeper. Cream programme cover as page, linen cards on top, coral accent. */
+[data-theme="programme"] {
+  --brand-sand:        #F8F6F0;  /* paper-cream programme cover (page base) */
+  --brand-sand-deep:   #EDEAE0;
+  --brand-sand-deeper: #DDD8C8;
+  --brand-paper:       #F7F0E2;  /* warm linen card surface, distinct on the cream page */
+  --brand-paper-hi:    #FBF5E9;
+  --brand-indigo:      #2A2D33;  /* linen slate for text/structure */
+  --brand-indigo-mid:  #4D525B;
+  --brand-indigo-soft: rgba(42, 45, 51, 0.08);
+  --brand-indigo-mute: rgba(42, 45, 51, 0.55);
+  --brand-yellow:      #E8745A;  /* linen coral — accent throughout */
+  --brand-yellow-soft: rgba(232, 116, 90, 0.18);
+  --brand-coral:       #C8482D;  /* deeper terracotta for kill/warning */
+  --brand-ink:         #1A1B1E;
+  --brand-line:        rgba(42, 45, 51, 0.10);
+  --brand-line-soft:   rgba(42, 45, 51, 0.05);
 
-  /* Cloud — sage-leaning gray for training frames. */
-  --brand-cloud:       #C2CFB7;
-  --brand-cloud-deep:  #9CB18E;
+  --brand-cloud:       #DDD5C0;  /* warm linen-tinted gray for training frames */
+  --brand-cloud-deep:  #B6AB94;
 
-  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
-  --font-body:    "Satoshi", system-ui, sans-serif;
-  --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
-}
-
-/* Touchline · Page — beyond brand. Sage page background, cream cards float on top. */
-[data-theme="touchline-page"] {
-  --brand-sand:        #C8DCC8;  /* page base — sage ground */
-  --brand-sand-deep:   #B5CDB6;
-  --brand-sand-deeper: #9CBAA0;
-  --brand-paper:       #F4F1E4;  /* warm cream cards on sage */
-  --brand-paper-hi:    #FFFFFF;
-  --brand-indigo:      #1E3527;  /* deep pitch-green text */
-  --brand-indigo-mid:  #2F6B47;  /* medium green for sub-structure */
-  --brand-indigo-soft: rgba(30, 53, 39, 0.10);
-  --brand-indigo-mute: rgba(30, 53, 39, 0.55);
-  --brand-yellow:      #2F6B47;  /* deeper green CTAs to read on sage */
-  --brand-yellow-soft: rgba(47, 107, 71, 0.18);
-  --brand-coral:       #C8482D;
-  --brand-ink:         #0E1A12;
-  --brand-line:        #A8C2A8;
-  --brand-line-soft:   rgba(30, 53, 39, 0.06);
-
-  /* Cloud — sage page → muted moss for training frames. */
-  --brand-cloud:       #AFC8AF;
-  --brand-cloud-deep:  #87A38A;
+  --logo-invert: none;
 
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body:    "Satoshi", system-ui, sans-serif;

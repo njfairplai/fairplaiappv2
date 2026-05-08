@@ -14,7 +14,7 @@ import { Logo } from '@/components/shared/Logo'
  */
 export default function UserTestingLandingPage() {
   useEffect(() => {
-    applyTheme('almanac')
+    applyTheme('touchline')
     // Reset any prior dwell tracking from a previous session
     try { localStorage.removeItem('fairplai-testing-dwell') } catch { /* noop */ }
     // Wipe stale auth + demo state from prior testing sessions. Without

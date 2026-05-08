@@ -27,7 +27,7 @@ export default function PostPalettePage() {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    let pickedId = 'almanac'
+    let pickedId = 'touchline'
     try {
       const raw = localStorage.getItem('fairplai-testing-palette')
       if (raw) {

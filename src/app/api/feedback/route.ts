@@ -24,11 +24,14 @@ import { NextRequest, NextResponse } from 'next/server'
  *   );
  *
  * Setup (one-time, in Vercel dashboard, on the fairplaiappv2 project):
- *   1. Storage tab → Create Database → Postgres.
- *   2. Run the DDL above in Vercel's SQL editor.
- *   3. Redeploy so env vars (POSTGRES_URL etc.) are in scope.
+ *   1. Storage tab → connect a Postgres / Neon database.
+ *   2. Run the DDL above in the database's SQL editor.
+ *   3. Redeploy so env vars (POSTGRES_URL et al.) are in scope.
  *
- * Local dev: `npx vercel link` once, then `npx vercel env pull .env.local`.
+ * Local dev: `npx vercel link` once, then `npx vercel env pull .env.local`,
+ * then restart `npm run dev`. The Vercel-Neon integration injects
+ * POSTGRES_URL plus siblings (POSTGRES_PRISMA_URL, POSTGRES_URL_NON_POOLING,
+ * DATABASE_URL) — `@vercel/postgres` reads POSTGRES_URL.
  *
  * If POSTGRES_URL isn't set, the route returns 503 with a helpful message
  * so local dev / preview deploys without the DB don't crash.
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: 'Postgres not configured. Create a database in Vercel → Storage → Postgres on the fairplaiappv2 project, then run the DDL in src/app/api/feedback/route.ts.',
+        error: 'Postgres not configured: POSTGRES_URL is missing. Run `npx vercel env pull .env.local` from the worktree root and restart the dev server. (Sibling vars POSTGRES_PRISMA_URL / POSTGRES_URL_NON_POOLING / DATABASE_URL may exist but @vercel/postgres reads POSTGRES_URL.)',
       },
       { status: 503 },
     )

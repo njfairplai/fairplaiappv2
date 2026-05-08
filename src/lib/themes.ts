@@ -23,6 +23,12 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'touchline',
+    name: 'Touchline',
+    tagline: 'Sage cards, calm ground',
+    swatches: ['#F1EFE4', '#1E3527', '#6FA77B'],
+  },
+  {
     id: 'almanac',
     name: 'Almanac',
     tagline: 'The football reference',
@@ -35,22 +41,16 @@ export const THEMES: Theme[] = [
     swatches: ['#EDEFF7', '#1B1650', '#4A4AFF'],
   },
   {
-    id: 'voltage',
-    name: 'Voltage',
-    tagline: 'Stadium tunnel, kickoff',
-    swatches: ['#1E1E24', '#F5F6FC', '#4536F5'],
+    id: 'twilight',
+    name: 'Twilight',
+    tagline: 'Deep dusk, gold accent',
+    swatches: ['#14131F', '#E8E5F5', '#FFB75A'],
   },
   {
-    id: 'touchline-cards',
-    name: 'Touchline · Cards',
-    tagline: 'Sage cards on cream',
-    swatches: ['#F1EFE4', '#1E3527', '#6FA77B'],
-  },
-  {
-    id: 'touchline-page',
-    name: 'Touchline · Page',
-    tagline: 'Sage ground, cream cards',
-    swatches: ['#C8DCC8', '#1E3527', '#2F6B47'],
+    id: 'programme',
+    name: 'Programme',
+    tagline: 'Cream programme, linen cards, coral',
+    swatches: ['#F8F6F0', '#2A2D33', '#E8745A'],
   },
 ]
 
@@ -66,12 +66,12 @@ export function applyTheme(themeId: string): void {
   }
 }
 
-/** Read the stored theme, falling back to the default 'almanac'. */
+/** Read the stored theme, falling back to the default 'touchline'. */
 export function readStoredTheme(): string {
-  if (typeof window === 'undefined') return 'almanac'
+  if (typeof window === 'undefined') return 'touchline'
   try {
-    return localStorage.getItem('fairplai-theme') ?? 'almanac'
+    return localStorage.getItem('fairplai-theme') ?? 'touchline'
   } catch {
-    return 'almanac'
+    return 'touchline'
   }
 }

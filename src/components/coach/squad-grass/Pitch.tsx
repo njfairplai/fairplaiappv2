@@ -10,7 +10,7 @@ interface PitchProps {
 
 /**
  * Vertical pitch surface, attacking up. Uses CSS variables so palette changes
- * (e.g. `data-theme="touchline-cards"`) recolour the chrome lines without
+ * (e.g. `data-theme="touchline"`) recolour the chrome lines without
  * code edits. The grass green stays constant — it's the pitch, not the brand.
  */
 export function Pitch({ children, aspect = 2 / 3, showZones = false }: PitchProps) {
