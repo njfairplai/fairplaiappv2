@@ -10,8 +10,11 @@ import { ADMIN_PASSWORD, unlockAdmin } from '@/lib/admin-gate'
  * password, sets the unlock flag in localStorage and routes to /admin
  * (which then renders the portal picker).
  *
- * Whitespace is trimmed before compare so a tester typing on mobile
- * doesn't get burned by an autocorrect-added space.
+ * Compare is **case-insensitive** + trimmed so mobile autocorrect
+ * (capitalizing the first letter, adding a trailing space) doesn't
+ * silently reject the right password. The soft-gate threat model
+ * doesn't care about case — anyone with the string in any case is
+ * who we want letting in.
  */
 export default function AdminUnlockPage() {
   const router = useRouter()
@@ -21,7 +24,7 @@ export default function AdminUnlockPage() {
 
   function tryUnlock(e: React.FormEvent) {
     e.preventDefault()
-    if (pw.trim() === ADMIN_PASSWORD) {
+    if (pw.trim().toLowerCase() === ADMIN_PASSWORD.toLowerCase()) {
       unlockAdmin()
       router.replace('/admin')
     } else {
@@ -112,6 +115,10 @@ export default function AdminUnlockPage() {
         <input
           type="password"
           autoFocus
+          autoComplete="current-password"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           value={pw}
           onChange={e => {
             setPw(e.target.value)
