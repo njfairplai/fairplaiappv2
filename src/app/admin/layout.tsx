@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { MessageSquare, Users, ClipboardList, UserCheck, BookOpen, Calendar, BarChart3, CreditCard, FileText } from 'lucide-react'
+import { MessageSquare, Users, ClipboardList, UserCheck, BookOpen, Calendar, BarChart3, CreditCard, FileText, Inbox } from 'lucide-react'
 import { ADMIN_UNLOCKED_KEY } from '@/lib/admin-gate'
 
 const COLORS = { primary: '#4A4AFF', muted: '#6E7180', border: '#E8EAED' }
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/admin/team-stats', label: 'Team Stats', icon: BarChart3 },
   { href: '/admin/credits', label: 'Credits', icon: CreditCard },
   { href: '/admin/reports', label: 'Reports', icon: FileText },
+  { href: '/admin/feedback', label: 'User Feedback', icon: Inbox },
 ]
 
 /**
