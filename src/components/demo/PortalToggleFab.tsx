@@ -6,17 +6,25 @@ import { ArrowLeftRight } from 'lucide-react'
 
 /**
  * PortalToggleFab — bottom-right floating button that toggles between
- * the coach + parent portals. Built for testers who saw both portals on
- * the demo and want to flip back and forth without typing URLs.
+ * the coach + parent portals. Two activation paths:
  *
- * Activation rules (all must be true):
- *   1. Tour completed (`fairplai_demo_completed = 'true'`)
- *   2. Persona is `coach` or `misc` — NOT `parent`. Parents are not
- *      shown the coach side per the asymmetric persona rule.
- *   3. Current pathname is on a coach or parent surface.
+ *   A. Demo testers, post-tour:
+ *        1. `fairplai_demo_completed = 'true'`
+ *        2. Persona is `coach` or `misc` (not `parent` — asymmetric
+ *           persona rule keeps parents from peeking at the coach side)
+ *        3. On a coach or parent route
  *
- * Tap routes to the home of the OTHER portal. Per-session dismissable
- * via × on the chip.
+ *   B. Founder via /admin gate:
+ *        1. `fairplai_admin_unlocked = 'true'`
+ *        2. On a coach or parent route
+ *      No persona check — the founder gets to flip freely.
+ *
+ * Common to both: hidden inside iframes (palette voting context) and
+ * per-session dismissable via × on the chip.
+ *
+ * Tap routes to the home of the OTHER portal. Tap-and-stamp also
+ * re-stamps `fairplai_role` so the destination layout's role check
+ * doesn't bounce to /login when the founder switches sides.
  */
 
 const SS_DISMISSED = 'fairplai_demo_toggle_dismissed'
@@ -37,15 +45,21 @@ export function PortalToggleFab() {
       return
     }
     try {
-      const completed = window.localStorage.getItem('fairplai_demo_completed') === 'true'
-      // The persona localStorage key is cleared on tour completion (in
-      // /demo/end) so we read the previously-stashed `fairplai_demo_persona`
-      // which /demo/persona writes alongside `fairplai_demo_active`.
-      const persona = window.localStorage.getItem('fairplai_demo_persona')
       const dismissed = window.sessionStorage.getItem(SS_DISMISSED) === 'true'
-      const validPersona = persona === 'coach' || persona === 'misc'
       const onPortalRoute =
         pathname.startsWith('/coach/web') || pathname.startsWith('/parent/')
+
+      // Path B: founder unlocked /admin. No persona check.
+      const adminUnlocked = window.localStorage.getItem('fairplai_admin_unlocked') === 'true'
+      if (adminUnlocked) {
+        setShow(onPortalRoute && !dismissed)
+        return
+      }
+
+      // Path A: demo tester, post-tour.
+      const completed = window.localStorage.getItem('fairplai_demo_completed') === 'true'
+      const persona = window.localStorage.getItem('fairplai_demo_persona')
+      const validPersona = persona === 'coach' || persona === 'misc'
       setShow(completed && validPersona && onPortalRoute && !dismissed)
     } catch {
       /* ignore */
@@ -57,6 +71,35 @@ export function PortalToggleFab() {
   const onCoach = pathname.startsWith('/coach/web')
   const targetLabel = onCoach ? 'Parent view' : 'Coach view'
   const targetRoute = onCoach ? PARENT_HOME : COACH_HOME
+  const targetRole = onCoach ? 'parent' : 'coach'
+
+  function onToggle() {
+    // For the admin-unlocked founder, re-stamp the role + auth session
+    // so the destination layout's role check (parent/layout.tsx) doesn't
+    // bounce to /login when flipping sides. No-op when role already
+    // matches or when the demo flow is what put the user here.
+    try {
+      const adminUnlocked = window.localStorage.getItem('fairplai_admin_unlocked') === 'true'
+      if (adminUnlocked) {
+        const now = Date.now()
+        window.localStorage.setItem('fairplai_role', targetRole)
+        window.localStorage.setItem(
+          'fairplai_auth_session',
+          JSON.stringify({
+            userId: `user_${targetRole}_${now}`,
+            email: `${targetRole}@fairplai.local`,
+            role: targetRole,
+            loginTimestamp: now,
+            expiresAt: now + 24 * 60 * 60 * 1000,
+          }),
+        )
+        window.localStorage.setItem('fairplai_consented', 'true')
+      }
+    } catch {
+      /* ignore */
+    }
+    router.push(targetRoute)
+  }
 
   return (
     <div
@@ -80,7 +123,7 @@ export function PortalToggleFab() {
     >
       <button
         type="button"
-        onClick={() => router.push(targetRoute)}
+        onClick={onToggle}
         style={{
           display: 'inline-flex',
           alignItems: 'center',

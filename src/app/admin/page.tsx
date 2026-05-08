@@ -1,15 +1,20 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Briefcase, Users, ShieldCheck, Settings } from 'lucide-react'
+import { ArrowRight, Briefcase, Users } from 'lucide-react'
 
 /**
  * Founder portal picker — landing page once /admin is unlocked.
  *
- * Lets the founder jump into any portal (Coach, Parent, Super Admin,
- * Academy Admin) without going through the demo flow. Each card stamps
- * the appropriate localStorage keys (fairplai_role + auth session +
- * consented) so the destination layout doesn't bounce to /login.
+ * Coach + Parent only. Super Admin + Academy Admin used to be cards
+ * here too but were dropped — those portals aren't part of the demo
+ * conversation Nahel is having today, and a leaner picker is faster
+ * to navigate. The PortalToggleFab (bottom-right floating chip) lets
+ * the founder flip between coach + parent without coming back here.
+ *
+ * Each card stamps the appropriate localStorage keys (fairplai_role +
+ * auth session + consented) so the destination layout doesn't bounce
+ * to /login.
  *
  * Demo state is intentionally NOT touched — if a demo session is in
  * progress, the founder might be using /admin to peek at a portal mid-
@@ -18,7 +23,7 @@ import { ArrowRight, Briefcase, Users, ShieldCheck, Settings } from 'lucide-reac
 
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000
 
-type Role = 'parent' | 'coach' | 'super_admin' | 'academy_admin'
+type Role = 'parent' | 'coach'
 
 interface PortalCard {
   role: Role
@@ -42,20 +47,6 @@ const PORTALS: PortalCard[] = [
     blurb: 'Parent home, Stats, Highlights, Development, Hub.',
     route: '/parent/home',
     icon: Users,
-  },
-  {
-    role: 'super_admin',
-    title: 'Super Admin',
-    blurb: 'Cross-academy oversight, billing, permissions.',
-    route: '/super-admin/dashboard',
-    icon: ShieldCheck,
-  },
-  {
-    role: 'academy_admin',
-    title: 'Academy Admin',
-    blurb: 'Squads, players, sessions, credits, reports.',
-    route: '/admin/dashboard',
-    icon: Settings,
   },
 ]
 
@@ -132,8 +123,9 @@ export default function AdminPortalPickerPage() {
           }}
         >
           Each card stamps the right session and drops you straight in —
-          no demo flow, no email gate. You stay unlocked until you clear
-          this device's storage.
+          no demo flow, no email gate. Once you're inside, the floating
+          chip (bottom right) lets you flip between coach and parent
+          without coming back here.
         </p>
 
         <div
