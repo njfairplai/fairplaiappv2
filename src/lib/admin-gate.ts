@@ -15,9 +15,8 @@
  *  expiry) — this is for the founder, not a customer session. */
 export const ADMIN_UNLOCKED_KEY = 'fairplai_admin_unlocked'
 
-/** The shibboleth. Trim + case-sensitive compare; the space is
- *  intentional. */
-export const ADMIN_PASSWORD = 'FairPlay 911'
+/** The shibboleth. Trim + case-sensitive compare. */
+export const ADMIN_PASSWORD = 'fairplai911'
 
 export function isAdminUnlocked(): boolean {
   if (typeof window === 'undefined') return false
