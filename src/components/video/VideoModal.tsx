@@ -113,6 +113,7 @@ export function VideoModal({ open, onClose, src, caption }: VideoModalProps) {
         autoPlay
         playsInline
         muted
+        preload="metadata"
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%',

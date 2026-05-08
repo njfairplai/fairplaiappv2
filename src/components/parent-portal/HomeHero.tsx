@@ -201,6 +201,43 @@ export function HomeHero({
             cursor: canPlay ? 'pointer' : 'default',
           }}
         >
+          {/* Video thumbnail layer — uses the clip URL itself with
+           *  preload="metadata" so the browser fetches and renders just
+           *  the first frame of the requested time-range. No extra image
+           *  asset, no ffmpeg, but the card now reads as a real video
+           *  preview instead of a flat indigo block. Falls back to the
+           *  indigo background when no clipUrl is available. */}
+          {canPlay && bestClip.clipUrl && (
+            <>
+              <video
+                src={bestClip.clipUrl}
+                muted
+                playsInline
+                preload="metadata"
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  pointerEvents: 'none',
+                }}
+              />
+              {/* Dark scrim so the play button + caption stay legible
+               *  on top of variable footage frames. */}
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(90deg, rgba(11, 8, 40, 0.78) 0%, rgba(11, 8, 40, 0.55) 60%, rgba(11, 8, 40, 0.35) 100%)',
+                  pointerEvents: 'none',
+                }}
+              />
+            </>
+          )}
           <button
             type="button"
             aria-label="Play best moment"
@@ -210,6 +247,7 @@ export function HomeHero({
             } : undefined}
             disabled={!canPlay}
             style={{
+              position: 'relative',
               width: 64,
               height: 64,
               borderRadius: '50%',
@@ -226,7 +264,7 @@ export function HomeHero({
           >
             <Play size={26} fill="currentColor" />
           </button>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
             <div
               style={{
                 fontFamily: 'var(--font-mono)',

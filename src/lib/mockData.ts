@@ -321,7 +321,12 @@ export const sessions: Session[] = [
   { id: 'session_032', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-01-25', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'cancelled' as const, opponent: 'Al Ain U14', competition: 'UAE Youth League', creditsConsumed: 36, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 85, autoTriggeredAnalysis: true },
   { id: 'session_033', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-01', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Dubai SC U14', competition: 'UAE Youth League', creditsConsumed: 37, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 87, autoTriggeredAnalysis: true },
   { id: 'session_034', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-08', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Al Jazira U14', competition: 'UAE Youth League', creditsConsumed: 36, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 84, autoTriggeredAnalysis: true },
-  { id: 'session_035', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-03-08', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Bani Yas U14 (away)', competition: 'Cup', creditsConsumed: 38, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 89, autoTriggeredAnalysis: true },
+  // session_035 is the latest analysed match for Zain Al-Dosari
+  // (player_009 — parent_001's second kid). Wired to the same demo
+  // footage so switching kids on parent home doesn't dead-end on a
+  // greyed play button. Uses the same SAS source with different
+  // time-fragments so the demo still feels distinct per kid.
+  { id: 'session_035', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-03-08', startTime: '17:00', endTime: '18:30', type: 'match' as const, status: 'analysed' as const, opponent: 'Bani Yas U14 (away)', competition: 'Cup', creditsConsumed: 38, participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 89, autoTriggeredAnalysis: true, matchVideoUrl: DEMO_MATCH_VIDEO_URL, matchOverlayUrl: DEMO_MATCH_OVERLAY_URL },
   // training_match for roster_002 — no analyses
   { id: 'session_036', facilityId: 'facility_001', pitchId: 'pitch_002', academyId: 'academy_001', rosterId: 'roster_002', date: '2026-02-13', startTime: '17:00', endTime: '18:30', type: 'training_match' as const, status: 'analysed' as const, opponent: 'Internal squad', competition: 'Friendly · in-house', participatingPlayerIds: [...u14BluePlayerIds], aiMatchConfidence: 68, autoTriggeredAnalysis: false },
 
@@ -559,6 +564,15 @@ const legacyHighlights: Highlight[] = [
   { id: 'highlight_015', sessionId: 'session_006', playerId: 'player_007', eventType: 'key_pass', timestampSeconds: 3060, durationSeconds: 8, releasedToParent: false, confidence: 0.87, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 85, flaggedByCoach: false },
   { id: 'highlight_016', sessionId: 'session_006', playerId: 'player_005', eventType: 'save', timestampSeconds: 3900, durationSeconds: 6, releasedToParent: false, confidence: 0.90, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 90, flaggedByCoach: false },
   { id: 'highlight_017', sessionId: 'session_006', playerId: 'player_006', eventType: 'tackle', timestampSeconds: 4800, durationSeconds: 9, releasedToParent: false, confidence: 0.84, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 81, flaggedByCoach: false },
+
+  // ── Session 035 — Zain Al-Dosari (player_009) vs Bani Yas U14 (Mar 8) ──
+  // Wired with clipUrls so parent_001's second kid also has playable
+  // video on parent home (and matches Kiyan's experience). Hand-coded
+  // entries appear BEFORE the backfill IIFE in this array, so they win
+  // the `getBestClipFromMatch` lookup (which returns the first goal).
+  { id: 'highlight_z01', sessionId: 'session_035', playerId: 'player_009', eventType: 'goal',     timestampSeconds: 1620, durationSeconds: 14, clipUrl: demoClipUrl(60, 80),   releasedToParent: true, confidence: 0.95, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_002', aiConfidence: 92, flaggedByCoach: true  },
+  { id: 'highlight_z02', sessionId: 'session_035', playerId: 'player_009', eventType: 'shot',     timestampSeconds: 2940, durationSeconds: 10, clipUrl: demoClipUrl(170, 185), releasedToParent: true, confidence: 0.88, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_002', aiConfidence: 84, flaggedByCoach: false },
+  { id: 'highlight_z03', sessionId: 'session_035', playerId: 'player_009', eventType: 'key_pass', timestampSeconds: 3960, durationSeconds: 12, clipUrl: demoClipUrl(245, 265), releasedToParent: true, confidence: 0.90, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_002', aiConfidence: 87, flaggedByCoach: false },
 
   ...(function buildBackfillHighlights(): Highlight[] {
     // Top up every (player, session) with at least 3 highlights so each
