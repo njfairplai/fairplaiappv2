@@ -23,8 +23,8 @@ import { FatigueTile } from '@/components/welfare/FatigueTile'
 
 interface WelfareCardsProps {
   playerId: string
-  /** Anchor for the Gear card so /parent/notifications?#gear scrolls into
-   *  view when a parent taps a PPE notification. */
+  /** Anchor for the Gear card so /parent/hub?#gear scrolls into view
+   *  when a parent taps a PPE notification (system update item). */
   gearAnchor?: string
 }
 

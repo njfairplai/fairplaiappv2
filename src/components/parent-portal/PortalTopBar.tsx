@@ -76,7 +76,11 @@ export function PortalTopBar({
       <button
         type="button"
         onClick={() =>
-          router.push(pathname.startsWith('/player') ? '/player/notifications' : '/parent/notifications')
+          // Parent: bell routes to /parent/hub which is now the unified
+          // feed (system events + coach + announcements + community).
+          // Player portal still has its own /player/notifications until
+          // we unify there too.
+          router.push(pathname.startsWith('/player') ? '/player/notifications' : '/parent/hub')
         }
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         style={{ ...iconBtnStyle(), position: 'relative' }}

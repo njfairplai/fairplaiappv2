@@ -179,8 +179,8 @@ export default function ParentHomePage() {
         )
       })()}
 
-      {/* Lately — preview of the top notifications. Full list lives at
-          /parent/notifications via the bell icon. */}
+      {/* Lately — preview of the top notifications. Full list now lives
+          at /parent/hub (system events merged into the unified feed). */}
       {lately.length > 0 && (
         <section
           style={{
@@ -212,7 +212,7 @@ export default function ParentHomePage() {
             </span>
             <button
               type="button"
-              onClick={() => router.push('/parent/notifications')}
+              onClick={() => router.push('/parent/hub')}
               style={{
                 background: 'transparent',
                 border: 'none',
