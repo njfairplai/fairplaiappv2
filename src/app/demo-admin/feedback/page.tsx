@@ -1,4 +1,6 @@
 import { sql } from '@vercel/postgres'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { THEMES } from '@/lib/themes'
 
 export const dynamic = 'force-dynamic'
@@ -70,13 +72,17 @@ function PaletteCount({ rows }: { rows: FeedbackRow[] }) {
   return (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
       {sorted.map(([id, n]) => (
-        <div key={id} style={{
-          padding: '10px 14px',
-          background: '#fff',
-          border: '1px solid #E8EAED',
-          borderRadius: 8,
-          fontSize: 13,
-        }}>
+        <div
+          key={id}
+          style={{
+            padding: '10px 14px',
+            background: 'var(--brand-paper)',
+            border: '1px solid var(--brand-line)',
+            borderRadius: 8,
+            fontSize: 13,
+            color: 'var(--brand-indigo)',
+          }}
+        >
           <strong>{paletteName(id)}</strong> · {n} vote{n === 1 ? '' : 's'}
         </div>
       ))}
@@ -84,98 +90,211 @@ function PaletteCount({ rows }: { rows: FeedbackRow[] }) {
   )
 }
 
-export default async function AdminFeedbackPage() {
+export default async function DemoAdminFeedbackPage() {
   const { rows, error } = await fetchRows()
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 1280 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>User testing feedback</h1>
-        <div style={{ fontSize: 13, color: '#6E7180' }}>{rows.length} response{rows.length === 1 ? '' : 's'}</div>
-      </div>
-      <p style={{ fontSize: 13, color: '#6E7180', marginTop: 0, marginBottom: 24 }}>
-        Live from Neon. Reload the page to fetch the latest. Sorted newest first.
-      </p>
+    <main
+      style={{
+        minHeight: '100vh',
+        background: 'var(--brand-sand)',
+        color: 'var(--brand-indigo)',
+        fontFamily: 'var(--font-satoshi), system-ui, sans-serif',
+        padding: '32px 24px 80px',
+      }}
+    >
+      <div style={{ maxWidth: 880, margin: '0 auto' }}>
+        <Link
+          href="/demo-admin"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 12,
+            fontWeight: 700,
+            color: 'var(--brand-indigo)',
+            textDecoration: 'none',
+            marginBottom: 16,
+          }}
+        >
+          <ArrowLeft size={13} /> Back to demo admin
+        </Link>
 
-      {error && (
-        <div style={{ padding: 16, background: '#FEE', border: '1px solid #FAA', borderRadius: 8, marginBottom: 24, color: '#900', fontSize: 14 }}>
-          <strong>Error:</strong> {error}
+        <div
+          style={{
+            fontFamily: 'var(--font-fragment), monospace',
+            fontSize: 11,
+            letterSpacing: '0.22em',
+            fontWeight: 800,
+            color: 'var(--brand-indigo-mute)',
+            marginBottom: 12,
+          }}
+        >
+          FAIRPLAI · USER FEEDBACK
         </div>
-      )}
 
-      {rows.length > 0 && <PaletteCount rows={rows} />}
-
-      {rows.length === 0 && !error && (
-        <div style={{ padding: 24, background: '#fff', border: '1px solid #E8EAED', borderRadius: 8, color: '#6E7180', fontSize: 14 }}>
-          No responses yet. Submit one through the user testing flow and reload.
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 6 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-clash), serif',
+              fontSize: 40,
+              lineHeight: 1.0,
+              letterSpacing: '-0.02em',
+              margin: 0,
+              fontWeight: 700,
+            }}
+          >
+            User testing feedback
+          </h1>
+          <div style={{ fontSize: 13, color: 'var(--brand-indigo-mute)', fontWeight: 600 }}>
+            {rows.length} response{rows.length === 1 ? '' : 's'}
+          </div>
         </div>
-      )}
+        <p style={{ fontSize: 14, color: 'var(--brand-indigo-mute)', margin: '0 0 28px', maxWidth: 540, lineHeight: 1.5 }}>
+          Live from Neon. Reload the page to fetch the latest. Sorted newest first.
+        </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {rows.map(r => {
-          const resp = r.responses ?? {}
-          return (
-            <div key={r.id} style={{
-              background: '#fff',
-              border: '1px solid #E8EAED',
-              borderRadius: 10,
-              padding: 18,
-              fontSize: 13,
-              lineHeight: 1.5,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>{paletteName(r.palette_vote)}</div>
-                  <div style={{ fontSize: 12, color: '#6E7180' }}>
-                    {fmtDate(r.created_at)} · {r.role ?? 'no role'} · {r.email ?? 'no email'}
+        {error && (
+          <div
+            style={{
+              padding: 16,
+              background: 'var(--brand-yellow-soft)',
+              border: '1px solid var(--brand-coral)',
+              borderRadius: 8,
+              marginBottom: 24,
+              color: 'var(--brand-indigo)',
+              fontSize: 14,
+            }}
+          >
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {rows.length > 0 && <PaletteCount rows={rows} />}
+
+        {rows.length === 0 && !error && (
+          <div
+            style={{
+              padding: 24,
+              background: 'var(--brand-paper)',
+              border: '1px solid var(--brand-line)',
+              borderRadius: 8,
+              color: 'var(--brand-indigo-mute)',
+              fontSize: 14,
+            }}
+          >
+            No responses yet. Submit one through the user testing flow and reload.
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {rows.map(r => {
+            const resp = r.responses ?? {}
+            const npsValue = resp.nps ?? null
+            const npsColor =
+              npsValue === null
+                ? 'var(--brand-indigo-mute)'
+                : npsValue >= 9
+                ? 'var(--brand-yellow)'
+                : npsValue >= 7
+                ? 'var(--brand-indigo)'
+                : 'var(--brand-coral)'
+            return (
+              <div
+                key={r.id}
+                style={{
+                  background: 'var(--brand-paper)',
+                  border: '1px solid var(--brand-line)',
+                  borderRadius: 10,
+                  padding: 18,
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                  color: 'var(--brand-indigo)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-clash), serif', fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                      {paletteName(r.palette_vote)}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--brand-indigo-mute)' }}>
+                      {fmtDate(r.created_at)} · {r.role ?? 'no role'} · {r.email ?? 'no email'}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-clash), serif',
+                        fontSize: 24,
+                        fontWeight: 700,
+                        color: npsColor,
+                      }}
+                    >
+                      NPS {npsValue ?? '—'}
+                    </div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: (resp.nps ?? 0) >= 9 ? '#1FA463' : (resp.nps ?? 0) >= 7 ? '#4A4AFF' : '#E04E4E' }}>
-                    NPS {resp.nps ?? '—'}
+
+                {resp.palette_words && resp.palette_words.length > 0 && (
+                  <div style={{ marginBottom: 8 }}>
+                    <span style={{ color: 'var(--brand-indigo-mute)', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>
+                      WORDS ·{' '}
+                    </span>
+                    {resp.palette_words.join(', ')}
                   </div>
-                </div>
+                )}
+
+                {resp.feel && (
+                  <div style={{ marginBottom: 8, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                    <span style={{ color: 'var(--brand-indigo-mute)', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>
+                      FEEL ·
+                    </span>
+                    {Object.entries(resp.feel).map(([k, v]) => (
+                      <span key={k}>
+                        {k}: <strong>{v ?? '—'}/5</strong>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {resp.favourite_features && resp.favourite_features.length > 0 && (
+                  <div style={{ marginBottom: 6 }}>
+                    <span style={{ color: 'var(--brand-indigo-mute)', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>
+                      FAVOURITES ·{' '}
+                    </span>
+                    {resp.favourite_features.map(featLabel).join(', ')}
+                  </div>
+                )}
+
+                {resp.kill_features && resp.kill_features.length > 0 && (
+                  <div style={{ marginBottom: 6 }}>
+                    <span style={{ color: 'var(--brand-coral)', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>
+                      KILL ·{' '}
+                    </span>
+                    {resp.kill_features.map(featLabel).join(', ')}
+                  </div>
+                )}
+
+                {r.whats_missing && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      padding: '10px 12px',
+                      background: 'var(--brand-sand)',
+                      border: '1px solid var(--brand-line-soft)',
+                      borderRadius: 6,
+                      fontStyle: 'italic',
+                      color: 'var(--brand-indigo)',
+                    }}
+                  >
+                    &ldquo;{r.whats_missing}&rdquo;
+                  </div>
+                )}
               </div>
-
-              {resp.palette_words && resp.palette_words.length > 0 && (
-                <div style={{ marginBottom: 8 }}>
-                  <span style={{ color: '#6E7180', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>WORDS · </span>
-                  {resp.palette_words.join(', ')}
-                </div>
-              )}
-
-              {resp.feel && (
-                <div style={{ marginBottom: 8, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                  <span style={{ color: '#6E7180', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>FEEL ·</span>
-                  {Object.entries(resp.feel).map(([k, v]) => (
-                    <span key={k}>{k}: <strong>{v ?? '—'}/5</strong></span>
-                  ))}
-                </div>
-              )}
-
-              {resp.favourite_features && resp.favourite_features.length > 0 && (
-                <div style={{ marginBottom: 6 }}>
-                  <span style={{ color: '#6E7180', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>FAVOURITES · </span>
-                  {resp.favourite_features.map(featLabel).join(', ')}
-                </div>
-              )}
-
-              {resp.kill_features && resp.kill_features.length > 0 && (
-                <div style={{ marginBottom: 6 }}>
-                  <span style={{ color: '#E04E4E', fontSize: 11, letterSpacing: '0.1em', fontWeight: 700 }}>KILL · </span>
-                  {resp.kill_features.map(featLabel).join(', ')}
-                </div>
-              )}
-
-              {r.whats_missing && (
-                <div style={{ marginTop: 10, padding: '10px 12px', background: '#F5F6FC', borderRadius: 6, fontStyle: 'italic' }}>
-                  &ldquo;{r.whats_missing}&rdquo;
-                </div>
-              )}
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
-    </div>
+    </main>
   )
 }
