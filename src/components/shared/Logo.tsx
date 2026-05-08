@@ -3,28 +3,34 @@ import Image from 'next/image'
 interface LogoProps {
   /** Rendered logo height in px. Width auto-scales by aspect ratio. */
   height?: number
-  /** Override the default theme-driven inversion. Use 'light' to force the
-      black wordmark, 'dark' to force the inverted (white) wordmark. */
+  /** Force a colour treatment.
+   *   'auto'  — use the indigo wordmark (default; correct for almost all
+   *             pages, which run on light surfaces).
+   *   'light' — same as 'auto', kept for caller compatibility.
+   *   'dark'  — sand wordmark, for use on dark surfaces (indigo hero bands,
+   *             coach hub dark mode, etc). */
   variant?: 'auto' | 'light' | 'dark'
   className?: string
   style?: React.CSSProperties
 }
 
 /**
- * Brand wordmark (horizontal). Single black-on-transparent PNG that
- * inverts to white via the per-theme `--logo-invert` CSS var. Pass
- * `variant="light"` or `"dark"` to override on surfaces that don't
- * match the active theme (e.g. a navy hero on Almanac).
+ * Brand wordmark (horizontal). Two PNGs ship in /public:
+ *
+ *   /logo-black.png — indigo wordmark, for light surfaces (the default).
+ *   /logo-white.png — sand wordmark, for dark surfaces.
+ *
+ * No CSS filter inversion (we used to invert(1) a single black PNG into
+ * white — that produced a flat white that lost the brand colour and
+ * anti-aliased oddly at small sizes). Now we ship both proper artworks
+ * and pick by variant.
  */
 export function Logo({ height = 24, variant = 'auto', className, style }: LogoProps) {
-  const filter =
-    variant === 'light' ? 'none' :
-    variant === 'dark'  ? 'invert(1)' :
-    'var(--logo-invert, none)'
+  const src = variant === 'dark' ? '/logo-white.png' : '/logo-black.png'
 
   return (
     <Image
-      src="/logo-black.png"
+      src={src}
       alt="Fairplai"
       width={2054}
       height={515}
@@ -33,7 +39,6 @@ export function Logo({ height = 24, variant = 'auto', className, style }: LogoPr
         height,
         width: 'auto',
         objectFit: 'contain',
-        filter,
         ...style,
       }}
       className={className}

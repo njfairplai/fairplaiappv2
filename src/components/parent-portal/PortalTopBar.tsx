@@ -2,22 +2,24 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { Bell, User } from 'lucide-react'
+import { Logo } from '@/components/shared/Logo'
 
 interface PortalTopBarProps {
   /** Optional unread count for the bell badge. 0 hides the badge. */
   unreadCount?: number
-  /** Title shown center-bar. Defaults to "Fairpl.ai". */
+  /** When set, renders this string in the centre instead of the
+   *  Fairplai wordmark. Used by deep pages ("Match", "Settings", etc). */
   title?: string
   /** When true, renders a back chevron in place of the avatar. */
   showBack?: boolean
 }
 
-/* TODO: design-refinement-target — Pack 3 will refine.
- * Slim sticky top bar with avatar (left) → settings, title (centre),
- * notification bell (right) with unread-count badge. */
+/* Slim sticky top bar with avatar (left) → settings, brand mark
+ * (centre — wordmark by default, or a deep-page title), notification
+ * bell (right) with unread-count badge. */
 export function PortalTopBar({
   unreadCount = 0,
-  title = 'Fairpl.ai',
+  title,
   showBack = false,
 }: PortalTopBarProps) {
   const router = useRouter()
@@ -62,15 +64,27 @@ export function PortalTopBar({
 
       <div
         style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          letterSpacing: '0.32em',
-          fontWeight: 800,
-          color: 'var(--brand-indigo)',
-          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        {title.toUpperCase()}
+        {title ? (
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              letterSpacing: '0.32em',
+              fontWeight: 800,
+              color: 'var(--brand-indigo)',
+              textAlign: 'center',
+            }}
+          >
+            {title.toUpperCase()}
+          </span>
+        ) : (
+          <Logo height={20} />
+        )}
       </div>
 
       <button
