@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { Play } from 'lucide-react'
 import type { Player, Session, MatchAnalysis, Highlight } from '@/lib/types'
 import { PolyRadar, type RadarCategory } from '@/components/coach/player-profile/PolyRadar'
 import { parentScoreColor } from '@/lib/parent-score-color'
+import { VideoModal } from '@/components/video/VideoModal'
 
 /* TODO: design-refinement-target — Pack 3 will refine visual treatment.
  * Current is a vertical 2-card hero: clip on top, radar below. Both halves
@@ -44,6 +46,16 @@ export function HomeHero({
   seasonAnalyses,
   role,
 }: HomeHeroProps) {
+  // Tap-to-play opens a full-screen video modal when the clip carries a
+  // playable URL. Static play-button card is preserved as the fallback
+  // for highlights without `clipUrl` (most legacy fixtures).
+  const [videoOpen, setVideoOpen] = useState(false)
+  const canPlay = !!bestClip?.clipUrl
+  // Separate state for the "Watch full match" CTA — parents can play the
+  // raw camera feed even when there's no best-clip yet. Coach-only AI
+  // overlay is intentionally not exposed here.
+  const [fullMatchOpen, setFullMatchOpen] = useState(false)
+  const fullMatchUrl = match?.matchVideoUrl ?? null
   // Season-averaged radar shape (different from Stats' per-match radar so
   // the two surfaces feel like distinct lenses, not duplicates).
   const seasonShape: Record<RadarCategory, number> | null = (() => {
@@ -161,9 +173,20 @@ export function HomeHero({
         </div>
       </div>
 
-      {/* Clip card — top half */}
+      {/* Clip card — top half. Whole card is clickable when clipUrl
+       *  exists; falls back to non-interactive when there's no playable
+       *  source so we don't fake an action. */}
       {bestClip && (
         <div
+          role={canPlay ? 'button' : undefined}
+          tabIndex={canPlay ? 0 : undefined}
+          onClick={canPlay ? () => setVideoOpen(true) : undefined}
+          onKeyDown={canPlay ? (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setVideoOpen(true)
+            }
+          } : undefined}
           style={{
             background: 'var(--brand-indigo)',
             color: 'var(--brand-sand)',
@@ -175,11 +198,17 @@ export function HomeHero({
             alignItems: 'center',
             gap: 14,
             aspectRatio: '16 / 9',
+            cursor: canPlay ? 'pointer' : 'default',
           }}
         >
           <button
             type="button"
             aria-label="Play best moment"
+            onClick={canPlay ? (e) => {
+              e.stopPropagation()
+              setVideoOpen(true)
+            } : undefined}
+            disabled={!canPlay}
             style={{
               width: 64,
               height: 64,
@@ -187,7 +216,7 @@ export function HomeHero({
               background: 'var(--brand-yellow)',
               color: 'var(--brand-indigo)',
               border: 'none',
-              cursor: 'pointer',
+              cursor: canPlay ? 'pointer' : 'default',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -239,6 +268,37 @@ export function HomeHero({
         </div>
       )}
 
+      {/* "Watch full match" — parents have a clip up top (one moment),
+       *  but they couldn't watch the whole match anywhere. This button
+       *  fills that gap. Renders only when the match carries a video
+       *  URL (currently the demo-anchor session). Plain text-button so
+       *  it doesn't fight the clip card for attention. */}
+      {fullMatchUrl && (
+        <button
+          type="button"
+          onClick={() => setFullMatchOpen(true)}
+          style={{
+            alignSelf: 'flex-start',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '10px 14px',
+            background: 'transparent',
+            color: 'var(--brand-indigo)',
+            border: '1px solid var(--brand-indigo)',
+            borderRadius: 999,
+            fontFamily: 'var(--font-body)',
+            fontWeight: 700,
+            fontSize: 12.5,
+            letterSpacing: '0.01em',
+            cursor: 'pointer',
+          }}
+        >
+          <Play size={14} fill="currentColor" />
+          Watch full match
+        </button>
+      )}
+
       {/* Radar — bottom half */}
       {seasonShape && (
         <div
@@ -277,6 +337,24 @@ export function HomeHero({
             size={260}
           />
         </div>
+      )}
+
+      {bestClip?.clipUrl && (
+        <VideoModal
+          open={videoOpen}
+          onClose={() => setVideoOpen(false)}
+          src={bestClip.clipUrl}
+          caption={`${EVENT_LABELS[bestClip.eventType]} · ${Math.floor(bestClip.timestampSeconds / 60)}m`}
+        />
+      )}
+
+      {fullMatchUrl && (
+        <VideoModal
+          open={fullMatchOpen}
+          onClose={() => setFullMatchOpen(false)}
+          src={fullMatchUrl}
+          caption={match?.opponent ? `FULL MATCH · vs ${match.opponent.toUpperCase()}` : 'FULL MATCH'}
+        />
       )}
     </section>
   )

@@ -23,6 +23,7 @@ import type { CoachCamClip } from '@/lib/types'
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
+import { VideoModal } from '@/components/video/VideoModal'
 import type { Highlight } from '@/lib/types'
 
 const PAGE_SIZE = 5
@@ -681,6 +682,10 @@ function CoachTouchedClipRow({
 function ClipRow({ clip }: { clip: Highlight }) {
   const meta = EVENT_BADGES[clip.eventType]
   const minute = Math.floor(clip.timestampSeconds / 60)
+  // Local modal state — only meaningful when the clip carries a real
+  // playable source (currently the session_017 demo highlights).
+  const [open, setOpen] = useState(false)
+  const canPlay = !!clip.clipUrl
   return (
     <div
       style={{
@@ -697,6 +702,8 @@ function ClipRow({ clip }: { clip: Highlight }) {
       <button
         type="button"
         aria-label="Play clip"
+        onClick={canPlay ? () => setOpen(true) : undefined}
+        disabled={!canPlay}
         style={{
           width: 36,
           height: 36,
@@ -704,7 +711,8 @@ function ClipRow({ clip }: { clip: Highlight }) {
           background: 'var(--brand-indigo)',
           color: 'var(--brand-sand)',
           border: 'none',
-          cursor: 'pointer',
+          cursor: canPlay ? 'pointer' : 'default',
+          opacity: canPlay ? 1 : 0.55,
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -712,6 +720,14 @@ function ClipRow({ clip }: { clip: Highlight }) {
       >
         <Play size={14} fill="currentColor" />
       </button>
+      {clip.clipUrl && (
+        <VideoModal
+          open={open}
+          onClose={() => setOpen(false)}
+          src={clip.clipUrl}
+          caption={`${meta.label} · ${minute}m`}
+        />
+      )}
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span

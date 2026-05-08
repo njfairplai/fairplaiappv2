@@ -18,6 +18,7 @@ import {
   readArray,
   type SharedClipRecord,
 } from '@/lib/welfare-store'
+import { DEMO_FOCAL_SESSION_ID } from '@/lib/demo-video'
 
 // Re-export so callers don't need to know which submodule owns these.
 export {
@@ -151,9 +152,20 @@ export function getMatchListForKid(playerId: string): Session[] {
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
-/** Most-recent analysed match for the kid — drives Home hero default. */
+/** Most-recent analysed match for the kid — drives Home hero default.
+ *
+ *  Demo override: if the demo-focal match (see src/lib/demo-video.ts) is
+ *  in the kid's list and analysed, return THAT — so parent home anchors
+ *  on the same match the coach Match Center defaults to. Without this,
+ *  later matches would win the chronological tie and parent + coach
+ *  would be looking at different games. Drop the override when real
+ *  data + a real wall-clock-driven anchor exist. */
 export function getLatestAnalysedMatch(playerId: string): Session | null {
   const list = getMatchListForKid(playerId)
+  const focal = list.find(s => s.id === DEMO_FOCAL_SESSION_ID)
+  if (focal && (focal.status === 'analysed' || focal.status === 'playback_ready')) {
+    return focal
+  }
   for (let i = list.length - 1; i >= 0; i--) {
     const s = list[i]
     if (s.status === 'analysed' || s.status === 'playback_ready') return s

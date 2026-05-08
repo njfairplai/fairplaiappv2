@@ -19,6 +19,8 @@
  * a later slice when the API layer lands.
  */
 
+import { demoClipUrl } from './demo-video'
+
 export type MatchCenterStatus =
   | 'prep'
   | 'processing'
@@ -198,6 +200,11 @@ export interface MatchCenterHighlight {
   /** Clip duration in seconds */
   dur: number
   headline: string
+  /** Optional URL to a playable clip — when present, the ClipModal
+   *  renders a real `<video>` element instead of the brand-chrome
+   *  placeholder. Demo clips use HTML5 `#t=start,end` fragments off the
+   *  single 5-min raw match in src/lib/demo-video.ts. */
+  clipUrl?: string
 }
 
 /**
@@ -213,27 +220,32 @@ export interface MatchCenterHighlight {
  * has something to demo against. Other matches stay tighter.
  */
 export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
-  // ── Feb 24 · vs Al Wasl Academy · 3-1 W (the populated reference match)
-  { id: 'h-24-1',  sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 4,  dur: 32, headline: 'Opener inside 5 minutes' },
-  { id: 'h-24-2',  sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 8,  dur: 18, headline: 'Through-ball off the kickoff' },
-  { id: 'h-24-3',  sessionDay: 24, ev: 'DEF',  player: 'Khalid Al-Naqbi',   num: 4,  minute: 11, dur: 11, headline: 'Block on the edge, ball recovered' },
-  { id: 'h-24-4',  sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 14, dur: 38, headline: 'Right-foot driven · 1-0' },
-  { id: 'h-24-5',  sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 19, dur: 12, headline: 'Reflex stop, near post' },
-  { id: 'h-24-6',  sessionDay: 24, ev: 'KEY',  player: 'Hamad Al-Mansoori', num: 10, minute: 23, dur: 16, headline: 'Switch to the far flank' },
-  { id: 'h-24-7',  sessionDay: 24, ev: 'SHOT', player: 'Saeed Khalifa',     num: 7,  minute: 26, dur: 10, headline: 'Curler off the post' },
-  { id: 'h-24-8',  sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 28, dur: 22, headline: 'Press-break carry, then split' },
-  { id: 'h-24-9',  sessionDay: 24, ev: 'DEF',  player: 'Rashid Al-Marri',   num: 3,  minute: 33, dur: 9,  headline: 'Block on the half-turn' },
-  { id: 'h-24-10', sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 38, dur: 28, headline: 'Volley from the cutback · 2-0' },
-  { id: 'h-24-11', sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 42, dur: 14, headline: 'Tipped over the bar' },
-  { id: 'h-24-12', sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1' },
-  { id: 'h-24-13', sessionDay: 24, ev: 'KEY',  player: 'Yousef Al-Zaabi',   num: 8,  minute: 51, dur: 17, headline: 'Line-breaking carry' },
-  { id: 'h-24-14', sessionDay: 24, ev: 'DEF',  player: 'Khalid Al-Naqbi',   num: 4,  minute: 56, dur: 12, headline: 'Last-ditch block on edge' },
-  { id: 'h-24-15', sessionDay: 24, ev: 'SHOT', player: 'Ahmed Hassan',      num: 9,  minute: 60, dur: 11, headline: 'Header straight at the keeper' },
-  { id: 'h-24-16', sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 65, dur: 19, headline: 'No-look pass, knife-edge' },
-  { id: 'h-24-17', sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 68, dur: 8,  headline: 'Smothered at feet' },
-  { id: 'h-24-18', sessionDay: 24, ev: 'GOAL', player: 'Kiyan Makkawi',     num: 6,  minute: 71, dur: 36, headline: 'Box arrival · 3-1' },
-  { id: 'h-24-19', sessionDay: 24, ev: 'DEF',  player: 'Faisal Mansour',    num: 2,  minute: 75, dur: 10, headline: 'Recovery on the touchline' },
-  { id: 'h-24-20', sessionDay: 24, ev: 'SHOT', player: 'Saeed Khalifa',     num: 7,  minute: 78, dur: 14, headline: 'Drive saved by the keeper' },
+  // ── Feb 24 · vs Al Wasl Academy · 3-1 W (the populated reference match,
+  // demo-anchor — see src/lib/demo-video.ts).
+  // Every clip below carries a `clipUrl` time-fragment of the single
+  // 5-min raw video so the coach Highlights surface plays REAL footage
+  // on tap. Fragments are spread across the 300-second source so
+  // different clips show different moments.
+  { id: 'h-24-1',  sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 4,  dur: 32, headline: 'Opener inside 5 minutes',         clipUrl: demoClipUrl(0, 30)    },
+  { id: 'h-24-2',  sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 8,  dur: 18, headline: 'Through-ball off the kickoff',   clipUrl: demoClipUrl(50, 70)   },
+  { id: 'h-24-3',  sessionDay: 24, ev: 'DEF',  player: 'Khalid Al-Naqbi',   num: 4,  minute: 11, dur: 11, headline: 'Block on the edge, ball recovered', clipUrl: demoClipUrl(80, 95) },
+  { id: 'h-24-4',  sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 14, dur: 38, headline: 'Right-foot driven · 1-0',         clipUrl: demoClipUrl(28, 60)   },
+  { id: 'h-24-5',  sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 19, dur: 12, headline: 'Reflex stop, near post',          clipUrl: demoClipUrl(105, 120) },
+  { id: 'h-24-6',  sessionDay: 24, ev: 'KEY',  player: 'Hamad Al-Mansoori', num: 10, minute: 23, dur: 16, headline: 'Switch to the far flank',         clipUrl: demoClipUrl(125, 145) },
+  { id: 'h-24-7',  sessionDay: 24, ev: 'SHOT', player: 'Saeed Khalifa',     num: 7,  minute: 26, dur: 10, headline: 'Curler off the post',             clipUrl: demoClipUrl(150, 165) },
+  { id: 'h-24-8',  sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 28, dur: 22, headline: 'Press-break carry, then split',   clipUrl: demoClipUrl(140, 160) },
+  { id: 'h-24-9',  sessionDay: 24, ev: 'DEF',  player: 'Rashid Al-Marri',   num: 3,  minute: 33, dur: 9,  headline: 'Block on the half-turn',          clipUrl: demoClipUrl(170, 185) },
+  { id: 'h-24-10', sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 38, dur: 28, headline: 'Volley from the cutback · 2-0',   clipUrl: demoClipUrl(190, 220) },
+  { id: 'h-24-11', sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 42, dur: 14, headline: 'Tipped over the bar',             clipUrl: demoClipUrl(95, 115)  },
+  { id: 'h-24-12', sessionDay: 24, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 47, dur: 42, headline: 'Late-arrival finish · 2-1',       clipUrl: demoClipUrl(220, 260) },
+  { id: 'h-24-13', sessionDay: 24, ev: 'KEY',  player: 'Yousef Al-Zaabi',   num: 8,  minute: 51, dur: 17, headline: 'Line-breaking carry',             clipUrl: demoClipUrl(60, 80)   },
+  { id: 'h-24-14', sessionDay: 24, ev: 'DEF',  player: 'Khalid Al-Naqbi',   num: 4,  minute: 56, dur: 12, headline: 'Last-ditch block on edge',        clipUrl: demoClipUrl(195, 215) },
+  { id: 'h-24-15', sessionDay: 24, ev: 'SHOT', player: 'Ahmed Hassan',      num: 9,  minute: 60, dur: 11, headline: 'Header straight at the keeper',   clipUrl: demoClipUrl(115, 130) },
+  { id: 'h-24-16', sessionDay: 24, ev: 'KEY',  player: 'Kiyan Makkawi',     num: 6,  minute: 65, dur: 19, headline: 'No-look pass, knife-edge',        clipUrl: demoClipUrl(205, 230) },
+  { id: 'h-24-17', sessionDay: 24, ev: 'SAVE', player: 'Omar Al-Sayed',     num: 1,  minute: 68, dur: 8,  headline: 'Smothered at feet',               clipUrl: demoClipUrl(245, 260) },
+  { id: 'h-24-18', sessionDay: 24, ev: 'GOAL', player: 'Kiyan Makkawi',     num: 6,  minute: 71, dur: 36, headline: 'Box arrival · 3-1',               clipUrl: demoClipUrl(255, 290) },
+  { id: 'h-24-19', sessionDay: 24, ev: 'DEF',  player: 'Faisal Mansour',    num: 2,  minute: 75, dur: 10, headline: 'Recovery on the touchline',       clipUrl: demoClipUrl(75, 90)   },
+  { id: 'h-24-20', sessionDay: 24, ev: 'SHOT', player: 'Saeed Khalifa',     num: 7,  minute: 78, dur: 14, headline: 'Drive saved by the keeper',       clipUrl: demoClipUrl(40, 60)   },
 
   // ── Feb 17 · vs Stratford E. · composite 78
   { id: 'h-17-1', sessionDay: 17, ev: 'GOAL', player: 'Saeed Khalifa',     num: 7,  minute: 14, dur: 32, headline: 'Header from the corner' },

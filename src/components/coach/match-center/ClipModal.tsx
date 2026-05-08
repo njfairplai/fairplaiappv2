@@ -206,11 +206,31 @@ export function ClipModal({
 
         {/* Body */}
         <div style={{ padding: isMobile ? '16px 16px' : '20px 22px' }}>
-          <VideoBlock
-            height={isMobile ? 220 : 320}
-            label={`${clip.ev} · ${clip.minute}'`}
-            sub={`${clip.player.toUpperCase()} #${clip.num}`}
-          />
+          {clip.clipUrl ? (
+            // Re-key so Safari reloads the source on next/prev clip
+            // instead of trying to swap mid-stream (which it hates).
+            <video
+              key={clip.id + '|' + clip.clipUrl}
+              src={clip.clipUrl}
+              controls
+              autoPlay
+              playsInline
+              muted
+              style={{
+                width: '100%',
+                height: isMobile ? 220 : 320,
+                background: '#000',
+                borderRadius: 4,
+                display: 'block',
+              }}
+            />
+          ) : (
+            <VideoBlock
+              height={isMobile ? 220 : 320}
+              label={`${clip.ev} · ${clip.minute}'`}
+              sub={`${clip.player.toUpperCase()} #${clip.num}`}
+            />
+          )}
 
           <div
             style={{

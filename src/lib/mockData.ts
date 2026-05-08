@@ -22,6 +22,11 @@ import {
   SESSIONS as MATCH_CENTER_SESSIONS,
   type MatchCenterHighlight,
 } from './match-center'
+import {
+  DEMO_MATCH_VIDEO_URL,
+  DEMO_MATCH_OVERLAY_URL,
+  demoClipUrl,
+} from './demo-video'
 
 // ─── FACILITIES ────────────────────────────────────────────
 export const facilities: Facility[] = [
@@ -244,7 +249,12 @@ export const sessions: Session[] = [
   // Aligned match sessions — see Match Center alignment block above
   { id: 'session_005', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-08', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Shabab FC', competition: 'Friendly', creditsConsumed: 38, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 91, autoTriggeredAnalysis: true },
   { id: 'session_006', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-17', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Stratford E.', competition: 'UAE Youth League', creditsConsumed: 42, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 88, autoTriggeredAnalysis: true },
-  { id: 'session_007', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-24', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Al Wasl Academy', competition: 'UAE Youth League', creditsConsumed: 40, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 93, autoTriggeredAnalysis: true },
+  // session_007 is the demo's anchor match — the Match Center default
+  // day (Feb 24) and `getLatestAnalysedMatch`'s demo-override return.
+  // Carries the real 5-minute footage (raw + AI overlay) — see
+  // src/lib/demo-video.ts. Coach drill-in renders the toggle, parent
+  // home + match drill-in render the raw stream only.
+  { id: 'session_007', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-24', startTime: '15:00', endTime: '16:30', type: 'match', status: 'analysed', opponent: 'Al Wasl Academy', competition: 'UAE Youth League', creditsConsumed: 40, programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 93, autoTriggeredAnalysis: true, matchVideoUrl: DEMO_MATCH_VIDEO_URL, matchOverlayUrl: DEMO_MATCH_OVERLAY_URL },
   { id: 'session_008', facilityId: 'facility_001', pitchId: 'pitch_001', academyId: 'academy_001', rosterId: 'roster_001', date: '2026-02-28', startTime: '15:00', endTime: '16:30', type: 'match', status: 'scheduled', opponent: 'Al Wasl Academy', competition: 'UAE Youth League', programId: 'program_003', participatingPlayerIds: [...u12RedPlayerIds], aiMatchConfidence: 72, autoTriggeredAnalysis: false },
 
   // U14 Blue surfaces
@@ -519,9 +529,12 @@ export const matchAnalyses: MatchAnalysis[] = [
  */
 const legacyHighlights: Highlight[] = [
   // Kiyan Makkawi
-  { id: 'highlight_001', sessionId: 'session_007', playerId: 'player_001', eventType: 'goal', timestampSeconds: 2040, durationSeconds: 12, releasedToParent: true, confidence: 0.97, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_001', aiConfidence: 91, flaggedByCoach: false },
-  { id: 'highlight_002', sessionId: 'session_007', playerId: 'player_001', eventType: 'key_pass', timestampSeconds: 4020, durationSeconds: 8, releasedToParent: true, confidence: 0.91, privacy: 'parent_visible', watermarkEnabled: true, squadId: 'roster_001', aiConfidence: 87, flaggedByCoach: false },
-  { id: 'highlight_003', sessionId: 'session_007', playerId: 'player_001', eventType: 'sprint_recovery', timestampSeconds: 4680, durationSeconds: 15, releasedToParent: false, confidence: 0.85, privacy: 'coach_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 78, flaggedByCoach: false },
+  // Kiyan's three Feb 24 clips — clipUrls are time-fragments of the
+  // single 5-minute raw video (see src/lib/demo-video.ts). The first
+  // (goal) drives parent home's "Kiyan scored" hero clip.
+  { id: 'highlight_001', sessionId: 'session_007', playerId: 'player_001', eventType: 'goal',            timestampSeconds: 2040, durationSeconds: 12, clipUrl: demoClipUrl(28, 42),   releasedToParent: true,  confidence: 0.97, privacy: 'parent_visible', watermarkEnabled: true,  squadId: 'roster_001', aiConfidence: 91, flaggedByCoach: false },
+  { id: 'highlight_002', sessionId: 'session_007', playerId: 'player_001', eventType: 'key_pass',        timestampSeconds: 4020, durationSeconds: 8,  clipUrl: demoClipUrl(140, 155), releasedToParent: true,  confidence: 0.91, privacy: 'parent_visible', watermarkEnabled: true,  squadId: 'roster_001', aiConfidence: 87, flaggedByCoach: false },
+  { id: 'highlight_003', sessionId: 'session_007', playerId: 'player_001', eventType: 'sprint_recovery', timestampSeconds: 4680, durationSeconds: 15, clipUrl: demoClipUrl(220, 240), releasedToParent: false, confidence: 0.85, privacy: 'coach_only',      watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 78, flaggedByCoach: false },
   // Ahmed Hassan
   { id: 'highlight_004', sessionId: 'session_007', playerId: 'player_002', eventType: 'goal', timestampSeconds: 1380, durationSeconds: 10, releasedToParent: false, confidence: 0.89, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 89, flaggedByCoach: false },
   // Omar Al Rashidi
@@ -546,6 +559,7 @@ const legacyHighlights: Highlight[] = [
   { id: 'highlight_015', sessionId: 'session_006', playerId: 'player_007', eventType: 'key_pass', timestampSeconds: 3060, durationSeconds: 8, releasedToParent: false, confidence: 0.87, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 85, flaggedByCoach: false },
   { id: 'highlight_016', sessionId: 'session_006', playerId: 'player_005', eventType: 'save', timestampSeconds: 3900, durationSeconds: 6, releasedToParent: false, confidence: 0.90, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 90, flaggedByCoach: false },
   { id: 'highlight_017', sessionId: 'session_006', playerId: 'player_006', eventType: 'tackle', timestampSeconds: 4800, durationSeconds: 9, releasedToParent: false, confidence: 0.84, privacy: 'team_only', watermarkEnabled: false, squadId: 'roster_001', aiConfidence: 81, flaggedByCoach: false },
+
   ...(function buildBackfillHighlights(): Highlight[] {
     // Top up every (player, session) with at least 3 highlights so each
     // match feels populated. Existing hand-coded highlights above are

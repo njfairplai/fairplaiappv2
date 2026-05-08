@@ -118,6 +118,16 @@ export interface Session {
   autoTriggeredAnalysis?: boolean
   isAdHoc?: boolean
   tournamentFixtureId?: string
+  /** Optional URL to the full-match video (raw camera). Set on demo-only
+   *  sessions where we have actual footage; rendered by the coach match
+   *  drill-in's Watch panel. */
+  matchVideoUrl?: string
+  /** Optional URL to the AI-overlay version of `matchVideoUrl` —
+   *  same footage with object-detection annotations rendered. The
+   *  coach Watch panel exposes a Standard ↔ AI Overlay toggle when
+   *  both are present. Coach-only by design (parents never see the
+   *  overlay; that's an internal AI surface). */
+  matchOverlayUrl?: string
 }
 
 export interface MatchAnalysis {

@@ -17,6 +17,7 @@ import {
 } from '@/lib/parent-portal'
 import { InjurySheet } from '@/components/coach/match-center/InjurySheet'
 import { FatigueTile } from '@/components/welfare/FatigueTile'
+import { MatchVideoPanel } from '@/components/video/MatchVideoPanel'
 
 const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
 
@@ -1191,6 +1192,19 @@ export default function CoachMatchAnalysisPage() {
       />
 
       <V3MatchStats stats={gameTeamStats[sessionId]} homeName={homeName} awayName={awayName} />
+
+      {/* Watch full match — only renders when the session has both raw +
+       *  overlay video URLs (currently only session_017, the demo
+       *  footage). The Standard ↔ AI Overlay toggle defaults to overlay
+       *  because the AI moment is the demo's wow. */}
+      {session.matchVideoUrl && session.matchOverlayUrl && (
+        <div style={{ padding: isMobile ? '0 18px 12px' : '0 28px 16px' }}>
+          <MatchVideoPanel
+            rawUrl={session.matchVideoUrl}
+            overlayUrl={session.matchOverlayUrl}
+          />
+        </div>
+      )}
 
       {/* Roster — both layouts share it; on mobile it falls below the reel */}
       <div style={{ background: BRAND.sand, padding: isMobile ? '20px 18px 32px' : '24px 28px 32px' }}>

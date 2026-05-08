@@ -14,6 +14,7 @@ import {
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { StatsRadarSection } from '@/components/parent-portal/StatsRadarSection'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
+import { VideoModal } from '@/components/video/VideoModal'
 import { parentScoreColor } from '@/lib/parent-score-color'
 import type { Highlight } from '@/lib/types'
 
@@ -79,6 +80,9 @@ export default function ParentMatchDetailPage() {
 
   // Welfare — injury flags for THIS player + session.
   const [playerInjuries, setPlayerInjuries] = useState<InjuryFlag[]>([])
+  // Tap-to-play full-match video. Only meaningful when the session
+  // carries a playable URL (currently the demo-anchor session_007).
+  const [fullMatchOpen, setFullMatchOpen] = useState(false)
   useEffect(() => {
     if (typeof window === 'undefined') return
     setPlayerInjuries(
@@ -190,6 +194,94 @@ export default function ParentMatchDetailPage() {
           </div>
         )}
       </section>
+
+      {/* Watch full match — only renders when session carries video URL.
+       *  Sits BEFORE highlights so the parent's first action is "watch
+       *  the whole thing", with clips as the deep-dive after. Reached
+       *  from the stats filmstrip → tap a match → here. */}
+      {session.matchVideoUrl && (
+        <section style={{ padding: '20px 16px 0' }}>
+          <button
+            type="button"
+            onClick={() => setFullMatchOpen(true)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              padding: '14px 16px',
+              background: 'var(--brand-indigo)',
+              color: 'var(--brand-sand)',
+              border: 'none',
+              borderRadius: 12,
+              cursor: 'pointer',
+              textAlign: 'left',
+              boxShadow: '0 6px 18px rgba(11, 8, 40, 0.18)',
+            }}
+          >
+            <span
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                background: 'var(--brand-yellow)',
+                color: 'var(--brand-indigo)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Play size={18} fill="currentColor" />
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9.5,
+                  letterSpacing: '0.22em',
+                  color: 'var(--brand-yellow)',
+                  fontWeight: 800,
+                }}
+              >
+                FULL MATCH
+              </span>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 17,
+                  letterSpacing: '-0.01em',
+                  marginTop: 2,
+                }}
+              >
+                Watch the whole match
+              </span>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 11.5,
+                  color: 'rgba(238, 228, 200, 0.7)',
+                  marginTop: 2,
+                }}
+              >
+                Camera-side feed · ~5 min
+              </span>
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 18,
+                color: 'var(--brand-yellow)',
+              }}
+            >
+              →
+            </span>
+          </button>
+        </section>
+      )}
 
       {/* Highlights row */}
       {sessionHighlights.length > 0 && (
@@ -382,6 +474,15 @@ export default function ParentMatchDetailPage() {
               : 'No analysis available for this match.'}
           </div>
         </section>
+      )}
+
+      {session.matchVideoUrl && (
+        <VideoModal
+          open={fullMatchOpen}
+          onClose={() => setFullMatchOpen(false)}
+          src={session.matchVideoUrl}
+          caption={session.opponent ? `FULL MATCH · vs ${session.opponent.toUpperCase()}` : 'FULL MATCH'}
+        />
       )}
     </div>
   )
