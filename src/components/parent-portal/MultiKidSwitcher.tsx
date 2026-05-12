@@ -2,6 +2,7 @@
 
 import type { Player } from '@/lib/types'
 import { PlayerGlyph } from '@/components/coach/player-profile/PlayerGlyph'
+import { cn } from '@/lib/cn'
 
 /* TODO: design-refinement-target — Pack 3 will refine visual treatment.
  * Current is a plain horizontal pill row with PlayerGlyph + name. Hidden
@@ -18,27 +19,17 @@ export function MultiKidSwitcher({ kids, activeKidId, onSwitch }: MultiKidSwitch
 
   return (
     <div
-      style={{
-        display: 'flex',
-        gap: 8,
-        padding: '12px 16px',
-        background: 'var(--brand-paper)',
-        borderBottom: '1px solid var(--brand-line)',
-        overflowX: 'auto',
-        scrollbarWidth: 'none',
-      }}
+      className={cn(
+        'flex gap-2 px-4 py-3 overflow-x-auto',
+        'bg-brand-paper border-b border-brand-line',
+        '[scrollbar-width:none]',
+      )}
     >
       <span
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9.5,
-          letterSpacing: '0.18em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          alignSelf: 'center',
-          marginRight: 4,
-          whiteSpace: 'nowrap',
-        }}
+        className={cn(
+          'self-center mr-1 whitespace-nowrap',
+          'font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute',
+        )}
       >
         VIEWING
       </span>
@@ -50,22 +41,14 @@ export function MultiKidSwitcher({ kids, activeKidId, onSwitch }: MultiKidSwitch
             type="button"
             onClick={() => onSwitch(k.id)}
             aria-pressed={isActive}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 12px 6px 6px',
-              borderRadius: 999,
-              background: isActive ? 'var(--brand-indigo)' : 'var(--brand-sand)',
-              color: isActive ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-              border: `1px solid ${isActive ? 'var(--brand-indigo)' : 'var(--brand-line)'}`,
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            }}
+            className={cn(
+              'inline-flex items-center gap-2 pr-3 py-1.5 pl-1.5 rounded-full',
+              'font-satoshi text-[13px] font-semibold whitespace-nowrap shrink-0 cursor-pointer',
+              'border transition-colors duration-150',
+              isActive
+                ? 'bg-brand-indigo text-brand-sand border-brand-indigo'
+                : 'bg-brand-sand text-brand-indigo border-brand-line hover:bg-brand-paper-hi',
+            )}
           >
             <PlayerGlyph
               size={26}
