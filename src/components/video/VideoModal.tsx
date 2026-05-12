@@ -49,36 +49,18 @@ export function VideoModal({ open, onClose, src, caption }: VideoModalProps) {
       role="dialog"
       aria-modal="true"
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(11, 8, 40, 0.92)',
-        zIndex: 1100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-      }}
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ background: 'rgba(11, 8, 40, 0.92)', zIndex: 1100 }}
     >
       <button
         type="button"
         aria-label="Close video"
         onClick={onClose}
+        className="absolute right-4 z-[2] inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-brand-sand"
         style={{
-          position: 'absolute',
           top: 'max(16px, env(safe-area-inset-top, 16px))',
-          right: 16,
-          width: 40,
-          height: 40,
-          borderRadius: 999,
           background: 'rgba(0, 0, 0, 0.5)',
           border: '1px solid rgba(238, 228, 200, 0.25)',
-          color: 'var(--brand-sand)',
-          cursor: 'pointer',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2,
         }}
       >
         <X size={18} />
@@ -86,20 +68,11 @@ export function VideoModal({ open, onClose, src, caption }: VideoModalProps) {
 
       {caption && (
         <div
+          className="absolute left-4 z-[2] rounded-full px-3.5 py-2 font-fragment text-[11px] font-bold tracking-[0.18em] text-brand-yellow"
           style={{
-            position: 'absolute',
             top: 'max(16px, env(safe-area-inset-top, 16px))',
-            left: 16,
-            padding: '8px 14px',
-            borderRadius: 999,
             background: 'rgba(0, 0, 0, 0.5)',
             border: '1px solid rgba(238, 228, 200, 0.18)',
-            color: 'var(--brand-yellow)',
-            fontFamily: 'var(--font-fragment), monospace',
-            fontSize: 11,
-            letterSpacing: '0.18em',
-            fontWeight: 700,
-            zIndex: 2,
           }}
         >
           {caption}
@@ -115,12 +88,9 @@ export function VideoModal({ open, onClose, src, caption }: VideoModalProps) {
         muted
         preload="metadata"
         onClick={e => e.stopPropagation()}
+        className="w-full max-w-[920px] rounded-xl bg-black"
         style={{
-          width: '100%',
-          maxWidth: 920,
           maxHeight: '85vh',
-          borderRadius: 12,
-          background: '#000',
           boxShadow: '0 18px 60px rgba(0, 0, 0, 0.6)',
         }}
       />

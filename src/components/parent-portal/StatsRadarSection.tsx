@@ -8,6 +8,7 @@ import {
   type RadarCategory,
 } from '@/components/coach/player-profile/PolyRadar'
 import { highlights, benchmarkData } from '@/lib/mockData'
+import { cn } from '@/lib/cn'
 
 interface StatsRadarSectionProps {
   playerId: string
@@ -142,49 +143,21 @@ export function StatsRadarSection({
 
   return (
     <section
-      style={{
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 12,
-        padding: isMobile ? '16px 14px' : '20px 22px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-      }}
+      className={cn(
+        'flex flex-col gap-3.5 rounded-xl border border-brand-line bg-brand-paper',
+        isMobile ? 'px-3.5 py-4' : 'px-[22px] py-5',
+      )}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 12,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
           {scope === 'match' ? 'MATCH SHAPE' : 'SEASON SHAPE'}
         </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9.5,
-            letterSpacing: '0.16em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 600,
-          }}
-        >
+        <span className="font-fragment text-[9.5px] font-semibold tracking-[0.16em] text-brand-indigo-mute">
           TAP A CATEGORY
         </span>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div className="flex justify-center">
         <PolyRadar
           series={[
             {
@@ -203,12 +176,8 @@ export function StatsRadarSection({
       {/* Sub-stats strip */}
       <div
         key={selected}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          gap: 8,
-          animation: 'fp-fade-in 220ms ease',
-        }}
+        className="grid grid-cols-3 gap-2"
+        style={{ animation: 'fp-fade-in 220ms ease' }}
       >
         <style>
           {`@keyframes fp-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}
@@ -216,67 +185,22 @@ export function StatsRadarSection({
         {activeStats.map(s => (
           <div
             key={s.label}
-            style={{
-              background: 'var(--brand-sand)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 8,
-              padding: '10px 12px',
-              minWidth: 0,
-            }}
+            className="min-w-0 rounded-lg border border-brand-line bg-brand-sand px-3 py-2.5"
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 6,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 8.5,
-                  letterSpacing: '0.16em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+            <div className="flex items-center justify-between gap-1.5">
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap font-fragment text-[8.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute">
                 {s.label}
               </span>
               {s.source === 'ai-derived' && (
                 <span
                   title="AI-derived"
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 8,
-                    letterSpacing: '0.1em',
-                    color: 'var(--brand-indigo-mute)',
-                    background: 'var(--brand-line-soft)',
-                    padding: '1px 5px',
-                    borderRadius: 999,
-                    fontWeight: 600,
-                  }}
+                  className="rounded-full bg-brand-line-soft px-[5px] py-px font-fragment text-[8px] font-semibold tracking-[0.1em] text-brand-indigo-mute"
                 >
                   AI
                 </span>
               )}
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 22,
-                color: 'var(--brand-indigo)',
-                letterSpacing: '-0.02em',
-                marginTop: 4,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
+            <div className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap font-clash text-[22px] tracking-[-0.02em] text-brand-indigo">
               {s.value}
             </div>
           </div>
@@ -285,34 +209,9 @@ export function StatsRadarSection({
 
       {/* Peer benchmark chip — privacy-preserving "top X%" framing. */}
       {benchmarkLabel && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 12px',
-            background: 'var(--brand-yellow-soft)',
-            border: '1px solid var(--brand-yellow)',
-            borderRadius: 8,
-          }}
-        >
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: 'var(--brand-yellow)',
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 12.5,
-              color: 'var(--brand-indigo)',
-              fontWeight: 600,
-            }}
-          >
+        <div className="flex items-center gap-2 rounded-lg border border-brand-yellow bg-brand-yellow-soft px-3 py-2.5">
+          <span className="h-2 w-2 flex-shrink-0 rounded-full bg-brand-yellow" />
+          <span className="font-satoshi text-[12.5px] font-semibold text-brand-indigo">
             {benchmarkLabel}
           </span>
         </div>
