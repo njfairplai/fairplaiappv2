@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import type { MatchCenterHighlight } from '@/lib/match-center'
 import { isClipFlagged, toggleFlaggedClip } from '@/lib/match-center-state'
@@ -95,94 +96,38 @@ export function ClipModal({
       onClick={e => {
         if (e.target === backdropRef.current) onClose()
       }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(11,8,40,0.62)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 90,
-        padding: isMobile ? 12 : 24,
-      }}
+      className={cn(
+        'fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(11,8,40,0.62)] backdrop-blur-[4px]',
+        isMobile ? 'p-3' : 'p-6',
+      )}
     >
       <div
-        style={{
-          background: BRAND.paper,
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 8,
-          width: '100%',
-          maxWidth: 760,
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 24px 56px rgba(11,8,40,0.4)',
-        }}
+        className="w-full max-w-[760px] max-h-[90vh] overflow-y-auto rounded-lg border border-brand-line bg-brand-paper shadow-[0_24px_56px_rgba(11,8,40,0.4)]"
       >
         {/* Header band */}
         <div
-          style={{
-            padding: isMobile ? '14px 16px' : '16px 22px',
-            background: BRAND.yellowSoft,
-            borderBottom: `1px solid ${BRAND.line}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            flexWrap: 'wrap',
-          }}
+          className={cn(
+            'flex flex-wrap items-center gap-2.5 border-b border-brand-line bg-brand-yellow-soft',
+            isMobile ? 'px-4 py-3.5' : 'px-[22px] py-4',
+          )}
         >
           {isReel && title && (
-            <div style={{ width: '100%' }}>
+            <div className="w-full">
               <MEyebrow>MATCH REEL</MEyebrow>
-              <div
-                style={{
-                  fontFamily: TYPE.display,
-                  fontSize: 22,
-                  letterSpacing: '-0.01em',
-                  color: BRAND.indigo,
-                  marginTop: 2,
-                }}
-              >
+              <div className="mt-0.5 font-clash text-[22px] tracking-[-0.01em] text-brand-indigo">
                 {title}
               </div>
             </div>
           )}
-          <span
-            style={{
-              background: BRAND.yellow,
-              color: BRAND.indigo,
-              fontFamily: TYPE.mono,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              padding: '3px 6px',
-              borderRadius: 2,
-            }}
-          >
+          <span className="rounded-sm bg-brand-yellow px-1.5 py-[3px] font-fragment text-[9px] font-bold tracking-[0.18em] text-brand-indigo">
             {clip.ev}
           </span>
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 10.5,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              fontWeight: 700,
-            }}
-          >
+          <span className="font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
             {clip.minute}&apos; · {clip.dur}S · {clip.player.toUpperCase()} #{clip.num}
           </span>
-          <span style={{ flex: 1 }} />
+          <span className="flex-1" />
           {isReel && (
-            <span
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 10,
-                letterSpacing: '0.18em',
-                color: BRAND.indigoMute,
-                fontWeight: 700,
-              }}
-            >
+            <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
               CLIP {index + 1} OF {queue.length}
             </span>
           )}
@@ -190,22 +135,14 @@ export function ClipModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: BRAND.indigo,
-              cursor: 'pointer',
-              fontFamily: TYPE.mono,
-              fontSize: 14,
-              padding: '0 4px',
-            }}
+            className="cursor-pointer border-none bg-transparent px-1 font-fragment text-sm text-brand-indigo"
           >
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: isMobile ? '16px 16px' : '20px 22px' }}>
+        <div className={cn(isMobile ? 'p-4' : 'px-[22px] py-5')}>
           {clip.clipUrl ? (
             // Re-key so Safari reloads the source on next/prev clip
             // instead of trying to swap mid-stream (which it hates).
@@ -216,13 +153,8 @@ export function ClipModal({
               autoPlay
               playsInline
               muted
-              style={{
-                width: '100%',
-                height: isMobile ? 220 : 320,
-                background: '#000',
-                borderRadius: 4,
-                display: 'block',
-              }}
+              className="block w-full rounded-sm bg-black"
+              style={{ height: isMobile ? 220 : 320 }}
             />
           ) : (
             <VideoBlock
@@ -232,39 +164,15 @@ export function ClipModal({
             />
           )}
 
-          <div
-            style={{
-              marginTop: 14,
-              padding: '14px 16px',
-              background: '#fff',
-              border: `1px solid ${BRAND.line}`,
-              borderRadius: 4,
-            }}
-          >
+          <div className="mt-3.5 rounded-sm border border-brand-line bg-white px-4 py-3.5">
             <MEyebrow color={BRAND.indigoMute}>HEADLINE</MEyebrow>
-            <div
-              style={{
-                fontFamily: TYPE.body,
-                fontSize: 14,
-                marginTop: 6,
-                color: BRAND.indigo,
-                lineHeight: 1.55,
-              }}
-            >
+            <div className="mt-1.5 font-satoshi text-sm leading-[1.55] text-brand-indigo">
               {clip.headline}
             </div>
           </div>
 
           {/* Footer actions */}
-          <div
-            style={{
-              marginTop: 18,
-              display: 'flex',
-              gap: 8,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="mt-[18px] flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleFlag}
@@ -284,7 +192,7 @@ export function ClipModal({
             >
               ↗ Share
             </button>
-            <span style={{ flex: 1 }} />
+            <span className="flex-1" />
             {isReel ? (
               <>
                 <button
