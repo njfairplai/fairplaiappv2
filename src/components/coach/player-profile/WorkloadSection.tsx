@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { AlertTriangle, Plus } from 'lucide-react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND_RAW } from '@/lib/constants'
 import {
   getFatigueSamplesForPlayer,
   getPPEFlagsForPlayer,
@@ -54,55 +54,27 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
 
   return (
     <section
-      style={{
-        padding: isMobile ? '20px 16px' : '24px 36px',
-        borderTop: `1px solid ${BRAND.line}`,
-        background: BRAND.sand,
-      }}
+      className={`border-t border-brand-line bg-brand-sand ${
+        isMobile ? 'px-4 py-5' : 'px-9 py-6'
+      }`}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-          gap: 10,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div
-          style={{
-            fontFamily: TYPE.mono,
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: BRAND.indigoMute,
-            fontWeight: 700,
-          }}
-        >
+      <div className="flex items-center justify-between mb-3.5 gap-2.5 flex-wrap">
+        <div className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
           WORKLOAD &amp; GEAR
         </div>
       </div>
 
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr',
-          gap: 14,
-        }}
+        className="grid gap-3.5"
+        style={{ gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr' }}
       >
         {/* Fatigue tile — single big number + tier + trend chip. The
          *  detail stats (top sprint, sprints, dist/min) sit underneath
          *  as small stat cards. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex flex-col gap-2.5">
           <FatigueTile samples={sorted} size="wide" />
           {latest && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: 8,
-              }}
-            >
+            <div className="grid grid-cols-3 gap-2">
               <Stat label="Top sprint" value={`${latest.topSprintKmh.toFixed(1)} km/h`} />
               <Stat label="Sprints" value={`${latest.sprintCount}`} />
               <Stat label="Dist / min" value={`${Math.round(latest.distancePerMinute)} m`} />
@@ -111,81 +83,37 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
         </div>
 
         {/* PPE / gear card */}
-        <div
-          style={{
-            background: BRAND.paper,
-            border: `1px solid ${BRAND.line}`,
-            borderRadius: 12,
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 10,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 10,
-                letterSpacing: '0.22em',
-                color: BRAND.indigoMute,
-                fontWeight: 700,
-              }}
-            >
+        <div className="bg-brand-paper border border-brand-line rounded-xl p-4 flex flex-col">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold">
               GEAR FLAGS
             </span>
             <button
               type="button"
               onClick={() => setPpeOpen(true)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '4px 10px',
-                border: `1px solid ${BRAND.indigo}`, borderRadius: 6,
-                background: 'transparent', color: BRAND.indigo,
-                fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.16em', fontWeight: 700,
-                cursor: 'pointer',
-              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 border border-brand-indigo rounded-md bg-transparent text-brand-indigo font-fragment text-[10px] tracking-[0.16em] font-bold cursor-pointer"
             >
               <Plus size={10} />
               FLAG
             </button>
           </div>
           {openPpe.length === 0 ? (
-            <div style={{ fontFamily: TYPE.body, fontSize: 12.5, color: BRAND.indigoMute }}>
+            <div className="font-satoshi text-[12.5px] text-brand-indigo-mute">
               No open gear flags.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="flex flex-col gap-1.5">
               {openPpe.map(flag => (
                 <div
                   key={flag.id}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 8,
-                    padding: '8px 10px',
-                    background: BRAND.sand,
-                    border: `1px solid ${BRAND.line}`,
-                    borderRadius: 8,
-                  }}
+                  className="flex items-start gap-2 px-2.5 py-2 bg-brand-sand border border-brand-line rounded-lg"
                 >
-                  <AlertTriangle size={13} color={BRAND.coral} style={{ flexShrink: 0, marginTop: 2 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontFamily: TYPE.body, fontSize: 12.5, fontWeight: 600,
-                        color: BRAND.indigo, textTransform: 'capitalize',
-                      }}
-                    >
+                  <AlertTriangle size={13} color={BRAND_RAW.coral} className="flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <div className="font-satoshi text-[12.5px] font-semibold text-brand-indigo capitalize">
                       {flag.gearType.replace('_', ' ')}
                     </div>
-                    <div
-                      style={{ fontFamily: TYPE.body, fontSize: 12, color: BRAND.indigoMid, marginTop: 2 }}
-                    >
+                    <div className="font-satoshi text-xs text-brand-indigo-mid mt-0.5">
                       {flag.notes}
                     </div>
                   </div>
@@ -211,9 +139,9 @@ export function WorkloadSection({ playerId, playerName, isMobile }: WorkloadSect
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: BRAND.sand, border: `1px solid ${BRAND.line}`, borderRadius: 8, padding: '8px 8px', textAlign: 'center' }}>
-      <div style={{ fontFamily: TYPE.display, fontSize: 15, fontWeight: 700, color: BRAND.indigo, letterSpacing: '-0.01em' }}>{value}</div>
-      <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 4, fontWeight: 700 }}>{label.toUpperCase()}</div>
+    <div className="bg-brand-sand border border-brand-line rounded-lg px-2 py-2 text-center">
+      <div className="font-clash text-[15px] font-bold text-brand-indigo tracking-[-0.01em]">{value}</div>
+      <div className="font-fragment text-[9px] tracking-[0.16em] text-brand-indigo-mute mt-1 font-bold">{label.toUpperCase()}</div>
     </div>
   )
 }
@@ -242,79 +170,56 @@ function PPESheet({
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      className="fixed inset-0 flex items-center justify-center z-[95] p-6"
       style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(11,8,40,0.62)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 95, padding: 24,
+        background: 'rgba(11,8,40,0.62)',
+        backdropFilter: 'blur(4px)',
       }}
     >
       <div
-        style={{
-          background: BRAND.paper,
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 8,
-          width: '100%', maxWidth: 400,
-          padding: '20px 22px',
-          boxShadow: '0 24px 56px rgba(11,8,40,0.4)',
-        }}
+        className="bg-brand-paper border border-brand-line rounded-lg w-full max-w-[400px] px-[22px] py-5"
+        style={{ boxShadow: '0 24px 56px rgba(11,8,40,0.4)' }}
       >
-        <div
-          style={{
-            fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em',
-            color: BRAND.indigoMute, fontWeight: 700,
-          }}
-        >
+        <div className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute font-bold">
           GEAR FLAG · {playerName.toUpperCase()}
         </div>
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>Gear</Label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {GEAR_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setGearType(opt.value)}
-                style={{
-                  padding: '9px 8px',
-                  border: `1px solid ${gearType === opt.value ? BRAND.indigo : BRAND.line}`,
-                  borderRadius: 6,
-                  background: gearType === opt.value ? BRAND.indigo : BRAND.sand,
-                  color: gearType === opt.value ? BRAND.sand : BRAND.indigo,
-                  fontFamily: TYPE.body, fontSize: 12.5, fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-1.5">
+            {GEAR_OPTIONS.map(opt => {
+              const active = gearType === opt.value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGearType(opt.value)}
+                  className={`px-2 py-[9px] border rounded-md font-satoshi text-[12.5px] font-semibold cursor-pointer ${
+                    active
+                      ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
+                      : 'border-brand-line bg-brand-sand text-brand-indigo'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              )
+            })}
           </div>
         </div>
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>Note for parent</Label>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="What needs replacing or fixing?"
             rows={3}
-            style={{
-              width: '100%', padding: '9px 12px',
-              border: `1px solid ${BRAND.line}`, borderRadius: 6,
-              fontFamily: TYPE.body, fontSize: 13.5, color: BRAND.indigo,
-              background: BRAND.sand, outline: 'none', resize: 'vertical',
-              boxSizing: 'border-box',
-            }}
+            className="w-full px-3 py-[9px] border border-brand-line rounded-md font-satoshi text-[13.5px] text-brand-indigo bg-brand-sand outline-none resize-y box-border"
           />
         </div>
-        <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <div className="mt-[18px] flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            style={{
-              padding: '8px 14px', border: 'none', background: 'transparent',
-              fontFamily: TYPE.body, fontSize: 13, color: BRAND.indigoMute,
-              cursor: 'pointer',
-            }}
+            className="px-3.5 py-2 border-0 bg-transparent font-satoshi text-[13px] text-brand-indigo-mute cursor-pointer"
           >
             Cancel
           </button>
@@ -322,14 +227,9 @@ function PPESheet({
             type="button"
             onClick={save}
             disabled={!notes.trim()}
-            style={{
-              padding: '10px 16px',
-              border: 'none', borderRadius: 6,
-              background: BRAND.indigo, color: BRAND.sand,
-              fontFamily: TYPE.body, fontSize: 13, fontWeight: 600,
-              cursor: notes.trim() ? 'pointer' : 'not-allowed',
-              opacity: notes.trim() ? 1 : 0.55,
-            }}
+            className={`px-4 py-2.5 border-0 rounded-md bg-brand-indigo text-brand-sand font-satoshi text-[13px] font-semibold ${
+              notes.trim() ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-55'
+            }`}
           >
             Send to parent
           </button>
@@ -341,12 +241,7 @@ function PPESheet({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em',
-        color: BRAND.indigoMute, fontWeight: 700, marginBottom: 6,
-      }}
-    >
+    <div className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute font-bold mb-1.5">
       {children}
     </div>
   )

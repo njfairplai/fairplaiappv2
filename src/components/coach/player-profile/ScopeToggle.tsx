@@ -25,73 +25,34 @@ export function ScopeToggle({ scope, onChange, matchLabel, isMobile }: ScopeTogg
   const matchActive = scope === 'match'
   return (
     <div
-      style={{
-        padding: isMobile ? '14px 16px' : '18px 36px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        background: 'var(--brand-paper)',
-        borderBottom: '1px solid var(--brand-line)',
-      }}
+      className={`flex items-center gap-3 bg-brand-paper border-b border-brand-line ${
+        isMobile ? 'px-4 py-3.5' : 'px-9 py-4'
+      }`}
     >
-      <span
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: '0.22em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-        }}
-      >
+      <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold">
         VIEW
       </span>
       <div
         role="tablist"
         aria-label="Profile scope"
-        style={{
-          display: 'inline-flex',
-          background: 'var(--brand-sand)',
-          border: '1px solid var(--brand-line)',
-          borderRadius: 999,
-          padding: 3,
-          gap: 2,
-        }}
+        className="inline-flex bg-brand-sand border border-brand-line rounded-full p-[3px] gap-[2px]"
       >
         <button
           role="tab"
           aria-selected={matchActive}
           type="button"
           onClick={() => onChange('match')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '7px 14px',
-            borderRadius: 999,
-            border: 'none',
-            background: matchActive ? 'var(--brand-indigo)' : 'transparent',
-            color: matchActive ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            letterSpacing: '0.01em',
-          }}
+          className={`inline-flex items-center gap-2 px-3.5 py-[7px] rounded-full border-0 font-satoshi text-[13px] font-bold cursor-pointer tracking-[0.01em] ${
+            matchActive ? 'bg-brand-indigo text-brand-sand' : 'bg-transparent text-brand-indigo'
+          }`}
         >
           Match
           {matchLabel && (
             <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.16em',
-                fontWeight: 700,
-                opacity: matchActive ? 0.7 : 0.55,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: isMobile ? 120 : 220,
-              }}
+              className={`font-fragment text-[10px] tracking-[0.16em] font-bold whitespace-nowrap overflow-hidden text-ellipsis ${
+                matchActive ? 'opacity-70' : 'opacity-55'
+              }`}
+              style={{ maxWidth: isMobile ? 120 : 220 }}
             >
               · {matchLabel.toUpperCase()}
             </span>
@@ -102,18 +63,9 @@ export function ScopeToggle({ scope, onChange, matchLabel, isMobile }: ScopeTogg
           aria-selected={!matchActive}
           type="button"
           onClick={() => onChange('season')}
-          style={{
-            padding: '7px 18px',
-            borderRadius: 999,
-            border: 'none',
-            background: !matchActive ? 'var(--brand-indigo)' : 'transparent',
-            color: !matchActive ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            letterSpacing: '0.01em',
-          }}
+          className={`px-[18px] py-[7px] rounded-full border-0 font-satoshi text-[13px] font-bold cursor-pointer tracking-[0.01em] ${
+            !matchActive ? 'bg-brand-indigo text-brand-sand' : 'bg-transparent text-brand-indigo'
+          }`}
         >
           Season
         </button>

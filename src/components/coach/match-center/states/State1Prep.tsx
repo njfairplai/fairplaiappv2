@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { MATCH_CENTER_ROSTER, type MatchCenterKind } from '@/lib/match-center'
 import {
@@ -192,129 +193,61 @@ export function State1Prep({
     : "Confirm attendance and lineup. Bib colours don't apply for competitive matches."
 
   return (
-    <Card style={{ padding: 0 }}>
+    <Card className="p-0">
       {/* Header */}
       <div
-        style={{
-          padding: '20px 26px',
-          borderBottom: `1px solid ${BRAND.line}`,
-          background: confirmed ? BRAND.yellowSoft : 'rgba(235,77,109,0.10)',
-        }}
+        className={cn(
+          'px-[26px] py-5 border-b border-brand-line',
+          confirmed && 'bg-brand-yellow-soft',
+        )}
+        style={confirmed ? undefined : { background: 'rgba(235,77,109,0.10)' }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="flex items-center gap-[10px] flex-wrap">
           {confirmed ? (
-            <span
-              style={{
-                background: BRAND.yellow,
-                color: BRAND.indigo,
-                fontFamily: TYPE.mono,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.18em',
-                padding: '3px 7px',
-                borderRadius: 3,
-              }}
-            >
+            <span className="bg-brand-yellow text-brand-indigo font-fragment text-[9px] font-bold tracking-[0.18em] px-[7px] py-[3px] rounded-[3px]">
               ✓ CONFIRMED
             </span>
           ) : (
             <MStatusPill status="prep" />
           )}
-          <span
-            style={{
-              color: BRAND.indigoMute,
-              fontFamily: TYPE.mono,
-              fontSize: 10.5,
-              letterSpacing: '0.18em',
-              fontWeight: 700,
-            }}
-          >
+          <span className="text-brand-indigo-mute font-fragment text-[10.5px] tracking-[0.18em] font-bold">
             {(opponent ? `VS ${opponent.toUpperCase()} · ` : '') + metaLine}
           </span>
         </div>
-        <MDisplay size={36} style={{ marginTop: 10 }}>
+        <MDisplay size={36} className="mt-[10px]">
           {headerTitle}
         </MDisplay>
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: 13,
-            color: BRAND.indigoMid,
-            marginTop: 6,
-          }}
-        >
+        <div className="font-satoshi text-[13px] text-brand-indigo-mid mt-[6px]">
           {headerSub}
         </div>
       </div>
 
       {/* Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 0,
-          borderBottom: `1px solid ${BRAND.line}`,
-          background: BRAND.sand,
-          padding: '0 26px',
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="flex gap-0 border-b border-brand-line bg-brand-sand px-[26px] flex-wrap">
         {TAB_ORDER.map((t, i) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            style={{
-              padding: '12px 18px',
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              position: 'relative',
-              fontFamily: TYPE.mono,
-              fontSize: 10.5,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: tab === t ? BRAND.indigo : BRAND.indigoMute,
-              textTransform: 'uppercase',
-            }}
+            className={cn(
+              'px-[18px] py-3 border-none bg-transparent cursor-pointer relative font-fragment text-[10.5px] font-bold tracking-[0.18em] uppercase',
+              tab === t ? 'text-brand-indigo' : 'text-brand-indigo-mute',
+            )}
           >
             {String(i + 1).padStart(2, '0')} · {t === 'lineup' && isTraining ? 'TEAMS' : t}
             {tab === t && (
-              <span
-                style={{
-                  position: 'absolute',
-                  bottom: -1,
-                  left: 0,
-                  right: 0,
-                  height: 2,
-                  background: BRAND.indigo,
-                }}
-              />
+              <span className="absolute -bottom-px left-0 right-0 h-[2px] bg-brand-indigo" />
             )}
           </button>
         ))}
-        <span style={{ flex: 1 }} />
-        <span
-          style={{
-            alignSelf: 'center',
-            fontFamily: TYPE.mono,
-            fontSize: 10,
-            color: BRAND.indigoMute,
-            letterSpacing: '0.18em',
-          }}
-        >
+        <span className="flex-1" />
+        <span className="self-center font-fragment text-[10px] text-brand-indigo-mute tracking-[0.18em]">
           {presentCount} PRESENT · {totalCount - presentCount} OUT
         </span>
       </div>
 
       {/* Tab content */}
-      <div style={{ padding: '20px 26px', minHeight: 380 }}>
+      <div className="px-[26px] py-5 min-h-[380px]">
         {tab === 'attendance' && (
           <PrepAttendance
             attendance={attendance}
@@ -354,23 +287,13 @@ export function State1Prep({
       </div>
 
       {/* Footer CTA bar — tab-aware */}
-      <div
-        style={{
-          padding: '14px 26px',
-          borderTop: `1px solid ${BRAND.line}`,
-          background: BRAND.sand,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="px-[26px] py-[14px] border-t border-brand-line bg-brand-sand flex items-center gap-[10px] flex-wrap">
         {!isTraining && (
           <button type="button" style={mcButtons.text} onClick={markAsDrills}>
             Mark as drills only ↗
           </button>
         )}
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         <button type="button" style={mcButtons.ghost} onClick={saveDraft}>
           Save draft
         </button>
@@ -414,6 +337,20 @@ interface PrepAttendanceProps {
 
 const ATT_COL_TEMPLATE = '28px 1fr 38px 60px 28px'
 
+/** Reusable column-header label inside the attendance / lineup grids. */
+function ColHeader({ children, centered }: { children: React.ReactNode; centered?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'font-fragment text-[9px] font-bold tracking-[0.18em] text-brand-indigo-mute',
+        centered && 'text-center',
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
 function PrepAttendance({
   attendance,
   jerseys,
@@ -424,110 +361,41 @@ function PrepAttendance({
   const isMobile = useIsMobile()
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 10,
-          flexWrap: 'wrap',
-          gap: 10,
-        }}
-      >
+      <div className="flex items-center justify-between mb-[10px] flex-wrap gap-[10px]">
         <MEyebrow>ROSTER · 16 PLAYERS</MEyebrow>
         <button type="button" style={mcButtons.text} onClick={onMarkAllPresent}>
           Mark all present →
         </button>
       </div>
-      <div
-        style={{
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 4,
-          background: '#fff',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="border border-brand-line rounded-[4px] bg-white overflow-hidden">
         {/* Two-column header row mirrors the data grid below. Single
          *  column on mobile so each row gets the full width and the
          *  inputs don't crash into each other. */}
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: '0 24px',
-            background: BRAND.sand,
-            borderBottom: `1px solid ${BRAND.line}`,
-          }}
+          className={cn(
+            'grid bg-brand-sand border-b border-brand-line',
+            isMobile ? 'grid-cols-1' : 'grid-cols-2',
+          )}
+          style={{ gap: '0 24px' }}
         >
           {(isMobile ? [0] : [0, 1]).map(col => (
             <div
               key={col}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: ATT_COL_TEMPLATE,
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 12px',
-              }}
+              className="grid items-center gap-[10px] px-3 py-2"
+              style={{ gridTemplateColumns: ATT_COL_TEMPLATE }}
             >
               <span />
-              <span
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  color: BRAND.indigoMute,
-                }}
-              >
-                PLAYER
-              </span>
-              <span
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  color: BRAND.indigoMute,
-                  textAlign: 'center',
-                }}
-              >
-                POS
-              </span>
-              <span
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  color: BRAND.indigoMute,
-                  textAlign: 'center',
-                }}
-              >
-                JERSEY
-              </span>
-              <span
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  color: BRAND.indigoMute,
-                  textAlign: 'center',
-                }}
-              >
-                IN
-              </span>
+              <ColHeader>PLAYER</ColHeader>
+              <ColHeader centered>POS</ColHeader>
+              <ColHeader centered>JERSEY</ColHeader>
+              <ColHeader centered>IN</ColHeader>
             </div>
           ))}
         </div>
         {/* Data grid */}
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: '0 24px',
-          }}
+          className={cn('grid', isMobile ? 'grid-cols-1' : 'grid-cols-2')}
+          style={{ gap: '0 24px' }}
         >
           {MATCH_CENTER_ROSTER.map((p, i) => {
             const present = attendance[p.num] !== undefined ? attendance[p.num] : p.present
@@ -535,43 +403,17 @@ function PrepAttendance({
             return (
               <div
                 key={p.num}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: ATT_COL_TEMPLATE,
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '8px 12px',
-                  borderBottom:
-                    i < MATCH_CENTER_ROSTER.length - 2 ? `1px solid ${BRAND.line}` : 'none',
-                }}
+                className={cn(
+                  'grid items-center gap-[10px] px-3 py-2',
+                  i < MATCH_CENTER_ROSTER.length - 2 && 'border-b border-brand-line',
+                )}
+                style={{ gridTemplateColumns: ATT_COL_TEMPLATE }}
               >
                 <MiniAvatar num={p.num} />
-                <div
-                  style={{
-                    fontFamily: TYPE.body,
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    color: BRAND.indigo,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+                <div className="font-satoshi text-[12.5px] font-semibold text-brand-indigo whitespace-nowrap overflow-hidden text-ellipsis">
                   {p.name}
                 </div>
-                <span
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: '0.16em',
-                    color: BRAND.indigoMute,
-                    border: `1px solid ${BRAND.line}`,
-                    padding: '2px 4px',
-                    borderRadius: 2,
-                    textAlign: 'center',
-                  }}
-                >
+                <span className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute border border-brand-line px-1 py-px rounded-[2px] text-center">
                   {p.pos}
                 </span>
                 <input
@@ -582,39 +424,19 @@ function PrepAttendance({
                     if (Number.isFinite(v) && v > 0) onJerseyChange(p.num, v)
                     else e.currentTarget.value = String(jerseyValue)
                   }}
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: BRAND.indigo,
-                    border: `1px solid ${BRAND.line}`,
-                    borderRadius: 3,
-                    padding: '3px 6px',
-                    width: 50,
-                    textAlign: 'center',
-                    background: BRAND.paper,
-                  }}
+                  className="font-fragment text-[11px] font-bold text-brand-indigo border border-brand-line rounded-[3px] px-[6px] py-[3px] w-[50px] text-center bg-brand-paper"
                 />
                 <button
                   type="button"
                   onClick={() => onPresenceChange(p.num, !present)}
                   aria-pressed={present}
                   aria-label={`${p.name} · ${present ? 'present' : 'absent'}`}
-                  style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 3,
-                    border: `1.5px solid ${present ? BRAND.indigo : BRAND.line}`,
-                    background: present ? BRAND.indigo : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: BRAND.sand,
-                    fontSize: 12,
-                    lineHeight: 1,
-                    cursor: 'pointer',
-                    padding: 0,
-                  }}
+                  className={cn(
+                    'w-[18px] h-[18px] rounded-[3px] flex items-center justify-center text-brand-sand text-xs leading-none cursor-pointer p-0',
+                    present
+                      ? 'bg-brand-indigo border-[1.5px] border-brand-indigo'
+                      : 'bg-transparent border-[1.5px] border-brand-line',
+                  )}
                 >
                   {present && '✓'}
                 </button>
@@ -684,22 +506,17 @@ function PrepLineup({
   const tallyOver = startingCount > target
   const tallyExact = startingCount === target
 
+  const lineupCols = isMobile
+    ? '24px 1fr 44px 44px 22px'
+    : '28px 1fr 60px 60px 28px'
+
   return (
     <div>
       {/* Format selector + tally header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 12,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+        <div className="flex items-center gap-[10px] flex-wrap">
           <MEyebrow>FORMAT</MEyebrow>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div className="flex gap-1">
             {FORMAT_OPTIONS.map(f => {
               const active = f === format
               return (
@@ -707,19 +524,12 @@ function PrepLineup({
                   key={f}
                   type="button"
                   onClick={() => onFormatChange(f)}
-                  style={{
-                    padding: '5px 10px',
-                    border: active ? 'none' : `1px solid ${BRAND.line}`,
-                    background: active ? BRAND.indigo : 'transparent',
-                    color: active ? BRAND.sand : BRAND.indigo,
-                    fontFamily: TYPE.mono,
-                    fontSize: 9.5,
-                    fontWeight: 700,
-                    letterSpacing: '0.18em',
-                    borderRadius: 3,
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                  }}
+                  className={cn(
+                    'px-[10px] py-[5px] font-fragment text-[9.5px] font-bold tracking-[0.18em] rounded-[3px] cursor-pointer uppercase',
+                    active
+                      ? 'border-none bg-brand-indigo text-brand-sand'
+                      : 'border border-brand-line bg-transparent text-brand-indigo',
+                  )}
                 >
                   {f}
                 </button>
@@ -727,35 +537,21 @@ function PrepLineup({
             })}
           </div>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: 14,
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="flex items-baseline gap-[14px] flex-wrap">
           <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 10.5,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: tallyOver ? BRAND.coral : tallyExact ? BRAND.indigo : BRAND.indigoMute,
-            }}
+            className={cn(
+              'font-fragment text-[10.5px] font-bold tracking-[0.18em]',
+              tallyOver
+                ? 'text-brand-coral'
+                : tallyExact
+                ? 'text-brand-indigo'
+                : 'text-brand-indigo-mute',
+            )}
           >
             STARTING {startingCount}/{target}
             {tallyOver && ' · OVER'}
           </span>
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-            }}
-          >
+          <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
             {groupTally.GK} GK · {groupTally.DEF} DEF · {groupTally.MID} MID ·{' '}
             {groupTally.ATT} ATT
           </span>
@@ -763,86 +559,21 @@ function PrepLineup({
       </div>
 
       {/* List */}
-      <div
-        style={{
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 4,
-          background: '#fff',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="border border-brand-line rounded-[4px] bg-white overflow-hidden">
         {/* Header row */}
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '24px 1fr 44px 44px 22px' : '28px 1fr 60px 60px 28px',
-            alignItems: 'center',
-            gap: 12,
-            padding: '8px 12px',
-            background: BRAND.sand,
-            borderBottom: `1px solid ${BRAND.line}`,
-          }}
+          className="grid items-center gap-3 px-3 py-2 bg-brand-sand border-b border-brand-line"
+          style={{ gridTemplateColumns: lineupCols }}
         >
           <span />
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-            }}
-          >
-            PLAYER
-          </span>
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              textAlign: 'center',
-            }}
-          >
-            POS
-          </span>
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              textAlign: 'center',
-            }}
-          >
-            GROUP
-          </span>
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              textAlign: 'center',
-            }}
-          >
-            START
-          </span>
+          <ColHeader>PLAYER</ColHeader>
+          <ColHeader centered>POS</ColHeader>
+          <ColHeader centered>GROUP</ColHeader>
+          <ColHeader centered>START</ColHeader>
         </div>
 
         {present.length === 0 ? (
-          <div
-            style={{
-              padding: '20px 12px',
-              textAlign: 'center',
-              fontFamily: TYPE.body,
-              fontSize: 13,
-              color: BRAND.indigoMute,
-            }}
-          >
+          <div className="px-3 py-5 text-center font-satoshi text-[13px] text-brand-indigo-mute">
             Mark some players present in the Attendance tab first.
           </div>
         ) : (
@@ -852,59 +583,23 @@ function PrepLineup({
             return (
               <div
                 key={p.num}
+                className={cn(
+                  'grid items-center gap-3 px-3 py-2',
+                  i < present.length - 1 && 'border-b border-brand-line',
+                )}
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? '24px 1fr 44px 44px 22px' : '28px 1fr 60px 60px 28px',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '8px 12px',
-                  borderBottom:
-                    i < present.length - 1 ? `1px solid ${BRAND.line}` : 'none',
+                  gridTemplateColumns: lineupCols,
                   opacity: isStarting ? 1 : 0.5,
                 }}
               >
                 <MiniAvatar num={p.num} />
-                <div
-                  style={{
-                    fontFamily: TYPE.body,
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    color: BRAND.indigo,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+                <div className="font-satoshi text-[12.5px] font-semibold text-brand-indigo whitespace-nowrap overflow-hidden text-ellipsis">
                   {p.name}
                 </div>
-                <span
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: '0.16em',
-                    color: BRAND.indigoMute,
-                    border: `1px solid ${BRAND.line}`,
-                    padding: '2px 4px',
-                    borderRadius: 2,
-                    textAlign: 'center',
-                  }}
-                >
+                <span className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute border border-brand-line px-1 py-px rounded-[2px] text-center">
                   {p.pos}
                 </span>
-                <span
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: '0.16em',
-                    color: BRAND.indigo,
-                    background: BRAND.lineSoft,
-                    padding: '2px 4px',
-                    borderRadius: 2,
-                    textAlign: 'center',
-                  }}
-                >
+                <span className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo bg-brand-line-soft px-1 py-px rounded-[2px] text-center">
                   {group}
                 </span>
                 <button
@@ -912,21 +607,12 @@ function PrepLineup({
                   onClick={() => onToggleBench(p.num)}
                   aria-pressed={isStarting}
                   aria-label={`${p.name} · ${isStarting ? 'starting' : 'benched'}`}
-                  style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 3,
-                    border: `1.5px solid ${isStarting ? BRAND.indigo : BRAND.line}`,
-                    background: isStarting ? BRAND.indigo : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: BRAND.sand,
-                    fontSize: 12,
-                    lineHeight: 1,
-                    cursor: 'pointer',
-                    padding: 0,
-                  }}
+                  className={cn(
+                    'w-[18px] h-[18px] rounded-[3px] flex items-center justify-center text-brand-sand text-xs leading-none cursor-pointer p-0',
+                    isStarting
+                      ? 'bg-brand-indigo border-[1.5px] border-brand-indigo'
+                      : 'bg-transparent border-[1.5px] border-brand-line',
+                  )}
                 >
                   {isStarting && '✓'}
                 </button>
@@ -960,16 +646,7 @@ function PrepTeams({ attendance, assignments, onAssign, onAutoSplit }: PrepTeams
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 12,
-          flexWrap: 'wrap',
-          gap: 10,
-        }}
-      >
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-[10px]">
         <MEyebrow>SPLIT INTO TEAM A / TEAM B · {present.length} PRESENT</MEyebrow>
         <button type="button" style={mcButtons.text} onClick={onAutoSplit}>
           Auto split →
@@ -978,23 +655,28 @@ function PrepTeams({ attendance, assignments, onAssign, onAutoSplit }: PrepTeams
 
       {unassigned.length > 0 && (
         <>
-          <MEyebrow color={BRAND.coral} style={{ marginBottom: 6 }}>
+          <MEyebrow color={BRAND.coral} className="mb-[6px]">
             UNASSIGNED · {unassigned.length}
           </MEyebrow>
           <TeamGrid players={unassigned} assignments={assignments} onAssign={onAssign} />
         </>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginTop: 18 }}>
+      <div
+        className={cn(
+          'grid gap-4 mt-[18px]',
+          isMobile ? 'grid-cols-1' : 'grid-cols-2',
+        )}
+      >
         <div>
           <MEyebrow>TEAM A · INDIGO · {teamA.length}</MEyebrow>
-          <div style={{ marginTop: 8 }}>
+          <div className="mt-2">
             <TeamGrid players={teamA} assignments={assignments} onAssign={onAssign} />
           </div>
         </div>
         <div>
           <MEyebrow color={BRAND.coral}>TEAM B · CORAL · {teamB.length}</MEyebrow>
-          <div style={{ marginTop: 8 }}>
+          <div className="mt-2">
             <TeamGrid players={teamB} assignments={assignments} onAssign={onAssign} />
           </div>
         </div>
@@ -1014,54 +696,24 @@ function TeamGrid({
 }) {
   if (players.length === 0)
     return (
-      <div
-        style={{
-          fontFamily: TYPE.body,
-          fontSize: 12,
-          color: BRAND.indigoMute,
-          padding: '10px 12px',
-          border: `1px dashed ${BRAND.line}`,
-          borderRadius: 4,
-          textAlign: 'center',
-        }}
-      >
+      <div className="font-satoshi text-xs text-brand-indigo-mute px-3 py-[10px] border border-dashed border-brand-line rounded-[4px] text-center">
         No players yet.
       </div>
     )
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div className="flex flex-col gap-[6px]">
       {players.map(p => {
         const team = assignments[p.num]
         return (
           <div
             key={p.num}
-            style={{
-              padding: '8px 10px',
-              background: '#fff',
-              border: `1px solid ${BRAND.line}`,
-              borderRadius: 4,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-            }}
+            className="px-[10px] py-2 bg-white border border-brand-line rounded-[4px] flex items-center gap-[10px]"
           >
             <MiniAvatar num={p.num} />
-            <div
-              style={{
-                flex: 1,
-                minWidth: 0,
-                fontFamily: TYPE.body,
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: BRAND.indigo,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
+            <div className="flex-1 min-w-0 font-satoshi text-[12.5px] font-semibold text-brand-indigo whitespace-nowrap overflow-hidden text-ellipsis">
               {p.name}
             </div>
-            <div style={{ display: 'flex', gap: 2 }}>
+            <div className="flex gap-[2px]">
               {(['A', 'B'] as const).map(t => {
                 const active = team === t
                 return (
@@ -1069,18 +721,14 @@ function TeamGrid({
                     key={t}
                     type="button"
                     onClick={() => onAssign(p.num, t)}
-                    style={{
-                      padding: '3px 8px',
-                      border: active ? 'none' : `1px solid ${BRAND.line}`,
-                      background: active ? (t === 'A' ? BRAND.indigo : BRAND.coral) : 'transparent',
-                      color: active ? BRAND.sand : BRAND.indigo,
-                      fontFamily: TYPE.mono,
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: '0.16em',
-                      borderRadius: 3,
-                      cursor: 'pointer',
-                    }}
+                    className={cn(
+                      'px-2 py-[3px] font-fragment text-[9px] font-bold tracking-[0.16em] rounded-[3px] cursor-pointer',
+                      active
+                        ? t === 'A'
+                          ? 'border-none bg-brand-indigo text-brand-sand'
+                          : 'border-none bg-brand-coral text-brand-sand'
+                        : 'border border-brand-line bg-transparent text-brand-indigo',
+                    )}
                   >
                     {t}
                   </button>
@@ -1124,46 +772,27 @@ function PrepConfirm({
   ]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 18 : 24 }}>
+    <div
+      className={cn(
+        'grid',
+        isMobile ? 'grid-cols-1 gap-[18px]' : 'grid-cols-2 gap-6',
+      )}
+    >
       <div>
         <MEyebrow>SUMMARY</MEyebrow>
-        <div
-          style={{
-            marginTop: 12,
-            border: `1px solid ${BRAND.line}`,
-            borderRadius: 4,
-            background: '#fff',
-          }}
-        >
+        <div className="mt-3 border border-brand-line rounded-[4px] bg-white">
           {rows.map(([k, v], i) => (
             <div
               key={k}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                borderBottom: i < rows.length - 1 ? `1px solid ${BRAND.line}` : 'none',
-              }}
+              className={cn(
+                'flex justify-between px-[14px] py-[10px]',
+                i < rows.length - 1 && 'border-b border-brand-line',
+              )}
             >
-              <span
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 10.5,
-                  color: BRAND.indigoMute,
-                  letterSpacing: '0.18em',
-                  fontWeight: 700,
-                }}
-              >
+              <span className="font-fragment text-[10.5px] text-brand-indigo-mute tracking-[0.18em] font-bold">
                 {k.toUpperCase()}
               </span>
-              <span
-                style={{
-                  fontFamily: TYPE.body,
-                  fontSize: 13,
-                  color: BRAND.indigo,
-                  fontWeight: 600,
-                }}
-              >
+              <span className="font-satoshi text-[13px] text-brand-indigo font-semibold">
                 {v}
               </span>
             </div>
@@ -1172,37 +801,14 @@ function PrepConfirm({
       </div>
       <div>
         <MEyebrow>WHAT HAPPENS NEXT</MEyebrow>
-        <div
-          style={{
-            marginTop: 12,
-            fontFamily: TYPE.body,
-            fontSize: 13,
-            color: BRAND.indigoMid,
-            lineHeight: 1.55,
-          }}
-        >
+        <div className="mt-3 font-satoshi text-[13px] text-brand-indigo-mid leading-[1.55]">
           On the day, record using the camera. Footage uploads automatically when you&apos;re
           back on Wi-Fi. Analysis takes ~2 hours; we&apos;ll surface a coloured composite +
           clips on this page when ready.
         </div>
-        <div
-          style={{
-            marginTop: 16,
-            padding: 14,
-            background: BRAND.yellowSoft,
-            borderRadius: 4,
-          }}
-        >
+        <div className="mt-4 p-[14px] bg-brand-yellow-soft rounded-[4px]">
           <MEyebrow color={BRAND.indigo}>★ TIP</MEyebrow>
-          <div
-            style={{
-              fontFamily: TYPE.body,
-              fontSize: 12.5,
-              marginTop: 6,
-              color: BRAND.indigo,
-              lineHeight: 1.5,
-            }}
-          >
+          <div className="font-satoshi text-[12.5px] mt-[6px] text-brand-indigo leading-[1.5]">
             Click ← Back to revisit attendance or {isTraining ? 'team split' : 'lineup'}.
             Save draft any time — your edits persist on this device.
           </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   MATCH_CENTER_HIGHLIGHTS,
@@ -117,97 +117,50 @@ export function State5Ready({
     : `${dateLabel(session)} · 15:00 · PITCH 1`
 
   return (
-    <Card style={{ padding: 0 }}>
+    <Card className="p-0">
       {/* Header */}
       <div
-        style={{
-          padding: isMobile ? '16px 16px' : '20px 26px',
-          borderBottom: `1px solid ${BRAND.line}`,
-          background: BRAND.yellowSoft,
-        }}
+        className={`border-b border-brand-line bg-brand-yellow-soft ${
+          isMobile ? 'px-4 py-4' : 'px-[26px] py-5'
+        }`}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className="flex items-center gap-[10px] flex-wrap">
           {!isTraining && motm && (
-            <span
-              style={{
-                background: BRAND.yellow,
-                color: BRAND.indigo,
-                fontFamily: TYPE.mono,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.18em',
-                padding: '3px 7px',
-                borderRadius: 3,
-              }}
-            >
+            <span className="bg-brand-yellow text-brand-indigo font-fragment text-[9px] font-bold tracking-[0.18em] px-[7px] py-[3px] rounded-[3px]">
               ★ MOTM {motm.toUpperCase()}
             </span>
           )}
           {isTraining && (
-            <span
-              style={{
-                background: BRAND.yellow,
-                color: BRAND.indigo,
-                fontFamily: TYPE.mono,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.18em',
-                padding: '3px 7px',
-                borderRadius: 3,
-              }}
-            >
+            <span className="bg-brand-yellow text-brand-indigo font-fragment text-[9px] font-bold tracking-[0.18em] px-[7px] py-[3px] rounded-[3px]">
               TRAINING
             </span>
           )}
-          <span
-            style={{
-              color: BRAND.indigo,
-              fontFamily: TYPE.mono,
-              fontSize: 10.5,
-              letterSpacing: '0.18em',
-              fontWeight: 700,
-            }}
-          >
+          <span className="text-brand-indigo font-fragment text-[10.5px] tracking-[0.18em] font-bold">
             {metaLine}
           </span>
         </div>
-        <div
-          style={{
-            marginTop: 12,
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: 16,
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="mt-3 flex items-baseline gap-4 flex-wrap">
           <MDisplay size={isMobile ? 32 : 56}>{headline}</MDisplay>
           {!isTraining && ourScore != null && oppScore != null && (
             <span
-              style={{
-                fontFamily: TYPE.display,
-                fontSize: isMobile ? 32 : 56,
-                color: BRAND.indigoMute,
-                lineHeight: 0.94,
-              }}
+              className="font-clash text-brand-indigo-mute leading-[0.94]"
+              style={{ fontSize: isMobile ? 32 : 56 }}
             >
               <span
-                style={{
-                  background: ourScore >= oppScore ? BRAND.yellow : 'transparent',
-                  color: BRAND.indigo,
-                  padding: '0 8px',
-                }}
+                className="text-brand-indigo px-2"
+                style={{ background: ourScore >= oppScore ? BRAND.yellow : 'transparent' }}
               >
                 {ourScore}
               </span>
-              <span style={{ margin: '0 6px' }}>—</span>
-              <span style={{ color: BRAND.indigoMute }}>{oppScore}</span>
+              <span className="mx-[6px]">—</span>
+              <span className="text-brand-indigo-mute">{oppScore}</span>
             </span>
           )}
         </div>
       </div>
 
       {/* Body */}
-      <div style={{ padding: isMobile ? '16px 16px' : '20px 26px' }}>
+      <div className={isMobile ? 'px-4 py-4' : 'px-[26px] py-5'}>
         <VideoBlock
           height={isMobile ? 200 : 300}
           label={`MATCH FOOTAGE${session.day === 24 ? ' · 84M' : ''}`}
@@ -215,17 +168,8 @@ export function State5Ready({
         />
 
         {/* Highlights row */}
-        <div style={{ marginTop: 22 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 10,
-              flexWrap: 'wrap',
-              gap: 10,
-            }}
-          >
+        <div className="mt-[22px]">
+          <div className="flex justify-between items-center mb-[10px] flex-wrap gap-[10px]">
             <MEyebrow>HIGHLIGHTS · {clips.length} CLIPS</MEyebrow>
             <button
               type="button"
@@ -244,17 +188,7 @@ export function State5Ready({
             </button>
           </div>
           {clips.length === 0 ? (
-            <div
-              style={{
-                fontFamily: TYPE.body,
-                fontSize: 13,
-                color: BRAND.indigoMute,
-                padding: '14px 16px',
-                border: `1px dashed ${BRAND.line}`,
-                borderRadius: 4,
-                textAlign: 'center',
-              }}
-            >
+            <div className="font-satoshi text-[13px] text-brand-indigo-mute px-4 py-[14px] border border-dashed border-brand-line rounded-[4px] text-center">
               No clips tagged for this session yet.
             </div>
           ) : (
@@ -286,7 +220,7 @@ export function State5Ready({
                 ))}
               </div>
               {showCollapseControls && (
-                <div style={{ marginTop: 8 }}>
+                <div className="mt-2">
                   <button
                     type="button"
                     onClick={() => setExpanded(e => !e)}
@@ -304,53 +238,24 @@ export function State5Ready({
          *  training summary table + top performers list each get the
          *  full width of the surface. */}
         <div
-          style={{
-            marginTop: 28,
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: isMobile ? 18 : 24,
-          }}
+          className={`mt-7 grid ${
+            isMobile ? 'grid-cols-1 gap-[18px]' : 'grid-cols-2 gap-6'
+          }`}
         >
           <div>
             <MEyebrow>{isTraining ? 'TRAINING SUMMARY' : 'TEAM SUMMARY'}</MEyebrow>
-            <div
-              style={{
-                marginTop: 12,
-                border: `1px solid ${BRAND.line}`,
-                borderRadius: 4,
-                background: '#fff',
-              }}
-            >
+            <div className="mt-3 border border-brand-line rounded-[4px] bg-white">
               {summaryRows(session, ourScore, oppScore, motm).map(([k, v], i, arr) => (
                 <div
                   key={k}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderBottom:
-                      i < arr.length - 1 ? `1px solid ${BRAND.line}` : 'none',
-                  }}
+                  className={`flex justify-between px-[14px] py-[10px] ${
+                    i < arr.length - 1 ? 'border-b border-brand-line' : ''
+                  }`}
                 >
-                  <span
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 10.5,
-                      color: BRAND.indigoMute,
-                      letterSpacing: '0.18em',
-                      fontWeight: 700,
-                    }}
-                  >
+                  <span className="font-fragment text-[10.5px] text-brand-indigo-mute tracking-[0.18em] font-bold">
                     {k.toUpperCase()}
                   </span>
-                  <span
-                    style={{
-                      fontFamily: TYPE.body,
-                      fontSize: 13,
-                      color: BRAND.indigo,
-                      fontWeight: 600,
-                    }}
-                  >
+                  <span className="font-satoshi text-[13px] text-brand-indigo font-semibold">
                     {v}
                   </span>
                 </div>
@@ -360,19 +265,14 @@ export function State5Ready({
 
           <div>
             <MEyebrow>TOP PERFORMERS THIS SESSION</MEyebrow>
-            <div
-              style={{
-                marginTop: 12,
-                border: `1px solid ${BRAND.line}`,
-                borderRadius: 4,
-                background: '#fff',
-              }}
-            >
+            <div className="mt-3 border border-brand-line rounded-[4px] bg-white">
               {topPerformersFor(session).map((p, i, arr) => (
                 <div
                   key={p.num}
+                  className={`grid items-center gap-[10px] px-[14px] py-[10px] ${
+                    i < arr.length - 1 ? 'border-b border-brand-line' : ''
+                  }`}
                   style={{
-                    display: 'grid',
                     /* Mobile drops the POS chip + dashed scout-slot
                      * columns to keep the row from overflowing on phone
                      * widths. The scout-slot reservation moves to a
@@ -380,80 +280,35 @@ export function State5Ready({
                     gridTemplateColumns: isMobile
                       ? '20px 28px 1fr 36px'
                       : '20px 28px 1fr 30px 38px 60px',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 14px',
-                    borderBottom:
-                      i < arr.length - 1 ? `1px solid ${BRAND.line}` : 'none',
                   }}
                 >
-                  <span
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 10,
-                      color: BRAND.indigoMute,
-                      fontWeight: 700,
-                    }}
-                  >
+                  <span className="font-fragment text-[10px] text-brand-indigo-mute font-bold">
                     {p.rank}.
                   </span>
                   <MiniAvatar num={p.num} />
-                  <span
-                    style={{
-                      fontFamily: TYPE.body,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: BRAND.indigo,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
+                  <span className="font-satoshi text-[13px] font-semibold text-brand-indigo whitespace-nowrap overflow-hidden text-ellipsis">
                     {p.name}{' '}
                     {p.motm && (
-                      <span style={{ color: BRAND.yellow, marginLeft: 2 }}>★</span>
+                      <span className="text-brand-yellow ml-[2px]">★</span>
                     )}
                   </span>
                   {!isMobile && (
-                    <span
-                      style={{
-                        fontFamily: TYPE.mono,
-                        fontSize: 9,
-                        fontWeight: 700,
-                        letterSpacing: '0.14em',
-                        color: BRAND.indigoMute,
-                        border: `1px solid ${BRAND.line}`,
-                        padding: '1px 4px',
-                        borderRadius: 2,
-                        textAlign: 'center',
-                      }}
-                    >
+                    <span className="font-fragment text-[9px] font-bold tracking-[0.14em] text-brand-indigo-mute border border-brand-line px-1 py-px rounded-[2px] text-center">
                       {p.pos}
                     </span>
                   )}
                   <span
-                    style={{
-                      fontFamily: TYPE.display,
-                      fontSize: isMobile ? 18 : 22,
-                      color: BRAND.indigo,
-                      textAlign: 'right',
-                    }}
+                    className="font-clash text-brand-indigo text-right"
+                    style={{ fontSize: isMobile ? 18 : 22 }}
                   >
                     {p.score}
                   </span>
                   {!isMobile && (
                     <span
+                      className="h-[18px] rounded-[2px] font-fragment text-[8px] tracking-[0.14em] flex items-center justify-center"
                       style={{
-                        height: 18,
                         border: '1px dashed rgba(27,21,80,0.18)',
-                        borderRadius: 2,
-                        fontFamily: TYPE.mono,
-                        fontSize: 8,
                         color: 'rgba(27,21,80,0.28)',
-                        letterSpacing: '0.14em',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                       }}
                     >
                       —
@@ -463,14 +318,8 @@ export function State5Ready({
               ))}
             </div>
             <div
-              style={{
-                marginTop: 8,
-                fontFamily: TYPE.mono,
-                fontSize: 9,
-                letterSpacing: '0.18em',
-                color: 'rgba(27,21,80,0.4)',
-                fontWeight: 700,
-              }}
+              className="mt-2 font-fragment text-[9px] tracking-[0.18em] font-bold"
+              style={{ color: 'rgba(27,21,80,0.4)' }}
             >
               ↑ {isMobile ? 'SCOUT-WATCH CHIPS RESERVED' : 'DASHED SLOTS = RESERVED FOR SCOUT-WATCH CHIPS'} (V2)
             </div>
@@ -478,11 +327,7 @@ export function State5Ready({
         </div>
 
         <div
-          style={{
-            marginTop: 24,
-            display: 'flex',
-            justifyContent: isMobile ? 'stretch' : 'flex-end',
-          }}
+          className={`mt-6 flex ${isMobile ? 'justify-stretch' : 'justify-end'}`}
         >
           <button
             type="button"

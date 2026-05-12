@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { getSessionsForMonth } from '@/lib/match-center'
 import { MEyebrow } from './atoms'
@@ -152,7 +153,7 @@ export function Calendar({
       return (
         <>
           {MONTH_NAMES[currentMonth - 1]}{' '}
-          <span style={{ color: BRAND.indigoMute }}>{currentYear}</span>
+          <span className="text-brand-indigo-mute">{currentYear}</span>
         </>
       )
     }
@@ -179,13 +180,10 @@ export function Calendar({
       {/* Header — month/week label, prev/next, today, record CTA. No
        *  view toggle: each platform gets one primitive. */}
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? 8 : 16,
-          marginBottom: 14,
-          flexWrap: 'wrap',
-        }}
+        className={cn(
+          'mb-3.5 flex flex-wrap items-center',
+          isMobile ? 'gap-2' : 'gap-4',
+        )}
       >
         <button
           type="button"
@@ -196,12 +194,10 @@ export function Calendar({
           ◀
         </button>
         <div
-          style={{
-            fontFamily: TYPE.display,
-            fontSize: isMobile ? 18 : 28,
-            letterSpacing: '-0.01em',
-            color: BRAND.indigo,
-          }}
+          className={cn(
+            'font-clash tracking-[-0.01em] text-brand-indigo',
+            isMobile ? 'text-lg' : 'text-[28px]',
+          )}
         >
           {headerLabel}
         </div>
@@ -218,42 +214,22 @@ export function Calendar({
           <button
             type="button"
             onClick={onToday}
-            style={{
-              padding: '6px 12px',
-              background: 'transparent',
-              border: `1px solid ${BRAND.line}`,
-              borderRadius: 4,
-              cursor: 'pointer',
-              fontFamily: TYPE.mono,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              color: BRAND.indigo,
-              textTransform: 'uppercase',
-            }}
+            className="cursor-pointer rounded-[4px] border border-brand-line bg-transparent px-3 py-1.5 font-fragment text-[10px] font-bold uppercase tracking-[0.18em] text-brand-indigo"
           >
             Today
           </button>
         )}
 
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
 
         {/* Record session CTA */}
         <button
           type="button"
           onClick={onRecord}
-          style={{
-            padding: isMobile ? '8px 10px' : '8px 14px',
-            background: BRAND.indigo,
-            color: BRAND.sand,
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-            fontFamily: TYPE.mono,
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: '0.16em',
-          }}
+          className={cn(
+            'cursor-pointer rounded-[4px] border-none bg-brand-indigo py-2 font-fragment text-[10.5px] font-bold tracking-[0.16em] text-brand-sand',
+            isMobile ? 'px-2.5' : 'px-3.5',
+          )}
         >
           {isMobile ? '+ RECORD' : '+ RECORD SESSION'}
         </button>
@@ -313,34 +289,12 @@ function MonthGrid({
   for (let t = 1; t <= trailingDays; t++) cells.push({ day: t, trailing: true })
 
   return (
-    <div
-      style={{
-        background: BRAND.paper,
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 6,
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          borderBottom: `1px solid ${BRAND.line}`,
-        }}
-      >
+    <div className="overflow-hidden rounded-md border border-brand-line bg-brand-paper">
+      <div className="grid grid-cols-7 border-b border-brand-line">
         {DAY_LABELS.map(d => (
           <div
             key={d}
-            style={{
-              padding: '8px 10px',
-              fontFamily: TYPE.mono,
-              fontSize: 9.5,
-              letterSpacing: '0.22em',
-              color: BRAND.indigoMute,
-              fontWeight: 700,
-              textAlign: 'left',
-              borderRight: `1px solid ${BRAND.line}`,
-            }}
+            className="border-r border-brand-line px-2.5 py-2 text-left font-fragment text-[9.5px] font-bold tracking-[0.22em] text-brand-indigo-mute"
           >
             {d}
           </div>
@@ -348,11 +302,8 @@ function MonthGrid({
       </div>
 
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gridAutoRows: '102px',
-        }}
+        className="grid grid-cols-7"
+        style={{ gridAutoRows: '102px' }}
       >
         {cells.map((c, i) => {
           const session = c.leading || c.trailing ? null : sessionsByDay[c.day]
@@ -361,39 +312,21 @@ function MonthGrid({
           return (
             <div
               key={i}
-              style={{
-                borderRight: `1px solid ${BRAND.line}`,
-                borderBottom: i < (totalRows - 1) * 7 ? `1px solid ${BRAND.line}` : 'none',
-                padding: '6px 6px',
-                background: muted ? BRAND.sand : isSelected ? BRAND.yellowSoft : 'transparent',
-                opacity: muted ? 0.4 : 1,
-                position: 'relative',
-              }}
+              className={cn(
+                'relative border-r border-brand-line p-1.5',
+                i < (totalRows - 1) * 7 && 'border-b',
+                muted ? 'bg-brand-sand opacity-40' : isSelected ? 'bg-brand-yellow-soft' : 'bg-transparent',
+              )}
             >
               <div
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '0.04em',
-                  color: muted ? BRAND.indigoMute : BRAND.indigo,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
+                className={cn(
+                  'flex items-center justify-between font-fragment text-[10px] font-bold tracking-[0.04em]',
+                  muted ? 'text-brand-indigo-mute' : 'text-brand-indigo',
+                )}
               >
                 <span>{muted ? '' : String(c.day).padStart(2, '0')}</span>
                 {session?.status === 'ready' && session.score != null && (
-                  <span
-                    style={{
-                      background: BRAND.indigo,
-                      color: BRAND.sand,
-                      fontSize: 8.5,
-                      padding: '1px 4px',
-                      borderRadius: 2,
-                      letterSpacing: '0.04em',
-                    }}
-                  >
+                  <span className="rounded-[2px] bg-brand-indigo px-1 py-px text-[8.5px] tracking-[0.04em] text-brand-sand">
                     {session.score}
                   </span>
                 )}
@@ -453,27 +386,14 @@ function WeekFilmstrip({
   }
 
   return (
-    <div
-      style={{
-        background: BRAND.paper,
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 6,
-        padding: '14px 14px',
-      }}
-    >
+    <div className="rounded-md border border-brand-line bg-brand-paper p-3.5">
       <MEyebrow style={{ marginBottom: 10 }}>
         WEEK · {MONTH_SHORT[anchor.month - 1]} {anchor.day} —{' '}
         {MONTH_SHORT[cards[6]!.month - 1]} {cards[6]!.day}
       </MEyebrow>
       <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          alignItems: 'stretch',
-          overflowX: 'auto',
-          scrollSnapType: 'x mandatory',
-          paddingBottom: 4,
-        }}
+        className="flex items-stretch gap-2.5 overflow-x-auto pb-1"
+        style={{ scrollSnapType: 'x mandatory' }}
       >
         {cards.map(c => {
           const monthSessions = getSessionsForMonth(c.year, c.month)
@@ -487,51 +407,16 @@ function WeekFilmstrip({
             return (
               <div
                 key={`${c.year}-${c.month}-${c.day}`}
-                style={{
-                  width: 156,
-                  minWidth: 156,
-                  height: 188,
-                  border: `1px dashed ${BRAND.line}`,
-                  borderRadius: 6,
-                  background: 'transparent',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: 0.7,
-                  scrollSnapAlign: 'start',
-                }}
+                className="flex h-[188px] w-[156px] min-w-[156px] flex-col items-center justify-center rounded-md border border-dashed border-brand-line bg-transparent opacity-70"
+                style={{ scrollSnapAlign: 'start' }}
               >
-                <div
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 9,
-                    letterSpacing: '0.22em',
-                    color: BRAND.indigoMute,
-                    fontWeight: 700,
-                  }}
-                >
+                <div className="font-fragment text-[9px] font-bold tracking-[0.22em] text-brand-indigo-mute">
                   {DAY_LABELS[c.dowIndex]}
                 </div>
-                <div
-                  style={{
-                    fontFamily: TYPE.display,
-                    fontSize: 28,
-                    color: BRAND.indigoMute,
-                    marginTop: 4,
-                  }}
-                >
+                <div className="mt-1 font-clash text-[28px] text-brand-indigo-mute">
                   {c.day}
                 </div>
-                <div
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 8.5,
-                    letterSpacing: '0.18em',
-                    color: BRAND.indigoMute,
-                    marginTop: 6,
-                  }}
-                >
+                <div className="mt-1.5 font-fragment text-[8.5px] tracking-[0.18em] text-brand-indigo-mute">
                   —
                 </div>
               </div>

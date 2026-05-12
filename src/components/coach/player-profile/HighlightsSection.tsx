@@ -142,42 +142,22 @@ export function HighlightsSection({
 
   return (
     <section
-      style={{
-        background: 'var(--brand-sand)',
-        padding: isMobile ? '24px 16px' : '32px 36px',
-        borderBottom: '1px solid var(--brand-line)',
-      }}
+      className={`bg-brand-sand border-b border-brand-line ${
+        isMobile ? 'px-4 py-6' : 'px-9 py-8'
+      }`}
     >
       {/* Section header */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '180px 1fr',
-          gap: isMobile ? 12 : 32,
-          alignItems: 'baseline',
-          marginBottom: 16,
-        }}
+        className={`grid items-baseline mb-4 ${isMobile ? 'gap-3' : 'gap-8'}`}
+        style={{ gridTemplateColumns: isMobile ? '1fr' : '180px 1fr' }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-            borderTop: '2px solid var(--brand-indigo)',
-            paddingTop: 8,
-          }}
-        >
+        <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold border-t-2 border-brand-indigo pt-2">
           HIGHLIGHTS
         </span>
         <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: isMobile ? 22 : 28,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-          }}
+          className={`font-clash text-brand-indigo tracking-[-0.02em] ${
+            isMobile ? 'text-[22px]' : 'text-[28px]'
+          }`}
         >
           The moments that mattered.
         </div>
@@ -186,7 +166,7 @@ export function HighlightsSection({
       {/* Reel hero — single card per scope. Match scope shows the playhead
           match's reel (or an empty placeholder if no clips); season scope
           shows the full-season reel. */}
-      <div style={{ marginBottom: inMatchScope ? 18 : 0 }}>
+      <div className={inMatchScope ? 'mb-[18px]' : 'mb-0'}>
         {inMatchScope ? (
           matchClips.length > 0 && matchSession ? (
             <ReelHero
@@ -198,18 +178,7 @@ export function HighlightsSection({
               shareUrl={`https://fairpl.ai/m/${currentSessionId}/p/${player.id}`}
             />
           ) : (
-            <div
-              style={{
-                background: 'var(--brand-paper)',
-                border: '1px solid var(--brand-line)',
-                borderRadius: 12,
-                padding: 24,
-                textAlign: 'center',
-                fontFamily: 'var(--font-body)',
-                fontSize: 13.5,
-                color: 'var(--brand-indigo-mute)',
-              }}
-            >
+            <div className="bg-brand-paper border border-brand-line rounded-xl p-6 text-center font-satoshi text-[13.5px] text-brand-indigo-mute">
               No clips for this match yet.
             </div>
           )
@@ -230,14 +199,11 @@ export function HighlightsSection({
       {inMatchScope && (
         <>
           <div
-            style={{
-              display: 'flex',
-              flexWrap: isMobile ? 'nowrap' : 'wrap',
-              overflowX: isMobile ? 'auto' : 'visible',
-              gap: 6,
-              marginBottom: 14,
-              paddingBottom: isMobile ? 4 : 0,
-            }}
+            className={`flex gap-1.5 mb-3.5 ${
+              isMobile
+                ? 'flex-nowrap overflow-x-auto pb-1'
+                : 'flex-wrap overflow-x-visible pb-0'
+            }`}
           >
             {(Object.keys(FILTER_LABELS) as EventFilter[]).map(f => {
               const active = filter === f
@@ -250,33 +216,14 @@ export function HighlightsSection({
                     setFilter(f)
                     setShowAll(false)
                   }}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '6px 12px',
-                    borderRadius: 999,
-                    border: active ? '1px solid var(--brand-indigo)' : '1px solid var(--brand-line)',
-                    background: active ? 'var(--brand-indigo)' : 'transparent',
-                    color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    letterSpacing: '0.02em',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                  }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-satoshi text-[12.5px] font-semibold cursor-pointer tracking-[0.02em] whitespace-nowrap flex-shrink-0 border ${
+                    active
+                      ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
+                      : 'border-brand-line bg-transparent text-brand-indigo'
+                  }`}
                 >
                   {FILTER_LABELS[f]}
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 10,
-                      letterSpacing: '0.12em',
-                      opacity: 0.7,
-                    }}
-                  >
+                  <span className="font-fragment text-[10px] tracking-[0.12em] opacity-70">
                     {count}
                   </span>
                 </button>
@@ -285,18 +232,7 @@ export function HighlightsSection({
           </div>
 
           {filtered.length === 0 ? (
-            <div
-              style={{
-                background: 'var(--brand-paper)',
-                border: '1px solid var(--brand-line)',
-                borderRadius: 12,
-                padding: 32,
-                textAlign: 'center',
-                fontFamily: 'var(--font-body)',
-                fontSize: 14,
-                color: 'var(--brand-indigo-mute)',
-              }}
-            >
+            <div className="bg-brand-paper border border-brand-line rounded-xl p-8 text-center font-satoshi text-sm text-brand-indigo-mute">
               {filter === 'all'
                 ? 'No highlights for this match yet.'
                 : `No ${FILTER_LABELS[filter].toLowerCase()} in this match.`}
@@ -304,12 +240,9 @@ export function HighlightsSection({
           ) : (
             <>
               <div
+                className="grid gap-2.5"
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile
-                    ? '1fr'
-                    : 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: 10,
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(260px, 1fr))',
                 }}
               >
                 {visible.map(h => (
@@ -320,19 +253,7 @@ export function HighlightsSection({
                 <button
                   type="button"
                   onClick={() => setShowAll(true)}
-                  style={{
-                    marginTop: 14,
-                    width: '100%',
-                    background: 'transparent',
-                    border: '1px solid var(--brand-line)',
-                    color: 'var(--brand-indigo)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    padding: '10px 18px',
-                    borderRadius: 999,
-                    cursor: 'pointer',
-                  }}
+                  className="mt-3.5 w-full bg-transparent border border-brand-line text-brand-indigo font-satoshi text-[13px] font-semibold px-[18px] py-2.5 rounded-full cursor-pointer"
                 >
                   See more ({hidden})
                 </button>
@@ -363,70 +284,35 @@ function ReelHero({
   const isThisMatch = kind === 'this-match'
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '14px 16px',
-        borderRadius: 12,
-        background: isThisMatch ? 'var(--brand-indigo)' : 'var(--brand-paper)',
-        color: isThisMatch ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-        border: isThisMatch ? 'none' : '1px solid var(--brand-line)',
-      }}
+      className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl ${
+        isThisMatch
+          ? 'bg-brand-indigo text-brand-sand'
+          : 'bg-brand-paper text-brand-indigo border border-brand-line'
+      }`}
     >
       <button
         type="button"
         aria-label={`Play ${title}`}
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: '50%',
-          background: 'var(--brand-yellow)',
-          color: 'var(--brand-indigo)',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          cursor: 'pointer',
-        }}
+        className="w-11 h-11 rounded-full bg-brand-yellow text-brand-indigo border-0 flex items-center justify-center flex-shrink-0 cursor-pointer"
       >
         <Play size={16} fill="currentColor" />
       </button>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="flex-1 min-w-0">
         <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9.5,
-            letterSpacing: '0.22em',
-            color: isThisMatch ? 'var(--brand-yellow)' : 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
+          className={`font-fragment text-[9.5px] tracking-[0.22em] font-bold ${
+            isThisMatch ? 'text-brand-yellow' : 'text-brand-indigo-mute'
+          }`}
         >
           {isThisMatch ? 'THIS MATCH REEL' : 'SEASON REEL'}
         </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 18,
-            letterSpacing: '-0.01em',
-            marginTop: 2,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+        <div className="font-clash text-[18px] tracking-[-0.01em] mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
           {title}
         </div>
         <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.12em',
-            color: isThisMatch ? 'rgba(238, 228, 200, 0.7)' : 'var(--brand-indigo-mute)',
-            fontWeight: 600,
-            marginTop: 3,
-          }}
+          className={`font-fragment text-[10px] tracking-[0.12em] font-semibold mt-[3px] ${
+            isThisMatch ? '' : 'text-brand-indigo-mute'
+          }`}
+          style={isThisMatch ? { color: 'rgba(238, 228, 200, 0.7)' } : undefined}
         >
           {clipCount} CLIPS · {formatDuration(durationSec)}
         </div>
@@ -444,80 +330,32 @@ function ClipCard({ clip, playerName }: { clip: Highlight; playerName: string })
   const meta = EVENT_BADGES[clip.eventType] ?? { label: clip.eventType.toUpperCase(), color: 'var(--brand-indigo-mid)' }
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 8,
-        padding: '10px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-      }}
-    >
+    <div className="bg-brand-paper border border-brand-line rounded-lg px-3 py-2.5 flex items-center gap-2.5">
       <button
         type="button"
         aria-label="Play clip"
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: '50%',
-          background: 'var(--brand-indigo)',
-          color: 'var(--brand-sand)',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          cursor: 'pointer',
-        }}
+        className="w-[30px] h-[30px] rounded-full bg-brand-indigo text-brand-sand border-0 flex items-center justify-center flex-shrink-0 cursor-pointer"
       >
         <Play size={11} fill="currentColor" />
       </button>
       <span
+        className="font-fragment text-[9px] font-bold tracking-[0.16em] px-[5px] py-[2px] rounded-[3px] flex-shrink-0"
         style={{
           background: meta.color,
           color: meta.color === 'var(--brand-yellow)' ? 'var(--brand-indigo)' : 'var(--brand-sand)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9,
-          fontWeight: 700,
-          letterSpacing: '0.16em',
-          padding: '2px 5px',
-          borderRadius: 3,
-          flexShrink: 0,
         }}
       >
         {meta.label}
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: 'var(--brand-indigo)',
-            lineHeight: 1.3,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+      <div className="flex-1 min-w-0">
+        <div className="font-satoshi text-[12.5px] font-semibold text-brand-indigo leading-[1.3] whitespace-nowrap overflow-hidden text-ellipsis">
           vs {sessionLabel}
         </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9.5,
-            letterSpacing: '0.16em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 600,
-            marginTop: 2,
-          }}
-        >
+        <div className="font-fragment text-[9.5px] tracking-[0.16em] text-brand-indigo-mute font-semibold mt-0.5">
           {date.toUpperCase()} · {minute}m · {clip.durationSeconds}S
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+      <div className="flex items-center gap-1 flex-shrink-0">
         <ShareMenu
           title={`${playerName} · ${meta.label.toLowerCase()} vs ${sessionLabel}`}
           url={`https://fairpl.ai/h/${clip.id}`}
@@ -526,18 +364,9 @@ function ClipCard({ clip, playerName }: { clip: Highlight; playerName: string })
           type="button"
           aria-label="Flag for review"
           title="Flag for review"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 26,
-            height: 26,
-            borderRadius: 6,
-            background: 'transparent',
-            border: '1px solid var(--brand-line)',
-            color: clip.flaggedByCoach ? 'var(--brand-coral)' : 'var(--brand-indigo)',
-            cursor: 'pointer',
-          }}
+          className={`inline-flex items-center justify-center w-[26px] h-[26px] rounded-md bg-transparent border border-brand-line cursor-pointer ${
+            clip.flaggedByCoach ? 'text-brand-coral' : 'text-brand-indigo'
+          }`}
         >
           <Flag size={12} fill={clip.flaggedByCoach ? 'currentColor' : 'none'} />
         </button>

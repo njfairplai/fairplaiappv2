@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { BRAND, TYPE } from '@/lib/constants'
 
 /**
  * Coach-side full-match video panel with a Standard ↔ AI Overlay toggle.
@@ -27,43 +26,14 @@ export function MatchVideoPanel({ rawUrl, overlayUrl }: MatchVideoPanelProps) {
   return (
     <section
       aria-label="Watch full match"
-      style={{
-        background: BRAND.indigo,
-        borderRadius: 14,
-        padding: 16,
-        color: BRAND.sand,
-      }}
+      className="bg-brand-indigo rounded-2xl p-4 text-brand-sand"
     >
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-          marginBottom: 12,
-          flexWrap: 'wrap',
-        }}
-      >
+      <header className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <div>
-          <div
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              fontWeight: 800,
-              color: BRAND.yellow,
-            }}
-          >
+          <div className="font-fragment text-[10px] tracking-[0.22em] font-extrabold text-brand-yellow">
             WATCH FULL MATCH
           </div>
-          <div
-            style={{
-              fontFamily: TYPE.display,
-              fontSize: 18,
-              letterSpacing: '-0.01em',
-              marginTop: 2,
-            }}
-          >
+          <div className="font-clash text-[18px] tracking-[-0.01em] mt-0.5">
             {mode === 'overlay'
               ? 'AI overlay — players + ball tracked'
               : 'Standard footage'}
@@ -76,13 +46,7 @@ export function MatchVideoPanel({ rawUrl, overlayUrl }: MatchVideoPanelProps) {
         <div
           role="tablist"
           aria-label="Video mode"
-          style={{
-            display: 'inline-flex',
-            background: 'rgba(238, 228, 200, 0.08)',
-            borderRadius: 999,
-            padding: 3,
-            border: '1px solid rgba(238, 228, 200, 0.16)',
-          }}
+          className="inline-flex bg-brand-sand/[0.08] rounded-full p-[3px] border border-brand-sand/[0.16]"
         >
           <ToggleBtn
             active={mode === 'raw'}
@@ -106,25 +70,10 @@ export function MatchVideoPanel({ rawUrl, overlayUrl }: MatchVideoPanelProps) {
         controls
         playsInline
         preload="metadata"
-        style={{
-          width: '100%',
-          aspectRatio: '16 / 9',
-          background: '#000',
-          borderRadius: 10,
-          display: 'block',
-        }}
+        className="w-full aspect-video bg-black rounded-[10px] block"
       />
 
-      <p
-        style={{
-          marginTop: 10,
-          marginBottom: 0,
-          fontFamily: TYPE.body,
-          fontSize: 11.5,
-          color: 'rgba(238, 228, 200, 0.62)',
-          lineHeight: 1.4,
-        }}
-      >
+      <p className="mt-2.5 mb-0 font-satoshi text-[11.5px] text-brand-sand/[0.62] leading-snug">
         {mode === 'overlay'
           ? 'Detection overlay rendered alongside the camera feed. Same five minutes as Standard — toggle to compare.'
           : 'Raw broadcast feed. Toggle to AI overlay to see what Fairplai tracks.'}
@@ -150,33 +99,15 @@ function ToggleBtn({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '7px 14px',
-        borderRadius: 999,
-        border: 'none',
-        background: active ? BRAND.sand : 'transparent',
-        color: active ? BRAND.indigo : BRAND.sand,
-        fontFamily: TYPE.body,
-        fontSize: 12,
-        fontWeight: 700,
-        letterSpacing: '0.02em',
-        cursor: 'pointer',
-        transition: 'all 160ms ease',
-      }}
+      className={`inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-full border-0 font-satoshi text-xs font-bold tracking-[0.02em] cursor-pointer transition-all duration-150 ${
+        active ? 'bg-brand-sand text-brand-indigo' : 'bg-transparent text-brand-sand'
+      }`}
     >
       {yellowDot && (
         <span
           aria-hidden
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: BRAND.yellow,
-            boxShadow: active ? 'none' : '0 0 6px rgba(252, 215, 24, 0.6)',
-          }}
+          className="w-1.5 h-1.5 rounded-full bg-brand-yellow"
+          style={{ boxShadow: active ? 'none' : '0 0 6px rgba(252, 215, 24, 0.6)' }}
         />
       )}
       {label}

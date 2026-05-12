@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import type { HighlightEvent } from '@/lib/match-center'
 
 /* Embedded primitives — used inline inside Mikel's response prose
@@ -32,46 +33,17 @@ export function MComposite({
 }: MCompositeProps) {
   const ink = color === BRAND.yellow ? BRAND.indigo : BRAND.sand
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        background: BRAND.paper,
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 4,
-        padding: '3px 8px 3px 4px',
-        verticalAlign: 'middle',
-        margin: '0 2px',
-      }}
-    >
+    <span className="mx-0.5 inline-flex items-center gap-1.5 rounded-[4px] border border-brand-line bg-brand-paper py-[3px] pl-1 pr-2 align-middle">
       <span
-        style={{
-          width: big ? 28 : 22,
-          height: big ? 28 : 22,
-          borderRadius: '50%',
-          background: color,
-          color: ink,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: TYPE.display,
-          fontSize: big ? 13 : 11,
-          fontWeight: 700,
-          letterSpacing: '-0.02em',
-          lineHeight: 1,
-        }}
+        className={cn(
+          'inline-flex items-center justify-center rounded-full font-clash font-bold leading-none tracking-[-0.02em]',
+          big ? 'h-7 w-7 text-[13px]' : 'h-[22px] w-[22px] text-[11px]',
+        )}
+        style={{ background: color, color: ink }}
       >
         {value}
       </span>
-      <span
-        style={{
-          fontFamily: TYPE.body,
-          fontSize: 12.5,
-          fontWeight: 600,
-          color: BRAND.indigo,
-        }}
-      >
+      <span className="font-satoshi text-[12.5px] font-semibold text-brand-indigo">
         {label}
       </span>
     </span>
@@ -96,47 +68,20 @@ export function MPlayer({
   return (
     <span
       onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 5,
-        background: motm ? BRAND.yellowSoft : BRAND.paper,
-        border: `1px solid ${motm ? BRAND.yellow : BRAND.line}`,
-        borderRadius: 4,
-        padding: '2px 8px 2px 3px',
-        verticalAlign: 'middle',
-        margin: '0 2px',
-        cursor: onClick ? 'pointer' : 'default',
-      }}
+      className={cn(
+        'mx-0.5 inline-flex items-center gap-[5px] rounded-[4px] border py-0.5 pl-[3px] pr-2 align-middle',
+        motm ? 'border-brand-yellow bg-brand-yellow-soft' : 'border-brand-line bg-brand-paper',
+        onClick ? 'cursor-pointer' : 'cursor-default',
+      )}
     >
       <span
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: '50%',
-          background: accent,
-          color: BRAND.sand,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: TYPE.mono,
-          fontSize: 9.5,
-          fontWeight: 700,
-          letterSpacing: '0.02em',
-          lineHeight: 1,
-        }}
+        className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full font-fragment text-[9.5px] font-bold leading-none tracking-[0.02em] text-brand-sand"
+        style={{ background: accent }}
       >
         {num}
       </span>
-      <span
-        style={{
-          fontFamily: TYPE.body,
-          fontSize: 12.5,
-          fontWeight: 600,
-          color: BRAND.indigo,
-        }}
-      >
-        {motm && <span style={{ color: BRAND.indigo, marginRight: 3 }}>★</span>}
+      <span className="font-satoshi text-[12.5px] font-semibold text-brand-indigo">
+        {motm && <span className="mr-[3px] text-brand-indigo">★</span>}
         {name}
       </span>
     </span>
@@ -180,79 +125,26 @@ export function MClipEmbed({
 }: MClipEmbedProps) {
   const tokens = EMBED_EVENT_TOKENS[ev]
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        background: '#fff',
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 4,
-        padding: '10px 12px',
-        margin: '8px 0',
-      }}
-    >
+    <div className="my-2 flex items-center gap-2.5 rounded-[4px] border border-brand-line bg-white px-3 py-2.5">
       <button
         type="button"
         onClick={onPlay}
         aria-label={`Play clip · ${ev} · ${player}`}
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: '50%',
-          flexShrink: 0,
-          background: BRAND.indigo,
-          color: BRAND.sand,
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 11,
-          paddingLeft: 2,
-        }}
+        className="flex h-[30px] w-[30px] shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-brand-indigo pl-0.5 text-[11px] text-brand-sand"
       >
         ▶
       </button>
       <span
-        style={{
-          background: tokens.bg,
-          color: tokens.ink,
-          fontFamily: TYPE.mono,
-          fontSize: 8.5,
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          padding: '3px 5px',
-          borderRadius: 2,
-          flexShrink: 0,
-        }}
+        className="shrink-0 rounded-[2px] px-[5px] py-[3px] font-fragment text-[8.5px] font-bold tracking-[0.18em]"
+        style={{ background: tokens.bg, color: tokens.ink }}
       >
         {ev}
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: BRAND.indigo,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+      <div className="min-w-0 flex-1">
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap font-satoshi text-[12.5px] font-semibold text-brand-indigo">
           {headline}
         </div>
-        <div
-          style={{
-            fontFamily: TYPE.mono,
-            fontSize: 9.5,
-            letterSpacing: '0.16em',
-            color: BRAND.indigoMute,
-            fontWeight: 700,
-            marginTop: 2,
-          }}
-        >
+        <div className="mt-0.5 font-fragment text-[9.5px] font-bold tracking-[0.16em] text-brand-indigo-mute">
           {player} #{num} · {minute}&apos; · {dur}S · {opp}
         </div>
       </div>
@@ -273,18 +165,11 @@ export function MikelGlyph({
 }) {
   return (
     <span
+      className="inline-flex items-center justify-center rounded-[4px] bg-brand-indigo font-fragment font-bold text-brand-yellow"
       style={{
         width: size,
         height: size,
-        borderRadius: 4,
-        background: BRAND.indigo,
-        color: BRAND.yellow,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: TYPE.mono,
         fontSize: size * 0.6,
-        fontWeight: 700,
         animation: pulse ? 'hubMikelPulse 2.4s ease-in-out infinite' : undefined,
       }}
     >
@@ -325,16 +210,7 @@ export const hubPrimaryBtnStyle: React.CSSProperties = {
  *  branded route set. */
 export function HubFrame({ children }: { children: ReactNode }) {
   return (
-    <div
-      style={{
-        background: BRAND.sand,
-        minHeight: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        color: BRAND.indigo,
-        fontFamily: TYPE.body,
-      }}
-    >
+    <div className="flex min-h-full flex-col bg-brand-sand font-satoshi text-brand-indigo">
       {children}
     </div>
   )

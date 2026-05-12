@@ -1,7 +1,8 @@
 'use client'
 
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
 import type { MatchCenterHighlight } from '@/lib/match-center'
+import { cn } from '@/lib/cn'
 import { mcButtons } from './atoms'
 
 /* Single tagged-clip card. Used in two places:
@@ -47,84 +48,35 @@ export function HighlightCard({
   const tokens = EVENT_TOKENS[h.ev]
   return (
     <div
-      style={{
-        width: compact ? '100%' : 280,
-        minWidth: compact ? 0 : 280,
-        background: '#fff',
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 4,
-        padding: '10px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-      }}
+      className={cn(
+        'flex items-center gap-2.5 rounded-[4px] border border-brand-line bg-white px-3 py-2.5',
+        compact ? 'w-full min-w-0' : 'w-[280px] min-w-[280px]',
+      )}
     >
       <button
         type="button"
         onClick={onPlay}
         aria-label={`Play clip · ${h.ev} · ${h.player}`}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: '50%',
-          flexShrink: 0,
-          background: BRAND.indigo,
-          color: BRAND.sand,
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 12,
-          paddingLeft: 2,
-        }}
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-brand-indigo pl-0.5 text-xs text-brand-sand"
       >
         ▶
       </button>
       <span
-        style={{
-          background: tokens.bg,
-          color: tokens.ink,
-          fontFamily: TYPE.mono,
-          fontSize: 8.5,
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          padding: '3px 5px',
-          borderRadius: 2,
-          flexShrink: 0,
-        }}
+        className="shrink-0 rounded-[2px] px-[5px] py-[3px] font-fragment text-[8.5px] font-bold tracking-[0.18em]"
+        style={{ background: tokens.bg, color: tokens.ink }}
       >
         {h.ev}
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: 12,
-            fontWeight: 600,
-            color: BRAND.indigo,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+      <div className="min-w-0 flex-1">
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap font-satoshi text-xs font-semibold text-brand-indigo">
           {h.player}{' '}
-          <span style={{ color: BRAND.indigoMute, fontWeight: 500 }}>#{h.num}</span>
+          <span className="font-medium text-brand-indigo-mute">#{h.num}</span>
         </div>
-        <div
-          style={{
-            fontFamily: TYPE.mono,
-            fontSize: 9,
-            letterSpacing: '0.16em',
-            color: BRAND.indigoMute,
-            fontWeight: 700,
-            marginTop: 1,
-          }}
-        >
+        <div className="mt-px font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">
           {h.minute}&apos; · {h.dur}S
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+      <div className="flex shrink-0 gap-1">
         <button
           type="button"
           onClick={onShare}

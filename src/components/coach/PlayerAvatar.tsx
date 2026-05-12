@@ -30,36 +30,25 @@ export default function PlayerAvatar({ player, size, showJersey }: PlayerAvatarP
   const hasPhoto = !!player.photo && !imgError
 
   return (
-    <div style={{ position: 'relative', width: px, height: px, flexShrink: 0 }}>
+    <div className="relative shrink-0" style={{ width: px, height: px }}>
       {hasPhoto ? (
         <Image
           src={player.photo!}
           alt={`${player.firstName} ${player.lastName}`}
           width={px}
           height={px}
-          style={{
-            width: px,
-            height: px,
-            borderRadius: '50%',
-            objectFit: 'cover',
-            objectPosition: 'top',
-            border: '2px solid rgba(255,255,255,0.15)',
-          }}
+          className="rounded-full object-cover object-top border-2 border-white/15"
+          style={{ width: px, height: px }}
           onError={() => setImgError(true)}
         />
       ) : (
         <div
+          className="rounded-full text-white font-bold flex items-center justify-center"
           style={{
             width: px,
             height: px,
-            borderRadius: '50%',
             background: getPositionGradient(position),
-            color: '#fff',
             fontSize: fontMap[size],
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
           }}
         >
           {initials}
@@ -67,21 +56,11 @@ export default function PlayerAvatar({ player, size, showJersey }: PlayerAvatarP
       )}
       {showJersey && (
         <div
+          className="absolute -bottom-0.5 -right-0.5 rounded-full bg-brand-indigo text-white font-bold flex items-center justify-center border-2 border-white"
           style={{
-            position: 'absolute',
-            bottom: -2,
-            right: -2,
             width: jerseySize[size],
             height: jerseySize[size],
-            borderRadius: '50%',
-            background: '#1B1650',
-            color: '#fff',
             fontSize: jerseyFont[size],
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px solid #fff',
           }}
         >
           {player.jerseyNumber}

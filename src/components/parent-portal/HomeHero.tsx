@@ -79,32 +79,11 @@ export function HomeHero({
 
   if (!match || !matchAnalysis) {
     return (
-      <section
-        style={{
-          background: 'var(--brand-sand)',
-          padding: '24px 16px 16px',
-          textAlign: 'center',
-          borderBottom: '1px solid var(--brand-line)',
-        }}
-      >
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 22,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-          }}
-        >
+      <section className="bg-brand-sand px-4 pt-6 pb-4 text-center border-b border-brand-line">
+        <div className="font-clash text-[22px] text-brand-indigo tracking-[-0.02em]">
           {role === 'player' ? "You haven't played yet." : `${player.firstName} hasn't played yet.`}
         </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            color: 'var(--brand-indigo-mute)',
-            marginTop: 6,
-          }}
-        >
+        <div className="font-satoshi text-[13px] text-brand-indigo-mute mt-1.5">
           Once a match is analysed, the highlights and stats land here.
         </div>
       </section>
@@ -112,61 +91,27 @@ export function HomeHero({
   }
 
   return (
-    <section
-      style={{
-        background: 'var(--brand-sand)',
-        padding: '20px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-      }}
-    >
+    <section className="bg-brand-sand px-4 py-5 flex flex-col gap-3.5">
       {/* Eyebrow */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <div className="flex flex-col gap-1">
+        <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold">
           {greeting.toUpperCase()}
         </span>
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 26,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.1,
-          }}
-        >
+        <div className="font-clash text-[26px] text-brand-indigo tracking-[-0.02em] leading-[1.1]">
           {match.type === 'training_match' ? 'Training match' : `vs ${match.opponent ?? 'Match'}`}
         </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 12.5,
-            color: 'var(--brand-indigo-mute)',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="font-satoshi text-[12.5px] text-brand-indigo-mute flex gap-2 items-center flex-wrap">
           <span>{formatShortDate(match.date)}</span>
-          <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+          <span className="w-[3px] h-[3px] rounded-full bg-brand-indigo-mute" />
           <span>
             Composite{' '}
-            <span style={{ color: parentScoreColor(matchAnalysis.compositeScore), fontWeight: 700 }}>
+            <span className="font-bold" style={{ color: parentScoreColor(matchAnalysis.compositeScore) }}>
               {matchAnalysis.compositeScore}
             </span>
           </span>
           {matchAnalysis.minutesPlayed !== undefined && (
             <>
-              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+              <span className="w-[3px] h-[3px] rounded-full bg-brand-indigo-mute" />
               <span>{matchAnalysis.minutesPlayed} mins</span>
             </>
           )}
@@ -187,19 +132,9 @@ export function HomeHero({
               setVideoOpen(true)
             }
           } : undefined}
-          style={{
-            background: 'var(--brand-indigo)',
-            color: 'var(--brand-sand)',
-            borderRadius: 12,
-            padding: 16,
-            position: 'relative',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            aspectRatio: '16 / 9',
-            cursor: canPlay ? 'pointer' : 'default',
-          }}
+          className={`bg-brand-indigo text-brand-sand rounded-xl p-4 relative overflow-hidden flex items-center gap-3.5 aspect-video ${
+            canPlay ? 'cursor-pointer' : 'cursor-default'
+          }`}
         >
           {/* Video thumbnail layer — uses the clip URL itself with
            *  preload="metadata" so the browser fetches and renders just
@@ -215,25 +150,16 @@ export function HomeHero({
                 playsInline
                 preload="metadata"
                 aria-hidden
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  pointerEvents: 'none',
-                }}
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
               />
               {/* Dark scrim so the play button + caption stay legible
                *  on top of variable footage frames. */}
               <div
                 aria-hidden
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                  position: 'absolute',
-                  inset: 0,
                   background:
                     'linear-gradient(90deg, rgba(11, 8, 40, 0.78) 0%, rgba(11, 8, 40, 0.55) 60%, rgba(11, 8, 40, 0.35) 100%)',
-                  pointerEvents: 'none',
                 }}
               />
             </>
@@ -246,60 +172,24 @@ export function HomeHero({
               setVideoOpen(true)
             } : undefined}
             disabled={!canPlay}
-            style={{
-              position: 'relative',
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              background: 'var(--brand-yellow)',
-              color: 'var(--brand-indigo)',
-              border: 'none',
-              cursor: canPlay ? 'pointer' : 'default',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              boxShadow: '0 4px 14px rgba(252, 215, 24, 0.32)',
-            }}
+            className={`relative w-16 h-16 rounded-full bg-brand-yellow text-brand-indigo border-0 inline-flex items-center justify-center shrink-0 shadow-[0_4px_14px_rgba(252,215,24,0.32)] ${
+              canPlay ? 'cursor-pointer' : 'cursor-default'
+            }`}
           >
             <Play size={26} fill="currentColor" />
           </button>
-          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9.5,
-                letterSpacing: '0.18em',
-                fontWeight: 800,
-                color: 'var(--brand-yellow)',
-              }}
-            >
+          <div className="flex-1 min-w-0 relative">
+            <div className="font-fragment text-[9.5px] tracking-[0.18em] font-extrabold text-brand-yellow">
               {EVENT_LABELS[bestClip.eventType]} · {Math.floor(bestClip.timestampSeconds / 60)}m
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 20,
-                color: 'var(--brand-sand)',
-                letterSpacing: '-0.02em',
-                marginTop: 4,
-                lineHeight: 1.15,
-              }}
-            >
+            <div className="font-clash text-xl text-brand-sand tracking-[-0.02em] mt-1 leading-[1.15]">
               {bestClip.eventType === 'goal'
                 ? role === 'player'
                   ? 'You scored.'
                   : `${player.firstName} scored.`
                 : 'The moment to watch.'}
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 11.5,
-                color: 'rgba(238, 228, 200, 0.7)',
-                marginTop: 4,
-              }}
-            >
+            <div className="font-satoshi text-[11.5px] text-brand-sand/70 mt-1">
               {bestClip.durationSeconds}s clip · tap to play
             </div>
           </div>
@@ -315,22 +205,7 @@ export function HomeHero({
         <button
           type="button"
           onClick={() => setFullMatchOpen(true)}
-          style={{
-            alignSelf: 'flex-start',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 14px',
-            background: 'transparent',
-            color: 'var(--brand-indigo)',
-            border: '1px solid var(--brand-indigo)',
-            borderRadius: 999,
-            fontFamily: 'var(--font-body)',
-            fontWeight: 700,
-            fontSize: 12.5,
-            letterSpacing: '0.01em',
-            cursor: 'pointer',
-          }}
+          className="self-start inline-flex items-center gap-2 px-3.5 py-2.5 bg-transparent text-brand-indigo border border-brand-indigo rounded-full font-satoshi font-bold text-[12.5px] tracking-[0.01em] cursor-pointer"
         >
           <Play size={14} fill="currentColor" />
           Watch full match
@@ -339,28 +214,8 @@ export function HomeHero({
 
       {/* Radar — bottom half */}
       {seasonShape && (
-        <div
-          style={{
-            background: 'var(--brand-paper)',
-            border: '1px solid var(--brand-line)',
-            borderRadius: 12,
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-              alignSelf: 'flex-start',
-            }}
-          >
+        <div className="bg-brand-paper border border-brand-line rounded-xl p-4 flex flex-col items-center gap-2">
+          <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold self-start">
             SEASON SHAPE · {seasonAnalyses.length} {seasonAnalyses.length === 1 ? 'MATCH' : 'MATCHES'}
           </span>
           <PolyRadar

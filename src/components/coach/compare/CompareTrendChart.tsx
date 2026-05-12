@@ -37,53 +37,18 @@ export function CompareTrendChart({ rows }: CompareTrendChartProps) {
     padT + innerH - (Math.max(0, Math.min(100, score)) / 100) * innerH
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 12,
-        padding: '20px 22px',
-        display: 'grid',
-        gap: 14,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 12,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-            borderTop: '2px solid var(--brand-indigo)',
-            paddingTop: 8,
-          }}
-        >
+    <div className="grid gap-3.5 rounded-xl border border-brand-line bg-brand-paper px-[22px] py-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div className="border-t-2 border-brand-indigo pt-2 font-fragment text-[10.5px] font-bold tracking-[0.22em] text-brand-indigo-mute">
           SEASON TRAJECTORY · COMPOSITE
         </div>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.18em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 600,
-          }}
-        >
+        <span className="font-fragment text-[10px] font-semibold tracking-[0.18em] text-brand-indigo-mute">
           MATCHDAY 1 . LATEST
         </span>
       </div>
 
-      <div style={{ width: '100%', overflowX: 'auto' }}>
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden style={{ maxWidth: '100%' }}>
+      <div className="w-full overflow-x-auto">
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden className="max-w-full">
           {/* Y gridlines at 25/50/75 */}
           {[25, 50, 75].map(g => (
             <g key={g}>
@@ -148,27 +113,12 @@ export function CompareTrendChart({ rows }: CompareTrendChartProps) {
       </div>
 
       {/* Legend */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 18,
-          flexWrap: 'wrap',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10.5,
-          letterSpacing: '0.18em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-        }}
-      >
+      <div className="flex flex-wrap gap-[18px] font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
         {rows.map(r => (
-          <span key={r.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span key={r.id} className="inline-flex items-center gap-1.5">
             <span
-              style={{
-                width: 14,
-                height: 2,
-                background: r.color,
-                display: 'inline-block',
-              }}
+              className="inline-block h-0.5 w-3.5"
+              style={{ background: r.color }}
             />
             {r.label.toUpperCase()} · {r.progression.length} MATCHES
           </span>

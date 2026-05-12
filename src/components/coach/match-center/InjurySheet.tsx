@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { flagInjury } from '@/lib/match-center'
 import type {
   InjuryType,
@@ -91,41 +92,20 @@ export function InjurySheet({
     <div
       ref={backdropRef}
       onClick={e => { if (e.target === backdropRef.current) onClose() }}
-      style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(11,8,40,0.62)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 95, padding: 24,
-      }}
+      className="fixed inset-0 z-[95] flex items-center justify-center p-6 backdrop-blur-[4px]"
+      style={{ background: 'rgba(11,8,40,0.62)' }}
     >
-      <div
-        style={{
-          background: BRAND.paper,
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 8,
-          width: '100%', maxWidth: 420,
-          padding: '20px 22px',
-          boxShadow: '0 24px 56px rgba(11,8,40,0.4)',
-        }}
-      >
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <div className="w-full max-w-[420px] rounded-lg border border-brand-line bg-brand-paper px-[22px] py-5 shadow-[0_24px_56px_rgba(11,8,40,0.4)]">
+        <div className="inline-flex items-center gap-1.5">
           <AlertTriangle size={13} color={BRAND.coral} />
           <MEyebrow>FLAG INJURY</MEyebrow>
         </div>
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: 13,
-            color: BRAND.indigoMid,
-            marginTop: 6,
-          }}
-        >
+        <div className="mt-1.5 font-satoshi text-[13px] text-brand-indigo-mid">
           {playerName} · this match
         </div>
 
         {/* Minute */}
-        <div style={{ marginTop: 16 }}>
+        <div className="mt-4">
           <Label>Minute</Label>
           <input
             type="number"
@@ -134,20 +114,20 @@ export function InjurySheet({
             value={minute}
             onChange={e => setMinute(e.target.value)}
             placeholder="e.g. 47"
-            style={inputStyle}
+            className={INPUT_CLS}
           />
         </div>
 
         {/* Type */}
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>Type</Label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
+          <div className="grid grid-cols-4 gap-1.5">
             {TYPE_OPTIONS.map(opt => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setType(opt.value)}
-                style={pillStyle(type === opt.value)}
+                className={pillCls(type === opt.value)}
               >
                 {opt.label}
               </button>
@@ -156,52 +136,36 @@ export function InjurySheet({
         </div>
 
         {/* Severity */}
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>Severity</Label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+          <div className="grid grid-cols-3 gap-1.5">
             {SEVERITY_OPTIONS.map(opt => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setSeverity(opt.value)}
-                style={{
-                  ...pillStyle(severity === opt.value),
-                  flexDirection: 'column',
-                  padding: '8px 6px',
-                  gap: 2,
-                }}
+                className={cn(pillCls(severity === opt.value), 'flex-col gap-0.5 px-1.5 py-2')}
               >
-                <span style={{ fontSize: 14, fontWeight: 700 }}>{opt.label}</span>
-                <span style={{ fontSize: 10.5, opacity: 0.75 }}>{opt.helper}</span>
+                <span className="text-sm font-bold">{opt.label}</span>
+                <span className="text-[10.5px] opacity-75">{opt.helper}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Notes */}
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>Notes (optional)</Label>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="What happened? Did the physio see it?"
             rows={3}
-            style={{
-              ...inputStyle,
-              resize: 'vertical',
-              fontFamily: TYPE.body,
-            }}
+            className={cn(INPUT_CLS, 'resize-y font-satoshi')}
           />
         </div>
 
-        <div
-          style={{
-            marginTop: 18,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 8,
-          }}
-        >
+        <div className="mt-[18px] flex justify-end gap-2">
           <button type="button" style={mcButtons.text} onClick={onClose}>Cancel</button>
           <button
             type="button"
@@ -219,48 +183,19 @@ export function InjurySheet({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        fontFamily: TYPE.mono,
-        fontSize: 10.5,
-        letterSpacing: '0.18em',
-        color: BRAND.indigoMute,
-        fontWeight: 700,
-        marginBottom: 6,
-      }}
-    >
+    <div className="mb-1.5 font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
       {children}
     </div>
   )
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '9px 12px',
-  border: `1px solid ${BRAND.line}`,
-  borderRadius: 6,
-  fontFamily: TYPE.body,
-  fontSize: 13.5,
-  color: BRAND.indigo,
-  background: BRAND.sand,
-  outline: 'none',
-  boxSizing: 'border-box',
-}
+const INPUT_CLS = 'box-border w-full rounded-md border border-brand-line bg-brand-sand px-3 py-[9px] font-satoshi text-[13.5px] text-brand-indigo outline-none'
 
-function pillStyle(active: boolean): React.CSSProperties {
-  return {
-    padding: '9px 8px',
-    border: `1px solid ${active ? BRAND.indigo : BRAND.line}`,
-    borderRadius: 6,
-    background: active ? BRAND.indigo : BRAND.sand,
-    color: active ? BRAND.sand : BRAND.indigo,
-    fontFamily: TYPE.body,
-    fontSize: 12.5,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
+function pillCls(active: boolean): string {
+  return cn(
+    'inline-flex cursor-pointer items-center justify-center rounded-md border px-2 py-[9px] font-satoshi text-[12.5px] font-semibold transition-all duration-150 ease-in-out',
+    active
+      ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
+      : 'border-brand-line bg-brand-sand text-brand-indigo',
+  )
 }

@@ -37,86 +37,45 @@ export function PlayerToken({ player, score, x, y, selected, dimmed, fatigue, on
       type="button"
       onClick={onClick}
       aria-label={`${player.firstName} ${player.lastName}, jersey ${player.jerseyNumber}, score ${score}`}
+      className="absolute -translate-x-1/2 translate-y-1/2 bg-transparent border-0 cursor-pointer p-0 transition-[opacity,filter] duration-200"
       style={{
-        position: 'absolute',
         left: `${x}%`,
         bottom: `${y}%`,
-        transform: 'translate(-50%, 50%)',
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        padding: 0,
         opacity: dimmed ? 0.35 : 1,
         filter: dimmed ? 'saturate(0.6)' : 'none',
-        transition: 'opacity 180ms ease, filter 180ms ease',
         zIndex: selected ? 3 : 1,
       }}
     >
       {/* halo when selected */}
       {selected && (
         <div
-          style={{
-            position: 'absolute',
-            inset: -14,
-            borderRadius: '50%',
-            border: `1.5px solid ${c}`,
-            opacity: 0.85,
-            pointerEvents: 'none',
-          }}
+          className="absolute -inset-[14px] rounded-full opacity-85 pointer-events-none"
+          style={{ border: `1.5px solid ${c}` }}
         />
       )}
       {/* token circle */}
       <div
+        className="rounded-full bg-[#1B1550] flex items-center justify-center text-brand-sand font-clash font-bold shadow-[0_6px_14px_rgba(0,0,0,0.35)] transition-all duration-150"
         style={{
           width: size,
           height: size,
-          borderRadius: '50%',
-          background: '#1B1550',
           border: `2.5px solid ${c}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#EEE4C8',
-          fontFamily: 'var(--font-display)',
           fontSize: selected ? 22 : 18,
-          fontWeight: 700,
-          boxShadow: '0 6px 14px rgba(0,0,0,0.35)',
-          transition: 'all 160ms ease',
         }}
       >
         {player.jerseyNumber}
       </div>
       {/* first name underneath */}
       <div
-        style={{
-          marginTop: 4,
-          textAlign: 'center',
-          fontFamily: 'var(--font-body)',
-          fontSize: 11,
-          color: '#fff',
-          fontWeight: 600,
-          letterSpacing: '0.02em',
-          textShadow: '0 1px 2px rgba(0,0,0,0.6)',
-          whiteSpace: 'nowrap',
-        }}
+        className="mt-1 text-center font-satoshi text-[11px] text-white font-semibold tracking-[0.02em] whitespace-nowrap"
+        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}
       >
         {firstName}
       </div>
       {/* score badge top-right */}
       <div
-        style={{
-          position: 'absolute',
-          top: -6,
-          right: -10,
-          background: c,
-          color: '#0B0828',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          fontWeight: 700,
-          padding: '2px 5px',
-          borderRadius: 4,
-          lineHeight: 1,
-        }}
+        className="absolute -top-1.5 -right-2.5 font-fragment text-[10px] font-bold px-[5px] py-[2px] rounded leading-none"
+        style={{ background: c, color: '#0B0828' }}
       >
         {score}
       </div>
@@ -124,17 +83,8 @@ export function PlayerToken({ player, score, x, y, selected, dimmed, fatigue, on
       {fatigueColor && (
         <div
           title={`Fatigue: ${fatigue}`}
-          style={{
-            position: 'absolute',
-            top: -4,
-            left: -4,
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            background: fatigueColor,
-            border: '2px solid #1B1550',
-            lineHeight: 1,
-          }}
+          className="absolute -top-1 -left-1 w-3 h-3 rounded-full border-2 border-[#1B1550] leading-none"
+          style={{ background: fatigueColor }}
         />
       )}
     </button>

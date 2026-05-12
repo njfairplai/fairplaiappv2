@@ -18,27 +18,8 @@ export function CompareDiffStrip({ rows }: CompareDiffStripProps) {
   for (const r of rows) scores[r.id] = averageScores(r.records)
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 12,
-        padding: '20px 22px',
-        display: 'grid',
-        gap: 14,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10.5,
-          letterSpacing: '0.22em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          borderTop: '2px solid var(--brand-indigo)',
-          paddingTop: 8,
-        }}
-      >
+    <div className="grid gap-3.5 rounded-xl border border-brand-line bg-brand-paper px-[22px] py-5">
+      <div className="border-t-2 border-brand-indigo pt-2 font-fragment text-[10.5px] font-bold tracking-[0.22em] text-brand-indigo-mute">
         BY CATEGORY
       </div>
 
@@ -49,34 +30,12 @@ export function CompareDiffStrip({ rows }: CompareDiffStripProps) {
         const top = ranked[0]?.score ?? 0
 
         return (
-          <div key={cat} style={{ display: 'grid', gap: 6 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                gap: 12,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 16,
-                  color: 'var(--brand-indigo)',
-                  letterSpacing: '-0.01em',
-                }}
-              >
+          <div key={cat} className="grid gap-1.5">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-clash text-base tracking-[-0.01em] text-brand-indigo">
                 {cat}
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                }}
-              >
+              <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                 LEAD · {top}
               </span>
             </div>
@@ -86,67 +45,27 @@ export function CompareDiffStrip({ rows }: CompareDiffStripProps) {
               return (
                 <div
                   key={r.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '120px 1fr 36px',
-                    alignItems: 'center',
-                    gap: 10,
-                  }}
+                  className="grid items-center gap-2.5"
+                  style={{ gridTemplateColumns: '120px 1fr 36px' }}
                 >
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 12.5,
-                      color: 'var(--brand-indigo)',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
+                  <span className="inline-flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-satoshi text-[12.5px] font-semibold text-brand-indigo">
                     <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: r.color,
-                        flexShrink: 0,
-                      }}
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ background: r.color }}
                     />
                     {r.label}
                   </span>
-                  <div
-                    style={{
-                      height: 10,
-                      background: 'var(--brand-line-soft)',
-                      borderRadius: 999,
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
+                  <div className="relative h-2.5 overflow-hidden rounded-full bg-brand-line-soft">
                     <div
+                      className="absolute inset-0 rounded-full"
                       style={{
-                        position: 'absolute',
-                        inset: 0,
                         width: `${Math.max(0, Math.min(100, s))}%`,
                         background: r.color,
-                        borderRadius: 999,
                         opacity: isLead ? 1 : 0.7,
                       }}
                     />
                   </div>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: 'var(--brand-indigo)',
-                      textAlign: 'right',
-                    }}
-                  >
+                  <span className="text-right font-fragment text-xs font-bold text-brand-indigo">
                     {s}
                   </span>
                 </div>

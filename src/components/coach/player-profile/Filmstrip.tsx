@@ -112,63 +112,34 @@ export function Filmstrip({
 
   return (
     <div
-      style={{
-        background: bg,
-        color: fg,
-        borderRadius: 12,
-        padding: '20px 28px 26px',
-        position: 'relative',
-      }}
+      className="rounded-xl px-7 pt-5 pb-[26px] relative"
+      style={{ background: bg, color: fg }}
     >
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
-          gap: 16,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+      <div className="flex items-center justify-between mb-3.5 gap-4">
+        <div className="flex items-baseline gap-3.5">
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              letterSpacing: '0.22em',
-              color: yellow,
-              fontWeight: 700,
-            }}
+            className="font-fragment text-[10.5px] tracking-[0.22em] font-bold"
+            style={{ color: yellow }}
           >
             SEASON FILMSTRIP
           </span>
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              color: muted,
-              letterSpacing: '0.16em',
-              fontWeight: 600,
-            }}
+            className="font-fragment text-[11px] tracking-[0.16em] font-semibold"
+            style={{ color: muted }}
           >
             {currentRange} · {totalLen} MATCHES
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => canBack && setStart(Math.max(0, start - windowSize))}
             disabled={!canBack}
+            className="bg-transparent px-3.5 py-[7px] rounded-full font-fragment text-[10px] font-bold tracking-[0.16em]"
             style={{
-              background: 'transparent',
               color: fg,
               border: `1px solid ${ringBtn}`,
-              padding: '7px 14px',
-              borderRadius: 999,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.16em',
               opacity: canBack ? 1 : 0.3,
               cursor: canBack ? 'pointer' : 'default',
             }}
@@ -181,16 +152,10 @@ export function Filmstrip({
               canFwd && setStart(Math.min(totalLen - windowSize, start + windowSize))
             }
             disabled={!canFwd}
+            className="bg-transparent px-3.5 py-[7px] rounded-full font-fragment text-[10px] font-bold tracking-[0.16em]"
             style={{
-              background: 'transparent',
               color: fg,
               border: `1px solid ${ringBtn}`,
-              padding: '7px 14px',
-              borderRadius: 999,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.16em',
               opacity: canFwd ? 1 : 0.3,
               cursor: canFwd ? 'pointer' : 'default',
             }}
@@ -203,14 +168,8 @@ export function Filmstrip({
       {/* Strip — overflow-x is a safety net for narrow viewports where the
           window count couldn't shrink any further (e.g. tiny preview iframes). */}
       <div
-        style={{
-          display: 'flex',
-          gap,
-          position: 'relative',
-          overflowX: 'auto',
-          paddingBottom: 4,
-          scrollbarWidth: 'thin',
-        }}
+        className="flex relative overflow-x-auto pb-1"
+        style={{ gap, scrollbarWidth: 'thin' }}
       >
         {visible.map(d => (
           <Frame
@@ -225,41 +184,17 @@ export function Filmstrip({
         {/* Yellow playhead bar */}
         {playheadInWindow && (
           <div
-            style={{
-              position: 'absolute',
-              top: -10,
-              bottom: -18,
-              left: playheadOffset - 1,
-              width: 2,
-              background: yellow,
-              zIndex: 1,
-              pointerEvents: 'none',
-            }}
+            className="absolute -top-2.5 -bottom-[18px] w-0.5 z-10 pointer-events-none"
+            style={{ left: playheadOffset - 1, background: yellow }}
             aria-hidden
           >
             <div
-              style={{
-                position: 'absolute',
-                top: -8,
-                left: -7,
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                background: yellow,
-                border: '3px solid var(--brand-indigo)',
-              }}
+              className="absolute -top-2 -left-[7px] w-4 h-4 rounded-full border-[3px] border-brand-indigo"
+              style={{ background: yellow }}
             />
             <div
-              style={{
-                position: 'absolute',
-                bottom: -8,
-                left: -7,
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                background: yellow,
-                border: '3px solid var(--brand-indigo)',
-              }}
+              className="absolute -bottom-2 -left-[7px] w-4 h-4 rounded-full border-[3px] border-brand-indigo"
+              style={{ background: yellow }}
             />
           </div>
         )}

@@ -7,7 +7,7 @@ import {
   getOpenPPEFlagsForPlayer,
 } from '@/lib/parent-portal'
 import type { FatigueSample, PPEFlag } from '@/lib/types'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
 import { FatigueTile } from '@/components/welfare/FatigueTile'
 
 /**
@@ -45,17 +45,10 @@ export function WelfareCards({ playerId, gearAnchor = 'gear' }: WelfareCardsProp
   return (
     <>
       {latest && (
-        <section style={{ padding: '20px 16px 0' }}>
+        <section className="px-4 pt-5">
           <ParentCard label="WORKLOAD">
             <FatigueTile samples={sortedSamples} size="wide" />
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: 8,
-                marginTop: 12,
-              }}
-            >
+            <div className="grid grid-cols-3 gap-2 mt-3">
               <Stat label="Top sprint" value={`${latest.topSprintKmh.toFixed(1)} km/h`} />
               <Stat label="Sprints" value={`${latest.sprintCount}`} />
               <Stat label="Dist / min" value={`${Math.round(latest.distancePerMinute)} m`} />
@@ -64,43 +57,20 @@ export function WelfareCards({ playerId, gearAnchor = 'gear' }: WelfareCardsProp
         </section>
       )}
       {openPpe.length > 0 && (
-        <section id={gearAnchor} style={{ padding: '20px 16px 0' }}>
+        <section id={gearAnchor} className="px-4 pt-5">
           <ParentCard label="GEAR NOTES">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {openPpe.map(flag => (
                 <div
                   key={flag.id}
-                  style={{
-                    display: 'flex',
-                    gap: 10,
-                    alignItems: 'flex-start',
-                    padding: 10,
-                    background: 'var(--brand-sand)',
-                    border: `1px solid var(--brand-line)`,
-                    borderRadius: 8,
-                  }}
+                  className="flex gap-2.5 items-start p-2.5 bg-brand-sand border border-brand-line rounded-lg"
                 >
-                  <AlertTriangle size={14} color={BRAND.coral} style={{ flexShrink: 0, marginTop: 2 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontFamily: TYPE.body,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: BRAND.indigo,
-                        textTransform: 'capitalize',
-                      }}
-                    >
+                  <AlertTriangle size={14} color={BRAND.coral} className="shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <div className="font-satoshi text-[13px] font-semibold text-brand-indigo capitalize">
                       {flag.gearType.replace('_', ' ')}
                     </div>
-                    <div
-                      style={{
-                        fontFamily: TYPE.body,
-                        fontSize: 12.5,
-                        color: BRAND.indigoMid,
-                        marginTop: 2,
-                      }}
-                    >
+                    <div className="font-satoshi text-[12.5px] text-brand-indigo-mid mt-0.5">
                       {flag.notes}
                     </div>
                   </div>
@@ -122,24 +92,8 @@ function ParentCard({
   children: React.ReactNode
 }) {
   return (
-    <div
-      style={{
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 12,
-        padding: '14px 14px 16px',
-      }}
-    >
-      <div
-        style={{
-          fontFamily: TYPE.mono,
-          fontSize: 10,
-          letterSpacing: '0.22em',
-          color: BRAND.indigoMute,
-          fontWeight: 700,
-          marginBottom: 10,
-        }}
-      >
+    <div className="bg-brand-paper border border-brand-line rounded-xl px-3.5 pt-3.5 pb-4">
+      <div className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold mb-2.5">
         {label}
       </div>
       {children}
@@ -149,19 +103,11 @@ function ParentCard({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        background: 'var(--brand-sand)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 8,
-        padding: '8px 8px',
-        textAlign: 'center',
-      }}
-    >
-      <div style={{ fontFamily: TYPE.display, fontSize: 15, fontWeight: 700, color: BRAND.indigo, letterSpacing: '-0.01em' }}>
+    <div className="bg-brand-sand border border-brand-line rounded-lg p-2 text-center">
+      <div className="font-clash text-[15px] font-bold text-brand-indigo tracking-[-0.01em]">
         {value}
       </div>
-      <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 4, fontWeight: 700 }}>
+      <div className="font-fragment text-[9px] tracking-[0.16em] text-brand-indigo-mute mt-1 font-bold">
         {label.toUpperCase()}
       </div>
     </div>

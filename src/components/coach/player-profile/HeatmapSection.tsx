@@ -60,66 +60,38 @@ export function HeatmapSection({
 
   return (
     <section
-      style={{
-        background: 'var(--brand-paper)',
-        padding: isMobile ? '24px 16px' : '32px 36px',
-        borderBottom: '1px solid var(--brand-line)',
-      }}
+      className={`bg-brand-paper border-b border-brand-line ${
+        isMobile ? 'px-4 py-6' : 'px-9 py-8'
+      }`}
     >
       <div
+        className="grid items-baseline mb-4"
         style={{
-          display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : '180px 1fr',
           gap: isMobile ? 12 : 32,
-          alignItems: 'baseline',
-          marginBottom: 16,
         }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-            borderTop: '2px solid var(--brand-indigo)',
-            paddingTop: 8,
-          }}
-        >
+        <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold border-t-2 border-brand-indigo pt-2">
           HEATMAP
           {scope === 'season' && (
-            <span style={{ marginLeft: 8, opacity: 0.7 }}>· SEASON AGGREGATE</span>
+            <span className="ml-2 opacity-70">· SEASON AGGREGATE</span>
           )}
         </span>
         <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: isMobile ? 22 : 28,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-          }}
+          className={`font-clash text-brand-indigo tracking-[-0.02em] ${
+            isMobile ? 'text-[22px]' : 'text-[28px]'
+          }`}
         >
           Where {player.firstName} played.
         </div>
       </div>
 
       {scope === 'match' && isTraining ? (
-        <div
-          style={{
-            background: 'var(--brand-sand)',
-            border: '1px solid var(--brand-line)',
-            borderRadius: 12,
-            padding: 32,
-            textAlign: 'center',
-            fontFamily: 'var(--font-body)',
-            fontSize: 14,
-            color: 'var(--brand-indigo-mute)',
-          }}
-        >
+        <div className="bg-brand-sand border border-brand-line rounded-xl p-8 text-center font-satoshi text-sm text-brand-indigo-mute">
           No tracking data for training sessions.
         </div>
       ) : (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="flex justify-center">
           <PitchHeatmap points={points ?? []} width={w} height={h} />
         </div>
       )}
@@ -152,7 +124,7 @@ function PitchHeatmap({
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
-      style={{ display: 'block' }}
+      className="block"
       aria-hidden
     >
       <defs>

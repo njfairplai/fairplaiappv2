@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   MComposite,
@@ -37,40 +38,18 @@ export function HubResponseCard({
   const router = useRouter()
   const isMobile = useIsMobile()
   return (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: 760,
-        background: '#fff',
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 8,
-        overflow: 'hidden',
-      }}
-    >
+    <div className="w-full max-w-[760px] overflow-hidden rounded-lg border border-brand-line bg-white">
       {/* Header — the question echoed back */}
       <div
-        style={{
-          padding: isMobile ? '12px 16px' : '14px 22px',
-          borderBottom: `1px solid ${BRAND.line}`,
-          background: BRAND.sand,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          flexWrap: 'wrap',
-        }}
+        className={cn(
+          'flex flex-wrap items-center gap-2.5 border-b border-brand-line bg-brand-sand',
+          isMobile ? 'px-4 py-3' : 'px-[22px] py-3.5',
+        )}
       >
-        <span
-          style={{
-            fontFamily: TYPE.mono,
-            fontSize: 9.5,
-            letterSpacing: '0.22em',
-            color: BRAND.indigoMute,
-            fontWeight: 700,
-          }}
-        >
+        <span className="font-fragment text-[9.5px] font-bold tracking-[0.22em] text-brand-indigo-mute">
           YOUR LAST QUESTION · 18M AGO
         </span>
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         {!isMobile && (
           <>
             <button type="button" style={hubGhostBtnStyle} onClick={onShare}>
@@ -83,51 +62,29 @@ export function HubResponseCard({
         )}
       </div>
 
-      <div style={{ padding: isMobile ? '16px 16px' : '20px 22px' }}>
+      <div className={cn(isMobile ? 'p-4' : 'px-[22px] py-5')}>
         <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: isMobile ? 15 : 16,
-            fontWeight: 500,
-            color: BRAND.indigo,
-            lineHeight: 1.45,
-          }}
+          className={cn(
+            'font-satoshi font-medium leading-[1.45] text-brand-indigo',
+            isMobile ? 'text-[15px]' : 'text-base',
+          )}
         >
           &ldquo;Build a 5-clip reel of Saeed&apos;s pressing this month.&rdquo;
         </div>
 
         {/* Mikel's reply — anchored on the yellow border so the byline
          *  reads as Mikel composing inside his own column */}
-        <div
-          style={{
-            marginTop: 18,
-            paddingLeft: 14,
-            borderLeft: `2px solid ${BRAND.yellow}`,
-          }}
-        >
-          <div
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 9.5,
-              letterSpacing: '0.22em',
-              color: BRAND.indigo,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
+        <div className="mt-[18px] border-l-2 border-brand-yellow pl-3.5">
+          <div className="flex items-center gap-1.5 font-fragment text-[9.5px] font-bold tracking-[0.22em] text-brand-indigo">
             <MikelGlyph size={16} />
             COACH MIKEL · 18M AGO
           </div>
 
           <div
-            style={{
-              fontSize: isMobile ? 13.5 : 14.5,
-              lineHeight: 1.7,
-              color: BRAND.indigo,
-              marginTop: 12,
-            }}
+            className={cn(
+              'mt-3 leading-[1.7] text-brand-indigo',
+              isMobile ? 'text-[13.5px]' : 'text-[14.5px]',
+            )}
           >
             Pulled five from the last four matches.{' '}
             <MPlayer
@@ -143,7 +100,7 @@ export function HubResponseCard({
           </div>
 
           {/* Embedded clips — three visible, two hidden behind "Show all" */}
-          <div style={{ marginTop: 12 }}>
+          <div className="mt-3">
             <MClipEmbed
               ev="DEF"
               player="Saeed Khalifa"
@@ -176,58 +133,28 @@ export function HubResponseCard({
             />
           </div>
 
-          <div
-            style={{
-              marginTop: 4,
-              fontFamily: TYPE.mono,
-              fontSize: 10,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              fontWeight: 700,
-            }}
-          >
+          <div className="mt-1 font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
             + 2 MORE CLIPS ·{' '}
-            <span
-              style={{
-                color: BRAND.indigo,
-                cursor: 'pointer',
-                borderBottom: `1px solid ${BRAND.indigo}`,
-              }}
-            >
+            <span className="cursor-pointer border-b border-brand-indigo text-brand-indigo">
               SHOW ALL ↓
             </span>
           </div>
 
           <div
-            style={{
-              fontSize: isMobile ? 13.5 : 14.5,
-              lineHeight: 1.7,
-              color: BRAND.indigo,
-              marginTop: 16,
-            }}
+            className={cn(
+              'mt-4 leading-[1.7] text-brand-indigo',
+              isMobile ? 'text-[13.5px]' : 'text-[14.5px]',
+            )}
           >
             Worth a look: his counter-press recovery is up{' '}
-            <span
-              style={{
-                background: BRAND.yellow,
-                padding: '0 4px',
-                fontWeight: 700,
-              }}
-            >
+            <span className="bg-brand-yellow px-1 font-bold">
               +12% vs January
             </span>{' '}
             — see the full pattern on his profile.
           </div>
 
           {/* Action row */}
-          <div
-            style={{
-              marginTop: 16,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
-            }}
-          >
+          <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={onExportReel}
@@ -238,36 +165,14 @@ export function HubResponseCard({
             <button
               type="button"
               onClick={() => router.push('/coach/web/player/player_007')}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${BRAND.indigo}`,
-                color: BRAND.indigo,
-                padding: '8px 14px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                fontFamily: TYPE.mono,
-                fontSize: 10.5,
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-              }}
+              className="cursor-pointer rounded-[4px] border border-brand-indigo bg-transparent px-3.5 py-2 font-fragment text-[10.5px] font-bold tracking-[0.16em] text-brand-indigo"
             >
               OPEN SAEED&apos;S PROFILE →
             </button>
             <button
               type="button"
               onClick={onRegenerate}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${BRAND.line}`,
-                color: BRAND.indigoMute,
-                padding: '8px 14px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                fontFamily: TYPE.mono,
-                fontSize: 10.5,
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-              }}
+              className="cursor-pointer rounded-[4px] border border-brand-line bg-transparent px-3.5 py-2 font-fragment text-[10.5px] font-bold tracking-[0.16em] text-brand-indigo-mute"
             >
               REGENERATE
             </button>

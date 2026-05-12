@@ -31,43 +31,14 @@ export function PlayheadDetail({ frame: f, player, isMobile }: PlayheadDetailPro
   const playerId = player.id
   if (f.upcoming) {
     return (
-      <section
-        style={{
-          background: 'var(--brand-paper)',
-          padding: '28px 36px',
-          borderBottom: '1px solid var(--brand-line)',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <section className="bg-brand-paper px-9 py-7 border-b border-brand-line">
+        <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
           UPCOMING · {f.shortDate.toUpperCase()}
         </span>
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 32,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-            marginTop: 6,
-          }}
-        >
+        <div className="font-clash text-[32px] text-brand-indigo tracking-[-0.02em] mt-1.5">
           {f.kind === 'training' ? 'Training match' : `vs ${f.opp}`}
         </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            color: 'var(--brand-indigo-mute)',
-            marginTop: 4,
-          }}
-        >
+        <div className="font-satoshi text-[13px] text-brand-indigo-mute mt-1">
           {f.shortDate} · No data yet.
         </div>
       </section>
@@ -76,36 +47,14 @@ export function PlayheadDetail({ frame: f, player, isMobile }: PlayheadDetailPro
 
   if (f.dnp) {
     return (
-      <section
-        style={{
-          background: 'var(--brand-paper)',
-          padding: '28px 36px',
-          borderBottom: '1px solid var(--brand-line)',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-coral)',
-            fontWeight: 700,
-          }}
-        >
+      <section className="bg-brand-paper px-9 py-7 border-b border-brand-line">
+        <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-coral font-bold">
           DID NOT PLAY · {f.shortDate.toUpperCase()}
         </span>
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 32,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-            marginTop: 6,
-          }}
-        >
+        <div className="font-clash text-[32px] text-brand-indigo tracking-[-0.02em] mt-1.5">
           {f.kind === 'training' ? 'Training match' : `vs ${f.opp}`}
         </div>
-        <div style={{ maxWidth: 540, marginTop: 4 }}>
+        <div className="max-w-[540px] mt-1">
           <MatchNoteEditor playerId={playerId} sessionId={f.sessionId} variant="light" />
         </div>
       </section>
@@ -127,10 +76,10 @@ export function PlayheadDetail({ frame: f, player, isMobile }: PlayheadDetailPro
     ? 'var(--brand-coral)'
     : undefined
   const eyebrowColor = f.motm
-    ? 'var(--brand-indigo)'
+    ? 'text-brand-indigo'
     : f.poor
-    ? 'var(--brand-coral)'
-    : 'var(--brand-indigo-mute)'
+    ? 'text-brand-coral'
+    : 'text-brand-indigo-mute'
   const eyebrowText =
     (f.motm ? '★ MOTM · ' : f.poor ? 'POOR FORM · ' : '') +
     (f.kind === 'training' ? 'TRAINING · ' : '') +
@@ -139,89 +88,59 @@ export function PlayheadDetail({ frame: f, player, isMobile }: PlayheadDetailPro
 
   return (
     <section
-      style={{
-        background: 'var(--brand-paper)',
-        padding: isMobile ? '24px 16px' : '28px 36px',
-        borderBottom: '1px solid var(--brand-line)',
-      }}
+      className={`bg-brand-paper border-b border-brand-line ${
+        isMobile ? 'px-4 py-6' : 'px-9 py-7'
+      }`}
     >
       <div
-        style={{
-          display: isMobile ? 'flex' : 'grid',
-          flexDirection: isMobile ? 'column' : undefined,
-          gridTemplateColumns: isMobile ? undefined : '140px minmax(0, 1fr) 320px',
-          gap: isMobile ? 14 : 28,
-          alignItems: isMobile ? 'stretch' : 'center',
-        }}
+        className={
+          isMobile
+            ? 'flex flex-col gap-3.5 items-stretch'
+            : 'grid items-center gap-7'
+        }
+        style={
+          isMobile
+            ? undefined
+            : { gridTemplateColumns: '140px minmax(0, 1fr) 320px' }
+        }
       >
-        <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+        <div className={`flex ${isMobile ? 'justify-center' : 'justify-start'}`}>
           <ScoreArc value={f.score} size={isMobile ? 96 : 120} stroke={isMobile ? 8 : 10} color={arcColor} />
         </div>
-        <div style={{ minWidth: 0, textAlign: isMobile ? 'center' : 'left' }}>
+        <div className={`min-w-0 ${isMobile ? 'text-center' : 'text-left'}`}>
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              letterSpacing: '0.22em',
-              color: eyebrowColor,
-              fontWeight: 700,
-            }}
+            className={`font-fragment text-[10.5px] tracking-[0.22em] font-bold ${eyebrowColor}`}
           >
             {eyebrowText}
           </span>
           <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: isMobile ? 24 : 34,
-              color: 'var(--brand-indigo)',
-              letterSpacing: '-0.02em',
-              marginTop: 4,
-            }}
+            className={`font-clash text-brand-indigo tracking-[-0.02em] mt-1 ${
+              isMobile ? 'text-2xl' : 'text-[34px]'
+            }`}
           >
             {f.kind === 'training' ? 'Training match' : `vs ${f.opp}`}
           </div>
           <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo-mute)',
-              marginTop: 4,
-              display: 'flex',
-              gap: 10,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              justifyContent: isMobile ? 'center' : 'flex-start',
-            }}
+            className={`font-satoshi text-[13px] text-brand-indigo-mute mt-1 flex gap-2.5 items-center flex-wrap ${
+              isMobile ? 'justify-center' : 'justify-start'
+            }`}
           >
             <span>{f.shortDate}</span>
-            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+            <span className="w-[3px] h-[3px] rounded-full bg-brand-indigo-mute" />
             <span>{resultLabel}</span>
             {analysis?.minutesPlayed !== undefined && (
               <>
-                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+                <span className="w-[3px] h-[3px] rounded-full bg-brand-indigo-mute" />
                 <span>{analysis.minutesPlayed} mins</span>
               </>
             )}
           </div>
         </div>
         <div
-          style={{
-            background: 'var(--brand-sand)',
-            border: '1px solid var(--brand-line)',
-            borderRadius: 10,
-            padding: '14px 16px',
-            order: isMobile ? 3 : undefined,
-          }}
+          className="bg-brand-sand border border-brand-line rounded-[10px] px-4 py-3.5"
+          style={{ order: isMobile ? 3 : undefined }}
         >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+          <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
             COACH NOTE
           </span>
           <MatchNoteEditor playerId={playerId} sessionId={f.sessionId} variant="light" />
@@ -231,50 +150,26 @@ export function PlayheadDetail({ frame: f, player, isMobile }: PlayheadDetailPro
       {/* Row 2: full-width stat strip — same shape as LatestHero. */}
       {stats.length > 0 && (
         <div
-          style={{
-            marginTop: isMobile ? 12 : 18,
-            display: 'grid',
-            gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`,
-            gap: 0,
-            borderTop: '1px solid var(--brand-line)',
-            borderBottom: '1px solid var(--brand-line)',
-          }}
+          className={`grid gap-0 border-t border-b border-brand-line ${
+            isMobile ? 'mt-3' : 'mt-[18px]'
+          }`}
+          style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}
         >
           {stats.map((s, i) => (
             <div
               key={s.k}
-              style={{
-                padding: isMobile ? '10px 8px' : '12px 10px',
-                borderRight: i < stats.length - 1 ? '1px solid var(--brand-line)' : 'none',
-                textAlign: 'center',
-              }}
+              className={`text-center ${isMobile ? 'px-2 py-2.5' : 'px-2.5 py-3'} ${
+                i < stats.length - 1 ? 'border-r border-brand-line' : ''
+              }`}
             >
               <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: isMobile ? 18 : 22,
-                  color: 'var(--brand-indigo)',
-                  letterSpacing: '-0.02em',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
+                className={`font-clash text-brand-indigo tracking-[-0.02em] whitespace-nowrap overflow-hidden text-ellipsis ${
+                  isMobile ? 'text-lg' : 'text-[22px]'
+                }`}
               >
                 {s.v}
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9,
-                  letterSpacing: '0.16em',
-                  fontWeight: 700,
-                  color: 'var(--brand-indigo-mute)',
-                  marginTop: 4,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <div className="font-fragment text-[9px] tracking-[0.16em] font-bold text-brand-indigo-mute mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                 {s.k.toUpperCase()}
               </div>
             </div>

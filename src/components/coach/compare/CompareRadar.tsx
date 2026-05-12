@@ -59,30 +59,14 @@ export function CompareRadar({ rows, size }: CompareRadarProps) {
     dotStroke: 'var(--brand-sand)',
   }))
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+    <div className="flex flex-col items-center gap-3.5">
       <PolyRadar series={series} size={size} />
-      <div
-        style={{
-          display: 'flex',
-          gap: 18,
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10.5,
-          letterSpacing: '0.18em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-        }}
-      >
+      <div className="flex flex-wrap justify-center gap-[18px] font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
         {rows.map(r => (
-          <span key={r.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span key={r.id} className="inline-flex items-center gap-1.5">
             <span
-              style={{
-                width: 14,
-                height: 2,
-                background: r.color,
-                display: 'inline-block',
-              }}
+              className="inline-block h-0.5 w-3.5"
+              style={{ background: r.color }}
             />
             {r.label.toUpperCase()}
           </span>

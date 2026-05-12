@@ -74,53 +74,18 @@ export function PlayerPickerPopover({
   return (
     <div
       ref={ref}
-      style={{
-        position: 'absolute',
-        top: 'calc(100% + 8px)',
-        [align]: 0,
-        zIndex: 30,
-        width: 320,
-        background: 'var(--brand-sand)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 12,
-        boxShadow: '0 18px 40px rgba(11, 8, 40, 0.18)',
-        padding: 12,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        maxHeight: 380,
-      }}
+      className="absolute top-[calc(100%+8px)] z-30 flex max-h-[380px] w-80 flex-col gap-2.5 rounded-xl border border-brand-line bg-brand-sand p-3 shadow-[0_18px_40px_rgba(11,8,40,0.18)]"
+      style={{ [align]: 0 }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <div className="flex items-center justify-between">
+        <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
           ADD PLAYER
         </span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close picker"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--brand-indigo-mute)',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-          }}
+          className="inline-flex cursor-pointer items-center border-none bg-transparent text-brand-indigo-mute"
         >
           <X size={14} />
         </button>
@@ -130,38 +95,11 @@ export function PlayerPickerPopover({
         value={query}
         onChange={e => setQuery(e.target.value)}
         placeholder="Search by name, position, jersey"
-        style={{
-          width: '100%',
-          padding: '8px 10px',
-          borderRadius: 8,
-          border: '1px solid var(--brand-line)',
-          background: 'var(--brand-paper)',
-          fontFamily: 'var(--font-body)',
-          fontSize: 13,
-          color: 'var(--brand-indigo)',
-          outline: 'none',
-          boxSizing: 'border-box',
-        }}
+        className="box-border w-full rounded-lg border border-brand-line bg-brand-paper px-2.5 py-2 font-satoshi text-[13px] text-brand-indigo outline-none"
       />
-      <div
-        style={{
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          paddingRight: 2,
-        }}
-      >
+      <div className="flex flex-col gap-1 overflow-y-auto pr-0.5">
         {filtered.length === 0 ? (
-          <div
-            style={{
-              padding: '18px 8px',
-              textAlign: 'center',
-              fontFamily: 'var(--font-body)',
-              fontSize: 12.5,
-              color: 'var(--brand-indigo-mute)',
-            }}
-          >
+          <div className="px-2 py-[18px] text-center font-satoshi text-[12.5px] text-brand-indigo-mute">
             {available.length === 0 ? 'All squad players added' : 'No players match'}
           </div>
         ) : (
@@ -170,18 +108,7 @@ export function PlayerPickerPopover({
               key={p.id}
               type="button"
               onClick={() => onPick(p.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 10px',
-                background: 'transparent',
-                border: '1px solid transparent',
-                borderRadius: 8,
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontFamily: 'var(--font-body)',
-              }}
+              className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent bg-transparent px-2.5 py-2 text-left font-satoshi"
               onMouseEnter={e =>
                 (e.currentTarget.style.background = 'var(--brand-paper)')
               }
@@ -192,28 +119,11 @@ export function PlayerPickerPopover({
                 jerseyNumber={p.jerseyNumber}
                 name={`${p.firstName} ${p.lastName}`}
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--brand-indigo)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+              <div className="min-w-0 flex-1">
+                <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold text-brand-indigo">
                   {p.firstName} {p.lastName}
                 </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 9.5,
-                    letterSpacing: '0.18em',
-                    color: 'var(--brand-indigo-mute)',
-                    fontWeight: 700,
-                  }}
-                >
+                <div className="font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                   #{p.jerseyNumber} · {p.position.join(' / ')}
                 </div>
               </div>

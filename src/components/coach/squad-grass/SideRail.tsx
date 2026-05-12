@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ChevronRight, X } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/cn'
 
 import type { Player, MatchAnalysis, RadarDataItem } from '@/lib/types'
 import { matchAnalyses, sessions } from '@/lib/mockData'
@@ -16,7 +17,7 @@ import { getLatestFatigueByPlayer, fatigueTier } from '@/lib/parent-portal'
 // match + player pages use so the radar reads identically across the app.
 const RadarChartDynamic = dynamic(
   () => import('@/components/charts/RadarChart'),
-  { ssr: false, loading: () => <div style={{ height: 240 }} /> },
+  { ssr: false, loading: () => <div className="h-60" /> },
 )
 
 type StatScope = 'last' | 'last5' | 'season'
@@ -96,15 +97,11 @@ export function SideRail({ player, season, open, onClose }: SideRailProps) {
       <div
         onClick={onClose}
         aria-hidden
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.45)',
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? 'auto' : 'none',
-          transition: 'opacity 200ms ease',
-          zIndex: 30,
-        }}
+        className={cn(
+          'fixed inset-0 z-30 transition-opacity duration-200 ease-in-out',
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
+        )}
+        style={{ background: 'rgba(0, 0, 0, 0.45)' }}
       />
 
       {/* panel — slides in from the right on desktop (a side rail);
@@ -115,63 +112,21 @@ export function SideRail({ player, season, open, onClose }: SideRailProps) {
       <aside
         role="dialog"
         aria-label={player ? `${player.firstName} ${player.lastName} player profile` : 'Player profile'}
-        style={
+        className={cn(
+          'fixed z-[31] flex flex-col overflow-y-auto bg-brand-indigo font-satoshi text-brand-sand transition-transform duration-[240ms] ease-in-out',
           isMobile
-            ? {
-                position: 'fixed',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                maxHeight: '88vh',
-                background: 'var(--brand-indigo)',
-                borderTop: '1px solid rgba(238, 228, 200, 0.08)',
-                borderTopLeftRadius: 16,
-                borderTopRightRadius: 16,
-                color: 'var(--brand-sand)',
-                fontFamily: 'var(--font-body)',
-                transform: open ? 'translateY(0)' : 'translateY(100%)',
-                transition: 'transform 240ms ease',
-                zIndex: 31,
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 -16px 40px rgba(0, 0, 0, 0.4)',
-                overflowY: 'auto',
-              }
-            : {
-                position: 'fixed',
-                // Sit below the layout header (60px desktop) so the sticky
-                // chrome doesn't clip the panel's top section. The tab bar
-                // (48px) lives directly under the header so we tuck under
-                // it too — the sidebar reads as anchored to the content
-                // area, not the chrome.
-                top: 108,
-                right: 0,
-                bottom: 0,
-                width: 'min(420px, 92vw)',
-                background: 'var(--brand-indigo)',
-                borderLeft: '1px solid rgba(238, 228, 200, 0.08)',
-                color: 'var(--brand-sand)',
-                fontFamily: 'var(--font-body)',
-                transform: open ? 'translateX(0)' : 'translateX(100%)',
-                transition: 'transform 240ms ease',
-                zIndex: 31,
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '-12px 0 36px rgba(0, 0, 0, 0.35)',
-                overflowY: 'auto',
-              }
-        }
+            ? 'inset-x-0 bottom-0 max-h-[88vh] rounded-t-2xl border-t border-[rgba(238,228,200,0.08)] shadow-[0_-16px_40px_rgba(0,0,0,0.4)]'
+            : 'right-0 bottom-0 top-[108px] w-[min(420px,92vw)] border-l border-[rgba(238,228,200,0.08)] shadow-[-12px_0_36px_rgba(0,0,0,0.35)]',
+        )}
+        style={{
+          transform: isMobile
+            ? open ? 'translateY(0)' : 'translateY(100%)'
+            : open ? 'translateX(0)' : 'translateX(100%)',
+        }}
       >
         {isMobile && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0 0' }}>
-            <span
-              style={{
-                width: 36,
-                height: 4,
-                borderRadius: 2,
-                background: 'rgba(238, 228, 200, 0.25)',
-              }}
-            />
+          <div className="flex justify-center pt-2">
+            <span className="h-1 w-9 rounded-[2px] bg-[rgba(238,228,200,0.25)]" />
           </div>
         )}
         {player && season ? (
@@ -256,57 +211,18 @@ function Body({
   return (
     <>
       {/* header bar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '14px 14px 14px 18px',
-          borderBottom: '1px solid rgba(238, 228, 200, 0.08)',
-        }}
-      >
+      <div className="flex items-center gap-2.5 border-b border-[rgba(238,228,200,0.08)] py-3.5 pl-[18px] pr-3.5">
         <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: '50%',
-            background: 'rgba(238, 228, 200, 0.08)',
-            border: `2px solid ${c}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--font-display)',
-            fontSize: 17,
-            color: 'var(--brand-sand)',
-            flexShrink: 0,
-          }}
+          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[rgba(238,228,200,0.08)] font-clash text-[17px] text-brand-sand"
+          style={{ border: `2px solid ${c}` }}
         >
           {player.jerseyNumber}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 18,
-              lineHeight: 1.05,
-              letterSpacing: '0.01em',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
+        <div className="min-w-0 flex-1">
+          <div className="overflow-hidden text-ellipsis whitespace-nowrap font-clash text-lg uppercase leading-[1.05] tracking-[0.01em]">
             {player.firstName} {player.lastName}
           </div>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.15em',
-              color: 'rgba(238, 228, 200, 0.6)',
-              marginTop: 3,
-            }}
-          >
+          <div className="mt-[3px] font-fragment text-[10px] tracking-[0.15em] text-[rgba(238,228,200,0.6)]">
             {player.position.join(' · ')} · #{player.jerseyNumber}
           </div>
         </div>
@@ -314,18 +230,7 @@ function Body({
           type="button"
           onClick={onClose}
           aria-label="Close player panel"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            background: 'transparent',
-            border: '1px solid rgba(238, 228, 200, 0.15)',
-            color: 'var(--brand-sand)',
-            cursor: 'pointer',
-          }}
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-[rgba(238,228,200,0.15)] bg-transparent text-brand-sand"
         >
           <X size={16} />
         </button>
@@ -333,46 +238,17 @@ function Body({
 
       {/* primary CTAs — pinned to the top of the body so the coach can deep-
           link to the profile or IDP without scrolling through the summary. */}
-      <div style={{ padding: '14px 18px 0', display: 'flex', gap: 8 }}>
+      <div className="flex gap-2 px-[18px] pt-3.5">
         <Link
           href={`/coach/web/player/${player.id}`}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: 12,
-            background: 'var(--brand-yellow)',
-            color: '#0B0828',
-            fontFamily: 'var(--font-body)',
-            fontWeight: 700,
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 13,
-            textDecoration: 'none',
-          }}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border-none bg-brand-yellow p-3 font-satoshi text-[13px] font-bold no-underline"
+          style={{ color: '#0B0828' }}
         >
           View full profile <ChevronRight size={14} />
         </Link>
         <Link
           href={`/coach/web/idps?player=${player.id}`}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: 12,
-            background: 'transparent',
-            color: 'var(--brand-sand)',
-            fontFamily: 'var(--font-body)',
-            fontWeight: 600,
-            border: '1px solid rgba(238, 228, 200, 0.25)',
-            borderRadius: 8,
-            fontSize: 13,
-            textDecoration: 'none',
-          }}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[rgba(238,228,200,0.25)] bg-transparent p-3 font-satoshi text-[13px] font-semibold text-brand-sand no-underline"
         >
           Open IDP <ChevronRight size={14} />
         </Link>
@@ -382,51 +258,21 @@ function Body({
        *  note to fairplai_player_notes_${id}. Lets the coach jot
        *  something while they're in the squad context, no full-profile
        *  navigation. */}
-      <div style={{ padding: '12px 18px 0' }}>
+      <div className="px-[18px] pt-3">
         <SideRailNoteEditor playerId={player.id} />
       </div>
 
       {/* Scope dropdown: drives the score, radar, and stats below. Defaults
           to Last session; coach can switch to Last 5 matches or Whole season. */}
-      <div style={{ padding: '14px 18px 0' }}>
-        <label
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'rgba(238, 228, 200, 0.06)',
-            border: '1px solid rgba(238, 228, 200, 0.16)',
-            borderRadius: 8,
-            padding: '6px 10px',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              letterSpacing: '0.18em',
-              color: 'rgba(238, 228, 200, 0.6)',
-              fontWeight: 700,
-            }}
-          >
+      <div className="px-[18px] pt-3.5">
+        <label className="inline-flex items-center gap-2 rounded-lg border border-[rgba(238,228,200,0.16)] bg-[rgba(238,228,200,0.06)] px-2.5 py-1.5">
+          <span className="font-fragment text-[9.5px] font-bold tracking-[0.18em] text-[rgba(238,228,200,0.6)]">
             SCOPE
           </span>
           <select
             value={scope}
             onChange={e => setScope(e.target.value as StatScope)}
-            style={{
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--brand-sand)',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              outline: 'none',
-              paddingRight: 14,
-            }}
+            className="cursor-pointer appearance-none border-none bg-transparent pr-3.5 font-satoshi text-[13px] font-semibold text-brand-sand outline-none"
           >
             {(Object.entries(SCOPE_LABELS) as [StatScope, string][]).map(([k, label]) => (
               <option key={k} value={k} style={{ color: '#0B0828' }}>
@@ -438,43 +284,25 @@ function Body({
       </div>
 
       {/* content scroll area */}
-      <div style={{ padding: '16px 18px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div className="flex flex-col gap-[18px] px-[18px] pb-6 pt-4">
         {/* headline score + trend */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+        <div className="flex items-baseline gap-2.5">
           <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 88,
-              lineHeight: 0.85,
-              color: c,
-              letterSpacing: '-0.02em',
-            }}
+            className="font-clash leading-[0.85] tracking-[-0.02em]"
+            style={{ fontSize: 88, color: c }}
           >
             {headlineScore || '—'}
           </div>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              color: 'rgba(238, 228, 200, 0.6)',
-              letterSpacing: '0.12em',
-            }}
-          >
+          <div className="font-fragment text-[11px] tracking-[0.12em] text-[rgba(238,228,200,0.6)]">
             {isLast ? 'LAST' : isLast5 ? 'LAST 5' : 'SEASON'}<br />SCORE
           </div>
           {(season.matches > 0 || last) && (
             <div
-              style={{
-                marginLeft: 'auto',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: trend >= 0 ? '#9BD08A' : '#EB4D6D',
-                fontWeight: 700,
-                textAlign: 'right',
-              }}
+              className="ml-auto text-right font-fragment text-[11px] font-bold"
+              style={{ color: trend >= 0 ? '#9BD08A' : '#EB4D6D' }}
             >
               {trend >= 0 ? '▲' : '▼'} {Math.abs(trend)}<br />
-              <span style={{ color: 'rgba(238, 228, 200, 0.5)', fontWeight: 400 }}>
+              <span className="font-normal text-[rgba(238,228,200,0.5)]">
                 {isLast ? 'vs season avg' : isLast5 ? 'vs season avg' : 'vs recent'}
               </span>
             </div>
@@ -482,26 +310,8 @@ function Body({
         </div>
 
         {/* fairplai read */}
-        <div
-          style={{
-            padding: '14px 14px 14px 16px',
-            background: 'rgba(252, 215, 24, 0.06)',
-            borderLeft: '2px solid var(--brand-yellow)',
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            lineHeight: 1.55,
-            color: 'rgba(238, 228, 200, 0.92)',
-          }}
-        >
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.15em',
-              color: 'var(--brand-yellow)',
-              marginBottom: 4,
-            }}
-          >
+        <div className="border-l-2 border-brand-yellow bg-[rgba(252,215,24,0.06)] py-3.5 pl-4 pr-3.5 font-satoshi text-[13px] leading-[1.55] text-[rgba(238,228,200,0.92)]">
+          <div className="mb-1 font-fragment text-[10px] tracking-[0.15em] text-brand-yellow">
             FAIRPLAI READ
           </div>
           {readForPlayer(player, season, last, isLast)}
@@ -513,7 +323,7 @@ function Body({
         <FatigueChip playerId={player.id} />
 
         {/* radar — 6 categories, identical to the analysis page */}
-        <div style={{ background: 'rgba(238, 228, 200, 0.04)', borderRadius: 12, padding: '8px 4px' }}>
+        <div className="rounded-xl bg-[rgba(238,228,200,0.04)] px-1 py-2">
           <RadarChartDynamic data={radarData} height={260} />
         </div>
 
@@ -522,25 +332,12 @@ function Body({
           {stats.map(([k, v]) => (
             <div
               key={k}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '10px 0',
-                borderBottom: '1px solid rgba(238, 228, 200, 0.08)',
-              }}
+              className="flex justify-between border-b border-[rgba(238,228,200,0.08)] py-2.5"
             >
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.12em',
-                  color: 'rgba(238, 228, 200, 0.6)',
-                  textTransform: 'uppercase',
-                }}
-              >
+              <span className="font-fragment text-[11px] uppercase tracking-[0.12em] text-[rgba(238,228,200,0.6)]">
                 {k}
               </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 17 }}>{v}</span>
+              <span className="font-clash text-[17px]">{v}</span>
             </div>
           ))}
         </div>
@@ -647,48 +444,17 @@ function SideRailNoteEditor({ playerId }: { playerId: string }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          style={{
-            width: '100%',
-            padding: 10,
-            background: 'rgba(238, 228, 200, 0.08)',
-            color: 'var(--brand-sand)',
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            fontWeight: 600,
-            border: '1px solid rgba(238, 228, 200, 0.18)',
-            borderRadius: 8,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+          className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-[rgba(238,228,200,0.18)] bg-[rgba(238,228,200,0.08)] p-2.5 font-satoshi text-[13px] font-semibold text-brand-sand"
         >
           <span>+ Add note</span>
           {notes.length > 0 && (
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                color: 'rgba(238, 228, 200, 0.7)',
-              }}
-            >
+            <span className="font-fragment text-[10px] font-bold tracking-[0.16em] text-[rgba(238,228,200,0.7)]">
               {notes.length} SAVED
             </span>
           )}
         </button>
         {toast && (
-          <div
-            style={{
-              marginTop: 8,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.16em',
-              fontWeight: 700,
-              color: 'var(--brand-yellow)',
-            }}
-          >
+          <div className="mt-2 font-fragment text-[10px] font-bold tracking-[0.16em] text-brand-yellow">
             ✓ {toast.toUpperCase()}
           </div>
         )}
@@ -697,58 +463,23 @@ function SideRailNoteEditor({ playerId }: { playerId: string }) {
   }
 
   return (
-    <div
-      style={{
-        background: 'rgba(238, 228, 200, 0.05)',
-        border: '1px solid rgba(238, 228, 200, 0.18)',
-        borderRadius: 8,
-        padding: 10,
-      }}
-    >
+    <div className="rounded-lg border border-[rgba(238,228,200,0.18)] bg-[rgba(238,228,200,0.05)] p-2.5">
       <textarea
         autoFocus
         value={draft}
         onChange={e => setDraft(e.target.value)}
         placeholder={`Quick note about this player…`}
         rows={3}
-        style={{
-          width: '100%',
-          background: 'transparent',
-          color: 'var(--brand-sand)',
-          fontFamily: 'var(--font-body)',
-          fontSize: 13,
-          lineHeight: 1.5,
-          border: 'none',
-          outline: 'none',
-          resize: 'vertical',
-        }}
+        className="w-full resize-y border-none bg-transparent font-satoshi text-[13px] leading-[1.5] text-brand-sand outline-none"
       />
-      <div
-        style={{
-          marginTop: 8,
-          display: 'flex',
-          gap: 8,
-          justifyContent: 'flex-end',
-        }}
-      >
+      <div className="mt-2 flex justify-end gap-2">
         <button
           type="button"
           onClick={() => {
             setDraft('')
             setOpen(false)
           }}
-          style={{
-            padding: '6px 12px',
-            background: 'transparent',
-            color: 'rgba(238, 228, 200, 0.7)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: '0.16em',
-            border: 'none',
-            cursor: 'pointer',
-            textTransform: 'uppercase',
-          }}
+          className="cursor-pointer border-none bg-transparent px-3 py-1.5 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-[rgba(238,228,200,0.7)]"
         >
           Cancel
         </button>
@@ -756,18 +487,13 @@ function SideRailNoteEditor({ playerId }: { playerId: string }) {
           type="button"
           onClick={save}
           disabled={draft.trim().length === 0}
+          className={cn(
+            'rounded-[4px] border-none px-3.5 py-1.5 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em]',
+            draft.trim() ? 'cursor-pointer' : 'cursor-default',
+          )}
           style={{
-            padding: '6px 14px',
             background: draft.trim() ? 'var(--brand-yellow)' : 'rgba(238, 228, 200, 0.12)',
             color: draft.trim() ? '#0B0828' : 'rgba(238, 228, 200, 0.4)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: '0.16em',
-            border: 'none',
-            borderRadius: 4,
-            cursor: draft.trim() ? 'pointer' : 'default',
-            textTransform: 'uppercase',
           }}
         >
           Save note
@@ -796,64 +522,29 @@ function FatigueChip({ playerId }: { playerId: string }) {
   const tierLabel = tier === 'high' ? 'HIGH' : tier === 'moderate' ? 'MOD' : 'LOW'
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 14px',
-        background: 'rgba(238, 228, 200, 0.04)',
-        border: `1px solid ${color}55`,
-        borderRadius: 12,
-      }}
+      className="flex items-center justify-between rounded-xl bg-[rgba(238,228,200,0.04)] px-3.5 py-3"
+      style={{ border: `1px solid ${color}55` }}
     >
       <div>
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.18em',
-            color: 'rgba(238, 228, 200, 0.6)',
-            fontWeight: 700,
-            marginBottom: 4,
-          }}
-        >
+        <div className="mb-1 font-fragment text-[10px] font-bold tracking-[0.18em] text-[rgba(238,228,200,0.6)]">
           FATIGUE LOAD
         </div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <div className="flex items-baseline gap-2">
           <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 28,
-              color,
-              letterSpacing: '-0.02em',
-              lineHeight: 1,
-            }}
+            className="font-clash text-[28px] leading-none tracking-[-0.02em]"
+            style={{ color }}
           >
             {load}
           </span>
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.18em',
-              color,
-              fontWeight: 700,
-            }}
+            className="font-fragment text-[10px] font-bold tracking-[0.18em]"
+            style={{ color }}
           >
             {tierLabel}
           </span>
         </div>
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 11.5,
-          color: 'rgba(238, 228, 200, 0.5)',
-          textAlign: 'right',
-          maxWidth: 140,
-          lineHeight: 1.4,
-        }}
-      >
+      <div className="max-w-[140px] text-right font-satoshi text-[11.5px] leading-[1.4] text-[rgba(238,228,200,0.5)]">
         From sprint count + distance per minute over the last 7 days.
       </div>
     </div>

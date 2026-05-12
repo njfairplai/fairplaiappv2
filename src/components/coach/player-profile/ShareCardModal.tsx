@@ -102,56 +102,27 @@ export function ShareCardModal({
   return (
     <div
       onClick={onClose}
+      className="fixed inset-0 flex items-center justify-center z-[80] p-6"
       style={{
-        position: 'fixed',
-        inset: 0,
         background: 'rgba(11, 8, 40, 0.55)',
         backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 80,
-        padding: 24,
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="bg-brand-sand rounded-[14px] px-7 py-6 grid gap-7 max-w-[1100px] w-full overflow-auto"
         style={{
-          background: 'var(--brand-sand)',
-          borderRadius: 14,
-          padding: '24px 28px',
-          display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) 340px',
-          gap: 28,
-          maxWidth: 1100,
-          width: '100%',
           maxHeight: '92vh',
-          overflow: 'auto',
           boxShadow: '0 24px 60px rgba(11, 8, 40, 0.4)',
         }}
       >
         {/* Preview pane */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <span
-            style={{
-              alignSelf: 'flex-start',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+        <div className="flex flex-col items-center gap-3">
+          <span className="self-start font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
             PREVIEW . {BIB_FORMATS[format].label.toUpperCase()} . {native.w}×{native.h}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+          <div className="flex items-center justify-center flex-1">
             <BibCard
               player={player}
               radar={radar}
@@ -167,48 +138,16 @@ export function ShareCardModal({
         </div>
 
         {/* Controls pane */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: 12,
-            }}
-          >
+        <div className="flex flex-col">
+          <div className="flex justify-between items-start gap-3">
             <div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.22em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                }}
-              >
+              <div className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
                 FAIRPL.AI
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 32,
-                  color: 'var(--brand-indigo)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 0.95,
-                  marginTop: 6,
-                }}
-              >
+              <div className="font-clash text-[32px] text-brand-indigo tracking-[-0.02em] leading-[0.95] mt-1.5">
                 Player card.
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 12.5,
-                  color: 'var(--brand-indigo-mute)',
-                  marginTop: 6,
-                  lineHeight: 1.5,
-                }}
-              >
+              <div className="font-satoshi text-[12.5px] text-brand-indigo-mute mt-1.5 leading-[1.5]">
                 Spring 2026 season summary for{' '}
                 <strong>
                   {player.firstName} {player.lastName}
@@ -220,14 +159,7 @@ export function ShareCardModal({
               type="button"
               onClick={onClose}
               aria-label="Close player card"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--brand-indigo)',
-                fontSize: 22,
-                cursor: 'pointer',
-                lineHeight: 1,
-              }}
+              className="bg-transparent border-0 text-brand-indigo text-[22px] cursor-pointer leading-none"
             >
               ✕
             </button>
@@ -236,30 +168,14 @@ export function ShareCardModal({
           {/* Format picker — text pills, no inline thumbnails. The single
               live preview on the left already shows the active format; the
               picker just needs to read at a glance. */}
-          <div style={{ marginTop: 24 }}>
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-              }}
-            >
+          <div className="mt-6">
+            <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold">
               FORMAT
             </span>
             <div
               role="tablist"
               aria-label="Card format"
-              style={{
-                display: 'flex',
-                marginTop: 10,
-                background: 'var(--brand-paper)',
-                border: '1px solid var(--brand-indigo)',
-                borderRadius: 999,
-                padding: 3,
-                gap: 2,
-              }}
+              className="flex mt-2.5 bg-brand-paper border border-brand-indigo rounded-full p-[3px] gap-[2px]"
             >
               {(Object.entries(BIB_FORMATS) as [BibFormat, (typeof BIB_FORMATS)[BibFormat]][]).map(
                 ([k, v]) => {
@@ -271,20 +187,11 @@ export function ShareCardModal({
                       role="tab"
                       aria-selected={active}
                       onClick={() => setFormat(k)}
-                      style={{
-                        flex: 1,
-                        background: active ? 'var(--brand-indigo)' : 'transparent',
-                        color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-                        border: 'none',
-                        padding: '8px 10px',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        borderRadius: 999,
-                        fontFamily: 'var(--font-body)',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        letterSpacing: '0.01em',
-                      }}
+                      className={`flex-1 border-0 px-2.5 py-2 cursor-pointer text-center rounded-full font-satoshi text-[13px] font-bold tracking-[0.01em] ${
+                        active
+                          ? 'bg-brand-indigo text-brand-sand'
+                          : 'bg-transparent text-brand-indigo'
+                      }`}
                     >
                       {v.label}
                     </button>
@@ -292,16 +199,7 @@ export function ShareCardModal({
                 },
               )}
             </div>
-            <div
-              style={{
-                marginTop: 8,
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.16em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 600,
-              }}
-            >
+            <div className="mt-2 font-fragment text-[10px] tracking-[0.16em] text-brand-indigo-mute font-semibold">
               {BIB_FORMATS[format].sub.toUpperCase()} . {native.w}×{native.h}
             </div>
           </div>
@@ -310,35 +208,14 @@ export function ShareCardModal({
               Instagram. Replaces the previous always-visible 3-button strip. */}
           <div
             ref={shareRef}
-            style={{
-              position: 'relative',
-              marginTop: 24,
-              paddingTop: 18,
-              borderTop: '1px solid var(--brand-line)',
-            }}
+            className="relative mt-6 pt-[18px] border-t border-brand-line"
           >
             <button
               type="button"
               onClick={() => setShareOpen(o => !o)}
               aria-haspopup="menu"
               aria-expanded={shareOpen}
-              style={{
-                width: '100%',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                background: 'var(--brand-yellow)',
-                color: 'var(--brand-indigo)',
-                border: '1px solid var(--brand-indigo)',
-                padding: '14px 16px',
-                fontFamily: 'var(--font-body)',
-                fontSize: 15,
-                fontWeight: 800,
-                cursor: 'pointer',
-                borderRadius: 8,
-                letterSpacing: '0.01em',
-              }}
+              className="w-full inline-flex items-center justify-center gap-2 bg-brand-yellow text-brand-indigo border border-brand-indigo px-4 py-3.5 font-satoshi text-[15px] font-extrabold cursor-pointer rounded-lg tracking-[0.01em]"
             >
               <Share2 size={16} />
               Share player card
@@ -347,21 +224,11 @@ export function ShareCardModal({
             {shareOpen && (
               <div
                 role="menu"
+                className="absolute left-0 right-0 bg-brand-sand border border-brand-indigo rounded-[10px] p-2 flex flex-col gap-1 z-[2]"
                 style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
                   bottom: 'calc(100% - 8px)',
                   marginBottom: 4,
-                  background: 'var(--brand-sand)',
-                  border: '1px solid var(--brand-indigo)',
-                  borderRadius: 10,
-                  padding: 8,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
                   boxShadow: '0 14px 32px rgba(11, 8, 40, 0.22)',
-                  zIndex: 2,
                 }}
               >
                 <ShareOption
@@ -383,18 +250,7 @@ export function ShareCardModal({
             )}
           </div>
 
-          <div
-            style={{
-              marginTop: 'auto',
-              paddingTop: 18,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              letterSpacing: '0.18em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 600,
-              textAlign: 'center',
-            }}
-          >
+          <div className="mt-auto pt-[18px] font-fragment text-[9.5px] tracking-[0.18em] text-brand-indigo-mute font-semibold text-center">
             CARDS AUTO-WATERMARKED . FAIRPL.AI
           </div>
         </div>
@@ -417,42 +273,13 @@ function ShareOption({
     <button
       type="button"
       role="menuitem"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 10,
-        background: 'transparent',
-        color: 'var(--brand-indigo)',
-        border: 'none',
-        padding: '10px 12px',
-        fontFamily: 'var(--font-body)',
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: 'pointer',
-        borderRadius: 8,
-        textAlign: 'left',
-      }}
-      onMouseEnter={e =>
-        (e.currentTarget.style.background = 'var(--brand-paper)')
-      }
-      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      className="flex items-center justify-between gap-2.5 bg-transparent text-brand-indigo border-0 px-3 py-2.5 font-satoshi text-[13px] font-semibold cursor-pointer rounded-lg text-left hover:bg-brand-paper"
     >
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+      <span className="inline-flex items-center gap-2.5">
         {swatch && (
           <span
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: 3,
-              background: swatch.bg,
-              color: '#fff',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 10,
-              fontWeight: 800,
-            }}
+            className="w-[18px] h-[18px] rounded-[3px] inline-flex items-center justify-center text-[10px] font-extrabold text-white"
+            style={{ background: swatch.bg }}
           >
             {swatch.glyph}
           </span>
@@ -460,14 +287,7 @@ function ShareOption({
         {label}
       </span>
       {meta && (
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.16em',
-            opacity: 0.6,
-          }}
-        >
+        <span className="font-fragment text-[10px] tracking-[0.16em] opacity-60">
           {meta}
         </span>
       )}

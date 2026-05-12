@@ -211,64 +211,30 @@ export function RadarSection({
 
   return (
     <section
-      style={{
-        background: 'var(--brand-paper)',
-        padding: isMobile ? '24px 16px' : '32px 36px',
-        borderBottom: '1px solid var(--brand-line)',
-      }}
+      className={`bg-brand-paper border-b border-brand-line ${
+        isMobile ? 'px-4 py-6' : 'px-9 py-8'
+      }`}
     >
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '180px 1fr auto',
-          gap: isMobile ? 12 : 32,
-          alignItems: 'baseline',
-          marginBottom: 16,
-        }}
+        className={`grid items-baseline mb-4 ${isMobile ? 'gap-3' : 'gap-8'}`}
+        style={{ gridTemplateColumns: isMobile ? '1fr' : '180px 1fr auto' }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-            borderTop: '2px solid var(--brand-indigo)',
-            paddingTop: 8,
-          }}
-        >
+        <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold border-t-2 border-brand-indigo pt-2">
           PROFILE
         </span>
         <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: isMobile ? 24 : 32,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-          }}
+          className={`font-clash text-brand-indigo tracking-[-0.02em] ${
+            isMobile ? 'text-2xl' : 'text-[32px]'
+          }`}
         >
           How {player.firstName} plays.
         </div>
-        <div style={{ position: 'relative', display: 'inline-flex' }}>
+        <div className="relative inline-flex">
           <button
             type="button"
             onClick={() => setPickerOpen(o => !o)}
             aria-label="Compare with another player"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 16px',
-              borderRadius: 999,
-              background: 'var(--brand-yellow)',
-              color: 'var(--brand-indigo)',
-              border: 'none',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              letterSpacing: '0.01em',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand-yellow text-brand-indigo border-0 font-satoshi text-[13px] font-bold cursor-pointer tracking-[0.01em]"
           >
             <GitCompareArrows size={14} />
             Compare with…
@@ -286,15 +252,7 @@ export function RadarSection({
         </div>
       </div>
 
-      <div
-        style={{
-          background: 'var(--brand-sand)',
-          borderRadius: 12,
-          padding: 20,
-          display: 'flex',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="bg-brand-sand rounded-xl p-5 flex justify-center">
         <PolyRadar
           series={
             inMatchScope && matchValues
@@ -340,41 +298,16 @@ export function RadarSection({
           "Hide / Show season average" link doubles as the toggle so the
           page only carries one affordance for season-overlay control. */}
       {inMatchScope && matchValues && (
-        <div
-          style={{
-            marginTop: 10,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 18,
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.18em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-            flexWrap: 'wrap',
-          }}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                width: 14,
-                height: 2.5,
-                background: 'var(--brand-indigo)',
-                display: 'inline-block',
-              }}
-            />
+        <div className="mt-2.5 flex justify-center items-center gap-[18px] font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute font-bold flex-wrap">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-3.5 h-[2.5px] bg-brand-indigo inline-block" />
             THIS MATCH
           </span>
           {showSeasonOverlay && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span className="inline-flex items-center gap-1.5">
               <span
-                style={{
-                  width: 14,
-                  height: 0,
-                  borderTop: '2px dashed var(--brand-yellow)',
-                  display: 'inline-block',
-                }}
+                className="w-3.5 h-0 inline-block"
+                style={{ borderTop: '2px dashed var(--brand-yellow)' }}
               />
               SEASON AVG
             </span>
@@ -382,17 +315,12 @@ export function RadarSection({
           <button
             type="button"
             onClick={() => setSeasonOverlayVisible(v => !v)}
+            className="bg-transparent border-0 text-brand-indigo cursor-pointer underline p-0"
             style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--brand-indigo)',
               fontFamily: 'inherit',
               fontSize: 'inherit',
               letterSpacing: 'inherit',
               fontWeight: 'inherit',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              padding: 0,
             }}
           >
             {showSeasonOverlay ? 'HIDE SEASON AVERAGE' : 'SHOW SEASON AVERAGE'}
@@ -403,11 +331,9 @@ export function RadarSection({
       {/* Sub-stat strip — fades when selected category changes. */}
       <div
         key={selected}
+        className={`mt-[18px] grid ${isMobile ? 'gap-2' : 'gap-3'}`}
         style={{
-          marginTop: 18,
-          display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-          gap: isMobile ? 8 : 12,
           animation: 'fp-fade-in 220ms ease',
         }}
       >
@@ -417,77 +343,29 @@ export function RadarSection({
         {activeStats.map(s => (
           <div
             key={s.label}
-            style={{
-              background: 'var(--brand-sand)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 10,
-              padding: '14px 16px',
-            }}
+            className="bg-brand-sand border border-brand-line rounded-[10px] px-4 py-3.5"
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                }}
-              >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-fragment text-[9.5px] tracking-[0.18em] text-brand-indigo-mute font-bold uppercase">
                 {s.label}
               </span>
               {s.source === 'ai-derived' && (
                 <span
                   title="AI-derived from category score"
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 9,
-                    letterSpacing: '0.12em',
-                    color: 'var(--brand-indigo-mute)',
-                    background: 'var(--brand-line-soft)',
-                    padding: '2px 6px',
-                    borderRadius: 999,
-                    fontWeight: 600,
-                    cursor: 'help',
-                  }}
+                  className="font-fragment text-[9px] tracking-[0.12em] text-brand-indigo-mute bg-brand-line-soft px-1.5 py-0.5 rounded-full font-semibold cursor-help"
                 >
                   AI
                 </span>
               )}
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 28,
-                color: 'var(--brand-indigo)',
-                letterSpacing: '-0.02em',
-                marginTop: 6,
-              }}
-            >
+            <div className="font-clash text-[28px] text-brand-indigo tracking-[-0.02em] mt-1.5">
               {s.value}
             </div>
           </div>
         ))}
       </div>
 
-      <div
-        style={{
-          marginTop: 12,
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: '0.18em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 600,
-        }}
-      >
+      <div className="mt-3 font-fragment text-[10px] tracking-[0.18em] text-brand-indigo-mute font-semibold">
         TAP A CATEGORY ON THE RADAR. AI PILLS ARE DERIVED FROM CATEGORY SCORES.
       </div>
     </section>

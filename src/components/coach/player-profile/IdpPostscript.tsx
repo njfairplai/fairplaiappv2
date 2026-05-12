@@ -50,134 +50,56 @@ export function IdpPostscript({ player }: IdpPostscriptProps) {
   const goals = (draft?.goals ?? []).filter(g => g.trim())
 
   return (
-    <section
-      style={{
-        background: 'var(--brand-indigo)',
-        color: 'var(--brand-sand)',
-        padding: '40px 36px 48px',
-      }}
-    >
+    <section className="bg-brand-indigo text-brand-sand px-9 pt-10 pb-12">
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '160px 1fr auto',
-          gap: 24,
-          alignItems: 'baseline',
-        }}
+        className="grid items-baseline gap-6"
+        style={{ gridTemplateColumns: '160px 1fr auto' }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-yellow)',
-            fontWeight: 700,
-            borderTop: '2px solid var(--brand-yellow)',
-            paddingTop: 8,
-          }}
-        >
+        <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-yellow font-bold border-t-2 border-brand-yellow pt-2">
           GOALS
         </span>
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         <Link
           href={`/coach/web/idps?player=${player.id}`}
-          style={{
-            background: 'var(--brand-yellow)',
-            color: 'var(--brand-indigo)',
-            border: 'none',
-            padding: '12px 18px',
-            borderRadius: 999,
-            fontFamily: 'var(--font-body)',
-            fontWeight: 700,
-            fontSize: 14,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            textDecoration: 'none',
-          }}
+          className="bg-brand-yellow text-brand-indigo border-0 px-[18px] py-3 rounded-full font-satoshi font-bold text-sm cursor-pointer inline-flex items-center gap-1.5 no-underline"
         >
           {hasDraft ? 'Open IDP' : 'Start IDP'} <ChevronRight size={16} />
         </Link>
       </div>
 
-      <div style={{ marginTop: 24 }}>
+      <div className="mt-6">
         {hasDraft ? (
           <>
-            <ol
-              style={{
-                listStyle: 'none',
-                margin: 0,
-                padding: 0,
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+            <ol className="list-none m-0 p-0 flex flex-col">
               {goals.map((g, i) => (
                 <li
                   key={i}
+                  className="grid gap-[18px] py-[18px] items-baseline"
                   style={{
-                    display: 'grid',
                     gridTemplateColumns: '64px 1fr',
-                    gap: 18,
-                    padding: '18px 0',
                     borderBottom:
                       i === goals.length - 1
                         ? 'none'
                         : '1px solid rgba(238, 228, 200, 0.12)',
-                    alignItems: 'baseline',
                   }}
                 >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 28,
-                      color: 'var(--brand-yellow)',
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
+                  <span className="font-clash text-[28px] text-brand-yellow tracking-[-0.02em]">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 22,
-                      color: 'var(--brand-sand)',
-                      lineHeight: 1.2,
-                      letterSpacing: '-0.01em',
-                    }}
-                  >
+                  <span className="font-clash text-[22px] text-brand-sand leading-tight tracking-[-0.01em]">
                     {g}
                   </span>
                 </li>
               ))}
             </ol>
             {draft && (
-              <div
-                style={{
-                  marginTop: 22,
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.18em',
-                  color: 'rgba(238, 228, 200, 0.6)',
-                  fontWeight: 600,
-                }}
-              >
+              <div className="mt-[22px] font-fragment text-[11px] tracking-[0.18em] text-brand-sand/60 font-semibold">
                 LAST REVIEWED · {formatRelative(draft.savedAt).toUpperCase()}
               </div>
             )}
           </>
         ) : (
-          <div
-            style={{
-              padding: '32px 0',
-              fontFamily: 'var(--font-body)',
-              fontSize: 14,
-              color: 'rgba(238, 228, 200, 0.7)',
-              maxWidth: 540,
-              lineHeight: 1.55,
-            }}
-          >
+          <div className="py-8 font-satoshi text-sm text-brand-sand/70 max-w-[540px] leading-relaxed">
             No development goals set yet for {player.firstName}. Start an IDP to capture
             what you're working on this term.
           </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Camera, Upload, X } from 'lucide-react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND_RAW } from '@/lib/constants'
 import { uploadCoachCam, sendClipToParent } from '@/lib/match-center'
 import type { CoachCamTag } from '@/lib/types'
 import { players, parents } from '@/lib/mockData'
@@ -111,49 +111,31 @@ export function SendClipSheet({
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      className="fixed inset-0 flex items-center justify-center z-[95] p-6"
       style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(11,8,40,0.62)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 95, padding: 24,
+        background: 'rgba(11,8,40,0.62)',
+        backdropFilter: 'blur(4px)',
       }}
     >
       <div
+        className="bg-brand-paper border border-brand-line rounded-lg w-full max-w-[420px] px-[22px] py-5 overflow-y-auto"
         style={{
-          background: BRAND.paper,
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 8,
-          width: '100%', maxWidth: 420,
-          padding: '20px 22px',
           boxShadow: '0 24px 56px rgba(11,8,40,0.4)',
           maxHeight: 'calc(100dvh - 48px)',
-          overflowY: 'auto',
         }}
       >
-        <div
-          style={{
-            fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em',
-            color: BRAND.indigoMute, fontWeight: 700,
-          }}
-        >
+        <div className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute font-bold">
           SEND A CLIP{playerName ? ` · ${playerName.toUpperCase()}` : ''}
         </div>
 
         {/* Player picker — only when not preselected */}
         {needsPicker && (
-          <div style={{ marginTop: 14 }}>
+          <div className="mt-3.5">
             <Label>Send to player</Label>
             <select
               value={pickedPlayerId}
               onChange={e => setPickedPlayerId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 12px',
-                border: `1px solid ${BRAND.line}`, borderRadius: 6,
-                fontFamily: TYPE.body, fontSize: 13.5, color: BRAND.indigo,
-                background: BRAND.sand, outline: 'none',
-                boxSizing: 'border-box',
-              }}
+              className="w-full px-3 py-[9px] border border-brand-line rounded-md font-satoshi text-[13.5px] text-brand-indigo bg-brand-sand outline-none box-border"
             >
               <option value="">— Pick a player —</option>
               {players
@@ -168,23 +150,19 @@ export function SendClipSheet({
         )}
 
         {/* Upload */}
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>Clip</Label>
           {!file ? (
             <label
               htmlFor="scs-file"
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                gap: 8, padding: '24px 12px',
-                background: BRAND.sand, border: `2px dashed ${BRAND.line}`,
-                borderRadius: 10, cursor: 'pointer', textAlign: 'center',
-              }}
+              className="flex flex-col items-center gap-2 px-3 py-6 bg-brand-sand rounded-[10px] cursor-pointer text-center"
+              style={{ border: `2px dashed ${BRAND_RAW.line}` }}
             >
-              <Upload size={20} color={BRAND.indigoMute} />
-              <div style={{ fontFamily: TYPE.body, fontSize: 13, fontWeight: 600, color: BRAND.indigo }}>
+              <Upload size={20} color={BRAND_RAW.indigoMute} />
+              <div className="font-satoshi text-[13px] font-semibold text-brand-indigo">
                 Pick a video or photo
               </div>
-              <div style={{ fontFamily: TYPE.body, fontSize: 11.5, color: BRAND.indigoMute }}>
+              <div className="font-satoshi text-[11.5px] text-brand-indigo-mute">
                 Phone camera roll · max 60s
               </div>
               <input
@@ -193,43 +171,24 @@ export function SendClipSheet({
                 accept="video/*,image/*"
                 capture="environment"
                 onChange={e => setFile(e.target.files?.[0] ?? null)}
-                style={{ display: 'none' }}
+                className="hidden"
               />
             </label>
           ) : (
-            <div
-              style={{
-                display: 'flex', gap: 10, padding: 10,
-                background: BRAND.sand, border: `1px solid ${BRAND.line}`,
-                borderRadius: 10, alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  width: 52, height: 52, borderRadius: 6,
-                  background: BRAND.indigo, color: BRAND.sand,
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, overflow: 'hidden',
-                }}
-              >
+            <div className="flex gap-2.5 p-2.5 bg-brand-sand border border-brand-line rounded-[10px] items-center">
+              <div className="w-[52px] h-[52px] rounded-md bg-brand-indigo text-brand-sand inline-flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {previewUrl && file.type.startsWith('image/') ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={previewUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <Camera size={18} />
                 )}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily: TYPE.body, fontSize: 12.5, fontWeight: 600,
-                    color: BRAND.indigo, overflow: 'hidden',
-                    textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}
-                >
+              <div className="flex-1 min-w-0">
+                <div className="font-satoshi text-[12.5px] font-semibold text-brand-indigo overflow-hidden text-ellipsis whitespace-nowrap">
                   {file.name}
                 </div>
-                <div style={{ fontFamily: TYPE.body, fontSize: 11, color: BRAND.indigoMute, marginTop: 2 }}>
+                <div className="font-satoshi text-[11px] text-brand-indigo-mute mt-0.5">
                   {(file.size / 1024 / 1024).toFixed(1)} MB
                 </div>
               </div>
@@ -237,13 +196,7 @@ export function SendClipSheet({
                 type="button"
                 aria-label="Clear"
                 onClick={() => setFile(null)}
-                style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: 'transparent', border: `1px solid ${BRAND.line}`,
-                  color: BRAND.indigoMute, cursor: 'pointer',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}
+                className="w-7 h-7 rounded-full bg-transparent border border-brand-line text-brand-indigo-mute cursor-pointer inline-flex items-center justify-center flex-shrink-0"
               >
                 <X size={12} />
               </button>
@@ -252,57 +205,46 @@ export function SendClipSheet({
         </div>
 
         {/* Tag */}
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>What is it</Label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-            {TAG_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setTag(opt.value)}
-                style={{
-                  padding: '9px 8px',
-                  border: `1px solid ${tag === opt.value ? BRAND.indigo : BRAND.line}`,
-                  borderRadius: 6,
-                  background: tag === opt.value ? BRAND.indigo : BRAND.sand,
-                  color: tag === opt.value ? BRAND.sand : BRAND.indigo,
-                  fontFamily: TYPE.body, fontSize: 12.5, fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-3 gap-1.5">
+            {TAG_OPTIONS.map(opt => {
+              const active = tag === opt.value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTag(opt.value)}
+                  className={`px-2 py-[9px] border rounded-md font-satoshi text-[12.5px] font-semibold cursor-pointer ${
+                    active
+                      ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
+                      : 'border-brand-line bg-brand-sand text-brand-indigo'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 
         {/* Caption */}
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-3.5">
           <Label>Caption (optional)</Label>
           <textarea
             value={caption}
             onChange={e => setCaption(e.target.value)}
             placeholder="What's the parent looking at?"
             rows={2}
-            style={{
-              width: '100%', padding: '9px 12px',
-              border: `1px solid ${BRAND.line}`, borderRadius: 6,
-              fontFamily: TYPE.body, fontSize: 13.5, color: BRAND.indigo,
-              background: BRAND.sand, outline: 'none', resize: 'vertical',
-              boxSizing: 'border-box',
-            }}
+            className="w-full px-3 py-[9px] border border-brand-line rounded-md font-satoshi text-[13.5px] text-brand-indigo bg-brand-sand outline-none resize-y box-border"
           />
         </div>
 
-        <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <div className="mt-[18px] flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            style={{
-              padding: '8px 14px', border: 'none', background: 'transparent',
-              fontFamily: TYPE.body, fontSize: 13, color: BRAND.indigoMute,
-              cursor: 'pointer',
-            }}
+            className="px-3.5 py-2 border-0 bg-transparent font-satoshi text-[13px] text-brand-indigo-mute cursor-pointer"
           >
             Cancel
           </button>
@@ -310,14 +252,11 @@ export function SendClipSheet({
             type="button"
             onClick={send}
             disabled={!file || (needsPicker && !pickedPlayerId)}
-            style={{
-              padding: '10px 16px',
-              border: 'none', borderRadius: 6,
-              background: file ? BRAND.indigo : BRAND.indigoSoft,
-              color: file ? BRAND.sand : BRAND.indigoMute,
-              fontFamily: TYPE.body, fontSize: 13, fontWeight: 700,
-              cursor: file ? 'pointer' : 'not-allowed',
-            }}
+            className={`px-4 py-2.5 border-0 rounded-md font-satoshi text-[13px] font-bold ${
+              file
+                ? 'bg-brand-indigo text-brand-sand cursor-pointer'
+                : 'bg-brand-indigo-soft text-brand-indigo-mute cursor-not-allowed'
+            }`}
           >
             Send to parent
           </button>
@@ -329,12 +268,7 @@ export function SendClipSheet({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em',
-        color: BRAND.indigoMute, fontWeight: 700, marginBottom: 6,
-      }}
-    >
+    <div className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute font-bold mb-1.5">
       {children}
     </div>
   )

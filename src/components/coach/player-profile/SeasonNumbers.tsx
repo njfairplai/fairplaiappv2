@@ -59,78 +59,32 @@ export function SeasonNumbers({
       { k: 'MOTMs', v: motms },
     ]
     return (
-      <section
-        style={{
-          background: 'var(--brand-sand)',
-          padding: '20px 36px',
-          borderBottom: '1px solid var(--brand-line)',
-        }}
-      >
+      <section className="bg-brand-sand px-9 py-5 border-b border-brand-line">
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'auto repeat(4, 1fr) auto',
-            gap: 0,
-            alignItems: 'center',
-          }}
+          className="grid items-center"
+          style={{ gridTemplateColumns: 'auto repeat(4, 1fr) auto' }}
         >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-              paddingRight: 22,
-            }}
-          >
+          <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold pr-[22px]">
             SEASON . TO DATE
           </span>
           {tiles.map((s, i, arr) => (
             <div
               key={s.k}
-              style={{
-                padding: '4px 22px',
-                borderLeft: '1px solid var(--brand-line)',
-                borderRight:
-                  i === arr.length - 1 ? '1px solid var(--brand-line)' : 'none',
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: 10,
-              }}
+              className={`px-[22px] py-1 border-l border-brand-line flex items-baseline gap-2.5 ${
+                i === arr.length - 1 ? 'border-r border-brand-line' : ''
+              }`}
             >
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 30,
-                  color: 'var(--brand-indigo)',
-                  letterSpacing: '-0.02em',
-                }}
-              >
+              <span className="font-clash text-[30px] text-brand-indigo tracking-[-0.02em]">
                 {s.v}
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
-                  letterSpacing: '0.18em',
-                  fontWeight: 700,
-                  color: 'var(--brand-indigo-mute)',
-                }}
-              >
+              <span className="font-fragment text-[10px] tracking-[0.18em] font-bold text-brand-indigo-mute">
                 {s.k.toUpperCase()}
               </span>
             </div>
           ))}
           <div
-            style={{
-              paddingLeft: 22,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              fontWeight: 700,
-              color: trend >= 0 ? '#3A8F6B' : 'var(--brand-coral)',
-              letterSpacing: '0.12em',
-            }}
+            className="pl-[22px] font-fragment text-[11px] font-bold tracking-[0.12em]"
+            style={{ color: trend >= 0 ? '#3A8F6B' : 'var(--brand-coral)' }}
           >
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)} OVER SEASON
           </div>
@@ -143,100 +97,44 @@ export function SeasonNumbers({
   const heroTiles = tilesFromData(data)
   return (
     <section
-      style={{
-        background: 'var(--brand-sand)',
-        padding: isMobile ? '24px 16px' : '32px 36px',
-        borderBottom: '1px solid var(--brand-line)',
-      }}
+      className={`bg-brand-sand border-b border-brand-line ${
+        isMobile ? 'px-4 py-6' : 'px-9 py-8'
+      }`}
     >
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
-          gap: isMobile ? 18 : 36,
-          alignItems: 'center',
-        }}
+        className={`grid items-center ${isMobile ? 'gap-[18px]' : 'gap-9'}`}
+        style={{ gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr' }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 20 }}>
+        <div className={`flex items-center ${isMobile ? 'gap-3.5' : 'gap-5'}`}>
           <ScoreArc value={seasonScore} size={isMobile ? 96 : 132} stroke={9} />
           <div>
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10.5,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-              }}
-            >
+            <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
               SPRING 2026 . SEASON COMPOSITE
             </span>
             <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: isMobile ? 24 : 32,
-                color: 'var(--brand-indigo)',
-                letterSpacing: '-0.02em',
-                marginTop: 4,
-                lineHeight: 1.1,
-              }}
+              className={`font-clash text-brand-indigo tracking-[-0.02em] mt-1 leading-[1.1] ${
+                isMobile ? 'text-2xl' : 'text-[32px]'
+              }`}
             >
               {matches} matches across the season.
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 13,
-                color: 'var(--brand-indigo-mute)',
-                marginTop: 4,
-              }}
-            >
+            <div className="font-satoshi text-[13px] text-brand-indigo-mute mt-1">
               {goals} goals . {assists} key passes . {motms} MOTM
               {motms === 1 ? '' : 's'} . trend {trend >= 0 ? '+' : ''}{trend}
             </div>
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile
-              ? 'repeat(3, 1fr)'
-              : 'repeat(6, 1fr)',
-            gap: 8,
-          }}
-        >
+        <div className={`grid gap-2 ${isMobile ? 'grid-cols-3' : 'grid-cols-6'}`}>
           {heroTiles.map(t => (
             <div
               key={t.k}
-              style={{
-                background: 'var(--brand-paper)',
-                border: '1px solid var(--brand-line)',
-                borderRadius: 10,
-                padding: '12px 14px',
-              }}
+              className="bg-brand-paper border border-brand-line rounded-[10px] px-3.5 py-3"
             >
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                }}
-              >
+              <div className="font-fragment text-[9.5px] tracking-[0.18em] text-brand-indigo-mute font-bold uppercase">
                 {t.k}
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 26,
-                  color: 'var(--brand-indigo)',
-                  letterSpacing: '-0.02em',
-                  marginTop: 4,
-                }}
-              >
+              <div className="font-clash text-[26px] text-brand-indigo tracking-[-0.02em] mt-1">
                 {t.v}
               </div>
             </div>

@@ -62,13 +62,11 @@ export function computeBibRadar(records: MatchAnalysis[]): Record<RadarCategory,
 function AcademyCrest({ size, color, bg }: { size: number; color: string; bg: string }) {
   return (
     <div
+      className="inline-flex items-center justify-center"
       style={{
         width: size,
         height: size,
         background: bg,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         border: `1px solid ${color}`,
       }}
     >
@@ -108,7 +106,7 @@ function BibShape({
   const neck = 'M 38 4 L 62 4 Q 62 22 50 22 Q 38 22 38 4 Z'
   const combined = `${outer} ${neck}`
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div className="relative" style={{ width, height }}>
       {/* SVG provides the bib silhouette underneath. The HTML children render
           on top — they're positioned via percentages of bibW/bibH and stay
           inside the bib bounds, so no clip-path is needed. (Earlier versions
@@ -120,7 +118,7 @@ function BibShape({
         height={height}
         viewBox="0 0 100 130"
         preserveAspectRatio="none"
-        style={{ position: 'absolute', inset: 0, display: 'block' }}
+        className="absolute inset-0 block"
       >
         <path d={combined} fill={fill} fillRule="evenodd" />
         <path
@@ -138,7 +136,7 @@ function BibShape({
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <div style={{ position: 'absolute', inset: 0 }}>{children}</div>
+      <div className="absolute inset-0">{children}</div>
     </div>
   )
 }
@@ -411,32 +409,26 @@ export function BibCard({
     const bibW = bibH * bibAspect
     return (
       <div
+        className="text-brand-indigo relative overflow-hidden"
         style={{
           width: W,
           height: H,
           background: surface,
-          color: 'var(--brand-indigo)',
-          position: 'relative',
-          overflow: 'hidden',
         }}
       >
         <div
+          className="absolute pointer-events-none"
           style={{
-            position: 'absolute',
             inset: frameInset,
             border: `${1.5 * scale}px solid var(--brand-indigo)`,
-            pointerEvents: 'none',
           }}
         />
         <div
+          className="absolute flex justify-between items-center"
           style={{
-            position: 'absolute',
             top: 22 * scale,
             left: padX,
             right: padX,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 * scale }}>
@@ -494,7 +486,7 @@ export function BibCard({
             strokeWidth={2}
             neckColor={surface}
           >
-            <div style={{ position: 'absolute', inset: 0 }}>
+            <div className="absolute inset-0">
               <BibContents
                 bibW={bibW}
                 bibH={bibH}
@@ -638,32 +630,26 @@ export function BibCard({
 
   return (
     <div
+      className="text-brand-indigo relative overflow-hidden"
       style={{
         width: W,
         height: H,
         background: surface,
-        color: 'var(--brand-indigo)',
-        position: 'relative',
-        overflow: 'hidden',
       }}
     >
       <div
+        className="absolute pointer-events-none"
         style={{
-          position: 'absolute',
           inset: frameInset,
           border: `${1.5 * scale}px solid var(--brand-indigo)`,
-          pointerEvents: 'none',
         }}
       />
       <div
+        className="absolute flex items-center justify-between"
         style={{
-          position: 'absolute',
           top: 36 * scale,
           left: 36 * scale,
           right: 36 * scale,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 * scale }}>
@@ -816,19 +802,8 @@ export function CardThumbButton({
       onClick={onClick}
       title="Open player card"
       aria-label="Open player card"
-      style={{
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        cursor: 'pointer',
-        width: W,
-        height: H,
-        position: 'relative',
-        transition: 'transform 200ms ease',
-        flexShrink: 0,
-      }}
-      onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
-      onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
+      className="bg-transparent border-0 p-0 cursor-pointer relative flex-shrink-0 transition-transform duration-200 ease hover:-translate-y-0.5"
+      style={{ width: W, height: H }}
     >
       <BibShape
         width={W}

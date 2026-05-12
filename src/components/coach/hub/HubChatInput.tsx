@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef, type KeyboardEvent } from 'react'
-import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/cn'
 import { hubGhostBtnStyle, hubPrimaryBtnStyle } from './HubEmbeds'
 
 /* The chat input is the hero of the Coach Hub. Centered, large,
@@ -70,18 +70,12 @@ export const HubChatInput = forwardRef<HubChatInputHandle, HubChatInputProps>(fu
 
   return (
     <div
-      style={{
-        width: '100%',
-        maxWidth: 720,
-        background: '#fff',
-        border: `1.5px solid ${focused ? BRAND.indigo : BRAND.line}`,
-        borderRadius: 8,
-        boxShadow: focused
-          ? '0 8px 28px rgba(11,8,40,0.12)'
-          : '0 2px 6px rgba(11,8,40,0.06)',
-        transition: 'all 200ms ease',
-        overflow: 'hidden',
-      }}
+      className={cn(
+        'w-full max-w-[720px] overflow-hidden rounded-lg border-[1.5px] bg-white transition-all duration-200 ease-in-out',
+        focused
+          ? 'border-brand-indigo shadow-[0_8px_28px_rgba(11,8,40,0.12)]'
+          : 'border-brand-line shadow-[0_2px_6px_rgba(11,8,40,0.06)]',
+      )}
     >
       <textarea
         ref={inputRef}
@@ -92,31 +86,16 @@ export const HubChatInput = forwardRef<HubChatInputHandle, HubChatInputProps>(fu
         onKeyDown={handleKeyDown}
         placeholder="Ask Mikel anything…"
         rows={2}
-        style={{
-          width: '100%',
-          padding: isMobile ? '16px 18px' : '20px 22px',
-          fontFamily: TYPE.body,
-          fontSize: isMobile ? 15 : 17,
-          color: BRAND.indigo,
-          lineHeight: 1.4,
-          minHeight: 78,
-          background: 'transparent',
-          border: 'none',
-          outline: 'none',
-          resize: 'none',
-          display: 'block',
-        }}
+        className={cn(
+          'block w-full min-h-[78px] resize-none border-none bg-transparent font-satoshi leading-[1.4] text-brand-indigo outline-none',
+          isMobile ? 'px-[18px] py-4 text-[15px]' : 'px-[22px] py-5 text-[17px]',
+        )}
       />
       <div
-        style={{
-          padding: isMobile ? '8px 10px' : '10px 14px',
-          borderTop: `1px solid ${BRAND.line}`,
-          background: BRAND.sand,
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? 6 : 10,
-          flexWrap: 'wrap',
-        }}
+        className={cn(
+          'flex flex-wrap items-center border-t border-brand-line bg-brand-sand',
+          isMobile ? 'gap-1.5 px-2.5 py-2' : 'gap-2.5 px-3.5 py-2.5',
+        )}
       >
         {!isMobile && (
           <>
@@ -128,17 +107,9 @@ export const HubChatInput = forwardRef<HubChatInputHandle, HubChatInputProps>(fu
             </button>
           </>
         )}
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         {!isMobile && (
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 9,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              fontWeight: 700,
-            }}
-          >
+          <span className="font-fragment text-[9px] font-bold tracking-[0.18em] text-brand-indigo-mute">
             ⏎ TO SEND · ⌘K TO FOCUS
           </span>
         )}
@@ -167,35 +138,16 @@ interface SuggestionChipsProps {
 export function SuggestionChips({ chips, onPick }: SuggestionChipsProps) {
   const isMobile = useIsMobile()
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 8,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        maxWidth: 760,
-        marginBottom: 14,
-      }}
-    >
+    <div className="mb-3.5 flex max-w-[760px] flex-wrap justify-center gap-2">
       {chips.map(c => (
         <button
           key={c}
           type="button"
           onClick={() => onPick?.(c)}
-          style={{
-            background: 'transparent',
-            border: `1px solid ${BRAND.line}`,
-            padding: isMobile ? '6px 10px' : '7px 12px',
-            borderRadius: 18,
-            cursor: 'pointer',
-            fontFamily: TYPE.mono,
-            fontSize: isMobile ? 9.5 : 10,
-            fontWeight: 600,
-            letterSpacing: '0.14em',
-            color: BRAND.indigoMid,
-            textTransform: 'uppercase',
-            transition: 'all 150ms ease',
-          }}
+          className={cn(
+            'cursor-pointer rounded-[18px] border border-brand-line bg-transparent font-fragment font-semibold uppercase tracking-[0.14em] text-brand-indigo-mid transition-all duration-150 ease-in-out',
+            isMobile ? 'px-2.5 py-1.5 text-[9.5px]' : 'px-3 py-[7px] text-[10px]',
+          )}
         >
           {c}
         </button>

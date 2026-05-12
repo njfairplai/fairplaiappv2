@@ -3,6 +3,7 @@
 import { Star } from 'lucide-react'
 import type { Session, MatchAnalysis } from '@/lib/types'
 import { parentScoreColor } from '@/lib/parent-score-color'
+import { cn } from '@/lib/cn'
 
 /* TODO: design-refinement-target — Pack 3 will refine.
  * Compact horizontal-filmstrip card used on parent/player Stats. Used in
@@ -54,38 +55,17 @@ export function MatchFilmstripCard({
       disabled={upcoming}
       aria-pressed={selected}
       aria-label={`${formatShortDate(session.date)}, ${session.opponent ?? 'Match'}, score ${composite}`}
-      style={{
-        flexShrink: 0,
-        width: 116,
-        minHeight: 168,
-        padding: '12px 10px',
-        background: surfaceColor,
-        border: `${selected ? 2 : 1}px solid ${
-          selected ? 'var(--brand-indigo)' : 'var(--brand-line)'
-        }`,
-        borderRadius: 10,
-        cursor: upcoming ? 'default' : 'pointer',
-        color: textColor,
-        textAlign: 'left',
-        fontFamily: 'var(--font-body)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        opacity: upcoming ? 0.6 : 1,
-        boxShadow: selected
-          ? '0 8px 20px rgba(11, 8, 40, 0.32)'
-          : '0 2px 6px rgba(11, 8, 40, 0.04)',
-        transition: 'all 200ms ease',
-      }}
+      className={cn(
+        'shrink-0 w-[116px] min-h-[168px] px-2.5 py-3 rounded-[10px] text-left font-satoshi flex flex-col gap-2 transition-all duration-200',
+        selected
+          ? 'border-2 border-brand-indigo shadow-[0_8px_20px_rgba(11,8,40,0.32)]'
+          : 'border border-brand-line shadow-[0_2px_6px_rgba(11,8,40,0.04)]',
+        upcoming ? 'cursor-default opacity-60' : 'cursor-pointer opacity-100',
+      )}
+      style={{ background: surfaceColor, color: textColor }}
     >
       {/* Date eyebrow + MOTM star */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-        }}
-      >
+      <div className="flex items-center gap-1">
         {motm && (
           <Star
             size={11}
@@ -94,60 +74,33 @@ export function MatchFilmstripCard({
           />
         )}
         <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            letterSpacing: '0.16em',
-            fontWeight: 700,
-            color: selected ? 'var(--brand-yellow)' : muteColor,
-          }}
+          className="font-fragment text-[9px] tracking-[0.16em] font-bold"
+          style={{ color: selected ? 'var(--brand-yellow)' : muteColor }}
         >
           {formatShortDate(session.date)}
         </span>
       </div>
 
       {/* Composite score (centered hero) */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="flex-1 flex items-center justify-center">
         {upcoming ? (
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              letterSpacing: '0.18em',
-              fontWeight: 700,
-              color: muteColor,
-            }}
+            className="font-fragment text-[9px] tracking-[0.18em] font-bold"
+            style={{ color: muteColor }}
           >
             SOON
           </span>
         ) : composite > 0 ? (
           <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 38,
-              color: scoreColor,
-              letterSpacing: '-0.02em',
-              lineHeight: 1,
-            }}
+            className="font-clash text-[38px] tracking-[-0.02em] leading-none"
+            style={{ color: scoreColor }}
           >
             {composite}
           </span>
         ) : (
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              letterSpacing: '0.18em',
-              color: muteColor,
-              fontWeight: 700,
-            }}
+            className="font-fragment text-[9px] tracking-[0.18em] font-bold"
+            style={{ color: muteColor }}
           >
             —
           </span>
@@ -157,32 +110,13 @@ export function MatchFilmstripCard({
       {/* Footer: opponent or training chip */}
       <div>
         {isTraining ? (
-          <span
-            style={{
-              display: 'inline-block',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 8,
-              fontWeight: 800,
-              letterSpacing: '0.16em',
-              color: 'var(--brand-indigo)',
-              background: 'var(--brand-yellow)',
-              padding: '2px 6px',
-              borderRadius: 3,
-              lineHeight: 1,
-            }}
-          >
+          <span className="inline-block font-fragment text-[8px] font-extrabold tracking-[0.16em] text-brand-indigo bg-brand-yellow px-1.5 py-[2px] rounded-[3px] leading-none">
             TRAINING
           </span>
         ) : (
           <div
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: textColor,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
+            className="text-[11px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
+            style={{ color: textColor }}
           >
             {session.opponent ? abbreviateOpponent(session.opponent) : 'Match'}
           </div>

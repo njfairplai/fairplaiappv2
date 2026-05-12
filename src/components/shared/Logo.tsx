@@ -35,13 +35,8 @@ export function Logo({ height = 24, variant = 'auto', className, style }: LogoPr
       width={2054}
       height={515}
       priority
-      style={{
-        height,
-        width: 'auto',
-        objectFit: 'contain',
-        ...style,
-      }}
-      className={className}
+      style={{ height, width: 'auto', ...style }}
+      className={`object-contain ${className ?? ''}`}
     />
   )
 }

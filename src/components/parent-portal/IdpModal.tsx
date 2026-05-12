@@ -77,20 +77,8 @@ export function IdpModal({
       aria-modal="true"
       aria-label={`${player.firstName}'s development plan`}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
-      className="idp-modal-scrim"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(11, 8, 40, 0.55)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 200,
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: 16,
-        overflowY: 'auto',
-        fontFamily: 'var(--font-satoshi)',
-      }}
+      className="idp-modal-scrim fixed inset-0 backdrop-blur-[4px] flex items-start justify-center p-4 overflow-y-auto font-satoshi"
+      style={{ background: 'rgba(11, 8, 40, 0.55)', zIndex: 200 }}
     >
       {/* Print-only stylesheet — hides everything except the IDP body
        *  on print + nudges margins so the printable area takes the page. */}
@@ -123,80 +111,27 @@ export function IdpModal({
 
       <div
         id="idp-print-area"
-        style={{
-          width: '100%',
-          maxWidth: 720,
-          background: 'var(--brand-paper)',
-          color: 'var(--brand-indigo)',
-          borderRadius: 14,
-          border: '1px solid var(--brand-line)',
-          boxShadow: '0 24px 56px rgba(11, 8, 40, 0.32)',
-          padding: '28px 32px',
-          marginTop: 24,
-          marginBottom: 24,
-        }}
+        className="w-full max-w-[720px] bg-brand-paper text-brand-indigo rounded-2xl border border-brand-line shadow-[0_24px_56px_rgba(11,8,40,0.32)] px-8 py-7 my-6"
       >
         {/* Header — eyebrow + name + close */}
-        <div
-          className="idp-modal-no-print"
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            marginBottom: 4,
-          }}
-        >
+        <div className="idp-modal-no-print flex justify-end mb-1">
           <button
             type="button"
             aria-label="Close"
             onClick={onClose}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              background: 'transparent',
-              border: '1px solid var(--brand-line)',
-              color: 'var(--brand-indigo-mute)',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="w-8 h-8 rounded-full bg-transparent border border-brand-line text-brand-indigo-mute cursor-pointer inline-flex items-center justify-center"
           >
             <X size={14} />
           </button>
         </div>
 
-        <div
-          style={{
-            fontFamily: 'var(--font-fragment)',
-            fontSize: 11,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+        <div className="font-fragment text-[11px] tracking-[0.22em] text-brand-indigo-mute font-bold">
           INDIVIDUAL DEVELOPMENT PLAN
         </div>
-        <h1
-          style={{
-            fontFamily: 'var(--font-clash)',
-            fontSize: 36,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
-            margin: '6px 0 4px',
-            fontWeight: 700,
-          }}
-        >
+        <h1 className="font-clash text-4xl tracking-[-0.02em] leading-[1.05] mt-1.5 mb-1 font-bold">
           {player.firstName} {player.lastName}
         </h1>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            color: 'var(--brand-indigo-mute)',
-            marginBottom: 24,
-          }}
-        >
+        <div className="font-satoshi text-[13px] text-brand-indigo-mute mb-6">
           #{player.jerseyNumber} · {player.position.join(' · ')}
         </div>
 
@@ -204,15 +139,7 @@ export function IdpModal({
         {(dev?.coachNotes || review?.strengthAreas?.length || review?.improvementAreas?.length) && (
           <Section label="Coach's plan">
             {dev?.coachNotes && (
-              <p
-                style={{
-                  fontSize: 14.5,
-                  lineHeight: 1.6,
-                  color: 'var(--brand-indigo)',
-                  margin: '0 0 14px',
-                  fontStyle: 'italic',
-                }}
-              >
+              <p className="text-[14.5px] leading-relaxed text-brand-indigo m-0 mb-3.5 italic">
                 &ldquo;{dev.coachNotes}&rdquo;
               </p>
             )}
@@ -228,20 +155,13 @@ export function IdpModal({
         {/* Soft skills */}
         {feedback && (
           <Section label="Soft skills">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="flex flex-col gap-3">
               <SoftSkillBar label="Attitude" value={feedback.attitude} />
               <SoftSkillBar label="Effort" value={feedback.effort} />
               <SoftSkillBar label="Coachability" value={feedback.coachability} />
               <SoftSkillBar label="Sportsmanship" value={feedback.sportsmanship} />
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 11.5,
-                color: 'var(--brand-indigo-mute)',
-                marginTop: 12,
-              }}
-            >
+            <div className="font-satoshi text-[11.5px] text-brand-indigo-mute mt-3">
               Last updated {feedback.date}
             </div>
           </Section>
@@ -250,25 +170,14 @@ export function IdpModal({
         {/* Season composite */}
         {composite != null && (
           <Section label="Season composite">
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+            <div className="flex items-baseline gap-3.5">
               <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 48,
-                  color: compositeColor,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                }}
+                className="font-clash text-5xl tracking-[-0.02em] leading-none"
+                style={{ color: compositeColor }}
               >
                 {composite}
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--brand-indigo-mute)',
-                }}
-              >
+              <span className="font-satoshi text-[13px] text-brand-indigo-mute">
                 Composite score across all matches this season.
               </span>
             </div>
@@ -279,11 +188,8 @@ export function IdpModal({
         {review && (
           <Section label="Season summary">
             <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: 10,
-              }}
+              className="grid gap-2.5"
+              style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}
             >
               <Stat label="Matches" value={String(review.matchesPlayed)} />
               <Stat label="Minutes" value={String(review.totalMinutes)} />
@@ -293,19 +199,8 @@ export function IdpModal({
               <Stat label="Highlights" value={String(review.highlightCount)} />
             </div>
             {review.bestMatch && (
-              <div
-                style={{
-                  marginTop: 16,
-                  padding: '10px 14px',
-                  background: 'var(--brand-sand)',
-                  border: '1px solid var(--brand-line)',
-                  borderRadius: 8,
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--brand-indigo)',
-                }}
-              >
-                <span style={{ color: 'var(--brand-indigo-mute)', marginRight: 6 }}>Best match:</span>
+              <div className="mt-4 px-3.5 py-2.5 bg-brand-sand border border-brand-line rounded-lg font-satoshi text-[13px] text-brand-indigo">
+                <span className="text-brand-indigo-mute mr-1.5">Best match:</span>
                 vs {review.bestMatch.opponent} · {review.bestMatch.score} ({review.bestMatch.date})
               </div>
             )}
@@ -313,52 +208,18 @@ export function IdpModal({
         )}
 
         {/* Actions — print-hidden */}
-        <div
-          className="idp-modal-no-print"
-          style={{
-            marginTop: 28,
-            display: 'flex',
-            gap: 10,
-            justifyContent: 'flex-end',
-            paddingTop: 18,
-            borderTop: '1px solid var(--brand-line)',
-          }}
-        >
+        <div className="idp-modal-no-print mt-7 flex gap-2.5 justify-end pt-[18px] border-t border-brand-line">
           <button
             type="button"
             onClick={onClose}
-            style={{
-              padding: '10px 16px',
-              background: 'transparent',
-              color: 'var(--brand-indigo)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 8,
-              fontFamily: 'inherit',
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
+            className="px-4 py-2.5 bg-transparent text-brand-indigo border border-brand-line rounded-lg font-semibold text-[13px] cursor-pointer"
           >
             Close
           </button>
           <button
             type="button"
             onClick={handlePrint}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '11px 18px',
-              background: 'var(--brand-indigo)',
-              color: 'var(--brand-sand)',
-              border: 'none',
-              borderRadius: 8,
-              fontFamily: 'inherit',
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(11, 8, 40, 0.18)',
-            }}
+            className="inline-flex items-center gap-2 px-[18px] py-[11px] bg-brand-indigo text-brand-sand border-0 rounded-lg font-bold text-[13px] cursor-pointer shadow-[0_4px_14px_rgba(11,8,40,0.18)]"
           >
             <Printer size={14} />
             Download PDF
@@ -371,18 +232,8 @@ export function IdpModal({
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginBottom: 22 }}>
-      <div
-        style={{
-          fontFamily: 'var(--font-fragment)',
-          fontSize: 10,
-          letterSpacing: '0.22em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          marginBottom: 10,
-          textTransform: 'uppercase',
-        }}
-      >
+    <section className="mb-[22px]">
+      <div className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold mb-2.5 uppercase">
         {label}
       </div>
       {children}
@@ -401,31 +252,17 @@ function PillRow({
 }) {
   const color = variant === 'positive' ? 'var(--brand-yellow)' : 'var(--brand-coral)'
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9.5,
-          letterSpacing: '0.18em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          marginBottom: 6,
-        }}
-      >
+    <div className="mb-3">
+      <div className="font-fragment text-[9.5px] tracking-[0.18em] text-brand-indigo-mute font-bold mb-1.5">
         {label.toUpperCase()}
       </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div className="flex gap-2 flex-wrap">
         {items.map(item => (
           <span
             key={item}
+            className="px-3 py-[5px] rounded-full font-satoshi text-[12.5px] font-semibold text-brand-indigo"
             style={{
-              padding: '5px 12px',
               border: `1.5px solid ${color}`,
-              borderRadius: 999,
-              fontFamily: 'var(--font-body)',
-              fontSize: 12.5,
-              fontWeight: 600,
-              color: 'var(--brand-indigo)',
               background: variant === 'positive' ? 'rgba(252, 215, 24, 0.12)' : 'transparent',
             }}
           >
@@ -440,46 +277,21 @@ function PillRow({
 function SoftSkillBar({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          marginBottom: 6,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 13.5,
-            color: 'var(--brand-indigo)',
-            fontWeight: 600,
-          }}
-        >
+      <div className="flex items-baseline justify-between mb-1.5">
+        <span className="font-satoshi text-[13.5px] text-brand-indigo font-semibold">
           {label}
         </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.18em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+        <span className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute font-bold">
           {value} / 5
         </span>
       </div>
-      <div style={{ display: 'flex', gap: 4 }}>
+      <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map(n => (
           <span
             key={n}
-            style={{
-              flex: 1,
-              height: 6,
-              borderRadius: 3,
-              background: n <= value ? 'var(--brand-yellow)' : 'var(--brand-line-soft)',
-            }}
+            className={`flex-1 h-1.5 rounded-[3px] ${
+              n <= value ? 'bg-brand-yellow' : 'bg-brand-line-soft'
+            }`}
           />
         ))}
       </div>
@@ -489,34 +301,11 @@ function SoftSkillBar({ label, value }: { label: string; value: number }) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        background: 'var(--brand-sand)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 8,
-        padding: '10px 12px',
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 22,
-          letterSpacing: '-0.02em',
-          color: 'var(--brand-indigo)',
-        }}
-      >
+    <div className="bg-brand-sand border border-brand-line rounded-lg px-3 py-2.5">
+      <div className="font-clash text-[22px] tracking-[-0.02em] text-brand-indigo">
         {value}
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9.5,
-          letterSpacing: '0.16em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          marginTop: 4,
-        }}
-      >
+      <div className="font-fragment text-[9.5px] tracking-[0.16em] text-brand-indigo-mute font-bold mt-1">
         {label.toUpperCase()}
       </div>
     </div>

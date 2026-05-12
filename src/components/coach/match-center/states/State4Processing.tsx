@@ -1,6 +1,5 @@
 'use client'
 
-import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   Card,
@@ -19,29 +18,17 @@ import {
 export function State4Processing() {
   const isMobile = useIsMobile()
   return (
-    <Card style={{ padding: isMobile ? 16 : 26 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+    <Card className={isMobile ? 'p-4' : 'p-[26px]'}>
+      <div className="flex items-center gap-[10px] flex-wrap">
         <MStatusPill status="processing" animated />
-        <span
-          style={{
-            color: BRAND.indigoMute,
-            fontFamily: TYPE.mono,
-            fontSize: 10.5,
-            letterSpacing: '0.18em',
-            fontWeight: 700,
-          }}
-        >
+        <span className="text-brand-indigo-mute font-fragment text-[10.5px] tracking-[0.18em] font-bold">
           VS AL WASL ACADEMY · SUN 22 FEB · 3-1 W
         </span>
       </div>
       <div
-        style={{
-          marginTop: 14,
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr',
-          gap: isMobile ? 14 : 24,
-          alignItems: 'stretch',
-        }}
+        className={`mt-[14px] grid items-stretch ${
+          isMobile ? 'grid-cols-1 gap-[14px]' : 'grid-cols-[1.4fr_1fr] gap-6'
+        }`}
       >
         <VideoBlock
           height={isMobile ? 200 : 300}
@@ -49,62 +36,19 @@ export function State4Processing() {
           sub="SUN 22 FEB · UPLOADED 18:24"
           playable={false}
         />
-        <div
-          style={{
-            padding: 22,
-            background: BRAND.lineSoft,
-            border: `1px solid ${BRAND.line}`,
-            borderRadius: 6,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
-        >
-          <MEyebrow color={BRAND.indigoMute}>◐ ANALYSIS IN PROGRESS</MEyebrow>
-          <MDisplay size={28} style={{ marginTop: 10 }}>
+        <div className="p-[22px] bg-brand-line-soft border border-brand-line rounded-md flex flex-col justify-center">
+          <MEyebrow>◐ ANALYSIS IN PROGRESS</MEyebrow>
+          <MDisplay size={28} className="mt-[10px]">
             Usually ~2 hours
           </MDisplay>
-          <div
-            style={{
-              fontFamily: TYPE.body,
-              fontSize: 13,
-              color: BRAND.indigoMid,
-              marginTop: 10,
-              lineHeight: 1.5,
-            }}
-          >
+          <div className="font-satoshi text-[13px] text-brand-indigo-mid mt-[10px] leading-[1.5]">
             We&apos;re parsing 84 minutes of footage. Composite scores, MOTM, highlights and
             stats will appear here when done.
           </div>
-          <div
-            style={{
-              marginTop: 18,
-              height: 6,
-              background: BRAND.indigoSoft,
-              borderRadius: 3,
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                width: '64%',
-                height: '100%',
-                background: BRAND.indigo,
-              }}
-            />
+          <div className="mt-[18px] h-[6px] bg-brand-indigo-soft rounded-[3px] overflow-hidden">
+            <div className="w-[64%] h-full bg-brand-indigo" />
           </div>
-          <div
-            style={{
-              marginTop: 6,
-              fontFamily: TYPE.mono,
-              fontSize: 9.5,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              fontWeight: 700,
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}
-          >
+          <div className="mt-[6px] font-fragment text-[9.5px] tracking-[0.18em] text-brand-indigo-mute font-bold flex justify-between">
             <span>STAGE 3 OF 5 · TAGGING EVENTS</span>
             <span>~42M LEFT</span>
           </div>

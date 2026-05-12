@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/cn'
 
 /* Lower tile rail — the "I just want to scroll" escape hatch for
  * coaches who don't want to type. Four small destination cards link
@@ -41,75 +42,29 @@ function HubTile({
         e.currentTarget.style.boxShadow = '0 1px 3px rgba(11,8,40,0.04)'
         e.currentTarget.style.borderColor = BRAND.line
       }}
-      style={{
-        flex: 1,
-        minWidth: 180,
-        height: 124,
-        background: BRAND.paper,
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 6,
-        padding: '14px 16px',
-        textAlign: 'left',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-        boxShadow: '0 1px 3px rgba(11,8,40,0.04)',
-      }}
+      className="flex h-[124px] min-w-[180px] flex-1 cursor-pointer flex-col justify-between rounded-md border border-brand-line bg-brand-paper px-4 py-3.5 text-left shadow-[0_1px_3px_rgba(11,8,40,0.04)] transition-[transform,box-shadow,border-color] duration-150 ease-in-out"
     >
-      <div
-        style={{
-          fontFamily: TYPE.mono,
-          fontSize: 9.5,
-          letterSpacing: '0.22em',
-          color: BRAND.indigoMute,
-          fontWeight: 700,
-        }}
-      >
+      <div className="font-fragment text-[9.5px] font-bold tracking-[0.22em] text-brand-indigo-mute">
         {eyebrow}
       </div>
       <div>
         <div
-          style={{
-            fontFamily: TYPE.display,
-            fontSize: 36,
-            lineHeight: 0.94,
-            letterSpacing: '-0.02em',
-            color: accent,
-          }}
+          className="font-clash text-4xl leading-[0.94] tracking-[-0.02em]"
+          style={{ color: accent }}
         >
           {primary}
           {primarySub && (
-            <span
-              style={{
-                fontSize: 14,
-                color: BRAND.indigoMute,
-                marginLeft: 6,
-                letterSpacing: 0,
-              }}
-            >
+            <span className="ml-1.5 text-sm tracking-normal text-brand-indigo-mute">
               {primarySub}
             </span>
           )}
         </div>
       </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontFamily: TYPE.mono,
-          fontSize: 10,
-          letterSpacing: '0.18em',
-          color: BRAND.indigo,
-          fontWeight: 700,
-        }}
-      >
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div className="flex items-center justify-between font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo">
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">
           {label}
         </span>
-        <span style={{ flexShrink: 0, marginLeft: 6 }}>→</span>
+        <span className="ml-1.5 shrink-0">→</span>
       </div>
     </button>
   )
@@ -120,13 +75,10 @@ export function HubTiles() {
   const isMobile = useIsMobile()
   return (
     <div
-      style={{
-        width: '100%',
-        maxWidth: 760,
-        display: 'grid',
-        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-        gap: 10,
-      }}
+      className={cn(
+        'grid w-full max-w-[760px] gap-2.5',
+        isMobile ? 'grid-cols-2' : 'grid-cols-4',
+      )}
     >
       <HubTile
         eyebrow="NEXT SESSION"

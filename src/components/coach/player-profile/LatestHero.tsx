@@ -42,62 +42,34 @@ export function LatestHero({ player, latest, isMobile }: LatestHeroProps) {
 
   return (
     <section
-      style={{
-        background: 'var(--brand-paper)',
-        padding: isMobile ? '24px 16px' : '32px 36px',
-        borderBottom: '1px solid var(--brand-line)',
-      }}
+      className={
+        isMobile
+          ? 'bg-brand-paper px-4 py-6 border-b border-brand-line'
+          : 'bg-brand-paper px-9 py-8 border-b border-brand-line'
+      }
     >
       <div
-        style={{
-          display: isMobile ? 'flex' : 'grid',
-          flexDirection: isMobile ? 'column' : undefined,
-          gridTemplateColumns: isMobile ? undefined : '180px minmax(0, 1fr) 320px',
-          gap: isMobile ? 16 : 32,
-          alignItems: isMobile ? 'stretch' : 'center',
-        }}
+        className={
+          isMobile
+            ? 'flex flex-col gap-4 items-stretch'
+            : 'grid items-center gap-8'
+        }
+        style={
+          isMobile
+            ? undefined
+            : { gridTemplateColumns: '180px minmax(0, 1fr) 320px' }
+        }
       >
         {/* Score + state chip */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'stretch' }}>
+        <div className={`flex flex-col ${isMobile ? 'items-center' : 'items-stretch'}`}>
           <ScoreArc value={latest.score} size={isMobile ? 120 : 160} stroke={isMobile ? 10 : 12} color={arcColor} />
-          <div
-            style={{
-              display: 'flex',
-              gap: 6,
-              marginTop: 14,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          <div className="flex gap-1.5 mt-3.5 items-center justify-center">
             {latest.motm ? (
-              <span
-                style={{
-                  background: 'var(--brand-yellow)',
-                  color: 'var(--brand-indigo)',
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                }}
-              >
+              <span className="bg-brand-yellow text-brand-indigo px-2.5 py-1 rounded-full font-fragment text-[9.5px] font-bold tracking-[0.18em]">
                 ★ MAN OF THE MATCH
               </span>
             ) : latest.poor ? (
-              <span
-                style={{
-                  background: 'transparent',
-                  color: 'var(--brand-coral)',
-                  border: '1px solid var(--brand-coral)',
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                }}
-              >
+              <span className="bg-transparent text-brand-coral border border-brand-coral px-2.5 py-1 rounded-full font-fragment text-[9.5px] font-bold tracking-[0.18em]">
                 BELOW FORM
               </span>
             ) : null}
@@ -105,49 +77,28 @@ export function LatestHero({ player, latest, isMobile }: LatestHeroProps) {
         </div>
 
         {/* Match label + meta (no stat strip — that lives in row 2 now) */}
-        <div style={{ minWidth: 0, textAlign: isMobile ? 'center' : 'left' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+        <div className={`min-w-0 ${isMobile ? 'text-center' : 'text-left'}`}>
+          <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
             LATEST MATCH
           </span>
           <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: isMobile ? 28 : 44,
-              lineHeight: 1.02,
-              letterSpacing: '-0.02em',
-              color: 'var(--brand-indigo)',
-              marginTop: 4,
-            }}
+            className={`font-clash leading-[1.02] tracking-[-0.02em] text-brand-indigo mt-1 ${
+              isMobile ? 'text-[28px]' : 'text-[44px]'
+            }`}
           >
             {latest.kind === 'training' ? 'Training match' : `vs ${latest.opp}`}
           </div>
           <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 14,
-              color: 'var(--brand-indigo-mute)',
-              marginTop: 4,
-              display: 'flex',
-              gap: 10,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              justifyContent: isMobile ? 'center' : 'flex-start',
-            }}
+            className={`font-satoshi text-sm text-brand-indigo-mute mt-1 flex gap-2.5 items-center flex-wrap ${
+              isMobile ? 'justify-center' : 'justify-start'
+            }`}
           >
             <span>{latest.shortDate}</span>
-            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+            <span className="w-[3px] h-[3px] rounded-full bg-brand-indigo-mute" />
             <span>{resultLabel}</span>
             {analysis?.minutesPlayed !== undefined && (
               <>
-                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+                <span className="w-[3px] h-[3px] rounded-full bg-brand-indigo-mute" />
                 <span>{analysis.minutesPlayed} mins</span>
               </>
             )}
@@ -156,23 +107,10 @@ export function LatestHero({ player, latest, isMobile }: LatestHeroProps) {
 
         {/* Coach note (row 1, right column on desktop; full-width below on mobile) */}
         <div
-          style={{
-            background: 'var(--brand-sand)',
-            border: '1px solid var(--brand-line)',
-            borderRadius: 10,
-            padding: '16px 18px',
-            order: isMobile ? 3 : undefined,
-          }}
+          className="bg-brand-sand border border-brand-line rounded-[10px] px-[18px] py-4"
+          style={{ order: isMobile ? 3 : undefined }}
         >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+          <span className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
             COACH NOTE · {latest.shortDate.toUpperCase()}
           </span>
           <MatchNoteEditor playerId={player.id} sessionId={latest.sessionId} variant="light" />
@@ -185,51 +123,26 @@ export function LatestHero({ player, latest, isMobile }: LatestHeroProps) {
           of the section padding. */}
       {stats.length > 0 && (
         <div
-          style={{
-            marginTop: isMobile ? 12 : 22,
-            display: 'grid',
-            gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`,
-            gap: 0,
-            borderTop: '1px solid var(--brand-line)',
-            borderBottom: '1px solid var(--brand-line)',
-          }}
+          className={`grid gap-0 border-t border-b border-brand-line ${
+            isMobile ? 'mt-3' : 'mt-[22px]'
+          }`}
+          style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}
         >
           {stats.map((s, i) => (
             <div
               key={s.k}
-              style={{
-                padding: isMobile ? '10px 8px' : '14px 12px',
-                borderRight:
-                  i < stats.length - 1 ? '1px solid var(--brand-line)' : 'none',
-                textAlign: 'center',
-              }}
+              className={`text-center ${isMobile ? 'px-2 py-2.5' : 'px-3 py-3.5'} ${
+                i < stats.length - 1 ? 'border-r border-brand-line' : ''
+              }`}
             >
               <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: isMobile ? 20 : 26,
-                  color: 'var(--brand-indigo)',
-                  letterSpacing: '-0.02em',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
+                className={`font-clash text-brand-indigo tracking-[-0.02em] whitespace-nowrap overflow-hidden text-ellipsis ${
+                  isMobile ? 'text-xl' : 'text-[26px]'
+                }`}
               >
                 {s.v}
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9,
-                  letterSpacing: '0.16em',
-                  fontWeight: 700,
-                  color: 'var(--brand-indigo-mute)',
-                  marginTop: 4,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <div className="font-fragment text-[9px] tracking-[0.16em] font-bold text-brand-indigo-mute mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                 {s.k.toUpperCase()}
               </div>
             </div>

@@ -16,33 +16,32 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
   return (
     <button
       onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: 'none',
-        borderRadius: 12, padding: '14px 16px', marginBottom: 8, width: '100%',
-        textAlign: 'left', cursor: 'pointer', boxShadow: SHADOWS.card,
-      }}
+      className="flex items-center gap-3 bg-white border-0 rounded-xl px-4 py-3.5 mb-2 w-full text-left cursor-pointer"
+      style={{ boxShadow: SHADOWS.card }}
     >
-      <div style={{ width: 44, height: 50, borderRadius: 10, background: '#F5F6FC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <span style={{ fontSize: 20, fontWeight: 800, color: '#1B1650', lineHeight: 1 }}>{match.day}</span>
-        <span style={{ fontSize: 11, color: '#6E7180', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{match.month}</span>
+      <div className="w-11 h-[50px] rounded-[10px] bg-[#F5F6FC] flex flex-col items-center justify-center shrink-0">
+        <span className="text-xl font-extrabold text-[#1B1650] leading-none">{match.day}</span>
+        <span className="text-[11px] text-[#6E7180] uppercase tracking-[0.04em]">{match.month}</span>
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#1B1650', margin: 0 }}>{match.opponent}</p>
-          <span style={{
-            fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '3px 8px', lineHeight: 1,
-            background: match.type === 'match' ? '#EFF6FF' : '#ECFDF5',
-            color: match.type === 'match' ? '#4A4AFF' : '#059669',
-          }}>
+      <div className="flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="text-[15px] font-bold text-[#1B1650] m-0">{match.opponent}</p>
+          <span
+            className={`text-[11px] font-bold rounded-[20px] px-2 py-[3px] leading-none ${
+              match.type === 'match'
+                ? 'bg-[#EFF6FF] text-[#4A4AFF]'
+                : 'bg-[#ECFDF5] text-[#059669]'
+            }`}
+          >
             {match.type === 'match' ? 'Match' : 'Training'}
           </span>
         </div>
-        <p style={{ fontSize: 12, color: '#9DA2B3', marginTop: 2 }}>{match.competition}</p>
-        <p style={{ fontSize: 12, color: '#9DA2B3' }}>{match.duration}</p>
+        <p className="text-xs text-[#9DA2B3] mt-0.5">{match.competition}</p>
+        <p className="text-xs text-[#9DA2B3]">{match.duration}</p>
       </div>
-      <div style={{ textAlign: 'right' }}>
-        <p style={{ fontSize: 22, fontWeight: 900, color: c, margin: 0, lineHeight: 1 }}>{match.score}</p>
-        <p style={{ fontSize: 10, color: '#9DA2B3', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>score</p>
+      <div className="text-right">
+        <p className="text-[22px] font-black m-0 leading-none" style={{ color: c }}>{match.score}</p>
+        <p className="text-[10px] text-[#9DA2B3] mt-0.5 uppercase tracking-[0.05em]">score</p>
       </div>
       <ChevronRight size={16} color="#9DA2B3" />
     </button>
