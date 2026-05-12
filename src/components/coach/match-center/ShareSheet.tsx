@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react'
 import { Send, Download, Link2 } from 'lucide-react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import type { MatchCenterHighlight } from '@/lib/match-center'
 import { sendClipToParent } from '@/lib/match-center'
 import { players, parents } from '@/lib/mockData'
@@ -93,39 +93,20 @@ export function ShareSheet({ clip, onClose, onAction }: ShareSheetProps) {
       onClick={e => {
         if (e.target === backdropRef.current) onClose()
       }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(11,8,40,0.62)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 95,
-        padding: 24,
-      }}
+      className={cn(
+        'fixed inset-0 z-[95] flex items-center justify-center p-6',
+        'bg-[rgba(11,8,40,0.62)] backdrop-blur-[4px]',
+      )}
     >
       <div
-        style={{
-          background: BRAND.paper,
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 8,
-          width: '100%',
-          maxWidth: 400,
-          padding: '20px 22px',
-          boxShadow: '0 24px 56px rgba(11,8,40,0.4)',
-        }}
+        className={cn(
+          'bg-brand-paper border border-brand-line rounded-lg',
+          'w-full max-w-[400px] px-[22px] py-5',
+          'shadow-[0_24px_56px_rgba(11,8,40,0.4)]',
+        )}
       >
         <MEyebrow>SHARE CLIP</MEyebrow>
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: 13,
-            color: BRAND.indigoMid,
-            marginTop: 6,
-            lineHeight: 1.5,
-          }}
-        >
+        <div className="font-satoshi text-[13px] text-brand-indigo-mid mt-1.5 leading-[1.5]">
           {clip.ev} · {clip.minute}&apos; · {clip.player} #{clip.num}
         </div>
 
@@ -134,54 +115,32 @@ export function ShareSheet({ clip, onClose, onAction }: ShareSheetProps) {
           type="button"
           onClick={sendToParent}
           disabled={!parentTarget}
-          style={{
-            ...mcButtons.primary,
-            marginTop: 16,
-            width: '100%',
-            padding: '13px 14px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            opacity: parentTarget ? 1 : 0.55,
-            cursor: parentTarget ? 'pointer' : 'not-allowed',
-          }}
+          // mcButtons.primary spread keeps the shared button vocabulary
+          // (font, letter-spacing, indigo background) consistent across
+          // Match Center. Layout overrides go in className.
+          style={mcButtons.primary}
+          className={cn(
+            'mt-4 w-full !px-[14px] !py-[13px]',
+            'inline-flex items-center justify-center gap-2',
+            parentTarget
+              ? 'cursor-pointer opacity-100'
+              : 'cursor-not-allowed opacity-55',
+          )}
         >
           <Send size={14} />
           <span>{parentLabel}</span>
         </button>
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: 11.5,
-            color: BRAND.indigoMute,
-            marginTop: 6,
-            textAlign: 'center',
-          }}
-        >
+        <div className="font-satoshi text-[11.5px] text-brand-indigo-mute mt-1.5 text-center">
           {parentSub}
         </div>
 
         {/* Secondary row — Download + Copy link, equal weight. */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 8,
-            marginTop: 14,
-          }}
-        >
+        <div className="mt-3.5 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={download}
-            style={{
-              ...mcButtons.ghost,
-              padding: '10px 14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
+            style={mcButtons.ghost}
+            className="!px-[14px] !py-[10px] inline-flex items-center justify-center gap-1.5"
           >
             <Download size={13} />
             Download
@@ -189,21 +148,15 @@ export function ShareSheet({ clip, onClose, onAction }: ShareSheetProps) {
           <button
             type="button"
             onClick={copyLink}
-            style={{
-              ...mcButtons.ghost,
-              padding: '10px 14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
+            style={mcButtons.ghost}
+            className="!px-[14px] !py-[10px] inline-flex items-center justify-center gap-1.5"
           >
             <Link2 size={13} />
             Copy link
           </button>
         </div>
 
-        <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="mt-3.5 flex justify-end">
           <button type="button" style={mcButtons.text} onClick={onClose}>
             Cancel
           </button>

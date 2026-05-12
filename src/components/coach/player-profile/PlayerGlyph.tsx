@@ -3,6 +3,7 @@ interface PlayerGlyphProps {
   jerseyNumber: number
   name: string
   motm?: boolean
+  className?: string
 }
 
 /**
@@ -10,7 +11,13 @@ interface PlayerGlyphProps {
  * yellow jersey-number eyebrow. MOTM adds a dashed yellow ring around the
  * outside. No real photo support — wire that in when player.photo lands.
  */
-export function PlayerGlyph({ size = 84, jerseyNumber, name, motm = false }: PlayerGlyphProps) {
+export function PlayerGlyph({
+  size = 84,
+  jerseyNumber,
+  name,
+  motm = false,
+  className,
+}: PlayerGlyphProps) {
   const initials = name
     .split(' ')
     .map(s => s[0])
@@ -24,7 +31,7 @@ export function PlayerGlyph({ size = 84, jerseyNumber, name, motm = false }: Pla
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
-      style={{ flexShrink: 0 }}
+      className={`shrink-0 ${className ?? ''}`}
       aria-hidden
     >
       <defs>
@@ -48,23 +55,23 @@ export function PlayerGlyph({ size = 84, jerseyNumber, name, motm = false }: Pla
       <text
         x={size / 2}
         y={size / 2 - size * 0.06}
-        fontFamily="var(--font-display)"
+        // fontSize scales with `size` prop — kept inline.
         fontSize={size * 0.32}
         fill="var(--brand-sand)"
         textAnchor="middle"
         dominantBaseline="middle"
-        style={{ letterSpacing: '-0.02em' }}
+        className="font-clash tracking-[-0.02em]"
       >
         {initials}
       </text>
       <text
         x={size / 2}
         y={size / 2 + size * 0.2}
-        fontFamily="var(--font-mono)"
+        // fontSize scales with `size` prop — kept inline.
         fontSize={size * 0.1}
         fill="var(--brand-yellow)"
         textAnchor="middle"
-        style={{ letterSpacing: '0.22em' }}
+        className="font-fragment tracking-[0.22em]"
       >
         #{jerseyNumber}
       </text>
