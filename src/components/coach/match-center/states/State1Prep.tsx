@@ -30,6 +30,7 @@ import {
   MiniAvatar,
   mcButtons,
 } from '../atoms'
+import { LineupPicker } from '../LineupPicker'
 
 /* State 1 — upcoming match prep with attendance / lineup / confirm tabs.
  *
@@ -79,6 +80,8 @@ export function State1Prep({
   const [teamAssignments, setTeamAssignments] = useState<Record<number, 'A' | 'B'>>({})
   const [format, setFormat] = useState<LineupFormat>('11v11')
   const [benched, setBenched] = useState<Set<number>>(new Set())
+  const [formationId, setFormationId] = useState<string | null>(null)
+  const [slotMap, setSlotMap] = useState<Record<number, number>>({})
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -90,6 +93,8 @@ export function State1Prep({
     const stored = readLineup(sessionId)
     setFormat(stored.format)
     setBenched(new Set(stored.benched))
+    setFormationId(stored.formationId ?? null)
+    setSlotMap(stored.slotMap ?? {})
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [sessionId])
 
@@ -148,14 +153,38 @@ export function State1Prep({
   }
   function setLineupFormat(f: LineupFormat) {
     setFormat(f)
-    writeLineup(sessionId, { format: f, benched: Array.from(benched) })
+    // Changing format invalidates formationId — the picker will lazy-
+    // pick the default formation for the new size on next render.
+    setFormationId(null)
+    setSlotMap({})
+    writeLineup(sessionId, {
+      format: f,
+      benched: Array.from(benched),
+      formationId: null,
+      slotMap: {},
+    })
   }
-  function toggleBench(num: number) {
-    const next = new Set(benched)
-    if (next.has(num)) next.delete(num)
-    else next.add(num)
-    setBenched(next)
-    writeLineup(sessionId, { format, benched: Array.from(next) })
+  function setLineupSlots(newFormationId: string, newSlotMap: Record<number, number>) {
+    setFormationId(newFormationId)
+    setSlotMap(newSlotMap)
+    // Subs = present players whose jersey isn't in newSlotMap.values.
+    // Mirror that into `benched` so legacy consumers (summary tally,
+    // PrepConfirm "starting count") stay accurate.
+    const assigned = new Set(Object.values(newSlotMap))
+    const present = MATCH_CENTER_ROSTER.filter(p => {
+      const override = attendance[p.num]
+      return override !== undefined ? override : p.present
+    })
+    const nextBenched = new Set(
+      present.filter(p => !assigned.has(p.num)).map(p => p.num),
+    )
+    setBenched(nextBenched)
+    writeLineup(sessionId, {
+      format,
+      benched: Array.from(nextBenched),
+      formationId: newFormationId,
+      slotMap: newSlotMap,
+    })
   }
 
   function autoSplitTeams() {
@@ -266,12 +295,13 @@ export function State1Prep({
           />
         )}
         {tab === 'lineup' && !isTraining && (
-          <PrepLineup
+          <PrepLineupVisual
             attendance={attendance}
             format={format}
-            benched={benched}
+            formationId={formationId}
+            slotMap={slotMap}
             onFormatChange={setLineupFormat}
-            onToggleBench={toggleBench}
+            onLineupChange={setLineupSlots}
           />
         )}
         {tab === 'confirm' && (
@@ -449,178 +479,85 @@ function PrepAttendance({
   )
 }
 
-// ─── Lineup tab (match) — start / bench mirror of attendance ────────
+// ─── Lineup tab (match) — visual formation picker ───────────────────
 //
-// The previous cut showed a per-player position picker (LB / CB / RB /
-// CDM / CM / CAM / LW / ST / RW / BENCH) but each player already has
-// a primary position in the roster — the coach doesn't need to assign
-// granular positions every matchday. The actual question is "who's
-// starting and who's benched?"
+// The format selector at the top still answers "what size are we playing
+// tonight?" (5v5 / 7v7 / 9v9 / 11v11). Within a chosen format the coach
+// drops into the <LineupPicker> which renders a vertical pitch with one
+// slot per formation position. Auto-assignment fills slots by best
+// positional fit; tap any slot to swap from the implicit subs pool.
 //
-// Layout mirrors the attendance grid: a single starting checkbox per
-// row, primary position shown read-only. A format selector at the top
-// (5v5 / 7v7 / 9v9 / 11v11) sets the target starting count; the tally
-// goes coral when the coach is over the limit, indigo at/under.
-//
-// Group breakdown (1 GK · 4 DEF · 3 MID · 3 ATT) is derived from each
-// player's `pos` field via positionGroup() so the coach can sense-check
-// the shape without locking a formation.
+// Previous incarnations of this tab showed a checkbox list or per-player
+// position dropdown. The visual surface is preserved as the source of
+// truth — `benched` still gets written for the summary card's "starting
+// count" line but it's derived from the slot map, not directly editable.
 
 const FORMAT_OPTIONS: LineupFormat[] = ['5v5', '7v7', '9v9', '11v11']
 
-function positionGroup(pos: string): 'GK' | 'DEF' | 'MID' | 'ATT' {
-  if (pos === 'GK') return 'GK'
-  if (pos === 'LB' || pos === 'CB' || pos === 'RB' || pos === 'LWB' || pos === 'RWB')
-    return 'DEF'
-  if (pos === 'CDM' || pos === 'CM' || pos === 'CAM' || pos === 'LM' || pos === 'RM')
-    return 'MID'
-  return 'ATT'
-}
-
-interface PrepLineupProps {
+interface PrepLineupVisualProps {
   attendance: AttendanceMap
   format: LineupFormat
-  benched: Set<number>
+  formationId: string | null
+  slotMap: Record<number, number>
   onFormatChange: (f: LineupFormat) => void
-  onToggleBench: (num: number) => void
+  onLineupChange: (formationId: string, slotMap: Record<number, number>) => void
 }
 
-function PrepLineup({
+function PrepLineupVisual({
   attendance,
   format,
-  benched,
+  formationId,
+  slotMap,
   onFormatChange,
-  onToggleBench,
-}: PrepLineupProps) {
-  const isMobile = useIsMobile()
+  onLineupChange,
+}: PrepLineupVisualProps) {
   const present = MATCH_CENTER_ROSTER.filter(p => {
     const override = attendance[p.num]
     return override !== undefined ? override : p.present
   })
-  const starters = present.filter(p => !benched.has(p.num))
-  const groupTally = { GK: 0, DEF: 0, MID: 0, ATT: 0 }
-  for (const p of starters) groupTally[positionGroup(p.pos)]++
-
-  const target = LINEUP_FORMAT_TARGET[format]
-  const startingCount = starters.length
-  const tallyOver = startingCount > target
-  const tallyExact = startingCount === target
-
-  const lineupCols = isMobile
-    ? '24px 1fr 44px 44px 22px'
-    : '28px 1fr 60px 60px 28px'
 
   return (
     <div>
-      {/* Format selector + tally header */}
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-        <div className="flex items-center gap-[10px] flex-wrap">
-          <MEyebrow>FORMAT</MEyebrow>
-          <div className="flex gap-1">
-            {FORMAT_OPTIONS.map(f => {
-              const active = f === format
-              return (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => onFormatChange(f)}
-                  className={cn(
-                    'px-[10px] py-[5px] font-fragment text-[9.5px] font-bold tracking-[0.18em] rounded-[3px] cursor-pointer uppercase',
-                    active
-                      ? 'border-none bg-brand-indigo text-brand-sand'
-                      : 'border border-brand-line bg-transparent text-brand-indigo',
-                  )}
-                >
-                  {f}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-        <div className="flex items-baseline gap-[14px] flex-wrap">
-          <span
-            className={cn(
-              'font-fragment text-[10.5px] font-bold tracking-[0.18em]',
-              tallyOver
-                ? 'text-brand-coral'
-                : tallyExact
-                ? 'text-brand-indigo'
-                : 'text-brand-indigo-mute',
-            )}
-          >
-            STARTING {startingCount}/{target}
-            {tallyOver && ' · OVER'}
-          </span>
-          <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
-            {groupTally.GK} GK · {groupTally.DEF} DEF · {groupTally.MID} MID ·{' '}
-            {groupTally.ATT} ATT
-          </span>
-        </div>
-      </div>
-
-      {/* List */}
-      <div className="border border-brand-line rounded-[4px] bg-white overflow-hidden">
-        {/* Header row */}
-        <div
-          className="grid items-center gap-3 px-3 py-2 bg-brand-sand border-b border-brand-line"
-          style={{ gridTemplateColumns: lineupCols }}
-        >
-          <span />
-          <ColHeader>PLAYER</ColHeader>
-          <ColHeader centered>POS</ColHeader>
-          <ColHeader centered>GROUP</ColHeader>
-          <ColHeader centered>START</ColHeader>
-        </div>
-
-        {present.length === 0 ? (
-          <div className="px-3 py-5 text-center font-satoshi text-[13px] text-brand-indigo-mute">
-            Mark some players present in the Attendance tab first.
-          </div>
-        ) : (
-          present.map((p, i) => {
-            const isStarting = !benched.has(p.num)
-            const group = positionGroup(p.pos)
+      {/* Format selector — sits above the formation picker since format
+       *  is a higher-level decision (size of the match) than formation
+       *  (shape within that size). */}
+      <div className="flex items-center gap-[10px] flex-wrap mb-3">
+        <MEyebrow>FORMAT</MEyebrow>
+        <div className="flex gap-1">
+          {FORMAT_OPTIONS.map(f => {
+            const active = f === format
             return (
-              <div
-                key={p.num}
+              <button
+                key={f}
+                type="button"
+                onClick={() => onFormatChange(f)}
                 className={cn(
-                  'grid items-center gap-3 px-3 py-2',
-                  i < present.length - 1 && 'border-b border-brand-line',
+                  'px-[10px] py-[5px] font-fragment text-[9.5px] font-bold tracking-[0.18em] rounded-[3px] cursor-pointer uppercase touch-manipulation',
+                  active
+                    ? 'border-none bg-brand-indigo text-brand-sand'
+                    : 'border border-brand-line bg-transparent text-brand-indigo',
                 )}
-                style={{
-                  gridTemplateColumns: lineupCols,
-                  opacity: isStarting ? 1 : 0.5,
-                }}
               >
-                <MiniAvatar num={p.num} />
-                <div className="font-satoshi text-[12.5px] font-semibold text-brand-indigo whitespace-nowrap overflow-hidden text-ellipsis">
-                  {p.name}
-                </div>
-                <span className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute border border-brand-line px-1 py-px rounded-[2px] text-center">
-                  {p.pos}
-                </span>
-                <span className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo bg-brand-line-soft px-1 py-px rounded-[2px] text-center">
-                  {group}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onToggleBench(p.num)}
-                  aria-pressed={isStarting}
-                  aria-label={`${p.name} · ${isStarting ? 'starting' : 'benched'}`}
-                  className={cn(
-                    'w-[18px] h-[18px] rounded-[3px] flex items-center justify-center text-brand-sand text-xs leading-none cursor-pointer p-0',
-                    isStarting
-                      ? 'bg-brand-indigo border-[1.5px] border-brand-indigo'
-                      : 'bg-transparent border-[1.5px] border-brand-line',
-                  )}
-                >
-                  {isStarting && '✓'}
-                </button>
-              </div>
+                {f}
+              </button>
             )
-          })
-        )}
+          })}
+        </div>
       </div>
+
+      {present.length === 0 ? (
+        <div className="px-3 py-5 text-center font-satoshi text-[13px] text-brand-indigo-mute border border-dashed border-brand-line rounded-[4px]">
+          Mark some players present in the Attendance tab first.
+        </div>
+      ) : (
+        <LineupPicker
+          presentPlayers={present}
+          format={format}
+          formationId={formationId}
+          slotMap={slotMap}
+          onChange={onLineupChange}
+        />
+      )}
     </div>
   )
 }

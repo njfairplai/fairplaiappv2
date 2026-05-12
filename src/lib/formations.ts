@@ -6,6 +6,85 @@ export interface FormationPosition {
   y: number // % down pitch (0=own goal, 100=opponent goal)
 }
 
+/** Coarse role bucket used by the lineup picker's filter chips + tally. */
+export type FormationRoleGroup = 'GK' | 'DEF' | 'MID' | 'ATT'
+
+/** Map a `FormationPosition.role` to its broad bucket. The set of roles
+ *  used in `FORMATIONS` is fixed (GK / LB / CB / RB / LWB / RWB / CDM /
+ *  CM / CAM / LM / RM / LW / RW / ST), so the switch covers everything. */
+export function roleGroup(role: string): FormationRoleGroup {
+  if (role === 'GK') return 'GK'
+  if (['LB', 'CB', 'RB', 'LWB', 'RWB'].includes(role)) return 'DEF'
+  if (['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(role)) return 'MID'
+  return 'ATT' // LW / RW / ST / CF / SS / AM
+}
+
+/** Position-match priority order per slot role. Falls back to "same
+ *  group" matches if no exact match is available, so an LM can fill an
+ *  LW slot when nobody else is closer. */
+const POSITION_MATCH: Record<string, string[]> = {
+  GK:  ['GK'],
+  LB:  ['LB', 'LWB', 'LM'],
+  CB:  ['CB', 'CDM'],
+  RB:  ['RB', 'RWB', 'RM'],
+  LWB: ['LWB', 'LB', 'LM'],
+  RWB: ['RWB', 'RB', 'RM'],
+  CDM: ['CDM', 'CM'],
+  CM:  ['CM', 'CDM', 'CAM'],
+  CAM: ['CAM', 'AM', 'CM', 'SS'],
+  LM:  ['LM', 'LW', 'LWB'],
+  RM:  ['RM', 'RW', 'RWB'],
+  LW:  ['LW', 'LM'],
+  RW:  ['RW', 'RM'],
+  ST:  ['ST', 'CF', 'SS'],
+  CF:  ['CF', 'ST'],
+  SS:  ['SS', 'CAM', 'CF'],
+  AM:  ['AM', 'CAM', 'CM'],
+}
+
+/**
+ * Auto-assign present players to formation slots by best positional fit.
+ *
+ * Algorithm: for each slot (in order; GK first), walk the slot role's
+ * `POSITION_MATCH` priority list. For each desired position, find the
+ * unassigned present player whose `position[]` array contains that
+ * value, preferring players whose preferred position (index 0 in their
+ * array) is the match. First match wins per slot. Players not placed
+ * end up as implicit subs.
+ *
+ * Returns slotMap: positionIndex → playerId.
+ */
+export function autoAssignByFormation(
+  formation: Formation,
+  presentPlayers: { id: string; position: string[] }[],
+): Record<number, string> {
+  const slotMap: Record<number, string> = {}
+  const taken = new Set<string>()
+
+  formation.positions.forEach((slot, slotIdx) => {
+    const wantList = POSITION_MATCH[slot.role] ?? [slot.role]
+    let best: { id: string; preference: number } | null = null
+    for (const want of wantList) {
+      for (const p of presentPlayers) {
+        if (taken.has(p.id)) continue
+        const idx = p.position.indexOf(want)
+        if (idx === -1) continue
+        const preference = idx // lower = stronger match
+        if (best === null || preference < best.preference) {
+          best = { id: p.id, preference }
+        }
+      }
+      if (best !== null) break
+    }
+    if (best) {
+      slotMap[slotIdx] = best.id
+      taken.add(best.id)
+    }
+  })
+
+  return slotMap
+}
+
 export interface Formation {
   id: string
   label: string

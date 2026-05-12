@@ -122,16 +122,36 @@ export const LINEUP_FORMAT_TARGET: Record<LineupFormat, number> = {
 
 export interface LineupState {
   format: LineupFormat
-  /** Jersey numbers benched (i.e. NOT starting). All other present
-   *  players are implicitly starting. */
+  /** Jersey numbers benched (i.e. NOT starting). Retained for legacy
+   *  match summaries that still derive "starting count" from this set;
+   *  the new visual lineup picker writes both `benched` and `slotMap`
+   *  so consumers can pick whichever shape they need. */
   benched: number[]
+  /** Formation registry id (e.g. `11v11_4-3-3`). `null` means the coach
+   *  hasn't picked a formation yet — the picker will lazy-init with the
+   *  format's default formation + auto-assign on first render. */
+  formationId?: string | null
+  /** positionIndex (in the Formation.positions array) → jersey number.
+   *  Sparse: empty slots are simply absent. Jerseys not present in any
+   *  slot's value become the implicit subs bench. */
+  slotMap?: Record<number, number>
 }
 
 export function readLineup(sessionId: string): LineupState {
-  return readJson<LineupState>(`fairplai_prep_lineup_${sessionId}`, {
+  const raw = readJson<LineupState>(`fairplai_prep_lineup_${sessionId}`, {
     format: '11v11',
     benched: [],
+    formationId: null,
+    slotMap: {},
   })
+  // Migrate older shape (no formationId/slotMap) — leave them empty so
+  // the picker lazy-initialises on mount.
+  return {
+    format: raw.format,
+    benched: raw.benched ?? [],
+    formationId: raw.formationId ?? null,
+    slotMap: raw.slotMap ?? {},
+  }
 }
 
 export function writeLineup(sessionId: string, state: LineupState): void {
