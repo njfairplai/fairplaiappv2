@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { Bell, User } from 'lucide-react'
 import { Logo } from '@/components/shared/Logo'
+import { cn } from '@/lib/cn'
 
 interface PortalTopBarProps {
   /** Optional unread count for the bell badge. 0 hides the badge. */
@@ -13,6 +14,9 @@ interface PortalTopBarProps {
   /** When true, renders a back chevron in place of the avatar. */
   showBack?: boolean
 }
+
+const ICON_BTN_CLASS =
+  'inline-flex items-center justify-center w-9 h-9 rounded-lg bg-transparent border-none cursor-pointer text-brand-indigo text-[22px] font-clash'
 
 /* Slim sticky top bar with avatar (left) → settings, brand mark
  * (centre — wordmark by default, or a deep-page title), notification
@@ -27,25 +31,18 @@ export function PortalTopBar({
 
   return (
     <header
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 20,
-        background: 'var(--brand-sand)',
-        borderBottom: '1px solid var(--brand-line)',
-        height: 52,
-        display: 'grid',
-        gridTemplateColumns: '40px 1fr 40px',
-        alignItems: 'center',
-        padding: '0 12px',
-      }}
+      className={cn(
+        'sticky top-0 z-20 grid h-[52px] items-center px-3',
+        'bg-brand-sand border-b border-brand-line',
+        'grid-cols-[40px_1fr_40px]',
+      )}
     >
       {showBack ? (
         <button
           type="button"
           onClick={() => router.back()}
           aria-label="Back"
-          style={iconBtnStyle()}
+          className={ICON_BTN_CLASS}
         >
           ‹
         </button>
@@ -56,30 +53,15 @@ export function PortalTopBar({
             router.push(pathname.startsWith('/player') ? '/player/settings' : '/parent/settings')
           }
           aria-label="Settings"
-          style={iconBtnStyle()}
+          className={ICON_BTN_CLASS}
         >
           <User size={18} />
         </button>
       )}
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="flex items-center justify-center">
         {title ? (
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              letterSpacing: '0.32em',
-              fontWeight: 800,
-              color: 'var(--brand-indigo)',
-              textAlign: 'center',
-            }}
-          >
+          <span className="text-center font-fragment text-[11px] font-extrabold tracking-[0.32em] text-brand-indigo">
             {title.toUpperCase()}
           </span>
         ) : (
@@ -97,29 +79,18 @@ export function PortalTopBar({
           router.push(pathname.startsWith('/player') ? '/player/notifications' : '/parent/hub')
         }
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-        style={{ ...iconBtnStyle(), position: 'relative' }}
+        className={cn(ICON_BTN_CLASS, 'relative')}
       >
         <Bell size={18} />
         {unreadCount > 0 && (
           <span
-            style={{
-              position: 'absolute',
-              top: 4,
-              right: 4,
-              minWidth: 16,
-              height: 16,
-              padding: '0 4px',
-              borderRadius: 8,
-              background: 'var(--brand-yellow)',
-              color: 'var(--brand-indigo)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              fontWeight: 800,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1.5px solid var(--brand-sand)',
-            }}
+            className={cn(
+              'absolute top-1 right-1 inline-flex items-center justify-center',
+              'min-w-[16px] h-4 px-1 rounded-lg',
+              'bg-brand-yellow text-brand-indigo',
+              'font-fragment text-[9.5px] font-extrabold',
+              'border-[1.5px] border-brand-sand',
+            )}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
@@ -127,21 +98,4 @@ export function PortalTopBar({
       </button>
     </header>
   )
-}
-
-function iconBtnStyle(): React.CSSProperties {
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--brand-indigo)',
-    cursor: 'pointer',
-    fontSize: 22,
-    fontFamily: 'var(--font-display)',
-  }
 }
