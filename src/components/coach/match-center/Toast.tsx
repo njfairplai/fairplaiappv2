@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { BRAND, TYPE } from '@/lib/constants'
 
 /**
  * Tiny transient-feedback chip that fades in bottom-right and auto-dismisses.
@@ -46,22 +45,13 @@ export function Toast({
       // text changes, even if a chip is already on-screen — useful when
       // two actions fire in quick succession.
       key={message}
-      style={{
-        position: 'fixed',
-        right: 24,
-        bottom: 24,
-        zIndex: 80,
-        background: BRAND.sand,
-        color: BRAND.indigo,
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 6,
-        padding: '10px 16px',
-        fontFamily: TYPE.body,
-        fontSize: 13,
-        fontWeight: 600,
-        boxShadow: '0 12px 28px rgba(11,8,40,0.20)',
-        animation: 'mcToastIn 180ms ease both',
-      }}
+      className={
+        'fixed right-6 bottom-6 z-[80] ' +
+        'bg-brand-sand text-brand-indigo border border-brand-line rounded-md ' +
+        'px-4 py-2.5 font-satoshi text-[13px] font-semibold ' +
+        'shadow-[0_12px_28px_rgba(11,8,40,0.20)] ' +
+        '[animation:mcToastIn_180ms_ease_both]'
+      }
     >
       {message}
     </div>
