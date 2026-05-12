@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { BRAND, TYPE } from '@/lib/constants'
 import type { MatchCenterStatus } from '@/lib/match-center'
+import { cn } from '@/lib/cn'
 
 /* Shared atoms for the Match Center surface. Kept in one file so the
  * design vocabulary (eyebrow → display → status pill → card) is
@@ -10,24 +11,24 @@ import type { MatchCenterStatus } from '@/lib/match-center'
 
 export function MEyebrow({
   children,
-  color = BRAND.indigoMute,
-  style = {},
+  color,
+  style,
+  className,
 }: {
   children: ReactNode
+  /** Override the default `text-brand-indigo-mute` color. Pass any CSS colour string. */
   color?: string
   style?: CSSProperties
+  className?: string
 }) {
   return (
     <div
-      style={{
-        fontFamily: TYPE.mono,
-        fontSize: 10.5,
-        letterSpacing: '0.22em',
-        color,
-        fontWeight: 700,
-        textTransform: 'uppercase',
-        ...style,
-      }}
+      style={color ? { color, ...style } : style}
+      className={cn(
+        'font-fragment text-[10.5px] font-bold uppercase tracking-[0.22em]',
+        !color && 'text-brand-indigo-mute',
+        className,
+      )}
     >
       {children}
     </div>
@@ -37,24 +38,25 @@ export function MEyebrow({
 export function MDisplay({
   children,
   size = 44,
-  color = BRAND.indigo,
-  style = {},
+  color,
+  style,
+  className,
 }: {
   children: ReactNode
   size?: number
+  /** Override the default `text-brand-indigo` color. */
   color?: string
   style?: CSSProperties
+  className?: string
 }) {
   return (
     <div
-      style={{
-        fontFamily: TYPE.display,
-        fontSize: size,
-        lineHeight: 0.94,
-        letterSpacing: '-0.02em',
-        color,
-        ...style,
-      }}
+      style={{ fontSize: size, ...(color ? { color } : {}), ...style }}
+      className={cn(
+        'font-clash leading-[0.94] tracking-[-0.02em]',
+        !color && 'text-brand-indigo',
+        className,
+      )}
     >
       {children}
     </div>
@@ -84,30 +86,22 @@ export function MStatusPill({
   if (!s) return null
   return (
     <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 5,
-        background: s.bg,
-        color: s.color,
-        fontFamily: TYPE.mono,
-        fontSize: 9,
-        fontWeight: 700,
-        letterSpacing: '0.18em',
-        padding: '3px 7px',
-        borderRadius: 3,
-        border: status === 'upcoming' ? `1px dashed ${BRAND.line}` : 'none',
-      }}
+      // Status-dependent colours stay inline because they're computed per
+      // status from the STATUS_TOKENS map (palette-independent semantic
+      // tokens — prep is always coral, drills always sand-deep, etc).
+      style={{ background: s.bg, color: s.color }}
+      className={cn(
+        'inline-flex items-center gap-[5px] rounded-[3px] px-[7px] py-[3px]',
+        'font-fragment text-[9px] font-bold tracking-[0.18em]',
+        status === 'upcoming' && 'border border-dashed border-brand-line',
+      )}
     >
       {animated && (
         <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: s.color,
-            animation: 'mcPulse 1.4s ease-in-out infinite',
-          }}
+          // Color follows the parent text color via currentColor; size + animation
+          // are the only fixed visual aspects.
+          style={{ background: s.color }}
+          className="block h-1.5 w-1.5 rounded-full [animation:mcPulse_1.4s_ease-in-out_infinite]"
         />
       )}
       {s.label}
@@ -119,16 +113,11 @@ export function MKindChip({ kind }: { kind: 'training' | 'drills' }) {
   if (kind === 'training') {
     return (
       <span
-        style={{
-          background: BRAND.yellow,
-          color: BRAND.indigo,
-          fontFamily: TYPE.mono,
-          fontSize: 8.5,
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          padding: '2px 5px',
-          borderRadius: 2,
-        }}
+        className={cn(
+          'bg-brand-yellow text-brand-indigo',
+          'rounded-[2px] px-[5px] py-0.5',
+          'font-fragment text-[8.5px] font-bold tracking-[0.18em]',
+        )}
       >
         TRAINING
       </span>
@@ -136,17 +125,11 @@ export function MKindChip({ kind }: { kind: 'training' | 'drills' }) {
   }
   return (
     <span
-      style={{
-        background: 'transparent',
-        color: BRAND.indigoMute,
-        border: `1px solid ${BRAND.line}`,
-        fontFamily: TYPE.mono,
-        fontSize: 8.5,
-        fontWeight: 700,
-        letterSpacing: '0.18em',
-        padding: '2px 5px',
-        borderRadius: 2,
-      }}
+      className={cn(
+        'bg-transparent text-brand-indigo-mute border border-brand-line',
+        'rounded-[2px] px-[5px] py-0.5',
+        'font-fragment text-[8.5px] font-bold tracking-[0.18em]',
+      )}
     >
       DRILLS
     </span>
@@ -155,19 +138,20 @@ export function MKindChip({ kind }: { kind: 'training' | 'drills' }) {
 
 export function Card({
   children,
-  style = {},
+  style,
+  className,
 }: {
   children: ReactNode
   style?: CSSProperties
+  className?: string
 }) {
   return (
     <div
-      style={{
-        background: BRAND.paper,
-        border: `1px solid ${BRAND.line}`,
-        borderRadius: 6,
-        ...style,
-      }}
+      style={style}
+      className={cn(
+        'bg-brand-paper border border-brand-line rounded-md',
+        className,
+      )}
     >
       {children}
     </div>
@@ -192,85 +176,44 @@ export function VideoBlock({
 }) {
   return (
     <div
+      // Height is a caller-supplied numeric value, and the diagonal-stripe
+      // background pattern uses a fixed repeating gradient — both kept
+      // inline because Tailwind has no clean equivalent.
       style={{
-        width: '100%',
         height,
-        background: '#0F0A36',
-        position: 'relative',
-        borderRadius: 6,
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         backgroundImage:
           'repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0 12px, transparent 12px 24px)',
       }}
+      className="relative w-full overflow-hidden rounded-md flex items-center justify-center bg-[#0F0A36]"
     >
       {playable && (
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: BRAND.yellow,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: TYPE.display,
-              fontSize: 22,
-              color: BRAND.indigo,
-              marginLeft: 4,
-            }}
-          >
-            ▶
-          </span>
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-yellow shadow-[0_8px_20px_rgba(0,0,0,0.4)]">
+          <span className="ml-1 font-clash text-[22px] text-brand-indigo">▶</span>
         </div>
       )}
       <div
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: 14,
-          fontFamily: TYPE.mono,
-          fontSize: 10,
-          letterSpacing: '0.22em',
-          color: 'rgba(238,228,200,0.55)',
-          fontWeight: 700,
-        }}
+        className={cn(
+          'absolute top-3 left-3.5',
+          'font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-sand/55',
+        )}
       >
         {label}
       </div>
       {sub && (
         <div
-          style={{
-            position: 'absolute',
-            bottom: 12,
-            left: 14,
-            fontFamily: TYPE.mono,
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'rgba(238,228,200,0.55)',
-            fontWeight: 700,
-          }}
+          className={cn(
+            'absolute bottom-3 left-3.5',
+            'font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-sand/55',
+          )}
         >
           {sub}
         </div>
       )}
       <div
-        style={{
-          position: 'absolute',
-          bottom: 12,
-          right: 14,
-          fontFamily: TYPE.mono,
-          fontSize: 10,
-          letterSpacing: '0.18em',
-          color: 'rgba(238,228,200,0.55)',
-        }}
+        className={cn(
+          'absolute bottom-3 right-3.5',
+          'font-fragment text-[10px] tracking-[0.18em] text-brand-sand/55',
+        )}
       >
         16:9
       </div>
@@ -302,7 +245,7 @@ export function MatchCenterScoreArc({
   const C = 2 * Math.PI * r
   const offset = C * (1 - Math.min(100, Math.max(0, value)) / 100)
   return (
-    <div style={{ position: 'relative', width: size, height: size }}>
+    <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle
           cx={size / 2}
@@ -321,6 +264,7 @@ export function MatchCenterScoreArc({
           stroke={color}
           strokeWidth={stroke}
           strokeLinecap="round"
+          // Transform + stroke-dash values are computed from size/value — kept inline.
           style={{
             transform: 'rotate(-90deg)',
             transformOrigin: `${size / 2}px ${size / 2}px`,
@@ -330,18 +274,9 @@ export function MatchCenterScoreArc({
         />
       </svg>
       <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: TYPE.display,
-          fontSize: size * 0.42,
-          letterSpacing: '-0.02em',
-          color: textColor,
-          lineHeight: 1,
-        }}
+        // fontSize scales with `size` prop — kept inline.
+        style={{ fontSize: size * 0.42, color: textColor }}
+        className="absolute inset-0 flex items-center justify-center font-clash leading-none tracking-[-0.02em]"
       >
         {value}
       </div>
@@ -352,28 +287,23 @@ export function MatchCenterScoreArc({
 export function MiniAvatar({ num }: { num: number }) {
   return (
     <div
-      style={{
-        width: 28,
-        height: 28,
-        borderRadius: '50%',
-        background: BRAND.indigo,
-        color: BRAND.sand,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: TYPE.mono,
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: '0.04em',
-        flexShrink: 0,
-      }}
+      className={cn(
+        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+        'bg-brand-indigo text-brand-sand',
+        'font-fragment text-[10px] font-bold tracking-[0.04em]',
+      )}
     >
       {num}
     </div>
   )
 }
 
-/** Shared button styles used across Match Center states. */
+/** Shared button styles used across Match Center states.
+ *
+ * Kept as `CSSProperties` objects (not class strings) because every
+ * consumer spreads them via `<button style={mcButtons.primary}>` rather
+ * than composing via className. Converting to class strings would
+ * require touching every caller — out of scope for this pass. */
 export const mcButtons = {
   text: {
     background: 'transparent',
