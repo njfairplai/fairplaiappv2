@@ -297,8 +297,18 @@ export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
   { id: 'h-m15-6', sessionDay: 15, sessionMonth: 3, ev: 'SAVE', player: 'Omar Al-Sayed',    num: 1,  minute: 71, dur: 12, headline: 'Reaction stop from a deflection' },
 ]
 
-/** Default selected day on first render (the populated Ready state). */
-export const DEFAULT_SELECTED_DAY = 24
+/**
+ * The demo's virtual "today". Single source of truth — `DEFAULT_SELECTED_DAY`
+ * resolves to `DEMO_TODAY.day`, and the Calendar's initial month/year also
+ * derive from this constant so a fresh page load opens on today, not on the
+ * Feb 24 focal session.
+ *
+ * Update this when the demo's "today" needs to advance.
+ */
+export const DEMO_TODAY = { year: 2026, month: 3, day: 21 } as const
+
+/** Default selected day on first render — alias for `DEMO_TODAY.day`. */
+export const DEFAULT_SELECTED_DAY = DEMO_TODAY.day
 
 export type MatchCenterState = '1' | '2' | '3' | '4' | '5' | null
 

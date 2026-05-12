@@ -34,7 +34,10 @@ interface CalendarProps {
    *  switch on cells where status === 'prep' and the coach has already
    *  hit "Confirm prep →" in State 1. */
   confirmedSessions: Set<string>
-  onSelect: (day: number) => void
+  /** Receives the full date of the selected cell so the page can also
+   *  update currentMonth/Year if the tap crossed a month boundary
+   *  (only possible in the mobile WeekFilmstrip). */
+  onSelect: (year: number, month: number, day: number) => void
   /** Desktop-mode month change. Clamped to the seeded data range. */
   onMonthChange: (year: number, month: number) => void
   /** Mobile-mode week change. The handler receives the new week's
@@ -271,7 +274,7 @@ function MonthGrid({
   month: number
   selectedDay: number | null
   confirmedSessions: Set<string>
-  onSelect: (day: number) => void
+  onSelect: (year: number, month: number, day: number) => void
 }) {
   const firstDow = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -337,7 +340,7 @@ function MonthGrid({
                   shape="cell"
                   selected={isSelected}
                   prepConfirmed={confirmedSessions.has(`${session.year}-${String(session.month).padStart(2, '0')}-${String(session.day).padStart(2, '0')}`)}
-                  onClick={() => onSelect(session.day)}
+                  onClick={() => onSelect(year, month, session.day)}
                 />
               )}
             </div>
@@ -362,7 +365,7 @@ function WeekFilmstrip({
   year: number
   month: number
   selectedDay: number | null
-  onSelect: (day: number) => void
+  onSelect: (year: number, month: number, day: number) => void
 }) {
   // Anchor on the Sunday of the week containing selectedDay (or month
   // start if no selection yet). The 7 cards may span months — pull each
@@ -434,7 +437,7 @@ function WeekFilmstrip({
                 }}
                 shape="frame"
                 selected={isSelected}
-                onClick={() => onSelect(c.day)}
+                onClick={() => onSelect(c.year, c.month, c.day)}
               />
             </div>
           )

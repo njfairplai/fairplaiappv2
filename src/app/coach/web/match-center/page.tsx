@@ -6,6 +6,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/cn'
 import {
   DEFAULT_SELECTED_DAY,
+  DEMO_TODAY,
   MATCH_CENTER_HIGHLIGHTS,
   SESSIONS,
   getSessionsForMonth,
@@ -55,8 +56,8 @@ export default function CoachMatchCenterPage() {
   )
 
   const isMobile = useIsMobile()
-  const [currentMonth, setCurrentMonth] = useState(2)
-  const [currentYear, setCurrentYear] = useState(2026)
+  const [currentMonth, setCurrentMonth] = useState<number>(DEMO_TODAY.month)
+  const [currentYear, setCurrentYear] = useState<number>(DEMO_TODAY.year)
   const [selectedDay, setSelectedDay] = useState<number>(initialDay)
 
   // Classification overrides + prep confirmations keyed by sessionId.
@@ -219,7 +220,15 @@ export default function CoachMatchCenterPage() {
           currentYear={currentYear}
           selectedDay={selectedDay}
           confirmedSessions={confirmedSessions}
-          onSelect={setSelectedDay}
+          onSelect={(year, month, day) => {
+            // Update month/year too — tap from a mobile filmstrip card
+            // can cross a month boundary, and we need currentMonth to
+            // match the selected day or the pane reads from the wrong
+            // month's sessions.
+            setCurrentYear(year)
+            setCurrentMonth(month)
+            setSelectedDay(day)
+          }}
           onMonthChange={(year, month) => {
             setCurrentYear(year)
             setCurrentMonth(month)
@@ -314,11 +323,6 @@ function EmptyDayState() {
     </Card>
   )
 }
-
-/** Demo "today" — used by the Calendar's Today button. Hardcoded
- *  inside the seeded data range (Feb–Apr 2026) so the button always
- *  lands somewhere with content. Bump when fixture data extends. */
-const DEMO_TODAY = { year: 2026, month: 3, day: 21 }
 
 const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 function formatSessionMeta(year: number, month: number, day: number): string {
