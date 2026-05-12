@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { CSSProperties } from 'react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { players, pitches } from '@/lib/mockData'
 import {
@@ -11,7 +11,6 @@ import {
   MEyebrow,
   MDisplay,
   MiniAvatar,
-  mcButtons,
 } from '@/components/coach/match-center/atoms'
 import { Toast } from '@/components/coach/match-center/Toast'
 
@@ -80,6 +79,16 @@ function writeDrafts(drafts: SessionDraft[]) {
 const ACADEMY_PLAYERS = players
   .filter(p => p.academyId === 'academy_001')
   .slice(0, 16)
+
+const INPUT_CLASS =
+  'mt-2.5 w-full px-3.5 py-2.5 font-satoshi text-sm text-brand-indigo bg-brand-paper border border-brand-line rounded-sm outline-none'
+
+const BTN_TEXT =
+  'cursor-pointer border-none bg-transparent font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute'
+const BTN_GHOST =
+  'cursor-pointer rounded-sm border border-brand-indigo bg-transparent px-3.5 py-2 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo'
+const BTN_PRIMARY =
+  'cursor-pointer rounded-sm border-none bg-brand-indigo px-[18px] py-[9px] font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-sand'
 
 export default function CoachRecordPage() {
   const router = useRouter()
@@ -150,44 +159,21 @@ export default function CoachRecordPage() {
   }, [currentStep, sessionType, opponentName, selectedPitch])
 
   return (
-    <div
-      style={{
-        background: BRAND.sand,
-        minHeight: '100%',
-        padding: isMobile ? '20px 14px' : '32px 36px',
-        color: BRAND.indigo,
-      }}
-    >
+    <div className="min-h-full bg-brand-sand text-brand-indigo px-3.5 py-5 md:px-9 md:py-8">
       <div>
         <MEyebrow>NEW SESSION</MEyebrow>
         <MDisplay size={isMobile ? 32 : 56} style={{ marginTop: 6 }}>
           Set up your session
         </MDisplay>
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: 14,
-            color: BRAND.indigoMid,
-            marginTop: 4,
-          }}
-        >
+        <div className="mt-1 font-satoshi text-sm text-brand-indigo-mid">
           Pick a session type, confirm attendance, and we&apos;ll have it ready for the pitch.
         </div>
       </div>
 
-      <div style={{ marginTop: 24 }}>
+      <div className="mt-6">
         <Card style={{ padding: 0 }}>
           {/* Steps tab row */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 0,
-              borderBottom: `1px solid ${BRAND.line}`,
-              background: BRAND.sand,
-              padding: '0 26px',
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="flex flex-wrap gap-0 border-b border-brand-line bg-brand-sand px-6">
             {stepLabels.map((label, i) => {
               const stepNum = i + 1
               const active = stepNum === currentStep
@@ -200,36 +186,19 @@ export default function CoachRecordPage() {
                     if (stepNum <= currentStep) setCurrentStep(stepNum)
                   }}
                   disabled={stepNum > currentStep}
-                  style={{
-                    padding: '12px 18px',
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: stepNum > currentStep ? 'default' : 'pointer',
-                    position: 'relative',
-                    fontFamily: TYPE.mono,
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    letterSpacing: '0.18em',
-                    color: active
-                      ? BRAND.indigo
+                  className={cn(
+                    'relative border-none bg-transparent px-4 py-3 font-fragment text-[10.5px] font-bold uppercase tracking-[0.18em]',
+                    stepNum > currentStep ? 'cursor-default' : 'cursor-pointer',
+                    active
+                      ? 'text-brand-indigo'
                       : complete
-                      ? BRAND.indigoMid
-                      : BRAND.indigoMute,
-                    textTransform: 'uppercase',
-                  }}
+                      ? 'text-brand-indigo-mid'
+                      : 'text-brand-indigo-mute',
+                  )}
                 >
                   {String(stepNum).padStart(2, '0')} · {label}
                   {active && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: -1,
-                        left: 0,
-                        right: 0,
-                        height: 2,
-                        background: BRAND.indigo,
-                      }}
-                    />
+                    <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-brand-indigo" />
                   )}
                 </button>
               )
@@ -237,7 +206,7 @@ export default function CoachRecordPage() {
           </div>
 
           {/* Step body */}
-          <div style={{ padding: '24px 26px', minHeight: 380 }}>
+          <div className="min-h-[380px] px-6 py-6">
             {currentStep === 1 && (
               <SetupStep
                 sessionType={sessionType}
@@ -276,32 +245,22 @@ export default function CoachRecordPage() {
           </div>
 
           {/* Footer CTA bar */}
-          <div
-            style={{
-              padding: '14px 26px',
-              borderTop: `1px solid ${BRAND.line}`,
-              background: BRAND.sand,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="flex flex-wrap items-center gap-2.5 border-t border-brand-line bg-brand-sand px-6 py-3.5">
             <button
               type="button"
-              style={mcButtons.text}
+              className={BTN_TEXT}
               onClick={() => router.push('/coach/web/match-center')}
             >
               Cancel ↗
             </button>
-            <span style={{ flex: 1 }} />
-            <button type="button" style={mcButtons.ghost} onClick={saveDraft}>
+            <span className="flex-1" />
+            <button type="button" className={BTN_GHOST} onClick={saveDraft}>
               Save draft
             </button>
             {currentStep > 1 && (
               <button
                 type="button"
-                style={mcButtons.ghost}
+                className={BTN_GHOST}
                 onClick={() => setCurrentStep(s => Math.max(1, s - 1))}
               >
                 ← Back
@@ -310,18 +269,17 @@ export default function CoachRecordPage() {
             {currentStep < totalSteps ? (
               <button
                 type="button"
-                style={{
-                  ...mcButtons.primary,
-                  opacity: canAdvance ? 1 : 0.5,
-                  cursor: canAdvance ? 'pointer' : 'default',
-                }}
+                className={cn(
+                  BTN_PRIMARY,
+                  !canAdvance && 'cursor-default opacity-50',
+                )}
                 onClick={() => canAdvance && setCurrentStep(s => s + 1)}
                 disabled={!canAdvance}
               >
                 Next →
               </button>
             ) : (
-              <button type="button" style={mcButtons.primary} onClick={confirmAndGo}>
+              <button type="button" className={BTN_PRIMARY} onClick={confirmAndGo}>
                 Confirm &amp; record →
               </button>
             )}
@@ -367,18 +325,10 @@ function SetupStep({
   selectedPitch,
   onPitchChange,
 }: SetupStepProps) {
-  const isMobile = useIsMobile()
   return (
     <div>
       <MEyebrow>SESSION TYPE</MEyebrow>
-      <div
-        style={{
-          marginTop: 12,
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-          gap: 10,
-        }}
-      >
+      <div className="mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-3">
         {SESSION_TYPE_OPTIONS.map(opt => {
           const active = opt.id === sessionType
           return (
@@ -386,35 +336,17 @@ function SetupStep({
               key={opt.id}
               type="button"
               onClick={() => onSessionTypeChange(opt.id)}
-              style={{
-                padding: '16px 18px',
-                background: active ? BRAND.yellow : BRAND.paper,
-                border: `1px solid ${active ? BRAND.indigo : BRAND.line}`,
-                borderRadius: 6,
-                textAlign: 'left',
-                cursor: 'pointer',
-                color: BRAND.indigo,
-              }}
+              className={cn(
+                'cursor-pointer rounded-md px-4 py-4 text-left text-brand-indigo border',
+                active
+                  ? 'bg-brand-yellow border-brand-indigo'
+                  : 'bg-brand-paper border-brand-line',
+              )}
             >
-              <div
-                style={{
-                  fontFamily: TYPE.display,
-                  fontSize: 22,
-                  letterSpacing: '-0.01em',
-                  lineHeight: 1.05,
-                }}
-              >
+              <div className="font-clash text-[22px] leading-[1.05] tracking-[-0.01em]">
                 {opt.title}
               </div>
-              <div
-                style={{
-                  fontFamily: TYPE.body,
-                  fontSize: 12.5,
-                  color: BRAND.indigoMid,
-                  marginTop: 6,
-                  lineHeight: 1.45,
-                }}
-              >
+              <div className="mt-1.5 font-satoshi text-[12.5px] leading-[1.45] text-brand-indigo-mid">
                 {opt.desc}
               </div>
             </button>
@@ -423,32 +355,25 @@ function SetupStep({
       </div>
 
       {sessionType === 'match' && (
-        <div style={{ marginTop: 22 }}>
+        <div className="mt-[22px]">
           <MEyebrow>OPPONENT</MEyebrow>
           <input
             value={opponentName}
             onChange={e => onOpponentChange(e.target.value)}
             placeholder="e.g. Al Wasl Academy"
-            style={inputStyle}
+            className={INPUT_CLASS}
           />
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: 22,
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-          gap: 16,
-        }}
-      >
+      <div className="mt-[22px] grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <MEyebrow>DATE</MEyebrow>
           <input
             type="date"
             value={sessionDate}
             onChange={e => onDateChange(e.target.value)}
-            style={inputStyle}
+            className={INPUT_CLASS}
           />
         </div>
         <div>
@@ -457,21 +382,14 @@ function SetupStep({
             type="time"
             value={sessionTime}
             onChange={e => onTimeChange(e.target.value)}
-            style={inputStyle}
+            className={INPUT_CLASS}
           />
         </div>
       </div>
 
-      <div style={{ marginTop: 22 }}>
+      <div className="mt-[22px]">
         <MEyebrow>PITCH</MEyebrow>
-        <div
-          style={{
-            marginTop: 10,
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-            gap: 8,
-          }}
-        >
+        <div className="mt-2.5 grid grid-cols-1 gap-2 md:grid-cols-2">
           {pitches.map(p => {
             const active = p.id === selectedPitch
             return (
@@ -479,34 +397,21 @@ function SetupStep({
                 key={p.id}
                 type="button"
                 onClick={() => onPitchChange(p.id)}
-                style={{
-                  padding: '10px 14px',
-                  background: active ? BRAND.indigo : BRAND.paper,
-                  color: active ? BRAND.sand : BRAND.indigo,
-                  border: `1px solid ${active ? BRAND.indigo : BRAND.line}`,
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
+                className={cn(
+                  'cursor-pointer rounded-sm px-3.5 py-2.5 text-left border',
+                  active
+                    ? 'bg-brand-indigo text-brand-sand border-brand-indigo'
+                    : 'bg-brand-paper text-brand-indigo border-brand-line',
+                )}
               >
-                <div
-                  style={{
-                    fontFamily: TYPE.body,
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
+                <div className="font-satoshi text-[13px] font-semibold">
                   {p.name}
                 </div>
                 <div
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 9.5,
-                    letterSpacing: '0.18em',
-                    color: active ? 'rgba(238,228,200,0.7)' : BRAND.indigoMute,
-                    marginTop: 2,
-                    fontWeight: 700,
-                  }}
+                  className={cn(
+                    'mt-0.5 font-fragment text-[9.5px] font-bold tracking-[0.18em]',
+                    active ? 'text-brand-sand/70' : 'text-brand-indigo-mute',
+                  )}
                 >
                   {p.type.toUpperCase()} ·{' '}
                   {p.cameraStatus === 'active'
@@ -524,19 +429,6 @@ function SetupStep({
   )
 }
 
-const inputStyle: CSSProperties = {
-  marginTop: 10,
-  width: '100%',
-  padding: '10px 14px',
-  fontFamily: TYPE.body,
-  fontSize: 14,
-  color: BRAND.indigo,
-  background: BRAND.paper,
-  border: `1px solid ${BRAND.line}`,
-  borderRadius: 4,
-  outline: 'none',
-}
-
 // ── Step 2 · Attendance ───────────────────────────────────────────────
 
 interface AttendanceStepProps {
@@ -545,7 +437,6 @@ interface AttendanceStepProps {
 }
 
 function AttendanceStep({ attendance, onChange }: AttendanceStepProps) {
-  const isMobile = useIsMobile()
   function setPresence(playerId: string, present: boolean) {
     const cur = attendance[playerId] ?? { present: false, jerseyNumber: 0 }
     onChange({ ...attendance, [playerId]: { ...cur, present } })
@@ -558,82 +449,30 @@ function AttendanceStep({ attendance, onChange }: AttendanceStepProps) {
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 10,
-          flexWrap: 'wrap',
-          gap: 10,
-        }}
-      >
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2.5">
         <MEyebrow>ROSTER · {ACADEMY_PLAYERS.length} PLAYERS</MEyebrow>
-        <span
-          style={{
-            fontFamily: TYPE.mono,
-            fontSize: 10,
-            letterSpacing: '0.18em',
-            fontWeight: 700,
-            color: BRAND.indigoMute,
-          }}
-        >
+        <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
           {presentCount} PRESENT · {ACADEMY_PLAYERS.length - presentCount} OUT
         </span>
       </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-          gap: '0 24px',
-          border: `1px solid ${BRAND.line}`,
-          borderRadius: 4,
-          background: '#fff',
-        }}
-      >
+      <div className="grid grid-cols-1 gap-x-6 gap-y-0 rounded-sm border border-brand-line bg-white md:grid-cols-2">
         {ACADEMY_PLAYERS.map((p, i) => {
           const entry =
             attendance[p.id] ?? { present: false, jerseyNumber: p.jerseyNumber }
           return (
             <div
               key={p.id}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '28px 1fr 38px 60px 28px',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 12px',
-                borderBottom:
-                  i < ACADEMY_PLAYERS.length - 2 ? `1px solid ${BRAND.line}` : 'none',
-              }}
+              className={cn(
+                'grid items-center gap-2.5 px-3 py-2',
+                i < ACADEMY_PLAYERS.length - 2 && 'border-b border-brand-line',
+              )}
+              style={{ gridTemplateColumns: '28px 1fr 38px 60px 28px' }}
             >
               <MiniAvatar num={p.jerseyNumber} />
-              <div
-                style={{
-                  fontFamily: TYPE.body,
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  color: BRAND.indigo,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <div className="overflow-hidden text-ellipsis whitespace-nowrap font-satoshi text-[12.5px] font-semibold text-brand-indigo">
                 {p.firstName} {p.lastName}
               </div>
-              <span
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: '0.16em',
-                  color: BRAND.indigoMute,
-                  border: `1px solid ${BRAND.line}`,
-                  padding: '2px 4px',
-                  borderRadius: 2,
-                  textAlign: 'center',
-                }}
-              >
+              <span className="rounded-[2px] border border-brand-line px-1 py-0.5 text-center font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">
                 {p.position[0]}
               </span>
               <input
@@ -644,40 +483,18 @@ function AttendanceStep({ attendance, onChange }: AttendanceStepProps) {
                   if (Number.isFinite(v) && v > 0) setJersey(p.id, v)
                   else e.currentTarget.value = String(entry.jerseyNumber)
                 }}
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: BRAND.indigo,
-                  border: `1px solid ${BRAND.line}`,
-                  borderRadius: 3,
-                  padding: '3px 6px',
-                  width: 50,
-                  textAlign: 'center',
-                  background: BRAND.paper,
-                }}
+                className="w-[50px] rounded-[3px] border border-brand-line bg-brand-paper px-1.5 py-[3px] text-center font-fragment text-[11px] font-bold text-brand-indigo"
               />
               <button
                 type="button"
                 onClick={() => setPresence(p.id, !entry.present)}
                 aria-pressed={entry.present}
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 3,
-                  border: `1.5px solid ${
-                    entry.present ? BRAND.indigo : BRAND.line
-                  }`,
-                  background: entry.present ? BRAND.indigo : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: BRAND.sand,
-                  fontSize: 12,
-                  lineHeight: 1,
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
+                className={cn(
+                  'flex h-[18px] w-[18px] cursor-pointer items-center justify-center rounded-[3px] p-0 text-xs leading-none text-brand-sand',
+                  entry.present
+                    ? 'border-[1.5px] border-brand-indigo bg-brand-indigo'
+                    : 'border-[1.5px] border-brand-line bg-transparent',
+                )}
               >
                 {entry.present && '✓'}
               </button>
@@ -702,7 +519,6 @@ function SplitTeamsStep({
   onChange,
   attendance,
 }: SplitTeamsStepProps) {
-  const isMobile = useIsMobile()
   const presentPlayers = ACADEMY_PLAYERS.filter(p => attendance[p.id]?.present)
   function assign(playerId: string, team: TeamAssignment) {
     onChange({ ...teamAssignments, [playerId]: team })
@@ -717,61 +533,25 @@ function SplitTeamsStep({
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 12,
-          flexWrap: 'wrap',
-          gap: 10,
-        }}
-      >
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2.5">
         <MEyebrow>SPLIT INTO TEAM A / TEAM B · {presentPlayers.length} PRESENT</MEyebrow>
-        <button type="button" style={mcButtons.text} onClick={autoSplit}>
+        <button type="button" className={BTN_TEXT} onClick={autoSplit}>
           Auto split →
         </button>
       </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-          gap: 8,
-          alignItems: 'flex-start',
-        }}
-      >
+      <div className="grid grid-cols-1 items-start gap-2 md:grid-cols-3">
         {presentPlayers.map(p => {
           const team = teamAssignments[p.id] ?? 'unassigned'
           return (
             <div
               key={p.id}
-              style={{
-                padding: '10px 12px',
-                background: '#fff',
-                border: `1px solid ${BRAND.line}`,
-                borderRadius: 4,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-              }}
+              className="flex items-center gap-2.5 rounded-sm border border-brand-line bg-white px-3 py-2.5"
             >
               <MiniAvatar num={p.jerseyNumber} />
-              <div
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  fontFamily: TYPE.body,
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  color: BRAND.indigo,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-satoshi text-[12.5px] font-semibold text-brand-indigo">
                 {p.firstName} {p.lastName}
               </div>
-              <div style={{ display: 'flex', gap: 2 }}>
+              <div className="flex gap-0.5">
                 {(['teamA', 'teamB'] as const).map(t => {
                   const active = team === t
                   return (
@@ -779,22 +559,15 @@ function SplitTeamsStep({
                       key={t}
                       type="button"
                       onClick={() => assign(p.id, t)}
-                      style={{
-                        padding: '3px 7px',
-                        border: active ? 'none' : `1px solid ${BRAND.line}`,
-                        background: active
-                          ? t === 'teamA'
-                            ? BRAND.indigo
-                            : BRAND.coral
-                          : 'transparent',
-                        color: active ? BRAND.sand : BRAND.indigo,
-                        fontFamily: TYPE.mono,
-                        fontSize: 9,
-                        fontWeight: 700,
-                        letterSpacing: '0.16em',
-                        borderRadius: 3,
-                        cursor: 'pointer',
-                      }}
+                      className={cn(
+                        'cursor-pointer rounded-[3px] px-1.5 py-[3px] font-fragment text-[9px] font-bold tracking-[0.16em]',
+                        active
+                          ? cn(
+                              'border-none text-brand-sand',
+                              t === 'teamA' ? 'bg-brand-indigo' : 'bg-brand-coral',
+                            )
+                          : 'border border-brand-line bg-transparent text-brand-indigo',
+                      )}
                     >
                       {t === 'teamA' ? 'A' : 'B'}
                     </button>
@@ -828,7 +601,6 @@ function ConfirmStep({
   selectedPitch,
   attendance,
 }: ConfirmStepProps) {
-  const isMobile = useIsMobile()
   const presentCount = Object.values(attendance).filter(a => a.present).length
   const pitch = pitches.find(p => p.id === selectedPitch)
 
@@ -853,46 +625,22 @@ function ConfirmStep({
   ]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 18 : 24 }}>
+    <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2 md:gap-6">
       <div>
         <MEyebrow>SUMMARY</MEyebrow>
-        <div
-          style={{
-            marginTop: 12,
-            border: `1px solid ${BRAND.line}`,
-            borderRadius: 4,
-            background: '#fff',
-          }}
-        >
+        <div className="mt-3 rounded-sm border border-brand-line bg-white">
           {rows.map(([k, v], i) => (
             <div
               key={k}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                borderBottom: i < rows.length - 1 ? `1px solid ${BRAND.line}` : 'none',
-              }}
+              className={cn(
+                'flex justify-between px-3.5 py-2.5',
+                i < rows.length - 1 && 'border-b border-brand-line',
+              )}
             >
-              <span
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 10.5,
-                  color: BRAND.indigoMute,
-                  letterSpacing: '0.18em',
-                  fontWeight: 700,
-                }}
-              >
+              <span className="font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                 {k.toUpperCase()}
               </span>
-              <span
-                style={{
-                  fontFamily: TYPE.body,
-                  fontSize: 13,
-                  color: BRAND.indigo,
-                  fontWeight: 600,
-                }}
-              >
+              <span className="font-satoshi text-[13px] font-semibold text-brand-indigo">
                 {v}
               </span>
             </div>
@@ -901,37 +649,14 @@ function ConfirmStep({
       </div>
       <div>
         <MEyebrow>NEXT</MEyebrow>
-        <div
-          style={{
-            marginTop: 12,
-            fontFamily: TYPE.body,
-            fontSize: 13,
-            color: BRAND.indigoMid,
-            lineHeight: 1.55,
-          }}
-        >
+        <div className="mt-3 font-satoshi text-[13px] leading-[1.55] text-brand-indigo-mid">
           When you confirm, this session is created on the calendar. Record on the day
           using the camera; footage uploads to MAK Academy when you&apos;re back on Wi-Fi.
           Match analysis takes ~2 hours.
         </div>
-        <div
-          style={{
-            marginTop: 14,
-            padding: 14,
-            background: BRAND.yellowSoft,
-            borderRadius: 4,
-          }}
-        >
+        <div className="mt-3.5 rounded-sm bg-brand-yellow-soft p-3.5">
           <MEyebrow color={BRAND.indigo}>★ TIP</MEyebrow>
-          <div
-            style={{
-              fontFamily: TYPE.body,
-              fontSize: 12.5,
-              marginTop: 6,
-              color: BRAND.indigo,
-              lineHeight: 1.5,
-            }}
-          >
+          <div className="mt-1.5 font-satoshi text-[12.5px] leading-[1.5] text-brand-indigo">
             Saved drafts persist on this device. Pick one up from the Match Center
             calendar by clicking its day.
           </div>

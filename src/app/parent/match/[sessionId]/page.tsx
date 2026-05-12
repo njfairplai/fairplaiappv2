@@ -16,6 +16,7 @@ import { StatsRadarSection } from '@/components/parent-portal/StatsRadarSection'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
 import { VideoModal } from '@/components/video/VideoModal'
 import { parentScoreColor } from '@/lib/parent-score-color'
+import { cn } from '@/lib/cn'
 import type { Highlight } from '@/lib/types'
 
 /* Locked event vocabulary across the app: goal · shot · key (key_pass)
@@ -103,24 +104,9 @@ export default function ParentMatchDetailPage() {
 
   if (!session || !player) {
     return (
-      <div
-        style={{
-          background: 'var(--brand-sand)',
-          minHeight: '100dvh',
-          color: 'var(--brand-indigo)',
-          padding: '40px 16px',
-          textAlign: 'center',
-        }}
-      >
+      <div className="min-h-[100dvh] bg-brand-sand px-4 py-10 text-center text-brand-indigo">
         <PortalTopBar title="Match" showBack />
-        <p
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 14,
-            color: 'var(--brand-indigo-mute)',
-            marginTop: 24,
-          }}
-        >
+        <p className="mt-6 font-satoshi text-sm text-brand-indigo-mute">
           Match not found.
         </p>
       </div>
@@ -135,61 +121,26 @@ export default function ParentMatchDetailPage() {
       : 'Match'
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-sand)',
-        minHeight: '100dvh',
-        color: 'var(--brand-indigo)',
-        paddingBottom: 80,
-      }}
-    >
+    <div className="min-h-[100dvh] bg-brand-sand pb-20 text-brand-indigo">
       <PortalTopBar title="Match" showBack />
 
       {/* Match header */}
-      <section style={{ padding: '20px 16px 0' }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <section className="px-4 pt-5">
+        <div className="font-fragment text-[10px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
           {formatShortDate(session.date).toUpperCase()}
         </div>
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 28,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-            margin: '4px 0 0',
-            lineHeight: 1.1,
-          }}
-        >
+        <h1 className="m-0 mt-1 font-clash text-[28px] leading-[1.1] tracking-[-0.02em] text-brand-indigo">
           {matchTitle}
         </h1>
         {analysis && (
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo-mute)',
-              marginTop: 6,
-              display: 'flex',
-              gap: 8,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 font-satoshi text-[13px] text-brand-indigo-mute">
             <span>
               Composite{' '}
               <span style={{ color: parentScoreColor(analysis.compositeScore), fontWeight: 700 }}>
                 {analysis.compositeScore}
               </span>
             </span>
-            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-indigo-mute)' }} />
+            <span className="h-[3px] w-[3px] rounded-full bg-brand-indigo-mute" />
             <span>{analysis.minutesPlayed ?? '—'} mins</span>
           </div>
         )}
@@ -200,113 +151,43 @@ export default function ParentMatchDetailPage() {
        *  the whole thing", with clips as the deep-dive after. Reached
        *  from the stats filmstrip → tap a match → here. */}
       {session.matchVideoUrl && (
-        <section style={{ padding: '20px 16px 0' }}>
+        <section className="px-4 pt-5">
           <button
             type="button"
             onClick={() => setFullMatchOpen(true)}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              padding: '14px 16px',
-              background: 'var(--brand-indigo)',
-              color: 'var(--brand-sand)',
-              border: 'none',
-              borderRadius: 12,
-              cursor: 'pointer',
-              textAlign: 'left',
-              boxShadow: '0 6px 18px rgba(11, 8, 40, 0.18)',
-            }}
+            className="flex w-full cursor-pointer items-center gap-3.5 rounded-xl border-none bg-brand-indigo px-4 py-3.5 text-left text-brand-sand shadow-[0_6px_18px_rgba(11,8,40,0.18)]"
           >
-            <span
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                background: 'var(--brand-yellow)',
-                color: 'var(--brand-indigo)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
+            <span className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-brand-yellow text-brand-indigo">
               <Play size={18} fill="currentColor" />
             </span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span
-                style={{
-                  display: 'block',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  letterSpacing: '0.22em',
-                  color: 'var(--brand-yellow)',
-                  fontWeight: 800,
-                }}
-              >
+            <span className="min-w-0 flex-1">
+              <span className="block font-fragment text-[9.5px] font-extrabold uppercase tracking-[0.22em] text-brand-yellow">
                 FULL MATCH
               </span>
-              <span
-                style={{
-                  display: 'block',
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 17,
-                  letterSpacing: '-0.01em',
-                  marginTop: 2,
-                }}
-              >
+              <span className="mt-0.5 block font-clash text-[17px] tracking-[-0.01em]">
                 Watch the whole match
               </span>
               <span
-                style={{
-                  display: 'block',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 11.5,
-                  color: 'rgba(238, 228, 200, 0.7)',
-                  marginTop: 2,
-                }}
+                className="mt-0.5 block font-satoshi text-[11.5px]"
+                style={{ color: 'rgba(238, 228, 200, 0.7)' }}
               >
                 Camera-side feed · ~5 min
               </span>
             </span>
-            <span
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 18,
-                color: 'var(--brand-yellow)',
-              }}
-            >
-              →
-            </span>
+            <span className="font-satoshi text-lg text-brand-yellow">→</span>
           </button>
         </section>
       )}
 
       {/* Highlights row */}
       {sessionHighlights.length > 0 && (
-        <section style={{ padding: '20px 16px 0' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-              display: 'block',
-              marginBottom: 8,
-            }}
-          >
+        <section className="px-4 pt-5">
+          <span className="mb-2 block font-fragment text-[10px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
             HIGHLIGHTS · {sessionHighlights.length} CLIPS
           </span>
           <div
-            style={{
-              display: 'flex',
-              gap: 8,
-              overflowX: 'auto',
-              paddingBottom: 4,
-              scrollbarWidth: 'thin',
-            }}
+            className="flex gap-2 overflow-x-auto pb-1"
+            style={{ scrollbarWidth: 'thin' }}
           >
             {sessionHighlights.map(h => (
               <ClipCard key={h.id} clip={h} />
@@ -317,18 +198,8 @@ export default function ParentMatchDetailPage() {
 
       {/* Per-match radar with click-to-drill */}
       {analysis && (
-        <section style={{ padding: '20px 16px 0' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-              display: 'block',
-              marginBottom: 8,
-            }}
-          >
+        <section className="px-4 pt-5">
+          <span className="mb-2 block font-fragment text-[10px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
             MATCH SHAPE · TAP A CATEGORY
           </span>
           <StatsRadarSection
@@ -341,27 +212,11 @@ export default function ParentMatchDetailPage() {
       )}
 
       {/* Coach note (read-only for parent / player) */}
-      <section style={{ padding: '20px 16px 0' }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <section className="px-4 pt-5">
+        <span className="font-fragment text-[10px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
           FROM COACH SARA
         </span>
-        <div
-          style={{
-            marginTop: 8,
-            background: 'var(--brand-paper)',
-            border: '1px solid var(--brand-line)',
-            borderRadius: 10,
-            padding: '12px 14px',
-          }}
-        >
+        <div className="mt-2 rounded-[10px] border border-brand-line bg-brand-paper px-3.5 py-3">
           {/* Read-only render — for parent/player we never let them edit
               the coach's note. The MatchNoteEditor's "saved" state shows
               read-only when there's a saved note. If no note, blank state. */}
@@ -373,20 +228,11 @@ export default function ParentMatchDetailPage() {
        *  When a parent lands here from a `?focusInjury=<id>` notification
        *  link, the matched row scrolls into view + flashes briefly. */}
       {playerInjuries.length > 0 && (
-        <section style={{ padding: '20px 16px 0' }}>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-              marginBottom: 10,
-            }}
-          >
+        <section className="px-4 pt-5">
+          <div className="mb-2.5 font-fragment text-[10px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
             MOMENTS TO KNOW
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {playerInjuries.map(inj => {
               const focused = inj.id === focusInjuryId
               return (
@@ -395,52 +241,23 @@ export default function ParentMatchDetailPage() {
                   ref={el => {
                     injuryRefs.current[inj.id] = el
                   }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 10,
-                    padding: '12px 14px',
-                    background: focused ? 'var(--brand-paper-hi)' : 'var(--brand-paper)',
-                    border: `1px solid ${focused ? 'var(--brand-coral)' : 'var(--brand-line)'}`,
-                    borderRadius: 10,
-                    transition: 'all 200ms ease',
-                  }}
+                  className={cn(
+                    'flex items-start gap-2.5 rounded-[10px] border px-3.5 py-3 transition-all duration-200',
+                    focused
+                      ? 'border-brand-coral bg-brand-paper-hi'
+                      : 'border-brand-line bg-brand-paper',
+                  )}
                 >
-                  <AlertTriangle size={14} color="var(--brand-coral)" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: 'var(--brand-indigo)',
-                        textTransform: 'capitalize',
-                      }}
-                    >
+                  <AlertTriangle size={14} color="var(--brand-coral)" className="mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-satoshi text-[13px] font-semibold capitalize text-brand-indigo">
                       {inj.type} at {inj.minute}&apos;
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: 9.5,
-                          letterSpacing: '0.16em',
-                          color: 'var(--brand-indigo-mute)',
-                          fontWeight: 700,
-                          marginLeft: 8,
-                          textTransform: 'uppercase',
-                        }}
-                      >
+                      <span className="ml-2 font-fragment text-[9.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute">
                         SEV {inj.severity}
                       </span>
                     </div>
                     {inj.notes && (
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: 12.5,
-                          color: 'var(--brand-indigo-mute)',
-                          marginTop: 4,
-                        }}
-                      >
+                      <div className="mt-1 font-satoshi text-[12.5px] text-brand-indigo-mute">
                         {inj.notes}
                       </div>
                     )}
@@ -454,19 +271,8 @@ export default function ParentMatchDetailPage() {
 
       {/* If processing or upcoming, show a thin status card. */}
       {!analysis && (
-        <section style={{ padding: '20px 16px 0' }}>
-          <div
-            style={{
-              background: 'var(--brand-paper)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 10,
-              padding: '14px 16px',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo-mute)',
-              textAlign: 'center',
-            }}
-          >
+        <section className="px-4 pt-5">
+          <div className="rounded-[10px] border border-brand-line bg-brand-paper px-4 py-3.5 text-center font-satoshi text-[13px] text-brand-indigo-mute">
             {session.status === 'processing'
               ? 'Analysis in progress · usually ~2 hours.'
               : session.date > new Date().toISOString().slice(0, 10)
@@ -493,99 +299,28 @@ function ClipCard({ clip }: { clip: Highlight }) {
   const player = players.find(p => p.id === clip.playerId)
   const minute = Math.floor(clip.timestampSeconds / 60)
   return (
-    <div
-      style={{
-        flexShrink: 0,
-        width: 180,
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 8,
-        padding: 12,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}
-    >
-      <div
-        style={{
-          aspectRatio: '16 / 9',
-          background: 'var(--brand-indigo)',
-          borderRadius: 6,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-        }}
-      >
+    <div className="flex w-[180px] flex-shrink-0 flex-col gap-2 rounded-lg border border-brand-line bg-brand-paper p-3">
+      <div className="relative flex aspect-video items-center justify-center rounded-md bg-brand-indigo">
         <button
           type="button"
           aria-label="Play clip"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            background: 'var(--brand-yellow)',
-            color: 'var(--brand-indigo)',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-brand-yellow text-brand-indigo"
         >
           <Play size={14} fill="currentColor" />
         </button>
         <span
-          style={{
-            position: 'absolute',
-            top: 6,
-            left: 6,
-            fontFamily: 'var(--font-mono)',
-            fontSize: 8,
-            letterSpacing: '0.16em',
-            fontWeight: 800,
-            color: 'var(--brand-indigo)',
-            background: meta.color,
-            padding: '2px 5px',
-            borderRadius: 3,
-            lineHeight: 1,
-          }}
+          className="absolute left-1.5 top-1.5 rounded-[3px] px-[5px] py-[2px] font-fragment text-[8px] font-extrabold uppercase leading-none tracking-[0.16em] text-brand-indigo"
+          style={{ background: meta.color }}
         >
           {meta.label}
         </span>
       </div>
-      <div style={{ minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'var(--brand-indigo)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+      <div className="min-w-0">
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap font-satoshi text-xs font-semibold text-brand-indigo">
           {player ? `${player.firstName} ${player.lastName[0]}.` : 'Player'}
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 4,
-            marginTop: 2,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              letterSpacing: '0.14em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+        <div className="mt-0.5 flex items-center justify-between gap-1">
+          <span className="font-fragment text-[9.5px] font-bold uppercase tracking-[0.14em] text-brand-indigo-mute">
             {minute}m · {clip.durationSeconds}S
           </span>
           <ShareMenu
@@ -622,14 +357,7 @@ function ReadOnlyNoteRenderer({
 
   if (!note) {
     return (
-      <div
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 13,
-          color: 'var(--brand-indigo-mute)',
-          fontStyle: 'italic',
-        }}
-      >
+      <div className="font-satoshi text-[13px] italic text-brand-indigo-mute">
         No note for this match.
       </div>
     )
@@ -637,26 +365,10 @@ function ReadOnlyNoteRenderer({
 
   return (
     <>
-      <div
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 13.5,
-          color: 'var(--brand-indigo)',
-          lineHeight: 1.55,
-        }}
-      >
+      <div className="font-satoshi text-[13.5px] leading-[1.55] text-brand-indigo">
         “{note.text}”
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9.5,
-          letterSpacing: '0.18em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          marginTop: 8,
-        }}
-      >
+      <div className="mt-2 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em] text-brand-indigo-mute">
         {note.author.toUpperCase()} · {relative(note.savedAt).toUpperCase()}
       </div>
     </>

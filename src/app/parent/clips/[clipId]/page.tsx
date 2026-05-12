@@ -7,9 +7,9 @@ import { highlights, players } from '@/lib/mockData'
 import { MATCH_CENTER_HIGHLIGHTS } from '@/lib/match-center'
 import { LS_COACH_CAM, readArray } from '@/lib/welfare-store'
 import type { CoachCamClip } from '@/lib/types'
-import { BRAND, TYPE } from '@/lib/constants'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { Toast } from '@/components/coach/match-center/Toast'
+import { cn } from '@/lib/cn'
 
 /**
  * /parent/clips/[clipId] — single-clip detail.
@@ -86,9 +86,9 @@ export default function ParentClipDetailPage() {
 
   if (!resolved) {
     return (
-      <div style={{ background: BRAND.sand, minHeight: '100dvh', color: BRAND.indigo, paddingBottom: 80 }}>
+      <div className="min-h-[100dvh] bg-brand-sand pb-20 text-brand-indigo">
         <PortalTopBar title="Clip" showBack />
-        <div style={{ padding: 32, textAlign: 'center', fontFamily: TYPE.body, color: BRAND.indigoMute }}>
+        <div className="p-8 text-center font-satoshi text-brand-indigo-mute">
           Clip not found. It may have been removed.
         </div>
       </div>
@@ -96,34 +96,32 @@ export default function ParentClipDetailPage() {
   }
 
   return (
-    <div style={{ background: BRAND.sand, minHeight: '100dvh', color: BRAND.indigo, paddingBottom: 96, fontFamily: TYPE.body }}>
+    <div className="min-h-[100dvh] bg-brand-sand pb-24 font-satoshi text-brand-indigo">
       <PortalTopBar title="Clip" showBack />
 
-      <div style={{ padding: '14px 16px 0' }}>
+      <div className="px-4 pt-3.5">
         <div
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '4px 10px',
-            border: `1px solid ${resolved.kind === 'coach_cam' ? BRAND.yellow : BRAND.indigo}`,
-            background: resolved.kind === 'coach_cam' ? `${BRAND.yellow}22` : BRAND.indigoSoft,
-            color: BRAND.indigo,
-            borderRadius: 999,
-          }}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-brand-indigo',
+            resolved.kind === 'coach_cam'
+              ? 'border-brand-yellow bg-brand-yellow-soft'
+              : 'border-brand-indigo bg-brand-indigo-soft',
+          )}
         >
-          {resolved.kind === 'coach_cam' && <Camera size={11} color={BRAND.indigo} />}
-          {resolved.kind === 'shared' && <Send size={11} color={BRAND.indigo} />}
-          <span style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.18em', fontWeight: 700 }}>
+          {resolved.kind === 'coach_cam' && <Camera size={11} color="var(--brand-indigo)" />}
+          {resolved.kind === 'shared' && <Send size={11} color="var(--brand-indigo)" />}
+          <span className="font-fragment text-[9.5px] font-bold tracking-[0.18em]">
             {sourceBadge.toUpperCase()}
           </span>
         </div>
       </div>
 
       {/* Player block */}
-      <div style={{ padding: '12px 16px 16px' }}>
-        <div style={{ fontFamily: TYPE.display, fontSize: 26, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+      <div className="px-4 pb-4 pt-3">
+        <div className="font-clash text-[26px] leading-[1.1] tracking-[-0.02em]">
           {resolved.title}
         </div>
-        <div style={{ fontFamily: TYPE.body, fontSize: 13, color: BRAND.indigoMute, marginTop: 6, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div className="mt-1.5 flex flex-wrap gap-2.5 font-satoshi text-[13px] text-brand-indigo-mute">
           <span>{resolved.playerName} {resolved.jersey != null && <>·  #{resolved.jersey}</>}</span>
           {resolved.minute != null && <><span>·</span><span>{resolved.minute}&apos;</span></>}
           <span>·</span><span>{resolved.duration}s</span>
@@ -131,57 +129,28 @@ export default function ParentClipDetailPage() {
       </div>
 
       {/* Player surface */}
-      <div style={{ padding: '0 16px' }}>
-        <div
-          style={{
-            position: 'relative',
-            background: BRAND.indigo,
-            borderRadius: 14,
-            aspectRatio: '16 / 9',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            overflow: 'hidden',
-          }}
-        >
+      <div className="px-4">
+        <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-[14px] bg-brand-indigo">
           <button
             type="button"
             aria-label="Play clip"
             onClick={() => setToast('Player coming once footage hosting lands')}
-            style={{
-              width: 72, height: 72, borderRadius: '50%',
-              background: BRAND.yellow, color: BRAND.indigo,
-              border: 'none', cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(252, 215, 24, 0.32)',
-            }}
+            className="inline-flex h-[72px] w-[72px] cursor-pointer items-center justify-center rounded-full border-none bg-brand-yellow text-brand-indigo shadow-[0_4px_14px_rgba(252,215,24,0.32)]"
           >
             <Play size={28} fill="currentColor" />
           </button>
-          <span
-            style={{
-              position: 'absolute', bottom: 12, left: 14,
-              fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.18em',
-              color: BRAND.yellow, fontWeight: 700,
-            }}
-          >
+          <span className="absolute bottom-3 left-3.5 font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-yellow">
             {resolved.eventLabel}
           </span>
         </div>
       </div>
 
       {/* Actions */}
-      <div style={{ padding: '16px 16px 0', display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+      <div className="grid grid-cols-1 gap-2 px-4 pt-4">
         <button
           type="button"
           onClick={downloadClip}
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            gap: 8,
-            padding: '13px 14px',
-            border: 'none', borderRadius: 8,
-            background: BRAND.indigo, color: BRAND.sand,
-            fontFamily: TYPE.body, fontSize: 13.5, fontWeight: 700,
-            cursor: 'pointer',
-          }}
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-brand-indigo px-3.5 py-3 font-satoshi text-[13.5px] font-bold text-brand-sand"
         >
           <Download size={14} />
           Download to phone
@@ -189,15 +158,7 @@ export default function ParentClipDetailPage() {
         <button
           type="button"
           onClick={() => router.push('/parent/highlights')}
-          style={{
-            padding: '11px 14px',
-            background: 'transparent',
-            border: `1px solid ${BRAND.line}`,
-            borderRadius: 8,
-            color: BRAND.indigo,
-            fontFamily: TYPE.body, fontSize: 13, fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          className="cursor-pointer rounded-lg border border-brand-line bg-transparent px-3.5 py-[11px] font-satoshi text-[13px] font-semibold text-brand-indigo"
         >
           See all highlights
         </button>

@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { COLORS } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { getInitials } from '@/lib/utils'
 
 interface AvatarProps {
@@ -9,46 +9,50 @@ interface AvatarProps {
   lastName: string
   photo?: string
   size?: number
-  style?: React.CSSProperties
+  className?: string
 }
 
-export default function Avatar({ firstName, lastName, photo, size = 48, style }: AvatarProps) {
+/**
+ * Circular avatar. Falls back to brand-tinted initials when no photo.
+ * Size stays as inline `style` — the px value is genuinely dynamic per
+ * caller (and font-size scales proportionally with it).
+ */
+export default function Avatar({ firstName, lastName, photo, size = 48, className }: AvatarProps) {
   const initials = getInitials(firstName, lastName)
 
   if (photo) {
     return (
       <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          overflow: 'hidden',
-          position: 'relative',
-          flexShrink: 0,
-          border: '2px solid rgba(74,74,255,0.15)',
-          ...style,
-        }}
+        style={{ width: size, height: size }}
+        className={cn(
+          'relative shrink-0 overflow-hidden rounded-full border-2 border-brand-indigo/15',
+          className,
+        )}
       >
-        <Image src={photo} alt={`${firstName} ${lastName}`} fill style={{ objectFit: 'cover', objectPosition: 'center top' }} />
+        <Image
+          src={photo}
+          alt={`${firstName} ${lastName}`}
+          fill
+          className="object-cover object-[center_top]"
+        />
       </div>
     )
   }
 
   return (
     <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        background: `${COLORS.primary}18`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        ...style,
-      }}
+      style={{ width: size, height: size }}
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-full bg-brand-indigo/10',
+        className,
+      )}
     >
-      <span style={{ fontSize: size * 0.36, fontWeight: 800, color: COLORS.primary }}>{initials}</span>
+      <span
+        style={{ fontSize: size * 0.36 }}
+        className="font-satoshi font-extrabold text-brand-indigo"
+      >
+        {initials}
+      </span>
     </div>
   )
 }

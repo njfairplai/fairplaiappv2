@@ -1,53 +1,51 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { THEMES } from '@/lib/themes'
+import {
+  COMPREHENSION_QUESTIONS,
+  FEATURES,
+  FAVOURITE_QUESTION,
+  FEEL_QUESTIONS,
+  INTENT_OPTIONS,
+  INTENT_QUESTION,
+  KILL_QUESTION,
+  MISSING_QUESTION,
+  NPS_QUESTION,
+  ROLES,
+  SECTIONS,
+  SURPRISE_QUESTION,
+  questionLabel,
+  resolveRole,
+  type IntentValue,
+  type Role,
+} from '@/lib/feedback-schema'
 
 /**
- * Phase 2B form (Slice 4.5): app feedback after the user has explored the
- * portal in their chosen palette.
+ * Phase 2B form (Slice 4.5 + audit redesign): app feedback after the user
+ * has explored the portal in their chosen palette.
  *
  * Reads palette + words from localStorage (set by PaletteVoteForm in Phase 1B)
  * and bundles them with the new answers into ONE submission to /api/feedback.
  *
- * Sections:
- *   C. Overall feel (3 Likerts about the APP — professional / scan / trust)
+ * Sections (in render order):
+ *   B. Comprehension (3 Likerts: tour clarity, mikel, score)
+ *   C. Overall feel (2 Likerts: professional, trust — role-aware)
  *   D. Favourite features (multi-select chips, max 3)
  *   E. Kill-list features (multi-select chips, no max)
- *   F. NPS 0-10
- *   G. Optional open textarea
- *   H. Role + email
+ *   F. Intent (yes / maybe / no — role-aware)
+ *   G. NPS 0-10 (role-aware)
+ *   H. Surprise (open textarea)
+ *   I. What's missing (open textarea)
+ *   J. Role + email
+ *
+ * The schema (questions, role-aware labels, dotted keys) lives in
+ * src/lib/feedback-schema.ts so the admin viewer can render the same
+ * structure without drift.
  */
 
-const FEATURES = [
-  { key: 'match_in_numbers', label: 'Match in Numbers (stat bars)' },
-  { key: 'timeline',         label: 'Timeline of moments' },
-  { key: 'clip',             label: 'Clip + Key Stats panel' },
-  { key: 'squad',            label: 'Squad table' },
-  { key: 'player_detail',    label: 'Per-player detail panel' },
-  { key: 'recap',            label: 'Match recap (WhatsApp share)' },
-  { key: 'watch_match',      label: 'Watch full match link' },
-] as const
-
-const FEEL_STATEMENTS = [
-  { key: 'professional', label: 'The design looks professional.' },
-  { key: 'scan',         label: 'The page is easy to scan at a glance.' },
-  { key: 'trust',        label: "I'd trust this with my squad's data." },
-] as const
-
 const LIKERT_LABELS = ['Strongly disagree', 'Strongly agree']
-
-const ROLES = [
-  { value: '', label: 'Pick one (optional)' },
-  { value: 'coach', label: 'Coach' },
-  { value: 'academy_admin', label: 'Academy admin' },
-  { value: 'parent', label: 'Parent' },
-  { value: 'player', label: 'Player' },
-  { value: 'analyst', label: 'Performance analyst' },
-  { value: 'tech', label: 'Tech / engineering' },
-  { value: 'other', label: 'Other' },
-]
 
 const labelStyle = {
   fontFamily: 'var(--font-fragment)',
@@ -155,6 +153,31 @@ function LikertRow({ label, value, onChange }: {
   )
 }
 
+function LikertGroup({
+  questions,
+  values,
+  setValue,
+  role,
+}: {
+  questions: { key: string; label: string | ((r: Role) => string) }[]
+  values: Record<string, number | null>
+  setValue: (k: string, v: number) => void
+  role: Role
+}) {
+  return (
+    <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
+      {questions.map(q => (
+        <LikertRow
+          key={q.key}
+          label={typeof q.label === 'function' ? q.label(role) : q.label}
+          value={values[q.key] ?? null}
+          onChange={v => setValue(q.key, v)}
+        />
+      ))}
+    </div>
+  )
+}
+
 function NPSScale({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -192,6 +215,46 @@ function NPSScale({ value, onChange }: { value: number | null; onChange: (v: num
   )
 }
 
+function IntentChoice({ value, onChange }: { value: IntentValue | null; onChange: (v: IntentValue) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      {INTENT_OPTIONS.map(opt => {
+        const active = value === opt.value
+        const activeBg =
+          opt.tone === 'positive' ? 'var(--brand-yellow)' :
+          opt.tone === 'negative' ? 'var(--brand-coral)' :
+          'var(--brand-indigo)'
+        const activeText =
+          opt.tone === 'positive' ? 'var(--brand-indigo)' : 'var(--brand-sand)'
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            style={{
+              flex: '1 1 100px',
+              minWidth: 100,
+              padding: '14px 18px',
+              background: active ? activeBg : 'var(--brand-paper)',
+              color: active ? activeText : 'var(--brand-indigo)',
+              border: `1px solid ${active ? activeBg : 'var(--brand-line)'}`,
+              borderRadius: 10,
+              fontFamily: 'var(--font-clash)',
+              fontSize: 18,
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+              cursor: 'pointer',
+              transition: 'all 140ms ease',
+            }}
+          >
+            {opt.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function PortalFeedbackForm() {
   const router = useRouter()
 
@@ -207,18 +270,27 @@ export function PortalFeedbackForm() {
     setPhase1Loaded(true)
   }, [])
 
-  // Phase 2 answers
+  // Comprehension Likerts (B)
+  const [comprehension, setComprehension] = useState<Record<string, number | null>>(
+    Object.fromEntries(COMPREHENSION_QUESTIONS.map(q => [q.key, null]))
+  )
+  const setComprehensionKey = (k: string, v: number) =>
+    setComprehension(prev => ({ ...prev, [k]: v }))
+
+  // Feel Likerts (C) — kept under 'feel.<short>' nested for back-compat with
+  // the JSONB shape; in the form state we flatten then re-nest at submit.
   const [feel, setFeel] = useState<Record<string, number | null>>(
-    Object.fromEntries(FEEL_STATEMENTS.map(s => [s.key, null]))
+    Object.fromEntries(FEEL_QUESTIONS.map(q => [q.key, null]))
   )
   const setFeelKey = (k: string, v: number) => setFeel(prev => ({ ...prev, [k]: v }))
 
+  // Features (D + E)
   const [favouriteFeatures, setFavouriteFeatures] = useState<string[]>([])
   const [killFeatures, setKillFeatures] = useState<string[]>([])
   const toggleFav = (k: string) => {
     setFavouriteFeatures(prev => {
       if (prev.includes(k)) return prev.filter(x => x !== k)
-      if (prev.length >= 3) return prev
+      if (FAVOURITE_QUESTION.max && prev.length >= FAVOURITE_QUESTION.max) return prev
       return [...prev, k]
     })
   }
@@ -226,16 +298,35 @@ export function PortalFeedbackForm() {
     setKillFeatures(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k])
   }
 
+  // Intent (F)
+  const [intent, setIntent] = useState<IntentValue | null>(null)
+
+  // NPS (G)
   const [nps, setNps] = useState<number | null>(null)
+
+  // Open text (H, I)
+  const [surprise, setSurprise] = useState('')
   const [whatsMissing, setWhatsMissing] = useState('')
+
+  // About you (J)
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const allFeelAnswered = FEEL_STATEMENTS.every(s => feel[s.key] !== null)
-  const canSubmit = !!phase1?.palette_vote && allFeelAnswered && favouriteFeatures.length > 0 && nps !== null && !submitting
+  const resolvedRole: Role = useMemo(() => resolveRole(role), [role])
+
+  const allComprehensionAnswered = COMPREHENSION_QUESTIONS.every(q => comprehension[q.key] !== null)
+  const allFeelAnswered = FEEL_QUESTIONS.every(q => feel[q.key] !== null)
+  const canSubmit =
+    !!phase1?.palette_vote &&
+    allComprehensionAnswered &&
+    allFeelAnswered &&
+    favouriteFeatures.length > 0 &&
+    intent !== null &&
+    nps !== null &&
+    !submitting
 
   // If they got here without phase 1 data, send them back to /vote.
   if (phase1Loaded && !phase1?.palette_vote) {
@@ -274,16 +365,29 @@ export function PortalFeedbackForm() {
       if (raw) dwell = JSON.parse(raw)
     } catch { /* noop */ }
 
+    // Build the responses payload from the form state. The schema expects
+    // feel.{professional,trust} nested; everything else is flat.
+    const feelOut: Record<string, number | null> = {}
+    for (const q of FEEL_QUESTIONS) {
+      const subKey = q.key.split('.')[1] ?? q.key
+      feelOut[subKey] = feel[q.key]
+    }
+    const comprehensionOut: Record<string, number | null> = {}
+    for (const q of COMPREHENSION_QUESTIONS) comprehensionOut[q.key] = comprehension[q.key]
+
     const payload = {
       palette_vote: phase1!.palette_vote,
       responses: {
         palette_words: phase1!.palette_words,
-        feel,
+        ...comprehensionOut,
+        feel: feelOut,
         favourite_features: favouriteFeatures,
         kill_features: killFeatures,
+        intent,
         nps,
+        surprise: surprise.trim() || null,
       },
-      whats_missing: whatsMissing,
+      whats_missing: whatsMissing.trim() || null,
       role: role || null,
       email: email || null,
       dwell_seconds: dwell,
@@ -358,27 +462,36 @@ export function PortalFeedbackForm() {
         </div>
       )}
 
-      {/* Section C: feel about the app */}
+      {/* Section B: comprehension */}
       <section>
-        <div style={sectionEyebrow}>SECTION C · OVERALL FEEL</div>
-        <h2 style={sectionHeadline}>How much do you agree about the app you just used?</h2>
+        <div style={sectionEyebrow}>{SECTIONS.comprehension}</div>
+        <h2 style={sectionHeadline}>Did the tour land?</h2>
         <ScaleHeader leftLabel={LIKERT_LABELS[0]} rightLabel={LIKERT_LABELS[1]} />
-        <div style={{ background: 'var(--brand-paper)', border: '1px solid var(--brand-line)', borderRadius: 10, padding: '4px 16px' }}>
-          {FEEL_STATEMENTS.map(s => (
-            <LikertRow
-              key={s.key}
-              label={s.label}
-              value={feel[s.key]}
-              onChange={v => setFeelKey(s.key, v)}
-            />
-          ))}
-        </div>
+        <LikertGroup
+          questions={COMPREHENSION_QUESTIONS}
+          values={comprehension}
+          setValue={setComprehensionKey}
+          role={resolvedRole}
+        />
       </section>
 
-      {/* Section D: favourite features */}
+      {/* Section C: feel */}
       <section>
-        <div style={sectionEyebrow}>SECTION D · FAVOURITES</div>
-        <h2 style={sectionHeadline}>Which features would you actually use?</h2>
+        <div style={sectionEyebrow}>{SECTIONS.feel}</div>
+        <h2 style={sectionHeadline}>How does the app feel?</h2>
+        <ScaleHeader leftLabel={LIKERT_LABELS[0]} rightLabel={LIKERT_LABELS[1]} />
+        <LikertGroup
+          questions={FEEL_QUESTIONS}
+          values={feel}
+          setValue={setFeelKey}
+          role={resolvedRole}
+        />
+      </section>
+
+      {/* Section D: favourites */}
+      <section>
+        <div style={sectionEyebrow}>{SECTIONS.features}</div>
+        <h2 style={sectionHeadline}>{FAVOURITE_QUESTION.label}</h2>
         <div style={{
           fontFamily: 'var(--font-fragment)',
           fontSize: 11,
@@ -386,11 +499,11 @@ export function PortalFeedbackForm() {
           color: 'var(--brand-indigo-mute)',
           fontWeight: 700,
           marginBottom: 12,
-        }}>PICK UP TO 3 · {favouriteFeatures.length}/3 SELECTED</div>
+        }}>PICK UP TO {FAVOURITE_QUESTION.max ?? '—'} · {favouriteFeatures.length}/{FAVOURITE_QUESTION.max ?? '—'} SELECTED</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {FEATURES.map(f => {
             const active = favouriteFeatures.includes(f.key)
-            const disabled = !active && favouriteFeatures.length >= 3
+            const disabled = !active && !!FAVOURITE_QUESTION.max && favouriteFeatures.length >= FAVOURITE_QUESTION.max
             return (
               <button
                 key={f.key}
@@ -418,8 +531,8 @@ export function PortalFeedbackForm() {
 
       {/* Section E: kill list */}
       <section>
-        <div style={sectionEyebrow}>SECTION E · KILL LIST</div>
-        <h2 style={sectionHeadline}>Which features felt unnecessary or confusing?</h2>
+        <div style={sectionEyebrow}>{SECTIONS.killList}</div>
+        <h2 style={sectionHeadline}>{KILL_QUESTION.label}</h2>
         <div style={{
           fontFamily: 'var(--font-fragment)',
           fontSize: 11,
@@ -454,31 +567,54 @@ export function PortalFeedbackForm() {
         </div>
       </section>
 
-      {/* Section F: NPS */}
+      {/* Section F: intent */}
       <section>
-        <div style={sectionEyebrow}>SECTION F · RECOMMENDATION</div>
-        <h2 style={sectionHeadline}>How likely are you to recommend Fairplai to another coach?</h2>
+        <div style={sectionEyebrow}>{SECTIONS.intent}</div>
+        <h2 style={sectionHeadline}>{questionLabel(INTENT_QUESTION, resolvedRole)}</h2>
+        <IntentChoice value={intent} onChange={setIntent} />
+      </section>
+
+      {/* Section G: NPS */}
+      <section>
+        <div style={sectionEyebrow}>{SECTIONS.nps}</div>
+        <h2 style={sectionHeadline}>{questionLabel(NPS_QUESTION, resolvedRole)}</h2>
         <NPSScale value={nps} onChange={setNps} />
       </section>
 
-      {/* Section G: open */}
+      {/* Section H: surprise */}
       <section>
-        <div style={sectionEyebrow}>SECTION G · ANYTHING ELSE</div>
-        <h2 style={sectionHeadline}>What&apos;s missing or what would you change? (optional)</h2>
+        <div style={sectionEyebrow}>{SECTIONS.surprise}</div>
+        <h2 style={sectionHeadline}>{SURPRISE_QUESTION.label} (optional)</h2>
+        <textarea
+          value={surprise}
+          onChange={e => setSurprise(e.target.value)}
+          placeholder={SURPRISE_QUESTION.placeholder}
+          rows={3}
+          style={{ ...inputStyle, resize: 'vertical' }}
+        />
+      </section>
+
+      {/* Section I: missing */}
+      <section>
+        <div style={sectionEyebrow}>{SECTIONS.missing}</div>
+        <h2 style={sectionHeadline}>{MISSING_QUESTION.label} (optional)</h2>
         <textarea
           value={whatsMissing}
           onChange={e => setWhatsMissing(e.target.value)}
-          placeholder="Features, info, interactions you'd want to see…"
+          placeholder={MISSING_QUESTION.placeholder}
           rows={4}
           style={{ ...inputStyle, resize: 'vertical' }}
         />
       </section>
 
-      {/* Section H: about you */}
+      {/* Section J: about you */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
-          <div style={sectionEyebrow}>SECTION H · ABOUT YOU</div>
+          <div style={sectionEyebrow}>{SECTIONS.about}</div>
           <h2 style={sectionHeadline}>Just two more.</h2>
+          <p style={{ fontSize: 13, color: 'var(--brand-indigo-mute)', margin: '-12px 0 0' }}>
+            Pick a role so the questions above re-phrase to your context next time.
+          </p>
         </div>
         <div>
           <label style={labelStyle} htmlFor="role">YOUR ROLE</label>

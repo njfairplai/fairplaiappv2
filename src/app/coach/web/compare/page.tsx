@@ -14,6 +14,7 @@ import {
   type CompareTrendRow,
 } from '@/components/coach/compare/CompareTrendChart'
 import { PlayerPickerPopover } from '@/components/coach/compare/PlayerPickerPopover'
+import { cn } from '@/lib/cn'
 
 const MAX_PLAYERS = 3
 /** Brand-aligned series colours; legibility falls off past 3 overlays. */
@@ -99,92 +100,48 @@ function CompareInner() {
 
   return (
     <div
-      style={{
-        background: 'var(--brand-sand)',
-        color: 'var(--brand-indigo)',
-        fontFamily: 'var(--font-body)',
-        minHeight: 'calc(100vh - 108px)',
-      }}
+      className="bg-brand-sand text-brand-indigo font-satoshi"
+      style={{ minHeight: 'calc(100vh - 108px)' }}
     >
       {/* Header */}
       <section
-        style={{
-          padding: isMobile ? '16px 16px 14px' : '24px 36px 18px',
-          borderBottom: '1px solid var(--brand-line)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          flexWrap: 'wrap',
-        }}
+        className={cn(
+          'flex flex-wrap items-center gap-4 border-b border-brand-line',
+          isMobile ? 'px-4 pt-4 pb-3.5' : 'px-9 pt-6 pb-[18px]',
+        )}
       >
         <button
           type="button"
           onClick={() => router.back()}
           aria-label="Back"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 36,
-            height: 36,
-            borderRadius: 8,
-            background: 'var(--brand-paper)',
-            border: '1px solid var(--brand-line)',
-            color: 'var(--brand-indigo)',
-            cursor: 'pointer',
-          }}
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-brand-line bg-brand-paper text-brand-indigo"
         >
           <ChevronLeft size={16} />
         </button>
         <div>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+          <div className="font-fragment text-[11px] font-bold tracking-[0.22em] text-brand-indigo-mute">
             COMPARE
           </div>
           <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: isMobile ? 26 : 36,
-              letterSpacing: '-0.02em',
-              lineHeight: 1.05,
-              marginTop: 2,
-            }}
+            className={cn(
+              'font-clash mt-0.5 tracking-[-0.02em] leading-[1.05]',
+              isMobile ? 'text-[26px]' : 'text-4xl',
+            )}
           >
             Stack players, side by side.
           </div>
         </div>
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10.5,
-            letterSpacing: '0.18em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+        <span className="ml-auto font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
           UP TO {MAX_PLAYERS} PLAYERS
         </span>
       </section>
 
       {/* Chip rail */}
       <section
-        style={{
-          padding: isMobile ? '14px 16px' : '18px 36px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 10,
-          alignItems: 'center',
-          borderBottom: '1px solid var(--brand-line)',
-          background: 'var(--brand-paper)',
-        }}
+        className={cn(
+          'flex flex-wrap items-center gap-2.5 border-b border-brand-line bg-brand-paper',
+          isMobile ? 'px-4 py-3.5' : 'px-9 py-[18px]',
+        )}
       >
         {rows.map(r => {
           const p = players.find(x => x.id === r.id)
@@ -192,19 +149,8 @@ function CompareInner() {
           return (
             <span
               key={r.id}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 10px 6px 6px',
-                borderRadius: 999,
-                background: 'var(--brand-sand)',
-                border: `1.5px solid ${r.color}`,
-                fontFamily: 'var(--font-body)',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--brand-indigo)',
-              }}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-sand pl-1.5 pr-2.5 py-1.5 font-satoshi text-[13px] font-semibold text-brand-indigo"
+              style={{ border: `1.5px solid ${r.color}` }}
             >
               <PlayerGlyph
                 size={26}
@@ -216,13 +162,7 @@ function CompareInner() {
                 type="button"
                 onClick={() => removePlayer(r.id)}
                 aria-label={`Remove ${p.firstName}`}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--brand-indigo-mute)',
-                  display: 'inline-flex',
-                }}
+                className="inline-flex cursor-pointer border-none bg-transparent text-brand-indigo-mute"
               >
                 <X size={14} />
               </button>
@@ -230,26 +170,17 @@ function CompareInner() {
           )
         })}
 
-        <div style={{ position: 'relative' }}>
+        <div className="relative">
           <button
             type="button"
             disabled={!canAddMore}
             onClick={() => setPickerOpen(o => !o)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 14px',
-              background: canAddMore ? 'var(--brand-indigo)' : 'var(--brand-line-soft)',
-              color: canAddMore ? 'var(--brand-sand)' : 'var(--brand-indigo-mute)',
-              border: 'none',
-              borderRadius: 999,
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: canAddMore ? 'pointer' : 'not-allowed',
-              letterSpacing: '0.01em',
-            }}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full border-none px-3.5 py-2 font-satoshi text-[13px] font-bold tracking-[0.01em]',
+              canAddMore
+                ? 'cursor-pointer bg-brand-indigo text-brand-sand'
+                : 'cursor-not-allowed bg-brand-line-soft text-brand-indigo-mute',
+            )}
           >
             <Plus size={14} />
             Add player
@@ -265,15 +196,7 @@ function CompareInner() {
         </div>
 
         {selected.length < 2 && (
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.18em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+          <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
             ADD AT LEAST 2 TO START
           </span>
         )}
@@ -284,46 +207,28 @@ function CompareInner() {
         <EmptyState onAdd={() => setPickerOpen(true)} />
       ) : (
         <section
-          style={{
-            padding: isMobile ? '20px 16px' : '28px 36px',
-            display: 'grid',
-            gap: 22,
-            gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)',
-          }}
+          className={cn(
+            'grid gap-[22px]',
+            isMobile ? 'px-4 py-5 grid-cols-1' : 'px-9 py-7 grid-cols-[minmax(0,1fr)_minmax(0,1fr)]',
+          )}
         >
           <div
-            style={{
-              background: 'var(--brand-paper)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 12,
-              padding: '20px 22px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-              gridColumn: isMobile ? 'auto' : '1 / -1',
-            }}
+            className={cn(
+              'flex flex-col gap-3.5 rounded-xl border border-brand-line bg-brand-paper px-[22px] py-5',
+              !isMobile && 'col-span-full',
+            )}
           >
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10.5,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-                borderTop: '2px solid var(--brand-indigo)',
-                paddingTop: 8,
-              }}
-            >
+            <div className="font-fragment text-[10.5px] font-bold tracking-[0.22em] text-brand-indigo-mute border-t-2 border-brand-indigo pt-2">
               SHAPE OVERLAY
             </div>
             <CompareRadar rows={rows} size={isMobile ? 280 : 380} />
           </div>
 
-          <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
+          <div className={cn(!isMobile && 'col-span-full')}>
             <CompareDiffStrip rows={rows} />
           </div>
 
-          <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
+          <div className={cn(!isMobile && 'col-span-full')}>
             <CompareTrendChart rows={trendRows} />
           </div>
         </section>
@@ -334,55 +239,18 @@ function CompareInner() {
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <section
-      style={{
-        padding: '60px 24px',
-        textAlign: 'center',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 14,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 28,
-          color: 'var(--brand-indigo)',
-          letterSpacing: '-0.02em',
-        }}
-      >
+    <section className="flex flex-col items-center gap-3.5 px-6 py-[60px] text-center">
+      <div className="font-clash text-[28px] tracking-[-0.02em] text-brand-indigo">
         Pick two players to start.
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 14,
-          color: 'var(--brand-indigo-mute)',
-          maxWidth: 420,
-        }}
-      >
+      <div className="font-satoshi text-sm text-brand-indigo-mute max-w-[420px]">
         Stack their season radars, see who leads each category, and track
         composite trajectories side by side.
       </div>
       <button
         type="button"
         onClick={onAdd}
-        style={{
-          marginTop: 8,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '10px 18px',
-          background: 'var(--brand-indigo)',
-          color: 'var(--brand-sand)',
-          border: 'none',
-          borderRadius: 999,
-          fontFamily: 'var(--font-body)',
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: 'pointer',
-        }}
+        className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full border-none bg-brand-indigo px-[18px] py-2.5 font-satoshi text-[13px] font-bold text-brand-sand"
       >
         <Plus size={14} />
         Add a player

@@ -5,18 +5,19 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { playerProfile } from '@/lib/mockData'
 import Toggle from '@/components/ui/Toggle'
-import { SHADOWS, COLORS } from '@/lib/constants'
 import { ChevronRight } from 'lucide-react'
 
-function RowDivider() { return <div style={{ height: 1, background: 'rgba(0,0,0,0.05)', marginLeft: 16 }} /> }
+function RowDivider() {
+  return <div className="h-px bg-brand-line-soft ml-4" />
+}
 
 function ChevronRow({ label, sub }: { label: string; sub?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 52 }}>
-      <span style={{ fontSize: 15, fontWeight: 500, color: COLORS.navy }}>{label}</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {sub && <span style={{ fontSize: 14, color: '#9DA2B3' }}>{sub}</span>}
-        <ChevronRight size={16} color="#9DA2B3" />
+    <div className="flex items-center justify-between px-4 h-[52px]">
+      <span className="text-[15px] font-medium text-brand-indigo">{label}</span>
+      <div className="flex items-center gap-2 text-brand-indigo-mute">
+        {sub && <span className="text-sm">{sub}</span>}
+        <ChevronRight size={16} />
       </div>
     </div>
   )
@@ -24,39 +25,52 @@ function ChevronRow({ label, sub }: { label: string; sub?: string }) {
 
 function ToggleRow({ label, sub, value, onChange }: { label: string; sub?: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 52 }}>
-      <span style={{ fontSize: 15, fontWeight: 500, color: COLORS.navy }}>{label}</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {sub && <span style={{ fontSize: 13, color: '#9DA2B3' }}>{sub}</span>}
+    <div className="flex items-center justify-between px-4 h-[52px]">
+      <span className="text-[15px] font-medium text-brand-indigo">{label}</span>
+      <div className="flex items-center gap-2.5">
+        {sub && <span className="text-[13px] text-brand-indigo-mute">{sub}</span>}
         <Toggle value={value} onChange={onChange} />
       </div>
     </div>
   )
 }
 
-function SectionCard({ children }: { children: React.ReactNode }) { return <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: SHADOWS.card }}>{children}</div> }
-function SectionLabel({ text }: { text: string }) { return <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.muted, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '20px 0 8px' }}>{text}</p> }
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-brand-paper rounded-[14px] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+      {children}
+    </div>
+  )
+}
+
+function SectionLabel({ text }: { text: string }) {
+  return (
+    <p className="text-[13px] font-bold text-brand-indigo-mute tracking-[0.08em] uppercase mt-5 mb-2">
+      {text}
+    </p>
+  )
+}
 
 export default function ParentSettingsPage() {
   const router = useRouter()
   const [notifs, setNotifs] = useState({ newMatch: true, highlights: true, weekly: true, monthly: false })
   const [delivery, setDelivery] = useState({ whatsapp: true, email: true })
   return (
-    <div className="tab-fade" style={{ minHeight: 'calc(100dvh - 80px)', background: '#F5F6FC', paddingBottom: 100 }}>
-      <div style={{ paddingTop: 28, display: 'flex', justifyContent: 'center' }}>
-        <Image src="/logo-black.png" alt="FairplAI" width={100} height={30} style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
+    <div className="tab-fade min-h-[calc(100dvh-80px)] bg-brand-sand pb-[100px]">
+      <div className="pt-7 flex justify-center">
+        <Image src="/logo-black.png" alt="FairplAI" width={100} height={30} className="h-[30px] w-auto object-contain" />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '20px 20px 0' }}>
-        <div style={{ width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', position: 'relative', border: '2px solid rgba(74,74,255,0.2)' }}>
-          <Image src="/players/kiyan.jpg" alt={playerProfile.name} fill style={{ objectFit: 'cover', objectPosition: 'center top' }} />
+      <div className="flex flex-col items-center gap-2 px-5 pt-5">
+        <div className="w-[52px] h-[52px] rounded-full overflow-hidden relative border-2 border-brand-indigo/20">
+          <Image src="/players/kiyan.jpg" alt={playerProfile.name} fill className="object-cover object-[center_top]" />
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: COLORS.navy, margin: 0 }}>{playerProfile.name}</p>
-          <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 2 }}>{playerProfile.academy} · {playerProfile.team}</p>
+        <div className="text-center">
+          <p className="text-base font-extrabold text-brand-indigo m-0">{playerProfile.name}</p>
+          <p className="text-[13px] text-brand-indigo-mute mt-0.5">{playerProfile.academy} · {playerProfile.team}</p>
         </div>
       </div>
-      <div style={{ height: 1, background: '#EDEFF7', margin: '20px 20px 0' }} />
-      <div style={{ padding: '0 20px' }}>
+      <div className="h-px bg-brand-line mx-5 mt-5" />
+      <div className="px-5">
         <SectionLabel text="Player View" />
         <SectionCard>
           <button
@@ -64,18 +78,10 @@ export default function ParentSettingsPage() {
               localStorage.setItem('fairplai_view_as_player', 'true')
               router.push('/player/home')
             }}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              width: '100%', height: 52, padding: '0 16px',
-              background: 'none', border: 'none', cursor: 'pointer',
-              textAlign: 'left',
-            }}
+            className="flex items-center justify-between w-full h-[52px] px-4 bg-transparent border-none cursor-pointer text-left"
           >
-            <span style={{ fontSize: 15, fontWeight: 500, color: COLORS.navy }}>View as Kiyan</span>
-            <span style={{
-              fontSize: 12, fontWeight: 700, color: '#00C9A7',
-              background: 'rgba(0,201,167,0.1)', padding: '4px 10px', borderRadius: 8,
-            }}>
+            <span className="text-[15px] font-medium text-brand-indigo">View as Kiyan</span>
+            <span className="text-xs font-bold text-brand-yellow bg-brand-yellow/15 px-2.5 py-1 rounded-lg">
               Open Player View →
             </span>
           </button>
@@ -104,11 +110,24 @@ export default function ParentSettingsPage() {
         <SectionCard>
           <ChevronRow label="Change Password" />
           <RowDivider />
-          <button onClick={() => window.alert('Your deletion request has been submitted.')} style={{ display: 'block', width: '100%', height: 52, padding: '0 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500, color: COLORS.error }}>Request Data Deletion</button>
+          <button
+            onClick={() => window.alert('Your deletion request has been submitted.')}
+            className="block w-full h-[52px] px-4 text-left bg-transparent border-none cursor-pointer text-[15px] font-medium text-brand-coral"
+          >
+            Request Data Deletion
+          </button>
           <RowDivider />
-          <button onClick={() => { localStorage.removeItem('fairplai_auth_session'); localStorage.removeItem('fairplai_role'); localStorage.removeItem('fairplai_consented'); router.push('/login') }} style={{ display: 'block', width: '100%', height: 52, padding: '0 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500, color: COLORS.error }}>Sign Out</button>
+          <button
+            onClick={() => { localStorage.removeItem('fairplai_auth_session'); localStorage.removeItem('fairplai_role'); localStorage.removeItem('fairplai_consented'); router.push('/login') }}
+            className="block w-full h-[52px] px-4 text-left bg-transparent border-none cursor-pointer text-[15px] font-medium text-brand-coral"
+          >
+            Sign Out
+          </button>
         </SectionCard>
-        <p style={{ fontSize: 12, color: '#9DA2B3', textAlign: 'center', marginTop: 24 }}>FairPlai Parent/Player Portal · v2.0.0<br /><span style={{ fontSize: 11, opacity: 0.7 }}>fairpl.ai · Made for GCC football families</span></p>
+        <p className="text-xs text-brand-indigo-mute text-center mt-6">
+          FairPlai Parent/Player Portal · v2.0.0<br />
+          <span className="text-[11px] opacity-70">fairpl.ai · Made for GCC football families</span>
+        </p>
       </div>
     </div>
   )

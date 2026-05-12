@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock } from 'lucide-react'
+import { cn } from '@/lib/cn'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 
 /**
  * Founder password screen for /demo-admin. Posts the password to
@@ -52,18 +55,7 @@ export default function DemoAdminUnlockPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        background: 'var(--brand-sand)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 20px',
-        color: 'var(--brand-indigo)',
-        fontFamily: 'var(--font-satoshi), system-ui, sans-serif',
-      }}
-    >
+    <main className="flex min-h-screen items-center justify-center bg-brand-sand px-5 py-10 font-satoshi text-brand-indigo">
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -74,62 +66,30 @@ export default function DemoAdminUnlockPage() {
 
       <form
         onSubmit={tryUnlock}
-        style={{
-          width: '100%',
-          maxWidth: 380,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 18,
-          animation: shake ? 'shake 0.3s ease' : undefined,
-        }}
+        className={cn(
+          'flex w-full max-w-[380px] flex-col gap-[18px]',
+          shake && '[animation:shake_0.3s_ease]',
+        )}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 8,
-              background: 'var(--brand-indigo)',
-              color: 'var(--brand-yellow)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand-indigo text-brand-yellow">
             <Lock size={18} />
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-fragment), monospace',
-              fontSize: 11,
-              letterSpacing: '0.22em',
-              fontWeight: 800,
-              color: 'var(--brand-indigo-mute)',
-            }}
-          >
+          <span className="font-fragment text-[11px] font-extrabold tracking-[0.22em] text-brand-indigo-mute">
             FAIRPLAI · DEMO ADMIN
           </span>
         </div>
 
-        <h1
-          style={{
-            fontFamily: 'var(--font-clash), serif',
-            fontSize: 36,
-            lineHeight: 1.05,
-            letterSpacing: '-0.02em',
-            margin: 0,
-            fontWeight: 700,
-          }}
-        >
+        <h1 className="m-0 font-clash text-4xl font-bold leading-[1.05] tracking-[-0.02em]">
           Founder access.
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--brand-indigo-mute)', margin: 0, lineHeight: 1.5 }}>
+        <p className="m-0 text-sm leading-[1.5] text-brand-indigo-mute">
           One password unlocks every portal — coach, parent — and the
           user-testing feedback viewer. Cookie-based, so your laptop and
           phone each unlock once and remember.
         </p>
 
-        <input
+        <Input
           type="password"
           autoFocus
           autoComplete="current-password"
@@ -143,51 +103,23 @@ export default function DemoAdminUnlockPage() {
           }}
           placeholder="Password"
           aria-label="Demo-admin password"
-          style={{
-            padding: '14px 16px',
-            background: 'var(--brand-paper)',
-            border: `1px solid ${error ? 'var(--brand-coral)' : 'var(--brand-line)'}`,
-            borderRadius: 8,
-            fontFamily: 'var(--font-satoshi)',
-            fontSize: 15,
-            color: 'var(--brand-indigo)',
-            outline: 'none',
-            transition: 'border-color 160ms ease',
-          }}
+          invalid={!!error}
         />
 
         {error && (
-          <span
-            style={{
-              fontFamily: 'var(--font-satoshi)',
-              fontSize: 12.5,
-              color: 'var(--brand-coral)',
-              fontWeight: 600,
-            }}
-          >
+          <span className="font-satoshi text-[12.5px] font-semibold text-brand-coral">
             {error}
           </span>
         )}
 
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={pw.trim().length === 0 || submitting}
-          style={{
-            padding: '13px 18px',
-            background: pw.trim() && !submitting ? 'var(--brand-indigo)' : 'var(--brand-line-soft)',
-            color: pw.trim() && !submitting ? 'var(--brand-sand)' : 'var(--brand-indigo-mute)',
-            border: 'none',
-            borderRadius: 8,
-            fontFamily: 'var(--font-satoshi)',
-            fontWeight: 700,
-            fontSize: 14,
-            letterSpacing: '0.02em',
-            cursor: pw.trim() && !submitting ? 'pointer' : 'default',
-            transition: 'all 160ms ease',
-          }}
+          className="rounded-lg"
         >
           {submitting ? 'Checking…' : 'Unlock →'}
-        </button>
+        </Button>
       </form>
     </main>
   )

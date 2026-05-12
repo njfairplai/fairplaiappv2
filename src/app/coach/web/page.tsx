@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, Footprints } from 'lucide-react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { HubFrame, MikelGlyph } from '@/components/coach/hub/HubEmbeds'
 import {
@@ -101,91 +101,29 @@ export default function CoachWebHubPage() {
     <HubFrame>
       {/* Hero zone — eyebrow / hero / subtitle / chips / input,
        *  centered with stagger fade-in animation. */}
-      <div
-        style={{
-          padding: isMobile ? '28px 16px 18px' : '40px 36px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 0,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: TYPE.mono,
-            fontSize: 10.5,
-            letterSpacing: '0.22em',
-            color: BRAND.indigoMute,
-            fontWeight: 700,
-            marginBottom: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            animation: 'hubFadeIn 360ms ease 0ms both',
-          }}
-        >
+      <div className="flex flex-col items-center px-4 pt-7 pb-[18px] md:px-9 md:pt-10 md:pb-6">
+        <div className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold mb-3 flex items-center gap-2 [animation:hubFadeIn_360ms_ease_0ms_both]">
           <MikelGlyph size={18} pulse />
           MORNING, COACH SARA
         </div>
 
-        <div
-          style={{
-            fontFamily: TYPE.display,
-            fontSize: isMobile ? 28 : 48,
-            lineHeight: 0.96,
-            letterSpacing: '-0.025em',
-            color: BRAND.indigo,
-            textAlign: 'center',
-            marginBottom: 6,
-            animation: 'hubFadeIn 360ms ease 80ms both',
-          }}
-        >
+        <div className="font-clash text-[28px] md:text-5xl leading-[0.96] tracking-[-0.025em] text-brand-indigo text-center mb-1.5 [animation:hubFadeIn_360ms_ease_80ms_both]">
           Ask Mikel{' '}
-          <span
-            style={{
-              background: BRAND.yellow,
-              padding: isMobile ? '0 6px' : '0 8px',
-            }}
-          >
+          <span className="bg-brand-yellow px-1.5 md:px-2">
             anything
           </span>
           .
         </div>
 
-        <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: isMobile ? 13 : 14,
-            color: BRAND.indigoMid,
-            textAlign: 'center',
-            marginBottom: isMobile ? 18 : 22,
-            maxWidth: 520,
-            lineHeight: 1.5,
-            animation: 'hubFadeIn 360ms ease 160ms both',
-          }}
-        >
+        <div className="font-satoshi text-[13px] md:text-sm text-brand-indigo-mid text-center mb-[18px] md:mb-[22px] max-w-[520px] leading-[1.5] [animation:hubFadeIn_360ms_ease_160ms_both]">
           Match prep, player questions, clip reels, drill ideas. Mikel knows this
           week&apos;s footage.
         </div>
 
-        <div
-          style={{
-            animation: 'hubFadeIn 360ms ease 240ms both',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
+        <div className="w-full flex justify-center [animation:hubFadeIn_360ms_ease_240ms_both]">
           <SuggestionChips chips={SUGGESTION_CHIPS} onPick={pickSuggestion} />
         </div>
-        <div
-          style={{
-            animation: 'hubFadeIn 400ms ease 320ms both',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
+        <div className="w-full flex justify-center [animation:hubFadeIn_400ms_ease_320ms_both]">
           <HubChatInput
             ref={inputHandle}
             initialFocus={!isMobile}
@@ -198,14 +136,7 @@ export default function CoachWebHubPage() {
 
       {/* Recent reply (when a thread exists) */}
       {hasThread && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            padding: isMobile ? '12px 14px' : '16px 36px',
-            animation: 'hubFadeIn 480ms ease 480ms both',
-          }}
-        >
+        <div className="flex justify-center px-3.5 py-3 md:px-9 md:py-4 [animation:hubFadeIn_480ms_ease_480ms_both]">
           <HubResponseCard
             onShare={shareReel}
             onNewThread={newThread}
@@ -219,35 +150,21 @@ export default function CoachWebHubPage() {
        *  attention. Reads from the same localStorage stream the parent
        *  inbox uses, so producer + consumer stay in sync. */}
       {(highFatigueCount > 0 || openPPECount > 0) && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            padding: isMobile ? '4px 14px 0' : '8px 36px 0',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 10,
-              maxWidth: 720,
-              width: '100%',
-              animation: 'hubFadeIn 480ms ease 540ms both',
-            }}
-          >
+        <div className="flex justify-center px-3.5 pt-1 md:px-9 md:pt-2">
+          <div className="flex flex-wrap gap-2.5 max-w-[720px] w-full [animation:hubFadeIn_480ms_ease_540ms_both]">
             {highFatigueCount > 0 && (
               <button
                 type="button"
                 onClick={() => router.push('/coach/web/squad')}
-                style={smartFlagStyle(BRAND.coral)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 bg-brand-paper border border-brand-line rounded-lg text-brand-indigo font-satoshi text-[12.5px] cursor-pointer transition-all duration-150"
+                style={{ borderLeft: `3px solid ${BRAND.coral}` }}
               >
                 <Footprints size={14} />
                 <span>
-                  <strong style={{ fontWeight: 800 }}>{highFatigueCount}</strong>{' '}
+                  <strong className="font-extrabold">{highFatigueCount}</strong>{' '}
                   player{highFatigueCount === 1 ? '' : 's'} over fatigue threshold this week
                 </span>
-                <span style={smartFlagArrow}>→</span>
+                <span className="font-satoshi text-sm text-brand-indigo-mute ml-1">→</span>
               </button>
             )}
             {openPPECount > 0 && (
@@ -258,14 +175,15 @@ export default function CoachWebHubPage() {
                   // squad surface is the closest entrypoint into players.
                   router.push('/coach/web/squad')
                 }}
-                style={smartFlagStyle(BRAND.indigo)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 bg-brand-paper border border-brand-line rounded-lg text-brand-indigo font-satoshi text-[12.5px] cursor-pointer transition-all duration-150"
+                style={{ borderLeft: `3px solid ${BRAND.indigo}` }}
               >
                 <AlertTriangle size={14} />
                 <span>
-                  <strong style={{ fontWeight: 800 }}>{openPPECount}</strong>{' '}
+                  <strong className="font-extrabold">{openPPECount}</strong>{' '}
                   open gear flag{openPPECount === 1 ? '' : 's'}
                 </span>
-                <span style={smartFlagArrow}>→</span>
+                <span className="font-satoshi text-sm text-brand-indigo-mute ml-1">→</span>
               </button>
             )}
           </div>
@@ -273,27 +191,13 @@ export default function CoachWebHubPage() {
       )}
 
       {/* Tile rail */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          padding: isMobile ? '16px 14px 32px' : '20px 36px 56px',
-        }}
-      >
+      <div className="flex justify-center px-3.5 pt-4 pb-8 md:px-9 md:pt-5 md:pb-14">
         <HubTiles />
       </div>
 
       {/* Privacy footer */}
-      <div style={{ textAlign: 'center', paddingBottom: 36 }}>
-        <span
-          style={{
-            fontFamily: TYPE.mono,
-            fontSize: 9.5,
-            letterSpacing: '0.22em',
-            color: BRAND.indigoMute,
-            fontWeight: 700,
-          }}
-        >
+      <div className="text-center pb-9">
+        <span className="font-fragment text-[9.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
           MIKEL DOESN&apos;T STORE QUESTIONS · YOUR CONVERSATIONS ARE PRIVATE
         </span>
       </div>
@@ -301,26 +205,4 @@ export default function CoachWebHubPage() {
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </HubFrame>
   )
-}
-
-function smartFlagStyle(accent: string): React.CSSProperties {
-  return {
-    display: 'inline-flex', alignItems: 'center', gap: 8,
-    padding: '8px 14px',
-    background: BRAND.paper,
-    border: `1px solid ${BRAND.line}`,
-    borderLeft: `3px solid ${accent}`,
-    borderRadius: 8,
-    color: BRAND.indigo,
-    fontFamily: TYPE.body, fontSize: 12.5,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  }
-}
-
-const smartFlagArrow: React.CSSProperties = {
-  fontFamily: TYPE.body,
-  fontSize: 14,
-  color: BRAND.indigoMute,
-  marginLeft: 4,
 }

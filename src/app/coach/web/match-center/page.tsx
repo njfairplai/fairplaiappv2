@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { BRAND, TYPE } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/cn'
 import {
   DEFAULT_SELECTED_DAY,
   MATCH_CENTER_HIGHLIGHTS,
@@ -190,12 +190,10 @@ export default function CoachMatchCenterPage() {
 
   return (
     <div
-      style={{
-        background: BRAND.sand,
-        minHeight: '100%',
-        padding: isMobile ? '20px 14px' : '32px 36px',
-        color: BRAND.indigo,
-      }}
+      className={cn(
+        'bg-brand-sand min-h-full text-brand-indigo',
+        isMobile ? 'px-3.5 py-5' : 'px-9 py-8',
+      )}
     >
       {/* Page header */}
       <div>
@@ -204,12 +202,10 @@ export default function CoachMatchCenterPage() {
           Match Center
         </MDisplay>
         <div
-          style={{
-            fontFamily: TYPE.body,
-            fontSize: isMobile ? 12.5 : 14,
-            color: BRAND.indigoMid,
-            marginTop: 4,
-          }}
+          className={cn(
+            'font-satoshi text-brand-indigo-mid mt-1',
+            isMobile ? 'text-[12.5px]' : 'text-sm',
+          )}
         >
           MAK Academy U13 Lions · 7 matches played, 5 scheduled, 1 needs prep.
         </div>
@@ -217,7 +213,7 @@ export default function CoachMatchCenterPage() {
 
       {/* Calendar primitive — month grid on desktop, week filmstrip
        *  on mobile. Driven by viewport, not page state. */}
-      <div style={{ marginTop: isMobile ? 18 : 28 }}>
+      <div className={cn(isMobile ? 'mt-[18px]' : 'mt-7')}>
         <Calendar
           currentMonth={currentMonth}
           currentYear={currentYear}
@@ -276,7 +272,7 @@ export default function CoachMatchCenterPage() {
       </div>
 
       {/* Contextual pane — inline below the calendar on both platforms. */}
-      <div style={{ marginTop: isMobile ? 18 : 28 }}>{paneContent}</div>
+      <div className={cn(isMobile ? 'mt-[18px]' : 'mt-7')}>{paneContent}</div>
 
       {/* Modals + toast */}
       <ClipModal
@@ -310,17 +306,9 @@ function EmptyDayState() {
   return (
     <Card style={{ padding: '40px 32px', textAlign: 'center' }}>
       <MEyebrow>NO SESSION</MEyebrow>
-      <div
-        style={{
-          fontFamily: TYPE.body,
-          fontSize: 14,
-          color: BRAND.indigoMid,
-          marginTop: 12,
-          lineHeight: 1.5,
-        }}
-      >
+      <div className="font-satoshi text-sm text-brand-indigo-mid mt-3 leading-[1.5]">
         Nothing scheduled this day. Pick another from the calendar above, or use{' '}
-        <span style={{ color: BRAND.indigo, fontWeight: 700 }}>+ Record session</span> to
+        <span className="text-brand-indigo font-bold">+ Record session</span> to
         start something new.
       </div>
     </Card>

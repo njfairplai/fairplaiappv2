@@ -102,8 +102,8 @@ export default function ParentStatsPage() {
 
   if (!activeKid) {
     return (
-      <div style={{ padding: 24, textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-body)', color: 'var(--brand-indigo-mute)' }}>
+      <div className="p-6 text-center">
+        <p className="font-satoshi text-brand-indigo-mute">
           No players linked to this account yet.
         </p>
       </div>
@@ -111,16 +111,7 @@ export default function ParentStatsPage() {
   }
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-sand)',
-        minHeight: '100dvh',
-        color: 'var(--brand-indigo)',
-        paddingBottom: 80,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="flex min-h-[100dvh] flex-col bg-brand-sand pb-20 text-brand-indigo">
       <PortalTopBar unreadCount={unreadCount} />
 
       <MultiKidSwitcher
@@ -130,67 +121,21 @@ export default function ParentStatsPage() {
       />
 
       {/* Top half: horizontal filmstrip of matches */}
-      <section
-        style={{
-          padding: '14px 16px 8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+      <section className="flex flex-col gap-2 px-4 pb-2 pt-3.5">
+        <div className="flex items-baseline justify-between">
+          <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
             SEASON · {sortedList.length} {sortedList.length === 1 ? 'MATCH' : 'MATCHES'}
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              letterSpacing: '0.16em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 600,
-            }}
-          >
+          <span className="font-fragment text-[9.5px] font-semibold tracking-[0.16em] text-brand-indigo-mute">
             TAP A MATCH
           </span>
         </div>
         {sortedList.length === 0 ? (
-          <div
-            style={{
-              padding: '32px 8px',
-              textAlign: 'center',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo-mute)',
-            }}
-          >
+          <div className="px-2 py-8 text-center font-satoshi text-[13px] text-brand-indigo-mute">
             No matches recorded yet.
           </div>
         ) : (
-          <div
-            style={{
-              display: 'flex',
-              gap: 8,
-              overflowX: 'auto',
-              paddingBottom: 6,
-              scrollbarWidth: 'thin',
-              scrollSnapType: 'x mandatory',
-            }}
-          >
+          <div className="flex gap-2 overflow-x-auto pb-1.5 snap-x snap-mandatory [scrollbar-width:thin]">
             {sortedList.map(s => {
               const analysis = matchAnalyses.find(
                 a => a.playerId === activeKid.id && a.sessionId === s.id,
@@ -199,7 +144,7 @@ export default function ParentStatsPage() {
               const upcoming = s.date > today
               const motm = !!analysis && analysis.compositeScore >= 80
               return (
-                <div key={s.id} style={{ scrollSnapAlign: 'start' }}>
+                <div key={s.id} className="snap-start">
                   <MatchFilmstripCard
                     session={s}
                     analysis={analysis}
@@ -224,45 +169,18 @@ export default function ParentStatsPage() {
       </section>
 
       {/* Bottom half: radar for the selected match */}
-      <section
-        style={{
-          padding: '8px 16px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          flex: 1,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+      <section className="flex flex-1 flex-col gap-2 px-4 pb-5 pt-2">
+        <div className="flex items-baseline justify-between">
+          <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
             {selectedMatchLabel ? selectedMatchLabel.toUpperCase() : 'NO MATCH SELECTED'}
           </span>
           {selectedAnalysis && (
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9.5,
-                letterSpacing: '0.16em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 600,
-              }}
-            >
+            <span className="font-fragment text-[9.5px] font-semibold tracking-[0.16em] text-brand-indigo-mute">
               COMPOSITE{' '}
-              <span style={{ color: parentScoreColor(selectedAnalysis.compositeScore), fontWeight: 700 }}>
+              <span
+                className="font-bold"
+                style={{ color: parentScoreColor(selectedAnalysis.compositeScore) }}
+              >
                 {selectedAnalysis.compositeScore}
               </span>
             </span>
@@ -276,18 +194,7 @@ export default function ParentStatsPage() {
             isMobile
           />
         ) : (
-          <div
-            style={{
-              background: 'var(--brand-paper)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 12,
-              padding: '40px 16px',
-              textAlign: 'center',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo-mute)',
-            }}
-          >
+          <div className="rounded-xl border border-brand-line bg-brand-paper px-4 py-10 text-center font-satoshi text-[13px] text-brand-indigo-mute">
             Tap an analysed match above to see the radar.
           </div>
         )}

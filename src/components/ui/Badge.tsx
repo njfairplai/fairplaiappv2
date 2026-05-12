@@ -1,39 +1,39 @@
 'use client'
 
-import { COLORS, RADIUS } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 
 type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral'
 
 interface BadgeProps {
   children: React.ReactNode
   variant?: BadgeVariant
-  style?: React.CSSProperties
+  className?: string
 }
 
-const variantMap: Record<BadgeVariant, { bg: string; color: string }> = {
-  success: { bg: `${COLORS.success}22`, color: COLORS.success },
-  warning: { bg: `${COLORS.warning}22`, color: COLORS.warning },
-  error: { bg: `${COLORS.error}22`, color: COLORS.error },
-  info: { bg: `${COLORS.primary}22`, color: COLORS.primary },
-  neutral: { bg: '#F5F6FC', color: COLORS.muted },
+/**
+ * Status badge.
+ *
+ * Traffic-light variants (success/warning/error) keep semantic colours
+ * that DON'T flip with the active palette — a "success" badge stays green
+ * regardless of whether the user is on Touchline or Twilight. Info +
+ * neutral DO follow the palette.
+ */
+const VARIANT: Record<BadgeVariant, string> = {
+  success: 'bg-[#27AE60]/15 text-[#27AE60]',
+  warning: 'bg-[#F39C12]/15 text-[#F39C12]',
+  error: 'bg-[#E74C3C]/15 text-[#E74C3C]',
+  info: 'bg-brand-indigo/12 text-brand-indigo',
+  neutral: 'bg-brand-line-soft text-brand-indigo-mute',
 }
 
-export default function Badge({ children, variant = 'neutral', style }: BadgeProps) {
-  const { bg, color } = variantMap[variant]
+export default function Badge({ children, variant = 'neutral', className }: BadgeProps) {
   return (
     <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        fontSize: 12,
-        fontWeight: 700,
-        padding: '4px 10px',
-        borderRadius: RADIUS.pill,
-        background: bg,
-        color,
-        whiteSpace: 'nowrap',
-        ...style,
-      }}
+      className={cn(
+        'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 font-satoshi text-xs font-bold',
+        VARIANT[variant],
+        className,
+      )}
     >
       {children}
     </span>

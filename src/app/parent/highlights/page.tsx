@@ -24,6 +24,7 @@ import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { ShareMenu } from '@/components/coach/player-profile/ShareMenu'
 import { VideoModal } from '@/components/video/VideoModal'
+import { cn } from '@/lib/cn'
 import type { Highlight } from '@/lib/types'
 
 const PAGE_SIZE = 5
@@ -221,14 +222,7 @@ export default function ParentHighlightsPage() {
   }
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-sand)',
-        minHeight: '100dvh',
-        color: 'var(--brand-indigo)',
-        paddingBottom: 80,
-      }}
-    >
+    <div className="min-h-[100dvh] bg-brand-sand pb-20 text-brand-indigo">
       <PortalTopBar unreadCount={unreadCount} />
 
       <MultiKidSwitcher
@@ -239,60 +233,20 @@ export default function ParentHighlightsPage() {
 
       {/* Season reel hero */}
       {playerHighlights.length > 0 && (
-        <section style={{ padding: '16px 16px 0' }}>
-          <div
-            style={{
-              background: 'var(--brand-indigo)',
-              color: 'var(--brand-sand)',
-              borderRadius: 12,
-              padding: '20px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-            }}
-          >
+        <section className="px-4 pt-4">
+          <div className="flex items-center gap-3.5 rounded-xl bg-brand-indigo px-[18px] py-5 text-brand-sand">
             <button
               type="button"
               aria-label="Watch season reel"
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                background: 'var(--brand-yellow)',
-                color: 'var(--brand-indigo)',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: '0 4px 14px rgba(252, 215, 24, 0.32)',
-              }}
+              className="inline-flex h-14 w-14 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-brand-yellow text-brand-indigo shadow-[0_4px_14px_rgba(252,215,24,0.32)]"
             >
               <Play size={22} fill="currentColor" />
             </button>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  letterSpacing: '0.22em',
-                  color: 'var(--brand-yellow)',
-                  fontWeight: 700,
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <div className="font-fragment text-[9.5px] font-bold tracking-[0.22em] text-brand-yellow">
                 SEASON REEL
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 20,
-                  color: 'var(--brand-sand)',
-                  letterSpacing: '-0.02em',
-                  marginTop: 2,
-                  lineHeight: 1.1,
-                }}
-              >
+              <div className="mt-0.5 font-clash text-xl leading-[1.1] tracking-[-0.02em] text-brand-sand">
                 {playerHighlights.length} clips · {Math.floor(totalDuration / 60)}m
               </div>
             </div>
@@ -306,15 +260,7 @@ export default function ParentHighlightsPage() {
       )}
 
       {/* Filter chips */}
-      <section
-        style={{
-          padding: '14px 16px 0',
-          display: 'flex',
-          gap: 6,
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-        }}
-      >
+      <section className="flex gap-1.5 overflow-x-auto px-4 pt-3.5 [scrollbar-width:none]">
         {(Object.keys(FILTER_LABELS) as EventFilter[]).map(f => {
           const active = filter === f
           return (
@@ -322,35 +268,15 @@ export default function ParentHighlightsPage() {
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '6px 12px',
-                borderRadius: 999,
-                border: active
-                  ? '1px solid var(--brand-indigo)'
-                  : '1px solid var(--brand-line)',
-                background: active ? 'var(--brand-indigo)' : 'transparent',
-                color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-                fontFamily: 'var(--font-body)',
-                fontSize: 12.5,
-                fontWeight: 600,
-                cursor: 'pointer',
-                letterSpacing: '0.02em',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-              }}
+              className={cn(
+                'inline-flex flex-shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 font-satoshi text-[12.5px] font-semibold tracking-[0.02em]',
+                active
+                  ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
+                  : 'border-brand-line bg-transparent text-brand-indigo',
+              )}
             >
               {FILTER_LABELS[f]}
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
-                  letterSpacing: '0.12em',
-                  opacity: 0.7,
-                }}
-              >
+              <span className="font-fragment text-[10px] tracking-[0.12em] opacity-70">
                 {counts[f]}
               </span>
             </button>
@@ -359,53 +285,22 @@ export default function ParentHighlightsPage() {
       </section>
 
       {/* Grouped clips per match */}
-      <section
-        style={{
-          padding: '20px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 18,
-        }}
-      >
+      <section className="flex flex-col gap-[18px] px-4 py-5">
         {/* "From your coach" group — promoted to the top of the grid
          *  when the coach has shared clips or uploaded Coach Cam clips
          *  in the last 15 days. Only shows when the filter is `all` so
          *  the AI event filters apply only to the AI grid below. */}
         {filter === 'all' && coachTouched.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                }}
-              >
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                 FROM YOUR COACH
               </div>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand-indigo)',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              <span className="whitespace-nowrap font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo">
                 {coachTouched.length} {coachTouched.length === 1 ? 'CLIP' : 'CLIPS'}
               </span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {coachTouched.map(row => (
                 <CoachTouchedClipRow
                   key={row.kind === 'shared' ? row.record.id : row.cam.id}
@@ -421,15 +316,7 @@ export default function ParentHighlightsPage() {
         )}
 
         {grouped.length === 0 ? (
-          <div
-            style={{
-              padding: '40px 16px',
-              textAlign: 'center',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13.5,
-              color: 'var(--brand-indigo-mute)',
-            }}
-          >
+          <div className="px-4 py-10 text-center font-satoshi text-[13.5px] text-brand-indigo-mute">
             {filter === 'all'
               ? 'No clips yet. They land here once matches are analysed.'
               : `No ${FILTER_LABELS[filter].toLowerCase()} this season.`}
@@ -445,67 +332,25 @@ export default function ParentHighlightsPage() {
                   ? `vs ${session.opponent}`
                   : 'Match'
               return (
-                <div
-                  key={sessionId}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-                >
+                <div key={sessionId} className="flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => router.push(`/parent/match/${sessionId}`)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                      background: 'transparent',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
+                    className="flex cursor-pointer items-baseline justify-between gap-2 border-none bg-transparent p-0 text-left"
                   >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: 9.5,
-                          letterSpacing: '0.18em',
-                          color: 'var(--brand-indigo-mute)',
-                          fontWeight: 700,
-                        }}
-                      >
+                    <div className="min-w-0">
+                      <div className="font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                         {session ? formatShortDate(session.date).toUpperCase() : '—'}
                       </div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: 18,
-                          color: 'var(--brand-indigo)',
-                          letterSpacing: '-0.02em',
-                          marginTop: 2,
-                          lineHeight: 1.1,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
+                      <div className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap font-clash text-lg leading-[1.1] tracking-[-0.02em] text-brand-indigo">
                         {matchTitle}
                       </div>
                     </div>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        letterSpacing: '0.18em',
-                        color: 'var(--brand-indigo)',
-                        fontWeight: 700,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
+                    <span className="whitespace-nowrap font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo">
                       {clips.length} {clips.length === 1 ? 'CLIP' : 'CLIPS'} →
                     </span>
                   </button>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div className="flex flex-col gap-2">
                     {clips.map(c => (
                       <ClipRow key={c.id} clip={c} />
                     ))}
@@ -516,41 +361,24 @@ export default function ParentHighlightsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: 8,
-                  paddingTop: 12,
-                  borderTop: '1px solid var(--brand-line)',
-                }}
-              >
+              <div className="mt-2 flex items-center justify-between border-t border-brand-line pt-3">
                 <button
                   type="button"
                   onClick={() => setPage(p => Math.max(0, p - 1))}
                   disabled={page === 0}
-                  style={paginationBtnStyle(page === 0)}
+                  className={paginationBtnClass(page === 0)}
                 >
                   <ChevronLeft size={14} />
                   Newer
                 </button>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 10,
-                    letterSpacing: '0.18em',
-                    color: 'var(--brand-indigo-mute)',
-                    fontWeight: 700,
-                  }}
-                >
+                <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                   {page + 1} / {totalPages}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                   disabled={page === totalPages - 1}
-                  style={paginationBtnStyle(page === totalPages - 1)}
+                  className={paginationBtnClass(page === totalPages - 1)}
                 >
                   Older
                   <ChevronRight size={14} />
@@ -589,90 +417,30 @@ function CoachTouchedClipRow({
     <button
       type="button"
       onClick={onOpen}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'auto 1fr auto',
-        alignItems: 'center',
-        gap: 10,
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderLeft: `3px solid ${sourceColor}`,
-        borderRadius: 8,
-        padding: '10px 12px',
-        cursor: 'pointer',
-        textAlign: 'left',
-      }}
+      className="grid cursor-pointer items-center gap-2.5 rounded-lg border border-brand-line bg-brand-paper px-3 py-2.5 text-left [grid-template-columns:auto_1fr_auto]"
+      style={{ borderLeft: `3px solid ${sourceColor}` }}
     >
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: '50%',
-          background: 'var(--brand-indigo)',
-          color: 'var(--brand-sand)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
+      <div className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-indigo text-brand-sand">
         <Play size={14} fill="currentColor" />
       </div>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '2px 6px',
-              borderRadius: 3,
-              background: `${sourceColor}1A`,
-              color: sourceColor,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              letterSpacing: '0.16em',
-              fontWeight: 800,
-              lineHeight: 1,
-            }}
+            className="inline-flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 font-fragment text-[9px] font-extrabold leading-none tracking-[0.16em]"
+            style={{ background: `${sourceColor}1A`, color: sourceColor }}
           >
             <SourceIcon size={9} />
             {sourceLabel}
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo)',
-              fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap font-satoshi text-[13px] font-semibold text-brand-indigo">
             {title}
           </span>
         </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9.5,
-            letterSpacing: '0.16em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-            marginTop: 4,
-          }}
-        >
+        <div className="mt-1 font-fragment text-[9.5px] font-bold tracking-[0.16em] text-brand-indigo-mute">
           {meta}
         </div>
       </div>
-      <span
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 14,
-          color: 'var(--brand-indigo-mute)',
-        }}
-      >
+      <span className="font-satoshi text-sm text-brand-indigo-mute">
         →
       </span>
     </button>
@@ -687,36 +455,16 @@ function ClipRow({ clip }: { clip: Highlight }) {
   const [open, setOpen] = useState(false)
   const canPlay = !!clip.clipUrl
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'auto 1fr auto',
-        alignItems: 'center',
-        gap: 10,
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 8,
-        padding: '10px 12px',
-      }}
-    >
+    <div className="grid items-center gap-2.5 rounded-lg border border-brand-line bg-brand-paper px-3 py-2.5 [grid-template-columns:auto_1fr_auto]">
       <button
         type="button"
         aria-label="Play clip"
         onClick={canPlay ? () => setOpen(true) : undefined}
         disabled={!canPlay}
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: '50%',
-          background: 'var(--brand-indigo)',
-          color: 'var(--brand-sand)',
-          border: 'none',
-          cursor: canPlay ? 'pointer' : 'default',
-          opacity: canPlay ? 1 : 0.55,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className={cn(
+          'inline-flex h-9 w-9 items-center justify-center rounded-full border-none bg-brand-indigo text-brand-sand',
+          canPlay ? 'cursor-pointer opacity-100' : 'cursor-default opacity-55',
+        )}
       >
         <Play size={14} fill="currentColor" />
       </button>
@@ -728,32 +476,15 @@ function ClipRow({ clip }: { clip: Highlight }) {
           caption={`${meta.label} · ${minute}m`}
         />
       )}
-      <div style={{ minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              letterSpacing: '0.18em',
-              fontWeight: 800,
-              color: 'var(--brand-indigo)',
-              background: meta.color,
-              padding: '2px 5px',
-              borderRadius: 3,
-              lineHeight: 1,
-            }}
+            className="rounded-[3px] px-[5px] py-0.5 font-fragment text-[9px] font-extrabold leading-none tracking-[0.18em] text-brand-indigo"
+            style={{ background: meta.color }}
           >
             {meta.label}
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              letterSpacing: '0.16em',
-              color: 'var(--brand-indigo-mute)',
-              fontWeight: 700,
-            }}
-          >
+          <span className="font-fragment text-[9.5px] font-bold tracking-[0.16em] text-brand-indigo-mute">
             {minute}m · {clip.durationSeconds}S
           </span>
         </div>
@@ -767,22 +498,11 @@ function ClipRow({ clip }: { clip: Highlight }) {
   )
 }
 
-function paginationBtnStyle(disabled: boolean): React.CSSProperties {
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: '8px 14px',
-    background: 'transparent',
-    border: '1px solid var(--brand-line)',
-    borderRadius: 999,
-    fontFamily: 'var(--font-body)',
-    fontSize: 12.5,
-    fontWeight: 600,
-    color: 'var(--brand-indigo)',
-    cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.3 : 1,
-  }
+function paginationBtnClass(disabled: boolean): string {
+  return cn(
+    'inline-flex items-center gap-1 rounded-full border border-brand-line bg-transparent px-3.5 py-2 font-satoshi text-[12.5px] font-semibold text-brand-indigo',
+    disabled ? 'cursor-default opacity-30' : 'cursor-pointer opacity-100',
+  )
 }
 
 function formatShortDate(iso: string): string {

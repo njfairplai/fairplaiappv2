@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { COLORS, RADIUS } from '@/lib/constants'
 import { X } from 'lucide-react'
+import { cn } from '@/lib/cn'
 
 interface ModalProps {
   open: boolean
@@ -12,12 +12,18 @@ interface ModalProps {
   maxWidth?: number
 }
 
+/**
+ * Centered modal with backdrop blur. Locks body scroll while open.
+ * `maxWidth` stays inline because it's a caller-supplied runtime value.
+ */
 export default function Modal({ open, onClose, title, children, maxWidth = 400 }: ModalProps) {
   const backdropRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [open])
 
   if (!open) return null
@@ -25,36 +31,35 @@ export default function Modal({ open, onClose, title, children, maxWidth = 400 }
   return (
     <div
       ref={backdropRef}
-      onClick={(e) => { if (e.target === backdropRef.current) onClose() }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: 20,
+      onClick={(e) => {
+        if (e.target === backdropRef.current) onClose()
       }}
+      className={cn(
+        'fixed inset-0 z-[1000] flex items-center justify-center p-5',
+        'bg-black/60 backdrop-blur-sm',
+      )}
     >
       <div
-        style={{
-          background: COLORS.cardBg,
-          borderRadius: RADIUS.card + 4,
-          padding: 24,
-          width: '100%',
-          maxWidth,
-          maxHeight: '80vh',
-          overflowY: 'auto',
-          position: 'relative',
-        }}
+        style={{ maxWidth }}
+        className={cn(
+          'relative w-full max-h-[80vh] overflow-y-auto rounded-2xl p-6',
+          'bg-brand-paper text-brand-indigo',
+        )}
       >
         {title && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 800, color: COLORS.navy, margin: 0 }}>{title}</h3>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-              <X size={20} color={COLORS.muted} />
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="m-0 font-satoshi text-lg font-extrabold text-brand-indigo">{title}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className={cn(
+                'cursor-pointer border-none bg-transparent p-1',
+                'text-brand-indigo-mute hover:text-brand-indigo',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-brand-paper rounded',
+              )}
+              aria-label="Close"
+            >
+              <X size={20} />
             </button>
           </div>
         )}

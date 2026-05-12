@@ -14,6 +14,7 @@ import {
 } from '@/lib/parent-portal'
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
+import { cn } from '@/lib/cn'
 
 /* Hub is now the single feed for parent comms + system events.
  * /parent/notifications was deleted; the bell icon routes here.
@@ -205,16 +206,7 @@ export default function ParentHubPage() {
   const showComposer = filter === 'all' || filter === 'coach'
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-sand)',
-        minHeight: '100dvh',
-        color: 'var(--brand-indigo)',
-        paddingBottom: 80,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="flex min-h-[100dvh] flex-col bg-brand-sand pb-20 text-brand-indigo">
       <PortalTopBar unreadCount={unreadCount} />
 
       <MultiKidSwitcher
@@ -224,42 +216,18 @@ export default function ParentHubPage() {
       />
 
       {/* Eyebrow */}
-      <section style={{ padding: '20px 16px 0' }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <section className="px-4 pt-5">
+        <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
           HUB
         </span>
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 28,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-            margin: '4px 0 0',
-            lineHeight: 1.1,
-          }}
-        >
+        <h1 className="m-0 mt-1 font-clash text-[28px] leading-[1.1] tracking-[-0.02em] text-brand-indigo">
           Everything in one place.
         </h1>
       </section>
 
       {/* Filter chip rail — narrows the merged feed. Counts on each
           chip so the parent sees what's there before filtering. */}
-      <section
-        style={{
-          padding: '14px 16px 0',
-          display: 'flex',
-          gap: 6,
-          flexWrap: 'wrap',
-        }}
-      >
+      <section className="flex flex-wrap gap-1.5 px-4 pt-3.5">
         {(['all', 'coach', 'announcement', 'community', 'system'] as FilterId[]).map(f => {
           const active = filter === f
           const label = f === 'all' ? 'All' : f === 'coach' ? 'Coach' : f === 'announcement' ? 'Academy' : f === 'community' ? 'Community' : 'Updates'
@@ -268,45 +236,23 @@ export default function ParentHubPage() {
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              style={{
-                padding: '6px 11px',
-                borderRadius: 999,
-                border: `1px solid ${active ? 'var(--brand-indigo)' : 'var(--brand-line)'}`,
-                background: active ? 'var(--brand-indigo)' : 'transparent',
-                color: active ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-                fontFamily: 'var(--font-body)',
-                fontSize: 11.5,
-                fontWeight: active ? 600 : 500,
-                cursor: 'pointer',
-                transition: 'all 160ms ease',
-              }}
+              className={cn(
+                'cursor-pointer rounded-full border px-[11px] py-1.5 font-satoshi text-[11.5px] transition-all duration-150',
+                active
+                  ? 'border-brand-indigo bg-brand-indigo font-semibold text-brand-sand'
+                  : 'border-brand-line bg-transparent font-medium text-brand-indigo',
+              )}
             >
-              {label} <span style={{ opacity: 0.7, marginLeft: 2 }}>{counts[f]}</span>
+              {label} <span className="ml-0.5 opacity-70">{counts[f]}</span>
             </button>
           )
         })}
       </section>
 
       {/* Feed */}
-      <section
-        style={{
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-          flex: 1,
-        }}
-      >
+      <section className="flex flex-1 flex-col gap-2.5 px-4 py-3.5">
         {filteredItems.length === 0 ? (
-          <div
-            style={{
-              padding: '40px 20px',
-              textAlign: 'center',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo-mute)',
-            }}
-          >
+          <div className="px-5 py-10 text-center font-satoshi text-[13px] text-brand-indigo-mute">
             Nothing in this view yet.
           </div>
         ) : (
@@ -324,50 +270,24 @@ export default function ParentHubPage() {
       {/* Send-coach composer — only when the feed shows coach items,
           otherwise the input feels disconnected from what's on screen. */}
       {showComposer && (
-        <section
-          style={{
-            padding: '12px 12px 16px',
-            background: 'var(--brand-paper)',
-            borderTop: '1px solid var(--brand-line)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
+        <section className="flex items-center gap-2 border-t border-brand-line bg-brand-paper px-3 pb-4 pt-3">
           <input
             value={draft}
             onChange={e => setDraft(e.target.value)}
             placeholder="Send Coach Sara a message…"
-            style={{
-              flex: 1,
-              background: 'var(--brand-sand)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 999,
-              padding: '10px 14px',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--brand-indigo)',
-              outline: 'none',
-            }}
+            className="flex-1 rounded-full border border-brand-line bg-brand-sand px-3.5 py-2.5 font-satoshi text-[13px] text-brand-indigo outline-none"
           />
           <button
             type="button"
             onClick={() => setDraft('')}
             disabled={draft.trim().length === 0}
             aria-label="Send"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: draft.trim() ? 'var(--brand-indigo)' : 'var(--brand-line-soft)',
-              color: draft.trim() ? 'var(--brand-sand)' : 'var(--brand-indigo-mute)',
-              border: 'none',
-              cursor: draft.trim() ? 'pointer' : 'default',
-              flexShrink: 0,
-            }}
+            className={cn(
+              'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-none',
+              draft.trim()
+                ? 'cursor-pointer bg-brand-indigo text-brand-sand'
+                : 'cursor-default bg-brand-line-soft text-brand-indigo-mute',
+            )}
           >
             <Send size={16} />
           </button>
@@ -403,105 +323,50 @@ function FeedCard({
             }
           : undefined
       }
-      style={{
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
+      className={cn(
+        'flex flex-col gap-2 rounded-xl border border-brand-line bg-brand-paper px-4 py-3.5',
         // Subtle yellow left rule for unread system items so they
         // visually stand out without being noisy.
-        borderLeft: unread ? '3px solid var(--brand-yellow)' : '1px solid var(--brand-line)',
-        borderRadius: 12,
-        padding: '14px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        cursor: interactive ? 'pointer' : 'default',
-      }}
+        unread ? 'border-l-[3px] border-l-brand-yellow' : '',
+        interactive ? 'cursor-pointer' : 'cursor-default',
+      )}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 8,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="flex items-center gap-2">
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 8.5,
-              letterSpacing: '0.18em',
-              fontWeight: 800,
-              color: tone.color,
-              background: tone.bg,
-              padding: '2px 6px',
-              borderRadius: 3,
-              lineHeight: 1,
-            }}
+            className={cn(
+              'rounded-[3px] px-1.5 py-0.5 font-fragment text-[8.5px] font-extrabold leading-none tracking-[0.18em]',
+              tone.className,
+            )}
           >
             {tone.label}
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 12.5,
-              color: 'var(--brand-indigo)',
-              fontWeight: 700,
-            }}
-          >
+          <span className="font-satoshi text-[12.5px] font-bold text-brand-indigo">
             {item.author}
           </span>
         </div>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9.5,
-            letterSpacing: '0.16em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+        <span className="font-fragment text-[9.5px] font-bold tracking-[0.16em] text-brand-indigo-mute">
           {item.shortDate.toUpperCase()}
         </span>
       </div>
-      <p
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 13.5,
-          color: 'var(--brand-indigo)',
-          lineHeight: 1.5,
-          margin: 0,
-        }}
-      >
+      <p className="m-0 font-satoshi text-[13.5px] leading-[1.5] text-brand-indigo">
         {item.body}
       </p>
     </article>
   )
 }
 
-function pillTone(kind: HubItemKind): { label: string; color: string; bg: string } {
+function pillTone(kind: HubItemKind): { label: string; className: string } {
   switch (kind) {
     case 'coach':
-      return { label: 'COACH', color: 'var(--brand-indigo)', bg: 'var(--brand-yellow)' }
+      return { label: 'COACH', className: 'bg-brand-yellow text-brand-indigo' }
     case 'announcement':
-      return {
-        label: 'ACADEMY',
-        color: 'var(--brand-sand)',
-        bg: 'var(--brand-indigo)',
-      }
+      return { label: 'ACADEMY', className: 'bg-brand-indigo text-brand-sand' }
     case 'community':
-      return {
-        label: 'COMMUNITY',
-        color: 'var(--brand-indigo)',
-        bg: 'var(--brand-line-soft)',
-      }
+      return { label: 'COMMUNITY', className: 'bg-brand-line-soft text-brand-indigo' }
     case 'system':
       // Coral so system events read as "from the platform" rather than
       // from a person — clearly different from coach/academy/community.
-      return {
-        label: 'UPDATE',
-        color: 'var(--brand-sand)',
-        bg: 'var(--brand-coral)',
-      }
+      return { label: 'UPDATE', className: 'bg-brand-coral text-brand-sand' }
   }
 }

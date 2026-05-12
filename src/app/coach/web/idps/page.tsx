@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Star, Send, Download, Save, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react'
 import { useTeam } from '@/contexts/TeamContext'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import {
   players, rosters, squadScores, seasonReviews, playerSeasonStats,
   playerRadarData, developmentReportData, coachFeedbackHistory, attendanceData, highlights,
@@ -60,7 +61,7 @@ function scoreColorForBrand(score: number): string {
  *  Mirrors the brand vocabulary (yellow = "this is the active signal"). */
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div style={{ display: 'flex', gap: 4 }}>
+    <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map(n => {
         const filled = n <= value
         return (
@@ -70,13 +71,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
             onClick={() => onChange(n)}
             aria-label={`${n} of 5`}
             aria-pressed={filled}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              lineHeight: 0,
-            }}
+            className="cursor-pointer border-none bg-transparent p-0 leading-none"
           >
             <Star
               size={20}
@@ -137,8 +132,14 @@ function MiniRadar({ data }: { data: Array<{ category: string; value: number; av
       {data.map((d, i) => {
         const p = getPoint(i, 120)
         return (
-          <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle"
-            style={{ fontSize: 8, fill: 'rgba(27,21,80,0.6)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+          <text
+            key={i}
+            x={p.x}
+            y={p.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-brand-indigo-mute font-fragment text-[8px] font-bold"
+          >
             {d.category.slice(0, 4).toUpperCase()}
           </text>
         )
@@ -147,18 +148,8 @@ function MiniRadar({ data }: { data: Array<{ category: string; value: number; av
   )
 }
 
-const inputBaseStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 14px',
-  fontFamily: TYPE.body,
-  fontSize: 14,
-  color: BRAND.indigo,
-  background: BRAND.paper,
-  border: `1px solid ${BRAND.line}`,
-  borderRadius: 4,
-  outline: 'none',
-  boxSizing: 'border-box',
-}
+const inputClass =
+  'w-full rounded-[4px] border border-brand-line bg-brand-paper px-3.5 py-2.5 font-satoshi text-sm text-brand-indigo outline-none box-border'
 
 export default function IDPsPage() {
   const { selectedRosterId } = useTeam()
@@ -205,10 +196,10 @@ export default function IDPsPage() {
     return 'due'
   }
 
-  const statusPill: Record<IDPStatus, { label: string; bg: string; ink: string }> = {
-    due: { label: 'DUE', bg: 'rgba(235,77,109,0.14)', ink: BRAND.coral },
-    draft: { label: 'DRAFT', bg: BRAND.lineSoft, ink: BRAND.indigoMid },
-    sent: { label: '✓ SENT', bg: BRAND.yellowSoft, ink: BRAND.indigo },
+  const statusPill: Record<IDPStatus, { label: string; className: string }> = {
+    due: { label: 'DUE', className: 'bg-brand-coral/15 text-brand-coral' },
+    draft: { label: 'DRAFT', className: 'bg-brand-line-soft text-brand-indigo-mid' },
+    sent: { label: '✓ SENT', className: 'bg-brand-yellow-soft text-brand-indigo' },
   }
 
   // ── EDITOR VIEW ──────────────────────────────────────────────
@@ -269,98 +260,42 @@ export default function IDPsPage() {
     const hasDraft = drafts[selectedPlayerId] != null
 
     return (
-      <div
-        style={{
-          background: BRAND.sand,
-          minHeight: '100%',
-          color: BRAND.indigo,
-          fontFamily: TYPE.body,
-        }}
-      >
+      <div className="min-h-full bg-brand-sand font-satoshi text-brand-indigo">
         {/* Editor header — back link, player identity, status */}
         <div
-          style={{
-            background: hasDraft && !isSent ? BRAND.yellowSoft : BRAND.sand,
-            padding: isMobile ? '14px 14px' : '20px 32px',
-            borderBottom: `1px solid ${BRAND.line}`,
-          }}
+          className={cn(
+            'border-b border-brand-line',
+            isMobile ? 'p-3.5' : 'px-8 py-5',
+            hasDraft && !isSent ? 'bg-brand-yellow-soft' : 'bg-brand-sand',
+          )}
         >
           <button
             type="button"
             onClick={() => setSelectedPlayerId(null)}
-            style={{
-              ...mcButtons.text,
-              padding: 0,
-              marginBottom: 12,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              color: BRAND.indigo,
-            }}
+            className="mb-3 inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo"
           >
             <ArrowLeft size={14} /> Back to list
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap items-center gap-4">
             <PlayerAvatar player={player} size="md" />
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="min-w-0 flex-1">
               <MEyebrow>INDIVIDUAL DEVELOPMENT PLAN</MEyebrow>
               <MDisplay size={isMobile ? 28 : 36} style={{ marginTop: 4 }}>
                 {player.firstName} {player.lastName}
               </MDisplay>
-              <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: '0.16em',
-                    color: BRAND.indigoMute,
-                    border: `1px solid ${BRAND.line}`,
-                    padding: '2px 6px',
-                    borderRadius: 2,
-                  }}
-                >
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <span className="rounded-sm border border-brand-line px-1.5 py-0.5 font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">
                   {position}
                 </span>
-                <span
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 10,
-                    letterSpacing: '0.16em',
-                    color: BRAND.indigoMute,
-                    fontWeight: 700,
-                  }}
-                >
+                <span className="font-fragment text-[10px] font-bold tracking-[0.16em] text-brand-indigo-mute">
                   #{player.jerseyNumber}
                 </span>
                 {isSent ? (
-                  <span
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: '0.18em',
-                      color: BRAND.indigo,
-                      background: BRAND.yellow,
-                      padding: '3px 7px',
-                      borderRadius: 3,
-                    }}
-                  >
+                  <span className="rounded-[3px] bg-brand-yellow px-1.5 py-0.5 font-fragment text-[9px] font-bold tracking-[0.18em] text-brand-indigo">
                     ✓ SENT TO PARENT
                   </span>
                 ) : hasDraft ? (
-                  <span
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: '0.18em',
-                      color: BRAND.indigoMid,
-                      background: BRAND.lineSoft,
-                      padding: '3px 7px',
-                      borderRadius: 3,
-                    }}
-                  >
+                  <span className="rounded-[3px] bg-brand-line-soft px-1.5 py-0.5 font-fragment text-[9px] font-bold tracking-[0.18em] text-brand-indigo-mid">
                     DRAFT IN PROGRESS
                   </span>
                 ) : null}
@@ -371,20 +306,17 @@ export default function IDPsPage() {
 
         {/* Two-column body */}
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: isMobile ? 14 : 20,
-            padding: isMobile ? 14 : 32,
-            paddingBottom: 96,
-          }}
+          className={cn(
+            'grid pb-24',
+            isMobile ? 'grid-cols-1 gap-3.5 p-3.5' : 'grid-cols-2 gap-5 p-8',
+          )}
         >
           {/* LEFT — auto-populated context */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="flex flex-col gap-3.5">
             {/* Performance — composite + delta */}
-            <Card style={{ padding: 18 }}>
+            <IDPCard>
               <MEyebrow>PERFORMANCE</MEyebrow>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 12 }}>
+              <div className="mt-3 flex items-center gap-4">
                 <MatchCenterScoreArc
                   value={compositeScore}
                   size={66}
@@ -394,132 +326,84 @@ export default function IDPsPage() {
                   textColor={BRAND.indigo}
                 />
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div className="flex items-center gap-1.5">
                     {diff > 3 ? (
                       <TrendingUp size={14} color={BRAND.indigo} />
                     ) : diff < -3 ? (
                       <TrendingDown size={14} color={BRAND.coral} />
                     ) : null}
                     <span
-                      style={{
-                        fontFamily: TYPE.mono,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: '0.14em',
-                        color:
-                          diff > 3 ? BRAND.indigo : diff < -3 ? BRAND.coral : BRAND.indigoMute,
-                      }}
+                      className={cn(
+                        'font-fragment text-[11px] font-bold tracking-[0.14em]',
+                        diff > 3
+                          ? 'text-brand-indigo'
+                          : diff < -3
+                            ? 'text-brand-coral'
+                            : 'text-brand-indigo-mute',
+                      )}
                     >
                       {diff > 0 ? '+' : ''}
                       {diff} VS AVG
                     </span>
                   </div>
-                  <span
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 10,
-                      letterSpacing: '0.18em',
-                      color: BRAND.indigoMute,
-                      fontWeight: 700,
-                    }}
-                  >
+                  <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                     SEASON AVG · {avgScore}
                   </span>
                 </div>
               </div>
-            </Card>
+            </IDPCard>
 
             {/* Skill profile radar */}
             {radarData.length > 0 && (
-              <Card style={{ padding: 18 }}>
+              <IDPCard>
                 <MEyebrow>SKILL PROFILE</MEyebrow>
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
+                <div className="mt-1 flex justify-center">
                   <MiniRadar data={radarData} />
                 </div>
-              </Card>
+              </IDPCard>
             )}
 
             {/* Key stats */}
             {stats && (
-              <Card style={{ padding: 18 }}>
+              <IDPCard>
                 <MEyebrow>KEY STATS</MEyebrow>
                 <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                    gap: '0 16px',
-                    marginTop: 10,
-                  }}
+                  className={cn(
+                    'mt-2.5 grid gap-x-4',
+                    isMobile ? 'grid-cols-1' : 'grid-cols-2',
+                  )}
                 >
                   {stats.stats.map((stat) => (
                     <div
                       key={stat.label}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        padding: '8px 0',
-                        borderBottom: `1px solid ${BRAND.lineSoft}`,
-                      }}
+                      className="flex justify-between border-b border-brand-line-soft py-2"
                     >
-                      <span
-                        style={{
-                          fontFamily: TYPE.mono,
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: '0.14em',
-                          color: BRAND.indigoMute,
-                        }}
-                      >
+                      <span className="font-fragment text-[10px] font-bold tracking-[0.14em] text-brand-indigo-mute">
                         {stat.label.toUpperCase()}
                       </span>
-                      <span
-                        style={{
-                          fontFamily: TYPE.body,
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: BRAND.indigo,
-                        }}
-                      >
+                      <span className="font-satoshi text-[13px] font-bold text-brand-indigo">
                         {stat.value}
                       </span>
                     </div>
                   ))}
                 </div>
-              </Card>
+              </IDPCard>
             )}
 
             {/* Strengths + working-on */}
             {review && (
-              <Card style={{ padding: 18 }}>
+              <IDPCard>
                 <MEyebrow>ANALYSIS</MEyebrow>
                 {review.strengthAreas.length > 0 && (
-                  <div style={{ marginTop: 10 }}>
-                    <div
-                      style={{
-                        fontFamily: TYPE.mono,
-                        fontSize: 9.5,
-                        letterSpacing: '0.18em',
-                        fontWeight: 700,
-                        color: BRAND.indigoMute,
-                        marginBottom: 8,
-                      }}
-                    >
+                  <div className="mt-2.5">
+                    <div className="mb-2 font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                       STRENGTHS
                     </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <div className="flex flex-wrap gap-1.5">
                       {review.strengthAreas.map(s => (
                         <span
                           key={s}
-                          style={{
-                            fontFamily: TYPE.body,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            padding: '4px 10px',
-                            borderRadius: 999,
-                            background: BRAND.yellowSoft,
-                            color: BRAND.indigo,
-                            border: `1px solid ${BRAND.yellow}`,
-                          }}
+                          className="rounded-full border border-brand-yellow bg-brand-yellow-soft px-2.5 py-1 font-satoshi text-xs font-bold text-brand-indigo"
                         >
                           {s}
                         </span>
@@ -528,33 +412,15 @@ export default function IDPsPage() {
                   </div>
                 )}
                 {review.improvementAreas.length > 0 && (
-                  <div style={{ marginTop: 14 }}>
-                    <div
-                      style={{
-                        fontFamily: TYPE.mono,
-                        fontSize: 9.5,
-                        letterSpacing: '0.18em',
-                        fontWeight: 700,
-                        color: BRAND.indigoMute,
-                        marginBottom: 8,
-                      }}
-                    >
+                  <div className="mt-3.5">
+                    <div className="mb-2 font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                       WORKING ON
                     </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <div className="flex flex-wrap gap-1.5">
                       {review.improvementAreas.map(s => (
                         <span
                           key={s}
-                          style={{
-                            fontFamily: TYPE.body,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            padding: '4px 10px',
-                            borderRadius: 999,
-                            background: 'transparent',
-                            color: BRAND.coral,
-                            border: `1px solid ${BRAND.coral}`,
-                          }}
+                          className="rounded-full border border-brand-coral bg-transparent px-2.5 py-1 font-satoshi text-xs font-bold text-brand-coral"
                         >
                           {s}
                         </span>
@@ -562,29 +428,21 @@ export default function IDPsPage() {
                     </div>
                   </div>
                 )}
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 18,
-                    marginTop: 14,
-                    paddingTop: 12,
-                    borderTop: `1px solid ${BRAND.lineSoft}`,
-                  }}
-                >
+                <div className="mt-3.5 flex gap-4 border-t border-brand-line-soft pt-3">
                   <SmallStat label="ATTENDANCE" value={attendance ? `${attendance.sessionsAttended}/${attendance.totalSessions}` : '—'} />
                   <SmallStat label="HIGHLIGHTS" value={String(playerHighlights.length)} />
                   <SmallStat label="MATCHES" value={String(review.matchesPlayed)} />
                 </div>
-              </Card>
+              </IDPCard>
             )}
           </div>
 
           {/* RIGHT — coach input */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="flex flex-col gap-3.5">
             {/* Star ratings */}
-            <Card style={{ padding: 18 }}>
+            <IDPCard>
               <MEyebrow>TEMPERAMENT &amp; ATTITUDE</MEyebrow>
-              <div style={{ marginTop: 12 }}>
+              <div className="mt-3">
                 {[
                   { key: 'attitude' as const, label: 'Attitude' },
                   { key: 'effort' as const, label: 'Effort' },
@@ -593,22 +451,12 @@ export default function IDPsPage() {
                 ].map((attr, i, arr) => (
                   <div
                     key={attr.key}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 0',
-                      borderBottom: i < arr.length - 1 ? `1px solid ${BRAND.lineSoft}` : 'none',
-                    }}
+                    className={cn(
+                      'flex items-center justify-between py-2.5',
+                      i < arr.length - 1 && 'border-b border-brand-line-soft',
+                    )}
                   >
-                    <span
-                      style={{
-                        fontFamily: TYPE.body,
-                        fontSize: 13.5,
-                        fontWeight: 600,
-                        color: BRAND.indigo,
-                      }}
-                    >
+                    <span className="font-satoshi text-[13.5px] font-semibold text-brand-indigo">
                       {attr.label}
                     </span>
                     <StarRating value={draft[attr.key]} onChange={v => updateDraft({ [attr.key]: v })} />
@@ -617,129 +465,55 @@ export default function IDPsPage() {
               </div>
 
               {devData && (
-                <div
-                  style={{
-                    marginTop: 14,
-                    paddingTop: 14,
-                    borderTop: `1px solid ${BRAND.line}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 9.5,
-                      letterSpacing: '0.18em',
-                      fontWeight: 700,
-                      color: BRAND.indigoMute,
-                      marginBottom: 10,
-                    }}
-                  >
+                <div className="mt-3.5 border-t border-brand-line pt-3.5">
+                  <div className="mb-2.5 font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                     DATA-BACKED SOFT SKILLS
                   </div>
                   {devData.softSkills.map(ss => (
-                    <div
-                      key={ss.category}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        marginBottom: 8,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: TYPE.body,
-                          fontSize: 12.5,
-                          color: BRAND.indigo,
-                          width: 100,
-                        }}
-                      >
+                    <div key={ss.category} className="mb-2 flex items-center gap-2.5">
+                      <span className="w-[100px] font-satoshi text-[12.5px] text-brand-indigo">
                         {ss.category}
                       </span>
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 6,
-                          background: BRAND.lineSoft,
-                          borderRadius: 3,
-                          overflow: 'hidden',
-                        }}
-                      >
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-[3px] bg-brand-line-soft">
                         <div
+                          className="h-full rounded-[3px]"
                           style={{
                             width: `${ss.score}%`,
-                            height: '100%',
                             background: ss.score >= ss.avg ? BRAND.indigo : BRAND.coral,
-                            borderRadius: 3,
                           }}
                         />
                       </div>
-                      <span
-                        style={{
-                          fontFamily: TYPE.mono,
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: '0.12em',
-                          color: BRAND.indigoMute,
-                          width: 28,
-                          textAlign: 'right',
-                        }}
-                      >
+                      <span className="w-7 text-right font-fragment text-[10px] font-bold tracking-[0.12em] text-brand-indigo-mute">
                         {ss.score}
                       </span>
                     </div>
                   ))}
                 </div>
               )}
-            </Card>
+            </IDPCard>
 
             {/* Coach observation */}
-            <Card style={{ padding: 18 }}>
+            <IDPCard>
               <MEyebrow>COACH&apos;S OBSERVATION</MEyebrow>
               <textarea
                 value={draft.observation}
                 onChange={e => updateDraft({ observation: e.target.value.slice(0, 280) })}
                 placeholder="Share your observations about this player…"
                 rows={4}
-                style={{
-                  ...inputBaseStyle,
-                  marginTop: 10,
-                  minHeight: 110,
-                  resize: 'vertical',
-                  lineHeight: 1.5,
-                }}
+                className={cn(inputClass, 'mt-2.5 min-h-[110px] resize-y leading-normal')}
               />
-              <div
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 10,
-                  letterSpacing: '0.16em',
-                  color: BRAND.indigoMute,
-                  fontWeight: 700,
-                  marginTop: 4,
-                  textAlign: 'right',
-                }}
-              >
+              <div className="mt-1 text-right font-fragment text-[10px] font-bold tracking-[0.16em] text-brand-indigo-mute">
                 {draft.observation.length}/280
               </div>
-            </Card>
+            </IDPCard>
 
             {/* Goals */}
-            <Card style={{ padding: 18 }}>
+            <IDPCard>
               <MEyebrow>GOALS FOR NEXT PERIOD</MEyebrow>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+              <div className="mt-3 flex flex-col gap-2.5">
                 {draft.goals.map((goal, i) => (
                   <div key={i}>
-                    <div
-                      style={{
-                        fontFamily: TYPE.mono,
-                        fontSize: 9.5,
-                        letterSpacing: '0.18em',
-                        fontWeight: 700,
-                        color: BRAND.indigoMute,
-                        marginBottom: 6,
-                      }}
-                    >
+                    <div className="mb-1.5 font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
                       {String(i + 1).padStart(2, '0')} · GOAL
                     </div>
                     <input
@@ -750,33 +524,25 @@ export default function IDPsPage() {
                         updateDraft({ goals: newGoals })
                       }}
                       placeholder={`What should ${player.firstName} work on?`}
-                      style={inputBaseStyle}
+                      className={inputClass}
                     />
                   </div>
                 ))}
               </div>
-            </Card>
+            </IDPCard>
           </div>
         </div>
 
         {/* Sticky footer CTA bar */}
         <div
-          style={{
-            position: 'sticky',
-            bottom: 0,
-            background: BRAND.sand,
-            borderTop: `1px solid ${BRAND.line}`,
-            padding: isMobile ? '12px 14px' : '14px 32px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-            zIndex: 10,
-          }}
+          className={cn(
+            'sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t border-brand-line bg-brand-sand',
+            isMobile ? 'px-3.5 py-3' : 'px-8 py-3.5',
+          )}
         >
-          <span style={{ flex: 1 }} />
+          <span className="flex-1" />
           <button type="button" style={mcButtons.ghost} onClick={() => updateDraft({})}>
-            <Save size={12} style={{ marginRight: 4, verticalAlign: '-2px' }} />
+            <Save size={12} className="mr-1 align-[-2px]" />
             Save draft
           </button>
           <button
@@ -787,7 +553,7 @@ export default function IDPsPage() {
               borderColor: BRAND.line,
             }}
           >
-            <Download size={12} style={{ marginRight: 4, verticalAlign: '-2px' }} />
+            <Download size={12} className="mr-1 align-[-2px]" />
             PDF
           </button>
           <button
@@ -800,7 +566,7 @@ export default function IDPsPage() {
               cursor: sendingId === selectedPlayerId || isSent ? 'default' : 'pointer',
             }}
           >
-            <Send size={12} style={{ marginRight: 4, verticalAlign: '-2px' }} />
+            <Send size={12} className="mr-1 align-[-2px]" />
             {isSent ? 'Sent ✓' : sendingId === selectedPlayerId ? 'Sending…' : 'Send to parent →'}
           </button>
         </div>
@@ -812,66 +578,23 @@ export default function IDPsPage() {
   const dueCount = rosterPlayers.filter(p => getStatus(p.id) === 'due').length
 
   return (
-    <div
-      style={{
-        background: BRAND.sand,
-        minHeight: '100%',
-        color: BRAND.indigo,
-        fontFamily: TYPE.body,
-      }}
-    >
+    <div className="min-h-full bg-brand-sand font-satoshi text-brand-indigo">
       {/* List header */}
-      <div
-        style={{
-          padding: isMobile ? '20px 14px 14px' : '32px 32px 18px',
-        }}
-      >
+      <div className={cn(isMobile ? 'px-3.5 pt-5 pb-3.5' : 'px-8 pt-8 pb-4')}>
         <MEyebrow>COACH WORKSPACE</MEyebrow>
         <MDisplay size={isMobile ? 32 : 56} style={{ marginTop: 6 }}>
           Individual Development Plans
         </MDisplay>
-        <div
-          style={{
-            display: 'flex',
-            gap: 14,
-            alignItems: 'center',
-            marginTop: 10,
-            flexWrap: 'wrap',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 10.5,
-              letterSpacing: '0.18em',
-              color: BRAND.indigoMute,
-              fontWeight: 700,
-            }}
-          >
+        <div className="mt-2.5 flex flex-wrap items-center gap-3.5">
+          <span className="font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
             {selectedRoster?.name?.toUpperCase() ?? 'ALL ROSTERS'}
           </span>
           {dueCount > 0 ? (
-            <span
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 10.5,
-                letterSpacing: '0.18em',
-                color: BRAND.coral,
-                fontWeight: 700,
-              }}
-            >
+            <span className="font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-coral">
               · {dueCount} REPORT{dueCount > 1 ? 'S' : ''} DUE
             </span>
           ) : (
-            <span
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 10.5,
-                letterSpacing: '0.18em',
-                color: BRAND.indigo,
-                fontWeight: 700,
-              }}
-            >
+            <span className="font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo">
               · ALL UP TO DATE ✓
             </span>
           )}
@@ -879,8 +602,8 @@ export default function IDPsPage() {
       </div>
 
       {/* Player list */}
-      <div style={{ padding: isMobile ? '0 14px 24px' : '0 32px 32px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className={cn(isMobile ? 'px-3.5 pb-6' : 'px-8 pb-8')}>
+        <div className="flex flex-col gap-2">
           {rosterPlayers.map(player => {
             const score = squadScores[player.id]
             const compositeScore = score?.compositeScore ?? 0
@@ -893,82 +616,33 @@ export default function IDPsPage() {
                 key={player.id}
                 type="button"
                 onClick={() => setSelectedPlayerId(player.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  padding: '12px 14px',
-                  background: BRAND.paper,
-                  borderRadius: 6,
-                  border: `1px solid ${BRAND.line}`,
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'left',
-                  boxShadow: '0 1px 3px rgba(11,8,40,0.04)',
-                  transition: 'all 0.15s',
-                  fontFamily: TYPE.body,
-                }}
+                className="flex w-full cursor-pointer items-center gap-3.5 rounded-md border border-brand-line bg-brand-paper px-3.5 py-3 text-left font-satoshi shadow-[0_1px_3px_rgba(11,8,40,0.04)] transition-all duration-150"
               >
                 <PlayerAvatar player={player} size="sm" />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: BRAND.indigo,
-                      }}
-                    >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold text-brand-indigo">
                       {player.firstName} {player.lastName}
                     </span>
-                    <span
-                      style={{
-                        fontFamily: TYPE.mono,
-                        fontSize: 9,
-                        fontWeight: 700,
-                        letterSpacing: '0.16em',
-                        padding: '2px 6px',
-                        borderRadius: 2,
-                        border: `1px solid ${BRAND.line}`,
-                        color: BRAND.indigoMute,
-                      }}
-                    >
+                    <span className="rounded-sm border border-brand-line px-1.5 py-0.5 font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">
                       {position}
                     </span>
                   </div>
-                  <span
-                    style={{
-                      fontFamily: TYPE.mono,
-                      fontSize: 10,
-                      letterSpacing: '0.16em',
-                      color: BRAND.indigoMute,
-                      fontWeight: 700,
-                    }}
-                  >
+                  <span className="font-fragment text-[10px] font-bold tracking-[0.16em] text-brand-indigo-mute">
                     #{player.jerseyNumber}
                   </span>
                 </div>
                 <span
-                  style={{
-                    fontFamily: TYPE.display,
-                    fontSize: 22,
-                    color: scoreColorForBrand(compositeScore),
-                    letterSpacing: '-0.02em',
-                  }}
+                  className="font-clash text-[22px] tracking-[-0.02em]"
+                  style={{ color: scoreColorForBrand(compositeScore) }}
                 >
                   {compositeScore}
                 </span>
                 <span
-                  style={{
-                    fontFamily: TYPE.mono,
-                    fontSize: 9.5,
-                    fontWeight: 700,
-                    letterSpacing: '0.18em',
-                    padding: '4px 8px',
-                    borderRadius: 3,
-                    background: pill.bg,
-                    color: pill.ink,
-                  }}
+                  className={cn(
+                    'rounded-[3px] px-2 py-1 font-fragment text-[9.5px] font-bold tracking-[0.18em]',
+                    pill.className,
+                  )}
                 >
                   {pill.label}
                 </span>
@@ -982,28 +656,17 @@ export default function IDPsPage() {
   )
 }
 
+function IDPCard({ children }: { children: React.ReactNode }) {
+  return <Card style={{ padding: 18 }}>{children}</Card>
+}
+
 function SmallStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div
-        style={{
-          fontFamily: TYPE.mono,
-          fontSize: 9.5,
-          letterSpacing: '0.18em',
-          color: BRAND.indigoMute,
-          fontWeight: 700,
-        }}
-      >
+      <div className="font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
         {label}
       </div>
-      <div
-        style={{
-          fontFamily: TYPE.display,
-          fontSize: 18,
-          color: BRAND.indigo,
-          marginTop: 2,
-        }}
-      >
+      <div className="mt-0.5 font-clash text-lg text-brand-indigo">
         {value}
       </div>
     </div>

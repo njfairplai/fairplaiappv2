@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { COLORS, RADIUS, ROLE_PATHS } from '@/lib/constants'
+import { ROLE_PATHS } from '@/lib/constants'
 import type { UserRole } from '@/lib/types'
 import { Building2, GraduationCap, Trophy, Heart, Zap, ArrowRightLeft, X, Video, Home } from 'lucide-react'
+import { cn } from '@/lib/cn'
 
 const roles: { role: UserRole; label: string; icon: React.ElementType; description: string }[] = [
   { role: 'facility_admin', label: 'Facility Admin', icon: Building2, description: 'Manage pitches & contracts' },
@@ -14,6 +15,10 @@ const roles: { role: UserRole; label: string; icon: React.ElementType; descripti
   { role: 'player', label: 'Player', icon: Zap, description: 'See your game plan & highlights' },
 ]
 
+/**
+ * Legacy role switcher (simpler version of FloatingNav, kept for screens
+ * that don't need the super-admin / coach-web variants). Same chrome.
+ */
 export default function RoleSwitcher() {
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -27,169 +32,121 @@ export default function RoleSwitcher() {
   }
 
   const currentRole = typeof window !== 'undefined' ? localStorage.getItem('fairplai_role') : null
-  const currentLabel = roles.find(r => r.role === currentRole)?.label || 'Switch'
+  const currentLabel = roles.find((r) => r.role === currentRole)?.label || 'Switch'
+
+  const rowClass =
+    'flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 border-transparent bg-[#F5F6FC] px-4 py-3.5 text-left transition-colors duration-150'
+  const iconBoxClass =
+    'flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--color-ahoy-blue)]/15'
 
   return (
     <>
-      {/* Home button */}
       <button
+        type="button"
         onClick={() => router.push('/')}
-        style={{
-          position: 'fixed',
-          bottom: 148,
-          right: 16,
-          zIndex: 999,
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          background: '#fff',
-          border: `1.5px solid ${COLORS.primary}`,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        }}
+        className={cn(
+          'fixed bottom-[148px] right-4 z-[999]',
+          'flex h-10 w-10 cursor-pointer items-center justify-center',
+          'rounded-full border-[1.5px] border-[color:var(--color-ahoy-blue)] bg-white',
+          'shadow-[0_4px_20px_rgba(0,0,0,0.15)]',
+        )}
+        aria-label="Home"
       >
-        <Home size={18} color={COLORS.primary} />
+        <Home size={18} className="text-[color:var(--color-ahoy-blue)]" />
       </button>
 
-      {/* Floating trigger */}
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        style={{
-          position: 'fixed',
-          bottom: 100,
-          right: 16,
-          zIndex: 999,
-          height: 40,
-          borderRadius: 20,
-          background: COLORS.primary,
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '0 14px',
-          boxShadow: '0 4px 20px rgba(74,74,255,0.4)',
-        }}
+        className={cn(
+          'fixed bottom-[100px] right-4 z-[999]',
+          'flex h-10 cursor-pointer items-center gap-1.5 rounded-full border-none px-3.5',
+          'bg-[color:var(--color-ahoy-blue)]',
+          'shadow-[0_4px_20px_rgba(74,74,255,0.4)]',
+        )}
       >
-        <ArrowRightLeft size={16} color="#fff" />
-        <span style={{ color: '#fff', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>{currentLabel}</span>
+        <ArrowRightLeft size={16} className="text-white" />
+        <span className="whitespace-nowrap font-satoshi text-xs font-semibold text-white">
+          {currentLabel}
+        </span>
       </button>
 
-      {/* Modal */}
       {open && (
         <div
           onClick={() => setOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 20,
-          }}
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-5 backdrop-blur-sm"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: '#fff',
-              borderRadius: RADIUS.card + 4,
-              padding: 24,
-              width: '100%',
-              maxWidth: 360,
-            }}
+            className="w-full max-w-[360px] rounded-2xl bg-white p-6"
           >
-            {/* Demo Mode label */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', background: '#FEF3C7', padding: '3px 10px', borderRadius: 12, letterSpacing: '0.03em', textTransform: 'uppercase' }}>Demo Mode</span>
-              <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                <X size={18} color={COLORS.muted} />
+            <div className="mb-3 flex items-center justify-between">
+              <span className="rounded-xl bg-[#FEF3C7] px-2.5 py-1 font-satoshi text-[11px] font-bold uppercase tracking-[0.03em] text-[#92400E]">
+                Demo Mode
+              </span>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="cursor-pointer border-none bg-transparent p-1"
+                aria-label="Close"
+              >
+                <X size={18} className="text-[color:var(--color-graphite)]" />
               </button>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, color: COLORS.navy, margin: '0 0 4px' }}>Switch Portal</h3>
-            <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px' }}>Select a role to explore</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h3 className="m-0 mb-1 font-satoshi text-lg font-extrabold text-[color:var(--color-deep-indigo)]">
+              Switch Portal
+            </h3>
+            <p className="m-0 mb-4 font-satoshi text-[13px] text-[color:var(--color-graphite)]">
+              Select a role to explore
+            </p>
+            <div className="flex flex-col gap-2">
               {roles.map(({ role, label, icon: Icon, description }) => {
                 const isActive = currentRole === role
                 return (
                   <button
                     key={role}
+                    type="button"
                     onClick={() => selectRole(role)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '14px 16px',
-                      borderRadius: RADIUS.card,
-                      background: isActive ? `${COLORS.primary}10` : '#F5F6FC',
-                      border: isActive ? `2px solid ${COLORS.primary}` : '2px solid transparent',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background 0.15s',
-                    }}
+                    className={cn(
+                      rowClass,
+                      isActive &&
+                        '!bg-[color:var(--color-ahoy-blue)]/10 !border-[color:var(--color-ahoy-blue)]',
+                    )}
                   >
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 10,
-                        background: `${COLORS.primary}15`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon size={20} color={COLORS.primary} />
+                    <div className={iconBoxClass}>
+                      <Icon size={20} className="text-[color:var(--color-ahoy-blue)]" />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, margin: 0 }}>{label}</p>
-                      <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>{description}</p>
+                    <div className="flex-1">
+                      <p className="m-0 font-satoshi text-[15px] font-bold text-[color:var(--color-deep-indigo)]">
+                        {label}
+                      </p>
+                      <p className="m-0 font-satoshi text-xs text-[color:var(--color-graphite)]">
+                        {description}
+                      </p>
                     </div>
                   </button>
                 )
               })}
 
-              {/* Guest Footage link */}
-              <div style={{ borderTop: `1px solid ${COLORS.border}`, marginTop: 8, paddingTop: 8 }}>
+              <div className="mt-2 border-t border-[color:var(--color-fp-white)] pt-2">
                 <button
-                  onClick={() => { setOpen(false); router.push('/guest/demo-session_007') }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '14px 16px',
-                    borderRadius: RADIUS.card,
-                    background: '#F5F6FC',
-                    border: '2px solid transparent',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'background 0.15s',
-                    width: '100%',
+                  type="button"
+                  onClick={() => {
+                    setOpen(false)
+                    router.push('/guest/demo-session_007')
                   }}
+                  className={rowClass}
                 >
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 10,
-                      background: `${COLORS.primary}15`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Video size={20} color={COLORS.primary} />
+                  <div className={iconBoxClass}>
+                    <Video size={20} className="text-[color:var(--color-ahoy-blue)]" />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: COLORS.navy, margin: 0 }}>Guest Footage</p>
-                    <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>View match footage as a guest</p>
+                  <div className="flex-1">
+                    <p className="m-0 font-satoshi text-[15px] font-bold text-[color:var(--color-deep-indigo)]">
+                      Guest Footage
+                    </p>
+                    <p className="m-0 font-satoshi text-xs text-[color:var(--color-graphite)]">
+                      View match footage as a guest
+                    </p>
                   </div>
                 </button>
               </div>

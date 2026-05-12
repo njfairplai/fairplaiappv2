@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Play, Calendar, TrendingUp, Settings, Users, ClipboardList, Dumbbell, User, BarChart3, MessageSquare, Sparkles, Film } from 'lucide-react'
 import { useTourSafe } from '@/components/demo/TourProvider'
+import { cn } from '@/lib/cn'
 
 interface NavItem {
   id: string
@@ -61,15 +62,13 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'co
     portal === 'player'
       ? playerNav
       : portal === 'parent'
-      ? parentNav
-      : portal === 'coachWeb'
-      ? coachWebNav
-      : coachNav
+        ? parentNav
+        : portal === 'coachWeb'
+          ? coachWebNav
+          : coachNav
 
   // When the tour is active, every tab except the current step's `tab`
-  // gets greyed out + disabled. Keeps the user on the curated path
-  // without dimming things they CAN click (within-page elements). Only
-  // applies to portals the tour actually walks (parent + coachWeb).
+  // gets greyed out + disabled.
   const tourActiveLockedTab =
     tour?.active && tour.step?.tab && (portal === 'parent' || portal === 'coachWeb')
       ? tour.step.tab
@@ -77,90 +76,61 @@ export default function BottomNav({ portal }: { portal: 'parent' | 'coach' | 'co
 
   return (
     <nav
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: 'var(--brand-paper)',
-        borderTop: '1px solid var(--brand-line)',
-        boxShadow: '0 -2px 16px rgba(11, 8, 40, 0.06)',
-      }}
+      className={cn(
+        'fixed bottom-0 left-0 right-0 z-50',
+        'bg-brand-paper border-t border-brand-line',
+        'shadow-[0_-2px_16px_rgba(11,8,40,0.06)]',
+      )}
     >
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          maxWidth: 480,
-          margin: '0 auto',
-          paddingBottom: 'env(safe-area-inset-bottom, 6px)',
-        }}
+        className="mx-auto flex max-w-[480px] items-center justify-around"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 6px)' }}
       >
         {items.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
-          // Tour locks navigation: only the current step's tab is
-          // clickable. The "live" tab still shows as active; others
-          // dim down + the click is suppressed.
           const tourLocked = tourActiveLockedTab !== null && tourActiveLockedTab !== item.id
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => {
                 if (tourLocked) return
                 router.push(item.href)
               }}
               disabled={tourLocked}
               aria-disabled={tourLocked}
-              title={tourLocked ? 'Locked during the guided tour. Use Next → in the tour card to advance.' : undefined}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2,
-                padding: '10px 8px',
-                minWidth: 50,
-                flex: 1,
-                background: 'none',
-                border: 'none',
-                cursor: tourLocked ? 'not-allowed' : 'pointer',
-                position: 'relative',
-                opacity: tourLocked ? 0.32 : 1,
-                transition: 'opacity 180ms ease',
-              }}
+              title={
+                tourLocked
+                  ? 'Locked during the guided tour. Use Next → in the tour card to advance.'
+                  : undefined
+              }
+              className={cn(
+                'relative flex min-w-[50px] flex-1 cursor-pointer flex-col items-center gap-0.5 border-none bg-transparent px-2 py-2.5',
+                'transition-opacity duration-200',
+                tourLocked && 'cursor-not-allowed opacity-30',
+              )}
             >
               {isActive && (
                 <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 24,
-                    height: 3,
-                    background: 'var(--brand-yellow)',
-                    borderRadius: '0 0 3px 3px',
-                  }}
+                  className={cn(
+                    'absolute left-1/2 top-0 -translate-x-1/2',
+                    'h-[3px] w-6 rounded-b-[3px] bg-brand-yellow',
+                  )}
                 />
               )}
               <Icon
                 size={22}
-                color={isActive ? 'var(--brand-indigo)' : 'var(--brand-indigo-mute)'}
                 strokeWidth={isActive ? 2.2 : 1.7}
+                className={cn(isActive ? 'text-brand-indigo' : 'text-brand-indigo-mute')}
               />
               <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: isActive ? 'var(--brand-indigo)' : 'var(--brand-indigo-mute)',
-                  letterSpacing: '0.08em',
-                  whiteSpace: 'nowrap',
-                }}
+                className={cn(
+                  'whitespace-nowrap font-fragment text-[9px] font-bold tracking-[0.08em]',
+                  isActive ? 'text-brand-indigo' : 'text-brand-indigo-mute',
+                )}
               >
                 {item.label}
               </span>

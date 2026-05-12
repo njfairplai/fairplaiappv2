@@ -1,8 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { COLORS } from '@/lib/constants'
 import { Bell } from 'lucide-react'
+import { cn } from '@/lib/cn'
 
 interface TopBarProps {
   title?: string
@@ -12,51 +12,59 @@ interface TopBarProps {
   dark?: boolean
 }
 
-export default function TopBar({ title, showLogo = false, showNotification = false, rightContent, dark = false }: TopBarProps) {
-  const textColor = dark ? '#fff' : COLORS.navy
-
+/**
+ * Mobile top bar with optional logo, title, notification bell, and a
+ * custom right slot. `dark` flips text to white and removes the border —
+ * used over dark hero sections.
+ */
+export default function TopBar({
+  title,
+  showLogo = false,
+  showNotification = false,
+  rightContent,
+  dark = false,
+}: TopBarProps) {
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '16px 20px 12px',
-        background: dark ? 'transparent' : '#fff',
-        borderBottom: dark ? 'none' : '1px solid rgba(0,0,0,0.05)',
-      }}
+      className={cn(
+        'flex items-center justify-between px-5 pt-4 pb-3',
+        dark ? 'bg-transparent' : 'border-b border-black/5 bg-brand-paper',
+      )}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="flex items-center gap-3">
         {showLogo && (
           <Image
             src={dark ? '/logo-white.png' : '/logo-black.png'}
             alt="FairplAI"
             width={80}
             height={24}
-            style={{ height: 24, width: 'auto', objectFit: 'contain' }}
+            className="h-6 w-auto object-contain"
           />
         )}
         {title && (
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: textColor, letterSpacing: '-0.4px', margin: 0 }}>
+          <h1
+            className={cn(
+              'm-0 font-satoshi text-2xl font-extrabold tracking-[-0.4px]',
+              dark ? 'text-white' : 'text-brand-indigo',
+            )}
+          >
             {title}
           </h1>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="flex items-center gap-3">
         {showNotification && (
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative', padding: 4 }}>
-            <Bell size={22} color={textColor} />
-            <div
-              style={{
-                position: 'absolute',
-                top: 2,
-                right: 2,
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: COLORS.error,
-                border: '2px solid #fff',
-              }}
+          <button
+            type="button"
+            className="relative cursor-pointer border-none bg-transparent p-1"
+            aria-label="Notifications"
+          >
+            <Bell size={22} className={dark ? 'text-white' : 'text-brand-indigo'} />
+            <span
+              className={cn(
+                'absolute right-0.5 top-0.5 block h-2 w-2 rounded-full',
+                'bg-brand-coral border-2 border-brand-paper',
+              )}
             />
           </button>
         )}

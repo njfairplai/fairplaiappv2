@@ -24,7 +24,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
   useEffect(() => { seedWelfareIfEmpty() }, [])
   if (blocked) return null
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', position: 'relative' }}>
+    <div className="relative mx-auto min-h-[100dvh] max-w-[480px]">
       <SoftLockBanner />
       {children}
       <BottomNav portal="parent" />

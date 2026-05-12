@@ -212,11 +212,16 @@
   --color-brand-paper-hi:    var(--brand-paper-hi);
   --color-brand-indigo:      var(--brand-indigo);
   --color-brand-indigo-mid:  var(--brand-indigo-mid);
+  --color-brand-indigo-soft: var(--brand-indigo-soft);
+  --color-brand-indigo-mute: var(--brand-indigo-mute);
   --color-brand-yellow:      var(--brand-yellow);
+  --color-brand-yellow-soft: var(--brand-yellow-soft);
   --color-brand-coral:       var(--brand-coral);
   --color-brand-ink:         var(--brand-ink);
   --color-brand-cloud:       var(--brand-cloud);
   --color-brand-cloud-deep:  var(--brand-cloud-deep);
+  --color-brand-line:        var(--brand-line);
+  --color-brand-line-soft:   var(--brand-line-soft);
 }
 
 * {

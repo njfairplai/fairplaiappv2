@@ -6,7 +6,8 @@ import dynamic from 'next/dynamic'
 import { AlertTriangle } from 'lucide-react'
 import { sessions, players, matchAnalyses, highlights, pitches } from '@/lib/mockData'
 import type { MatchAnalysis, Player, Highlight, InjuryFlag } from '@/lib/types'
-import { BRAND, TYPE, COLORS } from '@/lib/constants'
+import { BRAND, COLORS } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { getKeyStats } from '@/lib/squad-position-stats'
 import {
   getInjuryFlagsForSession,
@@ -19,7 +20,7 @@ import { InjurySheet } from '@/components/coach/match-center/InjurySheet'
 import { FatigueTile } from '@/components/welfare/FatigueTile'
 import { MatchVideoPanel } from '@/components/video/MatchVideoPanel'
 
-const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div style={{ height: 220 }} /> })
+const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div className="h-[220px]" /> })
 
 /* ──────────────────────────────────────────────────────────────────
    Coach Match Analysis (Direction C — sand-first redesign).
@@ -188,21 +189,12 @@ const v3Motion = `
  * roster + player detail surfaces here are about review, not export. */
 function V3BackRow({ onBack }: { onBack: () => void }) {
   return (
-    <div style={{
-      background: BRAND.sand,
-      padding: '14px 28px 4px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 14,
-      fontFamily: TYPE.body,
-    }}>
-      <button onClick={onBack} className="v3-cta" style={{
-        background: 'transparent', border: 'none', cursor: 'pointer',
-        color: BRAND.indigo, fontSize: 14,
-        fontFamily: TYPE.mono, letterSpacing: '0.16em', fontWeight: 600,
-        padding: '4px 0',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }} aria-label="Back to matches">
+    <div className="flex items-center gap-3.5 bg-brand-sand px-7 pt-3.5 pb-1 font-satoshi">
+      <button
+        onClick={onBack}
+        className="v3-cta flex items-center gap-2 border-none bg-transparent px-0 py-1 font-fragment text-sm font-semibold tracking-[0.16em] text-brand-indigo cursor-pointer"
+        aria-label="Back to matches"
+      >
         ← BACK TO MATCHES
       </button>
     </div>
@@ -233,41 +225,35 @@ function V3ScoreStrip({
   const homeWon = homeGoals > awayGoals
   const drew = homeGoals === awayGoals
   return (
-    <div style={{
-      padding: '14px 28px 22px',
-      borderBottom: `1px solid ${BRAND.line}`,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 18,
-      background: BRAND.sand,
-      flexWrap: 'wrap',
-    }}>
-      <div style={{ fontFamily: TYPE.display, fontSize: 32, color: BRAND.indigo, letterSpacing: '0.02em' }}>{homeName.toUpperCase()}</div>
+    <div className="flex flex-wrap items-center gap-[18px] border-b border-brand-line bg-brand-sand px-7 pt-3.5 pb-[22px]">
+      <div className="font-clash text-[32px] tracking-[0.02em] text-brand-indigo">{homeName.toUpperCase()}</div>
       {hasScore ? (
-        <div style={{ fontFamily: TYPE.display, fontSize: 44, letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: 10, color: BRAND.indigo }}>
-          <span style={{ position: 'relative', display: 'inline-block' }}>
+        <div className="flex items-baseline gap-2.5 font-clash text-[44px] tracking-[-0.02em] text-brand-indigo">
+          <span className="relative inline-block">
             {/* yellow swatch behind the winning team's goal count (or both, if draw) */}
             {(homeWon || drew) && (
-              <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
+              <span className="absolute inset-[-8px_-10px] z-0 rounded-[4px] bg-brand-yellow" />
             )}
-            <span style={{ position: 'relative', zIndex: 1 }}>{homeGoals}</span>
+            <span className="relative z-[1]">{homeGoals}</span>
           </span>
-          <span style={{ color: BRAND.indigoMute, fontSize: 24 }}>-</span>
-          <span style={{ position: 'relative', display: 'inline-block', color: homeWon ? BRAND.indigoMid : BRAND.indigo }}>
+          <span className="text-2xl text-brand-indigo-mute">-</span>
+          <span
+            className={cn('relative inline-block', homeWon ? 'text-brand-indigo-mid' : 'text-brand-indigo')}
+          >
             {(drew || (!homeWon && homeGoals !== awayGoals)) && (
-              <span style={{ position: 'absolute', inset: '-8px -10px', background: BRAND.yellow, borderRadius: 4, zIndex: 0 }} />
+              <span className="absolute inset-[-8px_-10px] z-0 rounded-[4px] bg-brand-yellow" />
             )}
-            <span style={{ position: 'relative', zIndex: 1 }}>{awayGoals}</span>
+            <span className="relative z-[1]">{awayGoals}</span>
           </span>
         </div>
       ) : (
-        <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.18em', color: BRAND.indigoMute, fontWeight: 700 }}>
+        <div className="font-fragment text-[11px] font-bold tracking-[0.18em] text-brand-indigo-mute">
           VS
         </div>
       )}
-      <div style={{ fontFamily: TYPE.display, fontSize: 32, color: BRAND.indigoMute, letterSpacing: '0.02em' }}>{awayName.toUpperCase()}</div>
-      <div style={{ width: 1, height: 28, background: BRAND.line, marginLeft: 6 }} />
-      <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', color: BRAND.indigoMute }}>
+      <div className="font-clash text-[32px] tracking-[0.02em] text-brand-indigo-mute">{awayName.toUpperCase()}</div>
+      <div className="ml-1.5 h-7 w-px bg-brand-line" />
+      <div className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute">
         {hasScore ? `FT · ${dateLabel} · ${venue}` : `${dateLabel} · ${venue}`}
       </div>
 
@@ -295,29 +281,22 @@ function V3MatchStats({ stats, homeName, awayName }: {
     { key: 'intercepts',    label: 'INTERCEPTS',      suffix: '' },
   ]
   return (
-    <div style={{
-      padding: '20px 28px 22px',
-      borderBottom: `1px solid ${BRAND.line}`,
-      background: BRAND.sand,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 12,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.22em', color: BRAND.indigoMute, fontWeight: 700 }}>
+    <div className="flex flex-col gap-3 border-b border-brand-line bg-brand-sand px-7 pt-5 pb-[22px]">
+      <div className="flex flex-wrap items-baseline justify-between gap-3.5">
+        <div className="font-fragment text-[11px] font-bold tracking-[0.22em] text-brand-indigo-mute">
           MATCH IN NUMBERS
         </div>
-        <div style={{ display: 'flex', gap: 14, fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: BRAND.indigo }} /> {homeName.toUpperCase()}
+        <div className="flex gap-3.5 font-fragment text-[9.5px] tracking-[0.16em] text-brand-indigo-mute">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-[2px] bg-brand-indigo" /> {homeName.toUpperCase()}
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: BRAND.indigoMute }} /> {awayName.toUpperCase()}
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-[2px] bg-brand-indigo-mute" /> {awayName.toUpperCase()}
           </span>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 32, rowGap: 10 }}>
+      <div className="grid grid-cols-2 gap-x-8 gap-y-2.5">
         {rows.map(({ key, label, suffix }) => {
           const h = stats.home[key]
           const a = stats.away[key]
@@ -327,31 +306,29 @@ function V3MatchStats({ stats, homeName, awayName }: {
           const homeWon = h > a
           const drew = h === a
           return (
-            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>
-                <span style={{ color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 18, letterSpacing: '-0.01em' }}>{h}{suffix}</span>
+            <div key={key} className="flex flex-col gap-1">
+              <div className="flex items-center justify-between font-fragment text-[9.5px] font-bold tracking-[0.16em] text-brand-indigo-mute">
+                <span className="font-clash text-lg tracking-[-0.01em] text-brand-indigo">{h}{suffix}</span>
                 <span>{label}</span>
-                <span style={{ color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 18, letterSpacing: '-0.01em' }}>{a}{suffix}</span>
+                <span className="font-clash text-lg tracking-[-0.01em] text-brand-indigo">{a}{suffix}</span>
               </div>
-              <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', background: BRAND.indigoSoft }}>
-                <div style={{
-                  width: `${homePct}%`,
-                  background: homeWon ? BRAND.indigo : drew ? BRAND.indigoMid : BRAND.indigoMid,
-                  position: 'relative',
-                }}>
+              <div className="flex h-1.5 overflow-hidden rounded-[3px] bg-brand-indigo-soft">
+                <div
+                  className={cn('relative', homeWon ? 'bg-brand-indigo' : 'bg-brand-indigo-mid')}
+                  style={{ width: `${homePct}%` }}
+                >
                   {/* yellow leading-tip when home wins this stat */}
                   {homeWon && (
-                    <span style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 4, background: BRAND.yellow }} />
+                    <span className="absolute top-0 right-0 bottom-0 w-1 bg-brand-yellow" />
                   )}
                 </div>
-                <div style={{ width: 1, background: BRAND.sand }} />
-                <div style={{
-                  width: `${awayPct}%`,
-                  background: !homeWon && !drew ? BRAND.indigo : BRAND.indigoMute,
-                  position: 'relative',
-                }}>
+                <div className="w-px bg-brand-sand" />
+                <div
+                  className={cn('relative', !homeWon && !drew ? 'bg-brand-indigo' : 'bg-brand-indigo-mute')}
+                  style={{ width: `${awayPct}%` }}
+                >
                   {!homeWon && !drew && (
-                    <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: BRAND.yellow }} />
+                    <span className="absolute top-0 bottom-0 left-0 w-1 bg-brand-yellow" />
                   )}
                 </div>
               </div>
@@ -409,97 +386,89 @@ function V3RosterRow({ row, idx, onSelect }: {
   const uniqueChips = Array.from(new Set(events.map(e => e.type))).slice(0, 3)
   return (
     <div
-      className="v3-row"
+      className="v3-row relative grid cursor-pointer items-center gap-4 border-b border-brand-line px-1 py-3.5"
       onClick={() => onSelect(p.id)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(p.id) } }}
       style={{
         animationDelay: `${100 + idx * 35}ms`,
-        display: 'grid',
         gridTemplateColumns: ROSTER_GRID_DESKTOP,
-        alignItems: 'center', gap: 16, padding: '14px 4px',
-        borderBottom: `1px solid ${BRAND.line}`, cursor: 'pointer',
-        position: 'relative',
       }}
     >
-      <div style={{ position: 'relative' }}>
-        <div className="v3-num" style={{
-          width: 36, height: 36, borderRadius: 8,
-          background: exceptional ? BRAND.yellow : BRAND.paper,
-          border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
-          color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 15,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>{p.jerseyNumber}</div>
+      <div className="relative">
+        <div
+          className={cn(
+            'v3-num flex h-9 w-9 items-center justify-center rounded-lg font-clash text-[15px] text-brand-indigo',
+            exceptional ? 'bg-brand-yellow border-[1.5px] border-brand-indigo' : 'bg-brand-paper border-[1.5px] border-brand-line',
+          )}
+        >{p.jerseyNumber}</div>
         {/* Fatigue dot — top-right of jersey badge. Coral when high,
          *  yellow when moderate, hidden when low (or no sample). */}
         {fatigueColor && fatigue !== 'low' && (
           <div
             title={`Fatigue: ${fatigue}`}
-            style={{
-              position: 'absolute', top: -2, right: -2,
-              width: 10, height: 10, borderRadius: '50%',
-              background: fatigueColor,
-              border: `2px solid ${BRAND.sand}`,
-            }}
+            className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-brand-sand"
+            style={{ background: fatigueColor }}
           />
         )}
       </div>
 
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontFamily: TYPE.body, fontSize: 14, fontWeight: 600, color: BRAND.indigo, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5 font-satoshi text-sm font-semibold text-brand-indigo">
           {p.firstName} {p.lastName}
-          {exceptional && <span style={{ fontSize: 10, color: BRAND.indigo, background: BRAND.yellow, padding: '1px 5px', borderRadius: 2, fontFamily: TYPE.mono, letterSpacing: '0.12em', fontWeight: 700 }}>★ MOTM</span>}
+          {exceptional && <span className="rounded-[2px] bg-brand-yellow px-1.5 py-px font-fragment text-[10px] font-bold tracking-[0.12em] text-brand-indigo">★ MOTM</span>}
           {/* Inline event chips — moments without a dedicated column */}
           {uniqueChips.map((type, i) => {
             const m = eventMeta[type] || { letter: '·' }
             const isGoal = type === 'goal'
             return (
-              <span key={i} title={m.label} style={{
-                fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.12em', fontWeight: 700,
-                padding: '2px 5px',
-                background: isGoal ? BRAND.yellow : BRAND.indigoSoft,
-                color: BRAND.indigo,
-                borderRadius: 3,
-              }}>{m.letter}</span>
+              <span
+                key={i}
+                title={m.label}
+                className={cn(
+                  'rounded-[3px] px-1.5 py-px font-fragment text-[9px] font-bold tracking-[0.12em] text-brand-indigo',
+                  isGoal ? 'bg-brand-yellow' : 'bg-brand-indigo-soft',
+                )}
+              >{m.letter}</span>
             )
           })}
         </div>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 2 }}>
+        <div className="mt-0.5 font-fragment text-[9.5px] tracking-[0.16em] text-brand-indigo-mute">
           {(p.position[0] || '').toUpperCase()}
         </div>
       </div>
 
       {/* Composite score */}
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontFamily: TYPE.display, fontSize: 22, color: c, letterSpacing: '-0.02em', lineHeight: 1 }}>{a.compositeScore}</div>
+      <div className="text-right">
+        <div className="font-clash text-[22px] leading-none tracking-[-0.02em]" style={{ color: c }}>{a.compositeScore}</div>
       </div>
 
       {/* Distance — universal stat */}
       <div>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>DISTANCE</div>
-        <div style={{ fontFamily: TYPE.display, fontSize: 17, color: BRAND.indigo, letterSpacing: '-0.01em', lineHeight: 1.1, marginTop: 2 }}>
+        <div className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">DISTANCE</div>
+        <div className="mt-0.5 font-clash text-[17px] leading-[1.1] tracking-[-0.01em] text-brand-indigo">
           {a.distanceCovered.toFixed(1)} km
         </div>
       </div>
 
       {/* Key stat 1 — position-aware */}
       <div>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>{ks1.label}</div>
-        <div style={{ fontFamily: TYPE.display, fontSize: 17, color: BRAND.indigo, letterSpacing: '-0.01em', lineHeight: 1.1, marginTop: 2 }}>
+        <div className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">{ks1.label}</div>
+        <div className="mt-0.5 font-clash text-[17px] leading-[1.1] tracking-[-0.01em] text-brand-indigo">
           {ks1.value}{ks1.suffix}
         </div>
       </div>
 
       {/* Key stat 2 — position-aware */}
       <div>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>{ks2.label}</div>
-        <div style={{ fontFamily: TYPE.display, fontSize: 17, color: BRAND.indigo, letterSpacing: '-0.01em', lineHeight: 1.1, marginTop: 2 }}>
+        <div className="font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">{ks2.label}</div>
+        <div className="mt-0.5 font-clash text-[17px] leading-[1.1] tracking-[-0.01em] text-brand-indigo">
           {ks2.value}{ks2.suffix}
         </div>
       </div>
 
-      <div className="v3-arrow" style={{ color: BRAND.indigo, fontSize: 16, fontFamily: TYPE.body }}>→</div>
+      <div className="v3-arrow font-satoshi text-base text-brand-indigo">→</div>
     </div>
   )
 }
@@ -515,55 +484,47 @@ function V3RosterRowMobile({ row, idx, onSelect }: {
   const fatigueColor = fatigueDotColor(fatigue)
   return (
     <div
-      className="v3-row"
+      className="v3-row grid cursor-pointer items-center gap-4 border-b border-brand-line px-1 py-3"
       onClick={() => onSelect(p.id)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(p.id) } }}
       style={{
         animationDelay: `${100 + idx * 28}ms`,
-        display: 'grid',
         gridTemplateColumns: '40px 1fr 60px 24px',
-        alignItems: 'center', gap: 16, padding: '12px 4px',
-        borderBottom: `1px solid ${BRAND.line}`, cursor: 'pointer',
       }}
     >
-      <div style={{ position: 'relative' }}>
-        <div className="v3-num" style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: exceptional ? BRAND.yellow : BRAND.paper,
-          border: `1.5px solid ${exceptional ? BRAND.indigo : BRAND.line}`,
-          color: BRAND.indigo, fontFamily: TYPE.display, fontSize: 13,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>{p.jerseyNumber}</div>
+      <div className="relative">
+        <div
+          className={cn(
+            'v3-num flex h-8 w-8 items-center justify-center rounded-lg font-clash text-[13px] text-brand-indigo',
+            exceptional ? 'bg-brand-yellow border-[1.5px] border-brand-indigo' : 'bg-brand-paper border-[1.5px] border-brand-line',
+          )}
+        >{p.jerseyNumber}</div>
         {fatigueColor && fatigue !== 'low' && (
           <div
             title={`Fatigue: ${fatigue}`}
-            style={{
-              position: 'absolute', top: -2, right: -2,
-              width: 9, height: 9, borderRadius: '50%',
-              background: fatigueColor,
-              border: `2px solid ${BRAND.sand}`,
-            }}
+            className="absolute -top-0.5 -right-0.5 h-[9px] w-[9px] rounded-full border-2 border-brand-sand"
+            style={{ background: fatigueColor }}
           />
         )}
       </div>
 
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontFamily: TYPE.body, fontSize: 13.5, fontWeight: 600, color: BRAND.indigo, display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 font-satoshi text-[13.5px] font-semibold text-brand-indigo">
           {p.firstName} {p.lastName}
-          {exceptional && <span style={{ fontSize: 9, color: BRAND.indigo, background: BRAND.yellow, padding: '1px 4px', borderRadius: 2, fontFamily: TYPE.mono, letterSpacing: '0.12em', fontWeight: 700 }}>★</span>}
+          {exceptional && <span className="rounded-[2px] bg-brand-yellow px-1 py-px font-fragment text-[9px] font-bold tracking-[0.12em] text-brand-indigo">★</span>}
         </div>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 9, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 2 }}>
+        <div className="mt-0.5 font-fragment text-[9px] tracking-[0.16em] text-brand-indigo-mute">
           {(p.position[0] || '').toUpperCase()} · {row.events.length} {row.events.length === 1 ? 'MOMENT' : 'MOMENTS'}
         </div>
       </div>
 
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontFamily: TYPE.display, fontSize: 22, color: c, letterSpacing: '-0.02em', lineHeight: 1 }}>{a.compositeScore}</div>
+      <div className="text-right">
+        <div className="font-clash text-[22px] leading-none tracking-[-0.02em]" style={{ color: c }}>{a.compositeScore}</div>
       </div>
 
-      <div className="v3-arrow" style={{ color: BRAND.indigo, fontSize: 16, fontFamily: TYPE.body, opacity: 1, transform: 'translateX(0)' }}>→</div>
+      <div className="v3-arrow font-satoshi text-base text-brand-indigo" style={{ opacity: 1, transform: 'translateX(0)' }}>→</div>
     </div>
   )
 }
@@ -585,27 +546,24 @@ function V3RosterSection({ title, rows, avg, accent, isMobile, onSelect }: {
   return (
     <div>
       {showHeader && (
-        <div style={{
-          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-          padding: '12px 4px 10px', gap: 10, flexWrap: 'wrap',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2.5 px-1 pt-3 pb-2.5">
+          <div className="flex items-center gap-2.5">
             {accentColor && (
-              <span style={{
-                width: 14, height: 14, borderRadius: 3,
-                background: accentColor,
-                border: accent === 'B' ? `1.5px solid ${BRAND.indigo}` : 'none',
-              }} aria-hidden />
+              <span
+                className={cn('h-3.5 w-3.5 rounded-[3px]', accent === 'B' && 'border-[1.5px] border-brand-indigo')}
+                style={{ background: accentColor }}
+                aria-hidden
+              />
             )}
-            <span style={{ fontFamily: TYPE.display, fontSize: isMobile ? 20 : 24, color: BRAND.indigo, letterSpacing: '-0.01em' }}>{title}</span>
-            <span style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.16em', color: BRAND.indigoMute, fontWeight: 700 }}>
+            <span className={cn('font-clash tracking-[-0.01em] text-brand-indigo', isMobile ? 'text-xl' : 'text-2xl')}>{title}</span>
+            <span className="font-fragment text-[10px] font-bold tracking-[0.16em] text-brand-indigo-mute">
               {rows.length} {rows.length === 1 ? 'PLAYER' : 'PLAYERS'}
             </span>
           </div>
           {typeof avg === 'number' && (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.18em', color: BRAND.indigoMute, fontWeight: 700 }}>AVG</span>
-              <span style={{ fontFamily: TYPE.display, fontSize: 22, color: scoreValueColor(avg), letterSpacing: '-0.02em' }}>{avg}</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo-mute">AVG</span>
+              <span className="font-clash text-[22px] tracking-[-0.02em]" style={{ color: scoreValueColor(avg) }}>{avg}</span>
             </div>
           )}
         </div>
@@ -613,20 +571,17 @@ function V3RosterSection({ title, rows, avg, accent, isMobile, onSelect }: {
 
       {/* column header — desktop has shared headers for # / NAME / SCORE only;
           stat cells self-label per row so they can vary by position. */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '40px 1fr 60px 24px' : ROSTER_GRID_DESKTOP,
-        gap: 16,
-        padding: '8px 4px', borderBottom: `1px solid ${BRAND.line}`,
-        fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.18em', color: BRAND.indigoMute,
-      }}>
+      <div
+        className="grid gap-4 border-b border-brand-line px-1 py-2 font-fragment text-[9.5px] tracking-[0.18em] text-brand-indigo-mute"
+        style={{ gridTemplateColumns: isMobile ? '40px 1fr 60px 24px' : ROSTER_GRID_DESKTOP }}
+      >
         {isMobile ? (
           <>
-            <div>#</div><div>NAME · POS</div><div style={{ textAlign: 'right' }}>SCORE</div><div></div>
+            <div>#</div><div>NAME · POS</div><div className="text-right">SCORE</div><div></div>
           </>
         ) : (
           <>
-            <div>#</div><div>NAME · POS</div><div style={{ textAlign: 'right' }}>SCORE</div><div></div><div></div><div></div><div></div>
+            <div>#</div><div>NAME · POS</div><div className="text-right">SCORE</div><div></div><div></div><div></div><div></div>
           </>
         )}
       </div>
@@ -736,117 +691,77 @@ function V3PlayerDetail({
 
   // Common panel content (header + score + radar + grades + physical + notes)
   const content = (
-    <div style={{
-      height: '100%',
-      overflowY: 'auto',
-      background: BRAND.sand,
-      color: BRAND.indigo,
-      fontFamily: TYPE.body,
-    }}>
+    <div className="h-full overflow-y-auto bg-brand-sand font-satoshi text-brand-indigo">
       {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '20px 24px',
-        background: BRAND.indigo, color: BRAND.sand,
-        position: 'sticky', top: 0, zIndex: 2,
-      }}>
-        <div style={{
-          width: 44, height: 44, borderRadius: '50%',
-          background: BRAND.sand, color: BRAND.indigo,
-          fontFamily: TYPE.display, fontSize: 18, fontWeight: 700,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: exceptional ? `0 0 0 2px ${BRAND.yellow}` : 'none',
-          flexShrink: 0,
-        }}>{p.jerseyNumber}</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: TYPE.display, fontSize: 22, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
+      <div className="sticky top-0 z-[2] flex items-center gap-3 bg-brand-indigo px-6 py-5 text-brand-sand">
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-sand font-clash text-lg font-bold text-brand-indigo"
+          style={{ boxShadow: exceptional ? `0 0 0 2px ${BRAND.yellow}` : 'none' }}
+        >{p.jerseyNumber}</div>
+        <div className="min-w-0 flex-1">
+          <div className="font-clash text-[22px] leading-[1.1] tracking-[-0.01em]">
             {p.firstName} {p.lastName}
           </div>
-          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.18em', color: 'rgba(238,228,200,0.7)', marginTop: 4 }}>
+          <div className="mt-1 font-fragment text-[10.5px] tracking-[0.18em] text-brand-sand/70">
             #{p.jerseyNumber} · {(p.position[0] || '').toUpperCase()} · {a.minutesPlayed ?? '-'}&apos;
           </div>
         </div>
         <button
           onClick={onClose}
           aria-label="Close"
-          className="v3-cta"
-          style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'rgba(238,228,200,0.10)', color: BRAND.sand,
-            border: `1px solid rgba(238,228,200,0.2)`,
-            fontSize: 16, cursor: 'pointer', flexShrink: 0,
-          }}
+          className="v3-cta flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[rgba(238,228,200,0.2)] bg-[rgba(238,228,200,0.10)] text-base text-brand-sand"
         >×</button>
       </div>
 
       {/* Composite score band */}
-      <div style={{
-        padding: '24px',
-        display: 'flex', alignItems: 'center', gap: 18,
-        borderBottom: `1px solid ${BRAND.line}`,
-      }}>
-        <div style={{
-          width: 96, height: 96, borderRadius: '50%',
-          border: `4px solid ${compositeColor}`,
-          background: BRAND.paper,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-        }}>
-          <div style={{ fontFamily: TYPE.display, fontSize: 34, lineHeight: 1, letterSpacing: '-0.02em', color: compositeColor }}>{a.compositeScore}</div>
-          <div style={{ fontFamily: TYPE.mono, fontSize: 8.5, letterSpacing: '0.2em', color: BRAND.indigoMute, marginTop: 4 }}>SCORE</div>
+      <div className="flex items-center gap-[18px] border-b border-brand-line p-6">
+        <div
+          className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-full bg-brand-paper"
+          style={{ border: `4px solid ${compositeColor}` }}
+        >
+          <div className="font-clash text-[34px] leading-none tracking-[-0.02em]" style={{ color: compositeColor }}>{a.compositeScore}</div>
+          <div className="mt-1 font-fragment text-[8.5px] tracking-[0.2em] text-brand-indigo-mute">SCORE</div>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>SESSION SCORE</div>
-          <div style={{ fontFamily: TYPE.display, fontSize: 24, marginTop: 4, letterSpacing: '-0.01em' }}>
+        <div className="min-w-0 flex-1">
+          <div className="font-fragment text-[10.5px] font-bold tracking-[0.2em] text-brand-indigo-mute">SESSION SCORE</div>
+          <div className="mt-1 font-clash text-2xl tracking-[-0.01em]">
             {a.compositeScore >= 85 ? 'Exceptional.' : a.compositeScore >= 75 ? 'Strong session.' : a.compositeScore >= 60 ? 'Solid.' : 'Room to grow.'}
           </div>
           {exceptional && (
-            <div style={{
-              display: 'inline-block',
-              marginTop: 8,
-              padding: '4px 10px',
-              background: BRAND.yellow, color: BRAND.indigo,
-              fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.18em', fontWeight: 700,
-              borderRadius: 4,
-            }}>★ MOTM</div>
+            <div className="mt-2 inline-block rounded-[4px] bg-brand-yellow px-2.5 py-1 font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo">★ MOTM</div>
           )}
         </div>
       </div>
 
       {/* Fatigue tile — sits below the composite band as a peer metric. */}
-      <div style={{ padding: '0 24px 20px', borderBottom: `1px solid ${BRAND.line}` }}>
+      <div className="border-b border-brand-line px-6 pb-5">
         <FatigueTile samples={fatigueSamples} size="wide" />
       </div>
 
       {/* Performance Radar */}
-      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 8 }}>PERFORMANCE RADAR</div>
-        <div style={{ background: BRAND.paper, borderRadius: 12, padding: 12, border: `1px solid ${BRAND.line}` }}>
+      <div className="border-b border-brand-line px-6 py-5">
+        <div className="mb-2 font-fragment text-[10.5px] font-bold tracking-[0.2em] text-brand-indigo-mute">PERFORMANCE RADAR</div>
+        <div className="rounded-xl border border-brand-line bg-brand-paper p-3">
           <RadarChartDynamic data={radarData} height={isMobile ? 240 : 280} />
         </div>
       </div>
 
       {/* Category Grades */}
-      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 10 }}>CATEGORY GRADES</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div className="border-b border-brand-line px-6 py-5">
+        <div className="mb-2.5 font-fragment text-[10.5px] font-bold tracking-[0.2em] text-brand-indigo-mute">CATEGORY GRADES</div>
+        <div className="grid grid-cols-2 gap-2">
           {grades.map(({ label, score }) => {
             const { grade, color } = getGrade(score)
             return (
-              <div key={label} style={{
-                background: BRAND.paper, border: `1px solid ${BRAND.line}`,
-                borderRadius: 10, padding: '12px 14px',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-              }}>
+              <div key={label} className="flex items-center justify-between gap-2.5 rounded-[10px] border border-brand-line bg-brand-paper px-3.5 py-3">
                 <div>
-                  <div style={{ fontSize: 12, color: BRAND.indigoMute, fontFamily: TYPE.mono, letterSpacing: '0.12em' }}>{label.toUpperCase()}</div>
-                  <div style={{ fontFamily: TYPE.display, fontSize: 22, color: BRAND.indigo, marginTop: 2, letterSpacing: '-0.01em' }}>{score}</div>
+                  <div className="font-fragment text-xs tracking-[0.12em] text-brand-indigo-mute">{label.toUpperCase()}</div>
+                  <div className="mt-0.5 font-clash text-[22px] tracking-[-0.01em] text-brand-indigo">{score}</div>
                 </div>
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  background: `${color}1A`, color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: TYPE.display, fontSize: 16, fontWeight: 800,
-                }}>{grade}</div>
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg font-clash text-base font-extrabold"
+                  style={{ background: `${color}1A`, color }}
+                >{grade}</div>
               </div>
             )
           })}
@@ -854,20 +769,17 @@ function V3PlayerDetail({
       </div>
 
       {/* Physical Details */}
-      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 10 }}>PHYSICAL</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+      <div className="border-b border-brand-line px-6 py-5">
+        <div className="mb-2.5 font-fragment text-[10.5px] font-bold tracking-[0.2em] text-brand-indigo-mute">PHYSICAL</div>
+        <div className="grid grid-cols-3 gap-2">
           {[
             { label: 'Distance', value: `${a.distanceCovered.toFixed(1)} km` },
             { label: 'Top Speed', value: `${a.topSpeed.toFixed(1)} km/h` },
             { label: 'Sprints', value: `${a.sprintCount}` },
           ].map(({ label, value }) => (
-            <div key={label} style={{
-              background: BRAND.paper, border: `1px solid ${BRAND.line}`, borderRadius: 10,
-              padding: '12px 8px', textAlign: 'center',
-            }}>
-              <div style={{ fontFamily: TYPE.display, fontSize: 18, fontWeight: 700, color: BRAND.indigo, letterSpacing: '-0.01em' }}>{value}</div>
-              <div style={{ fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.16em', color: BRAND.indigoMute, marginTop: 4 }}>{label.toUpperCase()}</div>
+            <div key={label} className="rounded-[10px] border border-brand-line bg-brand-paper px-2 py-3 text-center">
+              <div className="font-clash text-lg font-bold tracking-[-0.01em] text-brand-indigo">{value}</div>
+              <div className="mt-1 font-fragment text-[9.5px] tracking-[0.16em] text-brand-indigo-mute">{label.toUpperCase()}</div>
             </div>
           ))}
         </div>
@@ -875,83 +787,43 @@ function V3PlayerDetail({
 
       {/* Welfare — flag injury button + list of any injury flags
        *  already logged for this player in this session. */}
-      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BRAND.line}` }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 10,
-          }}
-        >
-          <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700 }}>
+      <div className="border-b border-brand-line px-6 py-5">
+        <div className="mb-2.5 flex items-center justify-between">
+          <div className="font-fragment text-[10.5px] font-bold tracking-[0.2em] text-brand-indigo-mute">
             INJURY MOMENTS
           </div>
           <button
             type="button"
             onClick={() => setInjurySheetOpen(true)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px',
-              border: `1px solid ${BRAND.coral}`,
-              borderRadius: 6,
-              background: 'transparent',
-              color: BRAND.coral,
-              fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.16em',
-              fontWeight: 700, cursor: 'pointer',
-            }}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-brand-coral bg-transparent px-3 py-1.5 font-fragment text-[10.5px] font-bold tracking-[0.16em] text-brand-coral"
           >
             <AlertTriangle size={11} />
             FLAG INJURY
           </button>
         </div>
         {playerInjuries.length === 0 ? (
-          <div style={{ fontFamily: TYPE.body, fontSize: 12.5, color: BRAND.indigoMute }}>
+          <div className="font-satoshi text-[12.5px] text-brand-indigo-mute">
             No injury moments flagged this match.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="flex flex-col gap-1.5">
             {playerInjuries.map(inj => (
               <div
                 key={inj.id}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '8px 10px',
-                  background: BRAND.paper,
-                  border: `1px solid ${BRAND.line}`,
-                  borderRadius: 8,
-                }}
+                className="flex items-center gap-2.5 rounded-lg border border-brand-line bg-brand-paper px-2.5 py-2"
               >
-                <span
-                  style={{
-                    fontFamily: TYPE.mono, fontSize: 10, letterSpacing: '0.16em',
-                    color: BRAND.coral, fontWeight: 700,
-                  }}
-                >
+                <span className="font-fragment text-[10px] font-bold tracking-[0.16em] text-brand-coral">
                   {inj.minute}&apos;
                 </span>
-                <span
-                  style={{
-                    fontFamily: TYPE.body, fontSize: 12.5,
-                    color: BRAND.indigo, textTransform: 'capitalize',
-                  }}
-                >
+                <span className="font-satoshi text-[12.5px] capitalize text-brand-indigo">
                   {inj.type}
                 </span>
-                <span
-                  style={{
-                    fontFamily: TYPE.mono, fontSize: 9.5, letterSpacing: '0.14em',
-                    color: BRAND.indigoMute, fontWeight: 700,
-                  }}
-                >
+                <span className="font-fragment text-[9.5px] font-bold tracking-[0.14em] text-brand-indigo-mute">
                   SEV {inj.severity}
                 </span>
                 {inj.notes && (
                   <span
-                    style={{
-                      fontFamily: TYPE.body, fontSize: 12, color: BRAND.indigoMid,
-                      flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}
+                    className="min-w-0 flex-1 overflow-hidden font-satoshi text-xs text-brand-indigo-mid text-ellipsis whitespace-nowrap"
                     title={inj.notes}
                   >
                     · {inj.notes}
@@ -964,19 +836,13 @@ function V3PlayerDetail({
       </div>
 
       {/* Coach notes */}
-      <div style={{ padding: '20px 24px 32px' }}>
-        <div style={{ fontFamily: TYPE.mono, fontSize: 10.5, letterSpacing: '0.2em', color: BRAND.indigoMute, fontWeight: 700, marginBottom: 8 }}>SESSION NOTES</div>
+      <div className="px-6 pt-5 pb-8">
+        <div className="mb-2 font-fragment text-[10.5px] font-bold tracking-[0.2em] text-brand-indigo-mute">SESSION NOTES</div>
         <textarea
           value={note}
           onChange={e => setNote(e.target.value)}
           placeholder={`Add notes about ${p.firstName}...`}
-          style={{
-            width: '100%', minHeight: 90,
-            border: `1px solid ${BRAND.line}`, background: BRAND.paper,
-            borderRadius: 10, padding: 12,
-            fontSize: 14, color: BRAND.indigo,
-            resize: 'vertical', fontFamily: TYPE.body, boxSizing: 'border-box',
-          }}
+          className="box-border w-full min-h-[90px] resize-y rounded-[10px] border border-brand-line bg-brand-paper p-3 font-satoshi text-sm text-brand-indigo"
         />
       </div>
 
@@ -996,26 +862,16 @@ function V3PlayerDetail({
       {/* backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(11,8,40,0.45)',
-          zIndex: 90,
-          animation: 'v3-backdrop-in 180ms ease-out both',
-        }}
+        className="fixed inset-0 z-[90] bg-[rgba(11,8,40,0.45)]"
+        style={{ animation: 'v3-backdrop-in 180ms ease-out both' }}
       />
       {/* panel: takeover on mobile, slide-in 460px on desktop */}
       <div
         role="dialog"
         aria-modal="true"
+        className="fixed top-0 right-0 bottom-0 z-[100] bg-brand-sand shadow-[-8px_0_32px_rgba(11,8,40,0.18)]"
         style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
           width: isMobile ? '100vw' : 460,
-          background: BRAND.sand,
-          boxShadow: '-8px 0 32px rgba(11,8,40,0.18)',
-          zIndex: 100,
           animation: isMobile
             ? 'v3-panel-up 280ms cubic-bezier(.2,.7,.2,1) both'
             : 'v3-panel-right 280ms cubic-bezier(.2,.7,.2,1) both',
@@ -1147,10 +1003,10 @@ export default function CoachMatchAnalysisPage() {
 
   if (!session) {
     return (
-      <div style={{ background: BRAND.sand, minHeight: '100vh', padding: 40, color: BRAND.indigo, fontFamily: TYPE.body }}>
+      <div className="min-h-screen bg-brand-sand p-10 font-satoshi text-brand-indigo">
         <style dangerouslySetInnerHTML={{ __html: v3Motion }} />
-        <div style={{ fontFamily: TYPE.display, fontSize: 32 }}>Session not found</div>
-        <button onClick={() => router.back()} style={{ marginTop: 20 }}>Go back</button>
+        <div className="font-clash text-[32px]">Session not found</div>
+        <button onClick={() => router.back()} className="mt-5">Go back</button>
       </div>
     )
   }
@@ -1165,15 +1021,7 @@ export default function CoachMatchAnalysisPage() {
   const awayGoals = score?.awayGoals ?? 0
 
   return (
-    <div style={{
-      width: '100%',
-      minHeight: '100vh',
-      background: BRAND.sand,
-      color: BRAND.indigo,
-      fontFamily: TYPE.body,
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <div className="flex min-h-screen w-full flex-col bg-brand-sand font-satoshi text-brand-indigo">
       <style dangerouslySetInnerHTML={{ __html: v3Motion }} />
 
       <V3BackRow onBack={() => router.back()} />
@@ -1198,7 +1046,7 @@ export default function CoachMatchAnalysisPage() {
        *  footage). The Standard ↔ AI Overlay toggle defaults to overlay
        *  because the AI moment is the demo's wow. */}
       {session.matchVideoUrl && session.matchOverlayUrl && (
-        <div style={{ padding: isMobile ? '0 18px 12px' : '0 28px 16px' }}>
+        <div className={cn(isMobile ? 'px-[18px] pb-3' : 'px-7 pb-4')}>
           <MatchVideoPanel
             rawUrl={session.matchVideoUrl}
             overlayUrl={session.matchOverlayUrl}
@@ -1207,34 +1055,31 @@ export default function CoachMatchAnalysisPage() {
       )}
 
       {/* Roster — both layouts share it; on mobile it falls below the reel */}
-      <div style={{ background: BRAND.sand, padding: isMobile ? '20px 18px 32px' : '24px 28px 32px' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
+      <div className={cn('bg-brand-sand', isMobile ? 'px-[18px] pt-5 pb-8' : 'px-7 pt-6 pb-8')}>
+        <div className="mb-3.5 flex flex-wrap items-baseline justify-between gap-3">
           <div>
-            <div style={{ fontFamily: TYPE.mono, fontSize: 11, letterSpacing: '0.22em', color: BRAND.indigoMute, fontWeight: 700 }}>
+            <div className="font-fragment text-[11px] font-bold tracking-[0.22em] text-brand-indigo-mute">
               {isTeamSplit
                 ? `TRAINING MATCH · ${playerRows.length} PLAYERS`
                 : `SQUAD · ${playerRows.length} PLAYERS`}
             </div>
-            <div style={{ fontFamily: TYPE.display, fontSize: isMobile ? 22 : 32, color: BRAND.indigo, marginTop: 2, letterSpacing: '-0.01em' }}>
+            <div className={cn('mt-0.5 font-clash tracking-[-0.01em] text-brand-indigo', isMobile ? 'text-[22px]' : 'text-[32px]')}>
               {isTeamSplit ? 'Who lined up where.' : 'Who did what at a glance.'}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-1.5">
             {ROSTER_SORT_DEFS.map(({ key, label }) => {
               const active = rosterSort === key
               return (
                 <button
                   key={key}
                   onClick={() => setRosterSort(key)}
-                  className={active ? '' : 'v3-pill'}
-                  style={{
-                    background: active ? BRAND.indigo : 'transparent',
-                    color: active ? BRAND.sand : BRAND.indigo,
-                    border: `1px solid ${active ? BRAND.indigo : BRAND.line}`,
-                    padding: '6px 11px', borderRadius: 999,
-                    fontFamily: TYPE.body, fontSize: 11.5, fontWeight: active ? 600 : 500,
-                    cursor: 'pointer', transition: 'all 160ms ease',
-                  }}
+                  className={cn(
+                    'cursor-pointer rounded-full border px-[11px] py-1.5 font-satoshi text-[11.5px] transition-all duration-150',
+                    active
+                      ? 'border-brand-indigo bg-brand-indigo font-semibold text-brand-sand'
+                      : 'v3-pill border-brand-line bg-transparent font-medium text-brand-indigo',
+                  )}
                 >{label}</button>
               )
             })}
@@ -1244,7 +1089,7 @@ export default function CoachMatchAnalysisPage() {
         {isTeamSplit ? (
           <>
             <V3RosterSection title="Team A" rows={teamARows} avg={teamAvg(teamARows)} accent="A" isMobile={isMobile} onSelect={setSelectedPlayerId} />
-            <div style={{ height: 18 }} />
+            <div className="h-[18px]" />
             <V3RosterSection title="Team B" rows={teamBRows} avg={teamAvg(teamBRows)} accent="B" isMobile={isMobile} onSelect={setSelectedPlayerId} />
           </>
         ) : (

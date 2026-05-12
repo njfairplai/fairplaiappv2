@@ -9,7 +9,7 @@ import { CoachThemeProvider, useCoachTheme } from '@/contexts/CoachThemeContext'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 import BottomNav from '@/components/ui/BottomNav'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { BRAND, TYPE } from '@/lib/constants'
+import { BRAND } from '@/lib/constants'
 import { Logo } from '@/components/shared/Logo'
 import { seedWelfareIfEmpty } from '@/lib/welfare-store'
 import { SoftLockBanner } from '@/components/demo/SoftLockBanner'
@@ -80,9 +80,8 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   const colors = isBrandedRoute ? { ...themeColors, ...BRAND_CHROME } : themeColors
   // Brand fonts are now the default across every coach/web route (chrome
   // unification — Slice 6 polish), even on routes whose body still uses
-  // the legacy CoachThemeContext colours.
-  const fontFamilyBody = TYPE.body
-  const tabFontWeight = 600
+  // the legacy CoachThemeContext colours. Body font + tab weight live in
+  // the Tailwind classes below (font-satoshi + font-semibold/bold).
 
   // `overflowX: 'hidden'` was previously set on the parent flex
   // column to suppress horizontal scrollbars on edge cases. We
@@ -90,59 +89,66 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
   // `position: sticky` on the header + tab bar. `maxWidth: '100vw'`
   // on the parent covers the original concern.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: colors.pageBg, maxWidth: '100vw', fontFamily: fontFamilyBody }}>
+    <div
+      className="flex flex-col min-h-screen max-w-[100vw] font-satoshi bg-[var(--coach-page-bg)]"
+      style={{
+        ['--coach-page-bg' as string]: colors.pageBg,
+        ['--coach-header-bg' as string]: colors.headerBg,
+        ['--coach-header-border' as string]: colors.headerBorder,
+        ['--coach-header-text' as string]: colors.headerText,
+        ['--coach-header-text-muted' as string]: colors.headerTextMuted,
+        ['--coach-text-muted' as string]: colors.textMuted,
+        ['--coach-text-secondary' as string]: colors.textSecondary,
+        ['--coach-tabbar-bg' as string]: colors.tabBarBg,
+        ['--coach-tabbar-border' as string]: colors.tabBarBorder,
+        ['--coach-tab-text' as string]: colors.tabText,
+        ['--coach-tab-text-active' as string]: colors.tabTextActive,
+        ['--coach-tab-indicator' as string]: colors.tabIndicator,
+      }}
+    >
       <SoftLockBanner />
       {/* Header bar — sticky so the logo + team selector + avatar
        *  stay visible as the page content scrolls beneath. */}
-      <header style={{
-        height: isMobile ? 52 : 60, flexShrink: 0,
-        background: colors.headerBg,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: isMobile ? '0 12px' : '0 24px',
-        borderBottom: `1px solid ${colors.headerBorder}`,
-        gap: 8,
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-      }}>
+      <header className="h-[52px] md:h-[60px] flex-shrink-0 flex items-center justify-between px-3 md:px-6 gap-2 sticky top-0 z-40 border-b border-b-[var(--coach-header-border)] bg-[var(--coach-header-bg)]">
         {isBrandedRoute ? (
-          <Logo height={isMobile ? 22 : 28} style={{ flexShrink: 0 }} />
+          <Logo height={isMobile ? 22 : 28} className="flex-shrink-0" />
         ) : (
           <Image
             src={mode === 'light' ? '/logo-black.png' : '/logo-white.png'}
             alt="Fairplai"
             width={100}
             height={28}
-            style={{ height: isMobile ? 24 : 28, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+            className="h-6 md:h-7 w-auto object-contain flex-shrink-0"
           />
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 16, minWidth: 0 }}>
+        <div className="flex items-center gap-1.5 md:gap-4 min-w-0">
           {/* Team selector */}
-          <div style={{ position: 'relative', minWidth: 0 }}>
+          <div className="relative min-w-0">
             <select
               value={selectedRosterId}
               onChange={e => setSelectedRosterId(e.target.value)}
-              style={{
-                padding: isMobile ? '6px 22px 6px 8px' : '7px 30px 7px 12px',
-                borderRadius: 8,
-                background: isBrandedRoute ? BRAND.paper : (mode === 'light' ? '#F1F5F9' : 'rgba(255,255,255,0.06)'),
-                border: `1px solid ${isBrandedRoute ? BRAND.line : (mode === 'light' ? '#E2E8F0' : 'rgba(255,255,255,0.1)')}`,
-                color: colors.headerText, fontSize: isMobile ? 11 : 13, fontWeight: 600,
-                fontFamily: TYPE.body,
-                cursor: 'pointer', outline: 'none',
-                appearance: 'none', WebkitAppearance: 'none',
-                maxWidth: isMobile ? 110 : 'none',
-              }}
+              className={
+                'font-satoshi font-semibold cursor-pointer outline-none appearance-none [-webkit-appearance:none] rounded-lg py-1.5 pl-2 pr-[22px] md:py-[7px] md:pl-3 md:pr-[30px] text-[11px] md:text-[13px] max-w-[110px] md:max-w-none border text-[var(--coach-header-text)] ' +
+                (isBrandedRoute
+                  ? 'bg-brand-paper border-brand-line'
+                  : mode === 'light'
+                  ? 'bg-[#F1F5F9] border-[#E2E8F0]'
+                  : 'bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.1)]')
+              }
             >
-              <option value="all" style={{ background: colors.headerBg, color: colors.headerText }}>All Teams</option>
+              <option value="all" className="bg-[var(--coach-header-bg)] text-[var(--coach-header-text)]">All Teams</option>
               {availableRosters.map(r => (
-                <option key={r.id} value={r.id} style={{ background: colors.headerBg, color: colors.headerText }}>
+                <option key={r.id} value={r.id} className="bg-[var(--coach-header-bg)] text-[var(--coach-header-text)]">
                   {r.name}
                 </option>
               ))}
             </select>
-            <ChevronDown size={isMobile ? 11 : 13} color={colors.textMuted} style={{ position: 'absolute', right: isMobile ? 6 : 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <ChevronDown
+              size={isMobile ? 11 : 13}
+              color={colors.textMuted}
+              className="absolute right-1.5 md:right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            />
           </div>
 
           {/* Mobile-app switch button intentionally removed for the demo
@@ -150,24 +156,22 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
            *  the button confuses testers. Keep the import out too. */}
 
           {/* Coach label (avatar only on mobile) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <div style={{
-              width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: '50%',
-              background: isBrandedRoute ? BRAND.indigo : 'rgba(74,74,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{
-                fontSize: isMobile ? 11 : 13, fontWeight: 700,
-                color: isBrandedRoute ? BRAND.sand : '#4A4AFF',
-                fontFamily: TYPE.display,
-              }}>CA</span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div
+              className={
+                'w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center ' +
+                (isBrandedRoute ? 'bg-brand-indigo' : 'bg-[rgba(74,74,255,0.15)]')
+              }
+            >
+              <span
+                className={
+                  'font-clash font-bold text-[11px] md:text-[13px] ' +
+                  (isBrandedRoute ? 'text-brand-sand' : 'text-[#4A4AFF]')
+                }
+              >CA</span>
             </div>
             {!isMobile && (
-              <span style={{
-                fontSize: 13, fontWeight: 600,
-                color: colors.headerTextMuted,
-                fontFamily: TYPE.body,
-              }}>Coach Ali</span>
+              <span className="font-satoshi text-[13px] font-semibold text-[var(--coach-header-text-muted)]">Coach Ali</span>
             )}
           </div>
         </div>
@@ -178,18 +182,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
        *  while the page scrolls. On mobile the same four tabs surface
        *  as a fixed bottom bar (BottomNav portal="coachWeb") and the
        *  top tab bar is hidden to avoid duplicate navigation. */}
-      <nav style={{
-        height: 48, flexShrink: 0,
-        background: colors.tabBarBg,
-        display: isMobile ? 'none' : 'flex',
-        alignItems: 'stretch',
-        padding: '0 24px',
-        gap: 4,
-        borderBottom: `1px solid ${colors.tabBarBorder}`,
-        position: 'sticky',
-        top: isMobile ? 52 : 60,
-        zIndex: 39,
-      }}>
+      <nav className="h-12 flex-shrink-0 hidden md:flex items-stretch px-6 gap-1 sticky top-[60px] z-[39] border-b bg-[var(--coach-tabbar-bg)] border-b-[var(--coach-tabbar-border)]">
         {tabs.map(tab => {
           const isActive = tab.exact
             ? pathname === tab.href
@@ -208,23 +201,14 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
               disabled={tourLocked}
               aria-disabled={tourLocked}
               title={tourLocked ? 'Locked during the guided tour. Use Next → in the tour card to advance.' : undefined}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '0 16px',
-                border: 'none', cursor: tourLocked ? 'not-allowed' : 'pointer',
-                background: 'transparent',
-                color: isActive ? colors.tabTextActive : colors.tabText,
-                fontSize: isBrandedRoute ? 12.5 : 14,
-                fontWeight: isActive ? 700 : (tabFontWeight ?? 500),
-                fontFamily: TYPE.body,
-                letterSpacing: isBrandedRoute ? '0.06em' : 'normal',
-                textTransform: isBrandedRoute ? ('uppercase' as const) : ('none' as const),
-                borderBottom: isActive ? `3px solid ${colors.tabIndicator}` : '3px solid transparent',
-                transition: 'all 0.15s ease',
-                marginBottom: -1, flexShrink: 0,
-                whiteSpace: 'nowrap',
-                opacity: tourLocked ? 0.32 : 1,
-              }}
+              className={
+                'flex items-center gap-2 px-4 border-none bg-transparent font-satoshi transition-all duration-150 -mb-px flex-shrink-0 whitespace-nowrap ' +
+                (tourLocked ? 'cursor-not-allowed opacity-[0.32]' : 'cursor-pointer opacity-100') + ' ' +
+                (isBrandedRoute ? 'text-[12.5px] tracking-[0.06em] uppercase' : 'text-sm normal-case tracking-normal') + ' ' +
+                (isActive
+                  ? 'text-[var(--coach-tab-text-active)] font-bold border-b-[3px] border-b-[var(--coach-tab-indicator)]'
+                  : 'text-[var(--coach-tab-text)] font-semibold border-b-[3px] border-b-transparent')
+              }
               onMouseEnter={e => {
                 if (!isActive && !tourLocked) e.currentTarget.style.color = colors.textSecondary
               }}
@@ -243,12 +227,7 @@ function CoachWebLayoutInner({ children }: { children: React.ReactNode }) {
        *  sticky header + tab bar above actually catch at the top.
        *  On mobile we pad the bottom of the page so the last surface
        *  row never sits hidden behind the fixed BottomNav. */}
-      <main
-        style={{
-          flex: 1,
-          paddingBottom: isMobile ? 72 : 0,
-        }}
-      >
+      <main className="flex-1 pb-[72px] md:pb-0">
         {children}
       </main>
 

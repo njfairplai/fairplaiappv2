@@ -21,6 +21,7 @@ import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
 import { WelfareCards } from '@/components/parent-portal/WelfareCards'
 import { IdpModal } from '@/components/parent-portal/IdpModal'
 import { ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/cn'
 
 /**
  * Parent Development — read-only IDP summary, attendance record, soft-
@@ -87,14 +88,7 @@ export default function ParentDevelopmentPage() {
       : 0
 
   return (
-    <div
-      style={{
-        background: 'var(--brand-sand)',
-        minHeight: '100dvh',
-        color: 'var(--brand-indigo)',
-        paddingBottom: 80,
-      }}
-    >
+    <div className="bg-brand-sand min-h-[100dvh] text-brand-indigo pb-20">
       <PortalTopBar unreadCount={unreadCount} />
 
       <MultiKidSwitcher
@@ -104,87 +98,38 @@ export default function ParentDevelopmentPage() {
       />
 
       {/* Eyebrow + headline */}
-      <section style={{ padding: '20px 16px 0' }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+      <section className="px-4 pt-5">
+        <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold">
           DEVELOPMENT
         </span>
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 28,
-            color: 'var(--brand-indigo)',
-            letterSpacing: '-0.02em',
-            margin: '4px 0 0',
-            lineHeight: 1.1,
-          }}
-        >
+        <h1 className="font-clash text-[28px] text-brand-indigo tracking-[-0.02em] mt-1 mb-0 leading-[1.1]">
           What {activeKid.firstName} is working on.
         </h1>
       </section>
 
       {/* Attendance card */}
       {att && (
-        <section style={{ padding: '20px 16px 0' }}>
+        <section className="px-4 pt-5">
           <Card label="ATTENDANCE">
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: 10,
-                marginBottom: 10,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 36,
-                  color: 'var(--brand-indigo)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                }}
-              >
+            <div className="flex items-baseline gap-2.5 mb-2.5">
+              <span className="font-clash text-[36px] text-brand-indigo tracking-[-0.02em] leading-none">
                 {attendancePct}%
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                }}
-              >
+              <span className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute font-bold">
                 {att.sessionsAttended} OF {att.totalSessions} SESSIONS
               </span>
             </div>
-            <div
-              style={{
-                height: 8,
-                borderRadius: 999,
-                background: 'var(--brand-line-soft)',
-                overflow: 'hidden',
-              }}
-            >
+            <div className="h-2 rounded-full bg-brand-line-soft overflow-hidden">
               <div
-                style={{
-                  height: '100%',
-                  width: `${attendancePct}%`,
-                  background:
-                    attendancePct >= 80
-                      ? 'var(--brand-yellow)'
-                      : attendancePct >= 60
-                      ? 'var(--brand-indigo)'
-                      : 'var(--brand-coral)',
-                  transition: 'width 200ms ease',
-                }}
+                className={cn(
+                  'h-full transition-[width] duration-200 ease-linear',
+                  attendancePct >= 80
+                    ? 'bg-brand-yellow'
+                    : attendancePct >= 60
+                    ? 'bg-brand-indigo'
+                    : 'bg-brand-coral',
+                )}
+                style={{ width: `${attendancePct}%` }}
               />
             </div>
           </Card>
@@ -202,58 +147,20 @@ export default function ParentDevelopmentPage() {
        *  page). The full document lives in the modal with a Download
        *  PDF button (window.print() under the hood). */}
       {(dev || feedback || score) && (
-        <section style={{ padding: '24px 16px 0' }}>
+        <section className="px-4 pt-6">
           <button
             type="button"
             onClick={() => setIdpOpen(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 14,
-              width: '100%',
-              padding: '16px 18px',
-              background: 'var(--brand-indigo)',
-              color: 'var(--brand-sand)',
-              border: 'none',
-              borderRadius: 12,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(11, 8, 40, 0.18)',
-              textAlign: 'left',
-            }}
+            className="flex items-center justify-between gap-3.5 w-full px-[18px] py-4 bg-brand-indigo text-brand-sand border-none rounded-xl font-[inherit] cursor-pointer shadow-[0_4px_14px_rgba(11,8,40,0.18)] text-left"
           >
             <div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-fragment)',
-                  fontSize: 10,
-                  letterSpacing: '0.22em',
-                  color: 'var(--brand-yellow)',
-                  fontWeight: 700,
-                  marginBottom: 4,
-                }}
-              >
+              <div className="font-fragment text-[10px] tracking-[0.22em] text-brand-yellow font-bold mb-1">
                 INDIVIDUAL DEVELOPMENT PLAN
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-clash)',
-                  fontSize: 22,
-                  letterSpacing: '-0.01em',
-                  lineHeight: 1.1,
-                }}
-              >
+              <div className="font-clash text-[22px] tracking-[-0.01em] leading-[1.1]">
                 Open development plan
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 12.5,
-                  color: 'rgba(238, 228, 200, 0.7)',
-                  marginTop: 4,
-                }}
-              >
+              <div className="font-satoshi text-[12.5px] text-[rgba(238,228,200,0.7)] mt-1">
                 Coach plan, strengths, soft skills, season summary. PDF download inside.
               </div>
             </div>
@@ -262,17 +169,8 @@ export default function ParentDevelopmentPage() {
         </section>
       )}
 
-      <section style={{ padding: '24px 16px' }}>
-        <p
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 11.5,
-            color: 'var(--brand-indigo-mute)',
-            textAlign: 'center',
-            lineHeight: 1.5,
-            margin: 0,
-          }}
-        >
+      <section className="px-4 py-6">
+        <p className="font-satoshi text-[11.5px] text-brand-indigo-mute text-center leading-[1.5] m-0">
           The coach owns this plan. To respond, send Coach Sara a message
           from the Hub.
         </p>
@@ -293,25 +191,8 @@ export default function ParentDevelopmentPage() {
 
 function Card({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        background: 'var(--brand-paper)',
-        border: '1px solid var(--brand-line)',
-        borderRadius: 12,
-        padding: '16px 18px',
-      }}
-    >
-      <span
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: '0.22em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          display: 'block',
-          marginBottom: 12,
-        }}
-      >
+    <div className="bg-brand-paper border border-brand-line rounded-xl px-[18px] py-4">
+      <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold block mb-3">
         {label}
       </span>
       {children}
@@ -321,41 +202,23 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
 
 function SoftSkillBar({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            color: 'var(--brand-indigo)',
-            fontWeight: 600,
-          }}
-        >
+    <div className="flex flex-col gap-1 mb-2.5">
+      <div className="flex items-baseline justify-between">
+        <span className="font-satoshi text-[13px] text-brand-indigo font-semibold">
           {label}
         </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.18em',
-            color: 'var(--brand-indigo-mute)',
-            fontWeight: 700,
-          }}
-        >
+        <span className="font-fragment text-[10px] tracking-[0.18em] text-brand-indigo-mute font-bold">
           {value} / 5
         </span>
       </div>
-      <div style={{ display: 'flex', gap: 4 }}>
+      <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map(n => (
           <span
             key={n}
-            style={{
-              flex: 1,
-              height: 6,
-              borderRadius: 3,
-              background:
-                n <= value ? 'var(--brand-yellow)' : 'var(--brand-line-soft)',
-            }}
+            className={cn(
+              'flex-1 h-1.5 rounded-[3px]',
+              n <= value ? 'bg-brand-yellow' : 'bg-brand-line-soft',
+            )}
           />
         ))}
       </div>

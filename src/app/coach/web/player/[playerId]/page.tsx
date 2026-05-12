@@ -20,6 +20,7 @@ import { IdpPostscript } from '@/components/coach/player-profile/IdpPostscript'
 import { WorkloadSection } from '@/components/coach/player-profile/WorkloadSection'
 import { ShareCardModal } from '@/components/coach/player-profile/ShareCardModal'
 import { CardThumbButton } from '@/components/coach/player-profile/BibCard'
+import { cn } from '@/lib/cn'
 
 /**
  * Coach Player Profile — Slice 6.1.1, Direction C v2 (the Filmstrip Season).
@@ -57,7 +58,7 @@ export default function CoachWebPlayerPage() {
 
   if (!player) {
     return (
-      <div style={{ padding: 48, fontFamily: 'var(--font-body)', color: 'var(--brand-indigo)' }}>
+      <div className="p-12 font-satoshi text-brand-indigo">
         Player not found.
       </div>
     )
@@ -75,56 +76,37 @@ export default function CoachWebPlayerPage() {
 
   return (
     <div
-      style={{
-        background: 'var(--brand-sand)',
-        color: 'var(--brand-indigo)',
-        fontFamily: 'var(--font-body)',
-        minHeight: 'calc(100vh - 108px)',
-      }}
+      className="bg-brand-sand text-brand-indigo font-satoshi"
+      style={{ minHeight: 'calc(100vh - 108px)' }}
     >
       {/* 1. Identity strip — back / glyph / name. SEASON + LATEST score cells
           and the Compare-with-player button were removed: scores live in the
           mode-specific hero now (match or season), and Compare-with moved
           into the radar section's header where comparison logically lives. */}
       <section
+        className={cn(
+          'bg-brand-sand border-b border-brand-line grid items-center',
+          isMobile ? 'px-4 py-4 gap-3' : 'px-9 py-5 gap-6',
+        )}
         style={{
-          padding: isMobile ? '16px 16px' : '20px 36px',
-          background: 'var(--brand-sand)',
-          borderBottom: '1px solid var(--brand-line)',
-          display: 'grid',
           gridTemplateColumns: isMobile
             ? 'auto 1fr auto'
             : 'auto minmax(0, 1fr) auto',
-          gap: isMobile ? 12 : 24,
-          alignItems: 'center',
         }}
       >
         <button
           type="button"
           onClick={() => router.push('/coach/web/squad')}
           aria-label="Back to squad"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 36,
-            height: 36,
-            borderRadius: 8,
-            background: 'var(--brand-paper)',
-            border: '1px solid var(--brand-line)',
-            color: 'var(--brand-indigo)',
-            cursor: 'pointer',
-          }}
+          className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-brand-paper border border-brand-line text-brand-indigo cursor-pointer"
         >
           <ChevronLeft size={16} />
         </button>
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: isMobile ? 10 : 18,
-            minWidth: 0,
-          }}
+          className={cn(
+            'flex items-center min-w-0',
+            isMobile ? 'gap-2.5' : 'gap-[18px]',
+          )}
         >
           <PlayerGlyph
             size={isMobile ? 56 : 72}
@@ -132,46 +114,26 @@ export default function CoachWebPlayerPage() {
             name={`${player.firstName} ${player.lastName}`}
             motm={!!latest?.motm}
           />
-          <div style={{ minWidth: 0 }}>
+          <div className="min-w-0">
             <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: isMobile ? 9 : 10.5,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-              }}
+              className={cn(
+                'font-fragment tracking-[0.22em] text-brand-indigo-mute font-bold',
+                isMobile ? 'text-[9px]' : 'text-[10.5px]',
+              )}
             >
               {player.position.join(' · ')} · #{player.jerseyNumber}
             </span>
             <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: isMobile ? 20 : 38,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
-                color: 'var(--brand-indigo)',
-                marginTop: 2,
-                whiteSpace: isMobile ? 'normal' : 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                wordBreak: 'break-word',
-              }}
+              className={cn(
+                'font-clash tracking-[-0.02em] text-brand-indigo mt-0.5 overflow-hidden text-ellipsis break-words',
+                isMobile ? 'text-[20px] whitespace-normal' : 'text-[38px] whitespace-nowrap',
+              )}
+              style={{ lineHeight: 1.1 }}
             >
               {player.firstName} {player.lastName}
             </div>
             {!isMobile && (
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 12.5,
-                  color: 'var(--brand-indigo-mute)',
-                  marginTop: 4,
-                  display: 'flex',
-                  gap: 10,
-                  flexWrap: 'wrap',
-                }}
-              >
+              <div className="font-satoshi text-[12.5px] text-brand-indigo-mute mt-1 flex gap-2.5 flex-wrap">
                 <span>{computeAge(player.dateOfBirth)} yrs</span>
                 <span>·</span>
                 <span>{player.dominantFoot}-foot</span>
@@ -220,7 +182,7 @@ export default function CoachWebPlayerPage() {
 
           {/* Filmstrip — only visible in match mode (it's the match navigator) */}
           {progression.length > 0 && (
-            <div style={{ padding: isMobile ? '20px 12px' : '24px 36px' }}>
+            <div className={cn(isMobile ? 'px-3 py-5' : 'px-9 py-6')}>
               <Filmstrip
                 data={progression}
                 currentMd={effectiveMd ?? progression[0].md}

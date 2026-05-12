@@ -11,6 +11,7 @@ import { getSeasonScoresFor, scoreColor } from '@/lib/squad-season-score'
 import { Pitch } from '@/components/coach/squad-grass/Pitch'
 import { PlayerToken } from '@/components/coach/squad-grass/PlayerToken'
 import { SideRail } from '@/components/coach/squad-grass/SideRail'
+import { cn } from '@/lib/cn'
 import {
   getAllInjuryFlags,
   getLatestFatigueByPlayer,
@@ -159,34 +160,18 @@ export default function CoachWebSquadPage() {
 
   return (
     <div
-      style={{
-        background: 'var(--brand-sand)',
-        color: 'var(--brand-indigo)',
-        minHeight: 'calc(100vh - 108px)',
-        fontFamily: 'var(--font-body)',
-      }}
+      className="bg-brand-sand text-brand-indigo font-satoshi"
+      style={{ minHeight: 'calc(100vh - 108px)' }}
     >
       {/* squad header */}
       <div
-        style={{
-          padding: isMobile ? '20px 16px 8px' : '28px 28px 14px',
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 16,
-          flexWrap: 'wrap',
-        }}
+        className={cn(
+          'flex items-baseline gap-4 flex-wrap',
+          isMobile ? 'px-4 pt-5 pb-2' : 'px-7 pt-7 pb-3.5',
+        )}
       >
         <div>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10.5,
-              fontWeight: 700,
-              letterSpacing: '0.22em',
-              color: 'var(--brand-indigo-mute)',
-              textTransform: 'uppercase',
-            }}
-          >
+          <div className="font-fragment text-[10.5px] font-bold tracking-[0.22em] text-brand-indigo-mute uppercase">
             SQUAD
           </div>
           {/* Match-Center / Highlights title vocabulary: TYPE.display at
@@ -195,54 +180,27 @@ export default function CoachWebSquadPage() {
            *  rest of the brand surfaces so the title font reads as one
            *  family across tabs. */}
           <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: isMobile ? 40 : 64,
-              letterSpacing: '-0.02em',
-              lineHeight: 0.94,
-              color: 'var(--brand-indigo)',
-              marginTop: 6,
-            }}
+            className={cn(
+              'font-clash tracking-[-0.02em] text-brand-indigo mt-1.5',
+              isMobile ? 'text-[40px]' : 'text-[64px]',
+            )}
+            style={{ lineHeight: 0.94 }}
           >
             {roster?.name ?? 'All squads'}
           </div>
           {roster && (
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                letterSpacing: '0.12em',
-                color: 'var(--brand-indigo-mute)',
-                marginTop: 6,
-              }}
-            >
+            <div className="font-fragment text-[11px] tracking-[0.12em] text-brand-indigo-mute mt-1.5">
               {roster.ageGroup.toUpperCase()} · {roster.type.toUpperCase()} · {rosterPlayers.length} PLAYERS
             </div>
           )}
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div className="ml-auto flex items-center gap-[18px]">
           <SquadStat label="Squad avg" value={squadAvg(seasonScores)} />
           <SquadStat label="Top form" value={topForm?.score ?? 0} />
           <button
             type="button"
             onClick={() => router.push('/coach/web/compare')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 16px',
-              borderRadius: 999,
-              background: 'var(--brand-indigo)',
-              color: 'var(--brand-sand)',
-              border: 'none',
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              letterSpacing: '0.01em',
-              alignSelf: 'flex-end',
-              whiteSpace: 'nowrap',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand-indigo text-brand-sand border-0 font-satoshi text-[13px] font-bold cursor-pointer tracking-[0.01em] self-end whitespace-nowrap"
           >
             <GitCompareArrows size={14} />
             Compare players
@@ -254,13 +212,10 @@ export default function CoachWebSquadPage() {
        *  not matching the active filter dim out. Pills are mutually
        *  exclusive; tap the active pill again to return to "All". */}
       <div
-        style={{
-          padding: isMobile ? '0 16px' : '0 28px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-        }}
+        className={cn(
+          'flex items-center gap-2 flex-wrap',
+          isMobile ? 'px-4' : 'px-7',
+        )}
       >
         {[
           { id: 'all' as const, label: 'All', count: rosterPlayers.length, dot: 'var(--brand-indigo)' },
@@ -275,41 +230,21 @@ export default function CoachWebSquadPage() {
               type="button"
               onClick={() => setActiveFilter(isActive ? 'all' : pill.id)}
               aria-pressed={isActive}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 14px',
-                borderRadius: 999,
-                border: isActive ? '1px solid var(--brand-indigo)' : '1px solid var(--brand-line)',
-                background: isActive ? 'var(--brand-indigo)' : 'transparent',
-                color: isActive ? 'var(--brand-sand)' : 'var(--brand-indigo)',
-                fontFamily: 'var(--font-body)',
-                fontSize: 12.5,
-                fontWeight: 600,
-                cursor: 'pointer',
-                letterSpacing: '0.02em',
-                whiteSpace: 'nowrap',
-              }}
+              className={cn(
+                'inline-flex items-center gap-2 px-3.5 py-2 rounded-full font-satoshi text-[12.5px] font-semibold cursor-pointer tracking-[0.02em] whitespace-nowrap border',
+                isActive
+                  ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
+                  : 'border-brand-line bg-transparent text-brand-indigo',
+              )}
             >
               {pill.id !== 'all' && (
                 <span
-                  style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: isActive ? 'var(--brand-yellow)' : pill.dot,
-                    display: 'inline-block',
-                  }}
+                  className="w-1.5 h-1.5 rounded-full inline-block"
+                  style={{ background: isActive ? 'var(--brand-yellow)' : pill.dot }}
                 />
               )}
               {pill.label}
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
-                  letterSpacing: '0.12em',
-                  opacity: 0.7,
-                }}
-              >
+              <span className="font-fragment text-[10px] tracking-[0.12em] opacity-70">
                 {pill.count}
               </span>
             </button>
@@ -320,12 +255,12 @@ export default function CoachWebSquadPage() {
       {/* pitch — full-width on every breakpoint; the player panel pops out
           as an overlay rather than stealing column space. */}
       <div
-        style={{
-          position: 'relative',
-          padding: isMobile ? '8px 12px 16px' : '8px 28px 28px',
-        }}
+        className={cn(
+          'relative',
+          isMobile ? 'px-3 pt-2 pb-4' : 'px-7 pt-2 pb-7',
+        )}
       >
-        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
+        <div className="relative max-w-[760px] mx-auto">
           <Pitch>
             {positioned.map(({ player, x, y }) => {
               const score = seasonScores[player.id]?.avg ?? 0
@@ -366,25 +301,13 @@ export default function CoachWebSquadPage() {
 function SquadStat({ label, value }: { label: string; value: number }) {
   const c = scoreColor(value || 0)
   return (
-    <div style={{ textAlign: 'right' }}>
-      <div
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: '0.18em',
-          color: 'var(--brand-indigo-mute)',
-        }}
-      >
+    <div className="text-right">
+      <div className="font-fragment text-[10px] tracking-[0.18em] text-brand-indigo-mute">
         {label.toUpperCase()}
       </div>
       <div
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 28,
-          color: value ? c : 'var(--brand-indigo-mute)',
-          lineHeight: 1,
-          marginTop: 2,
-        }}
+        className="font-clash text-[28px] leading-none mt-0.5"
+        style={{ color: value ? c : 'var(--brand-indigo-mute)' }}
       >
         {value || '—'}
       </div>

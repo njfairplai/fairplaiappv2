@@ -1,59 +1,68 @@
 'use client'
 
-import { ButtonHTMLAttributes } from 'react'
-import { COLORS, RADIUS } from '@/lib/constants'
+import { ButtonHTMLAttributes, forwardRef } from 'react'
+import { cn } from '@/lib/cn'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   fullWidth?: boolean
 }
 
-const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
-  primary: { background: COLORS.primary, color: '#fff', border: 'none' },
-  secondary: { background: 'transparent', color: COLORS.primary, border: `1.5px solid ${COLORS.primary}` },
-  ghost: { background: 'transparent', color: COLORS.muted, border: 'none' },
-  danger: { background: COLORS.error, color: '#fff', border: 'none' },
+const VARIANT: Record<ButtonVariant, string> = {
+  primary:
+    'border-transparent bg-brand-indigo text-brand-sand hover:bg-brand-indigo-mid focus-visible:ring-brand-indigo',
+  secondary:
+    'border-brand-indigo bg-transparent text-brand-indigo hover:bg-brand-paper-hi focus-visible:ring-brand-indigo',
+  ghost:
+    'border-transparent bg-transparent text-brand-indigo-mute hover:bg-brand-paper hover:text-brand-indigo focus-visible:ring-brand-indigo',
+  danger:
+    'border-transparent bg-brand-coral text-brand-sand hover:opacity-90 focus-visible:ring-brand-coral',
 }
 
-const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
-  sm: { padding: '8px 16px', fontSize: 13, fontWeight: 600 },
-  md: { padding: '12px 24px', fontSize: 15, fontWeight: 700 },
-  lg: { padding: '16px 32px', fontSize: 16, fontWeight: 700 },
+const SIZE: Record<ButtonSize, string> = {
+  sm: 'px-4 py-2 text-[13px] font-semibold',
+  md: 'px-6 py-3 text-[15px] font-bold',
+  lg: 'px-8 py-4 text-base font-bold',
 }
 
-export default function Button({
-  variant = 'primary',
-  size = 'md',
-  fullWidth = false,
-  style,
-  disabled,
-  children,
-  ...props
-}: ButtonProps) {
+/**
+ * Brand-token Button.
+ *
+ * Hover / focus-visible / disabled states all via Tailwind pseudo-classes —
+ * no `onMouseEnter` / `useState(hovered)` plumbing required. Follows the
+ * active palette automatically (`bg-brand-indigo` resolves to whatever
+ * indigo the current palette defines).
+ *
+ * @example
+ *   <Button variant="primary">Save changes</Button>
+ *   <Button variant="ghost" size="sm">Cancel</Button>
+ *   <Button variant="secondary" fullWidth>Submit feedback</Button>
+ */
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant = 'primary', size = 'md', fullWidth = false, className, type = 'button', ...rest },
+  ref,
+) {
   return (
     <button
-      style={{
-        borderRadius: RADIUS.pill,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.5 : 1,
-        transition: 'all 0.18s ease',
-        width: fullWidth ? '100%' : undefined,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        ...variantStyles[variant],
-        ...sizeStyles[size],
-        ...style,
-      }}
-      disabled={disabled}
-      {...props}
-    >
-      {children}
-    </button>
+      ref={ref}
+      type={type}
+      className={cn(
+        'inline-flex items-center justify-center gap-2 rounded-full border font-satoshi',
+        'transition-colors duration-150',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-sand',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+        SIZE[size],
+        VARIANT[variant],
+        fullWidth && 'w-full',
+        className,
+      )}
+      {...rest}
+    />
   )
-}
+})
+
+export default Button

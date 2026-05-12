@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Camera } from 'lucide-react'
-import { BRAND, TYPE } from '@/lib/constants'
+import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { SendClipSheet } from '@/components/coach/player-profile/SendClipSheet'
 import {
@@ -16,7 +16,7 @@ import {
   readFlaggedClips,
   toggleFlaggedClip,
 } from '@/lib/match-center-state'
-import { MEyebrow, MDisplay, Card, mcButtons } from '@/components/coach/match-center/atoms'
+import { MEyebrow, MDisplay } from '@/components/coach/match-center/atoms'
 import { HighlightCard } from '@/components/coach/match-center/HighlightCard'
 import { ClipModal } from '@/components/coach/match-center/ClipModal'
 import { ShareSheet } from '@/components/coach/match-center/ShareSheet'
@@ -146,57 +146,25 @@ export default function CoachHighlightsPage() {
 
   return (
     <div
-      style={{
-        background: BRAND.sand,
-        minHeight: '100%',
-        padding: isMobile ? '20px 14px' : '32px 36px',
-        color: BRAND.indigo,
-      }}
+      className={cn(
+        'min-h-full bg-brand-sand text-brand-indigo',
+        isMobile ? 'px-3.5 py-5' : 'px-9 py-8',
+      )}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 16,
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <MEyebrow>SPRING 2026 SEASON</MEyebrow>
           <MDisplay size={isMobile ? 36 : 64} style={{ marginTop: 6 }}>
             Highlights
           </MDisplay>
-          <div
-            style={{
-              fontFamily: TYPE.body,
-              fontSize: 14,
-              color: BRAND.indigoMid,
-              marginTop: 4,
-            }}
-          >
+          <div className="mt-1 font-satoshi text-sm text-brand-indigo-mid">
             Every clip we&apos;ve tagged this season. Filter by event, narrow to a player.
           </div>
         </div>
         <button
           type="button"
           onClick={() => setSendClipOpen(true)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '10px 16px',
-            border: `1px solid ${BRAND.indigo}`,
-            borderRadius: 8,
-            background: BRAND.indigo,
-            color: BRAND.sand,
-            fontFamily: TYPE.body,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(11, 8, 40, 0.18)',
-            flexShrink: 0,
-          }}
+          className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-brand-indigo bg-brand-indigo px-4 py-2.5 font-satoshi text-[13px] font-bold text-brand-sand shadow-[0_4px_14px_rgba(11,8,40,0.18)]"
         >
           <Camera size={14} />
           + Coach Cam
@@ -204,18 +172,11 @@ export default function CoachHighlightsPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ marginTop: 24 }}>
-        <Card style={{ padding: '14px 18px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              flexWrap: 'wrap',
-            }}
-          >
+      <div className="mt-6">
+        <div className="rounded-md border border-brand-line bg-brand-paper px-[18px] py-3.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <MEyebrow>EVENT</MEyebrow>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            <div className="flex flex-wrap gap-1">
               {EVENT_FILTERS.map(f => {
                 const active = f === eventFilter
                 return (
@@ -223,19 +184,12 @@ export default function CoachHighlightsPage() {
                     key={f}
                     type="button"
                     onClick={() => setEventFilter(f)}
-                    style={{
-                      padding: '6px 10px',
-                      border: active ? 'none' : `1px solid ${BRAND.line}`,
-                      background: active ? BRAND.indigo : 'transparent',
-                      color: active ? BRAND.sand : BRAND.indigo,
-                      fontFamily: TYPE.mono,
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      letterSpacing: '0.18em',
-                      borderRadius: 3,
-                      cursor: 'pointer',
-                      textTransform: 'uppercase',
-                    }}
+                    className={cn(
+                      'cursor-pointer rounded-[3px] px-2.5 py-1.5 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em]',
+                      active
+                        ? 'border-none bg-brand-indigo text-brand-sand'
+                        : 'border border-brand-line bg-transparent text-brand-indigo',
+                    )}
                   >
                     {f}
                   </button>
@@ -243,19 +197,9 @@ export default function CoachHighlightsPage() {
               })}
             </div>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              flexWrap: 'wrap',
-              marginTop: 10,
-              paddingTop: 10,
-              borderTop: `1px solid ${BRAND.lineSoft}`,
-            }}
-          >
+          <div className="mt-2.5 flex flex-wrap items-center gap-2.5 border-t border-brand-line-soft pt-2.5">
             <MEyebrow>PLAYER</MEyebrow>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            <div className="flex flex-wrap gap-1">
               {playerOptions.map(name => {
                 const active = name === playerFilter
                 const label = name === 'ALL' ? 'ALL' : abbreviatePlayerName(name)
@@ -264,19 +208,12 @@ export default function CoachHighlightsPage() {
                     key={name}
                     type="button"
                     onClick={() => setPlayerFilter(name)}
-                    style={{
-                      padding: '6px 10px',
-                      border: active ? 'none' : `1px solid ${BRAND.line}`,
-                      background: active ? BRAND.indigo : 'transparent',
-                      color: active ? BRAND.sand : BRAND.indigo,
-                      fontFamily: TYPE.mono,
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      letterSpacing: '0.18em',
-                      borderRadius: 3,
-                      cursor: 'pointer',
-                      textTransform: 'uppercase',
-                    }}
+                    className={cn(
+                      'cursor-pointer rounded-[3px] px-2.5 py-1.5 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em]',
+                      active
+                        ? 'border-none bg-brand-indigo text-brand-sand'
+                        : 'border border-brand-line bg-transparent text-brand-indigo',
+                    )}
                   >
                     {label}
                   </button>
@@ -284,28 +221,20 @@ export default function CoachHighlightsPage() {
               })}
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Match groups */}
-      <div style={{ marginTop: 20 }}>
+      <div className="mt-5">
         {groups.length === 0 ? (
-          <Card style={{ padding: '48px 32px', textAlign: 'center' }}>
+          <div className="rounded-md border border-brand-line bg-brand-paper px-8 py-12 text-center">
             <MEyebrow>NO CLIPS</MEyebrow>
-            <div
-              style={{
-                fontFamily: TYPE.body,
-                fontSize: 14,
-                color: BRAND.indigoMid,
-                marginTop: 10,
-                lineHeight: 1.5,
-              }}
-            >
+            <div className="mt-2.5 font-satoshi text-sm leading-[1.5] text-brand-indigo-mid">
               No clips for this filter. Try widening to ALL events or ALL players.
             </div>
-          </Card>
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="flex flex-col gap-6">
             {pagedGroups.map(group => (
               <MatchGroup
                 key={group.key}
@@ -340,48 +269,31 @@ export default function CoachHighlightsPage() {
         )}
 
         {totalPages > 1 && (
-          <div
-            style={{
-              marginTop: 16,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             <button
               type="button"
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-              style={{
-                ...mcButtons.ghost,
-                opacity: page === 0 ? 0.4 : 1,
-                cursor: page === 0 ? 'default' : 'pointer',
-              }}
+              className={cn(
+                'rounded border border-brand-indigo bg-transparent px-3.5 py-2 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo',
+                page === 0 ? 'cursor-default opacity-40' : 'cursor-pointer opacity-100',
+              )}
             >
               ← Prev
             </button>
-            <span
-              style={{
-                fontFamily: TYPE.mono,
-                fontSize: 10.5,
-                fontWeight: 700,
-                letterSpacing: '0.18em',
-                color: BRAND.indigoMute,
-              }}
-            >
+            <span className="font-fragment text-[10.5px] font-bold tracking-[0.18em] text-brand-indigo-mute">
               PAGE {page + 1} OF {totalPages}
             </span>
             <button
               type="button"
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              style={{
-                ...mcButtons.ghost,
-                opacity: page >= totalPages - 1 ? 0.4 : 1,
-                cursor: page >= totalPages - 1 ? 'default' : 'pointer',
-              }}
+              className={cn(
+                'rounded border border-brand-indigo bg-transparent px-3.5 py-2 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo',
+                page >= totalPages - 1
+                  ? 'cursor-default opacity-40'
+                  : 'cursor-pointer opacity-100',
+              )}
             >
               Next →
             </button>
@@ -473,47 +385,20 @@ function MatchGroup({
      * background — paper-on-sand was too low contrast and made the
      * surface read as one beige blur. The header band keeps its
      * yellow-soft for analysed matches as a "this is played" signal. */
-    <Card
-      style={{
-        padding: 0,
-        background: '#fff',
-        boxShadow: '0 2px 6px rgba(11,8,40,0.06)',
-      }}
-    >
+    <div className="rounded-md border border-brand-line bg-white shadow-[0_2px_6px_rgba(11,8,40,0.06)]">
       <div
-        style={{
-          padding: '14px 20px',
-          background: session?.status === 'ready' ? BRAND.yellowSoft : BRAND.sand,
-          borderBottom: `1px solid ${BRAND.line}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          flexWrap: 'wrap',
-        }}
+        className={cn(
+          'flex flex-wrap items-center gap-3.5 border-b border-brand-line px-5 py-3.5',
+          session?.status === 'ready' ? 'bg-brand-yellow-soft' : 'bg-brand-sand',
+        )}
       >
-        <div style={{ flex: 1, minWidth: 240 }}>
-          <div
-            style={{
-              fontFamily: TYPE.mono,
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: BRAND.indigoMute,
-              fontWeight: 700,
-            }}
-          >
+        <div className="min-w-[240px] flex-1">
+          <div className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
             {MONTH_SHORT_LABELS[month - 1]} {String(day).padStart(2, '0')} ·{' '}
             {session?.kind === 'training' ? 'TRAINING' : 'MATCH'} · {clips.length}{' '}
             {clips.length === 1 ? 'CLIP' : 'CLIPS'}
           </div>
-          <div
-            style={{
-              fontFamily: TYPE.display,
-              fontSize: 24,
-              letterSpacing: '-0.01em',
-              color: BRAND.indigo,
-              marginTop: 4,
-            }}
-          >
+          <div className="mt-1 font-clash text-2xl tracking-[-0.01em] text-brand-indigo">
             {session?.kind === 'training'
               ? 'Internal training'
               : session?.opponent
@@ -526,7 +411,7 @@ function MatchGroup({
          *  carry the match identity. The chip was visual noise. */}
         <button
           type="button"
-          style={{ ...mcButtons.ghost, background: BRAND.yellow, borderColor: BRAND.yellow }}
+          className="cursor-pointer rounded border border-brand-yellow bg-brand-yellow px-3.5 py-2 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo"
           onClick={onPlayReel}
           aria-label="Play match reel"
         >
@@ -535,7 +420,7 @@ function MatchGroup({
         {openMatchHref && (
           <button
             type="button"
-            style={mcButtons.ghost}
+            className="cursor-pointer rounded border border-brand-indigo bg-transparent px-3.5 py-2 font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo"
             onClick={() => router.push(openMatchHref)}
           >
             Open match →
@@ -545,13 +430,15 @@ function MatchGroup({
 
       {/* Clip row (or wrap grid when expanded) */}
       <div
-        style={{
-          padding: '14px 20px',
-          display: expanded ? 'grid' : 'flex',
-          gridTemplateColumns: expanded ? 'repeat(auto-fill, minmax(280px, 1fr))' : undefined,
-          gap: 10,
-          overflowX: expanded ? 'visible' : 'auto',
-        }}
+        className={cn(
+          'gap-2.5 px-5 py-3.5',
+          expanded ? 'grid overflow-x-visible' : 'flex overflow-x-auto',
+        )}
+        style={
+          expanded
+            ? { gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }
+            : undefined
+        }
       >
         {visible.map(h => (
           <HighlightCard
@@ -566,23 +453,17 @@ function MatchGroup({
       </div>
 
       {showCollapseControls && (
-        <div
-          style={{
-            padding: '0 20px 14px',
-            display: 'flex',
-            justifyContent: 'flex-start',
-          }}
-        >
+        <div className="flex justify-start px-5 pb-3.5">
           <button
             type="button"
-            style={mcButtons.text}
+            className="cursor-pointer border-none bg-transparent font-fragment text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute"
             onClick={() => setExpanded(e => !e)}
           >
             {expanded ? '↑ Show fewer' : `+${overflow} more clips ↓`}
           </button>
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 

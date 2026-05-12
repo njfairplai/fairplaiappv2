@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Calendar as CalendarIcon, ChevronRight } from 'lucide-react'
 import { matchAnalyses, squadScores } from '@/lib/mockData'
 import { parentScoreColor } from '@/lib/parent-score-color'
+import { cn } from '@/lib/cn'
 import {
   getKidsForParent,
   getDefaultKid,
@@ -87,8 +88,8 @@ export default function ParentHomePage() {
 
   if (!activeKid) {
     return (
-      <div style={{ padding: 24, textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-body)', color: 'var(--brand-indigo-mute)' }}>
+      <div className="p-6 text-center">
+        <p className="font-satoshi text-brand-indigo-mute">
           No players linked to this parent account yet.
         </p>
       </div>
@@ -97,12 +98,7 @@ export default function ParentHomePage() {
 
   return (
     <div
-      style={{
-        background: 'var(--brand-sand)',
-        minHeight: '100dvh',
-        color: 'var(--brand-indigo)',
-        paddingBottom: 80, // bottom-nav clearance
-      }}
+      className="min-h-[100dvh] bg-brand-sand pb-20 text-brand-indigo"
     >
       <PortalTopBar unreadCount={unreadCount} />
 
@@ -128,50 +124,18 @@ export default function ParentHomePage() {
         if (!score) return null
         const color = parentScoreColor(score.compositeScore)
         return (
-          <section style={{ padding: '14px 16px 0' }}>
-            <div
-              style={{
-                background: 'var(--brand-paper)',
-                border: '1px solid var(--brand-line)',
-                borderRadius: 12,
-                padding: '14px 16px',
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: 14,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.22em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
-              >
+          <section className="px-4 pt-3.5">
+            <div className="flex items-baseline gap-3.5 rounded-xl border border-brand-line bg-brand-paper px-4 py-3.5">
+              <span className="shrink-0 font-fragment text-[10.5px] font-bold tracking-[0.22em] text-brand-indigo-mute">
                 SEASON
               </span>
               <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 44,
-                  color,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                }}
+                className="font-clash text-[44px] leading-none tracking-[-0.02em]"
+                style={{ color }}
               >
                 {score.compositeScore}
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 12.5,
-                  color: 'var(--brand-indigo-mute)',
-                  marginLeft: 'auto',
-                  textAlign: 'right',
-                }}
-              >
+              <span className="ml-auto text-right font-satoshi text-[12.5px] text-brand-indigo-mute">
                 Composite score across<br />all matches this season.
               </span>
             </div>
@@ -182,48 +146,15 @@ export default function ParentHomePage() {
       {/* Lately — preview of the top notifications. Full list now lives
           at /parent/hub (system events merged into the unified feed). */}
       {lately.length > 0 && (
-        <section
-          style={{
-            padding: '14px 16px',
-            borderTop: '1px solid var(--brand-line)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              justifyContent: 'space-between',
-              marginBottom: 6,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.22em',
-                color: 'var(--brand-indigo-mute)',
-                fontWeight: 700,
-              }}
-            >
+        <section className="flex flex-col gap-1 border-t border-brand-line px-4 py-3.5">
+          <div className="mb-1.5 flex items-baseline justify-between">
+            <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
               LATELY
             </span>
             <button
               type="button"
               onClick={() => router.push('/parent/hub')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.18em',
-                color: 'var(--brand-indigo)',
-                fontWeight: 700,
-                cursor: 'pointer',
-                padding: 0,
-              }}
+              className="cursor-pointer border-none bg-transparent p-0 font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo"
             >
               SEE ALL
             </button>
@@ -233,25 +164,11 @@ export default function ParentHomePage() {
               key={n.id}
               type="button"
               onClick={() => router.push(n.href)}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'auto 1fr auto',
-                alignItems: 'center',
-                gap: 12,
-                padding: '10px 4px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '1px solid var(--brand-line)',
-                textAlign: 'left',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-body)',
-              }}
+              className="grid cursor-pointer items-center gap-3 border-0 border-b border-solid border-brand-line bg-transparent px-1 py-2.5 text-left font-satoshi [grid-template-columns:auto_1fr_auto]"
             >
               <span
+                className="h-2 w-2 shrink-0 rounded-full"
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
                   background:
                     n.kind === 'clips'
                       ? 'var(--brand-indigo)'
@@ -262,31 +179,17 @@ export default function ParentHomePage() {
                       : n.kind === 'attendance_milestone'
                       ? 'var(--brand-yellow)'
                       : 'var(--brand-indigo-mute)',
-                  flexShrink: 0,
                 }}
               />
               <span
-                style={{
-                  fontSize: 13.5,
-                  color: 'var(--brand-indigo)',
-                  fontWeight: readIds.has(n.id) ? 500 : 600,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
+                className={cn(
+                  'overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] text-brand-indigo',
+                  readIds.has(n.id) ? 'font-medium' : 'font-semibold',
+                )}
               >
                 {n.title}
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
-                  letterSpacing: '0.14em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              <span className="whitespace-nowrap font-fragment text-[10px] font-semibold tracking-[0.14em] text-brand-indigo-mute">
                 {n.shortDate.toUpperCase()}
               </span>
             </button>
@@ -296,75 +199,27 @@ export default function ParentHomePage() {
 
       {/* Next session footer card */}
       {nextSession && (
-        <section style={{ padding: '14px 16px 20px' }}>
+        <section className="px-4 pb-5 pt-3.5">
           <button
             type="button"
             onClick={() => router.push('/parent/stats')}
-            style={{
-              width: '100%',
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr auto',
-              alignItems: 'center',
-              gap: 12,
-              padding: '14px 16px',
-              background: 'var(--brand-paper)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 12,
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontFamily: 'var(--font-body)',
-            }}
+            className="grid w-full cursor-pointer items-center gap-3 rounded-xl border border-brand-line bg-brand-paper px-4 py-3.5 text-left font-satoshi [grid-template-columns:auto_1fr_auto]"
           >
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                background: 'var(--brand-yellow)',
-                color: 'var(--brand-indigo)',
-              }}
-            >
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-yellow text-brand-indigo">
               <CalendarIcon size={18} />
             </span>
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9.5,
-                  letterSpacing: '0.22em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 700,
-                }}
-              >
+            <div className="min-w-0">
+              <div className="font-fragment text-[9.5px] font-bold tracking-[0.22em] text-brand-indigo-mute">
                 NEXT UP
               </div>
-              <div
-                style={{
-                  fontSize: 14,
-                  color: 'var(--brand-indigo)',
-                  fontWeight: 600,
-                  marginTop: 2,
-                }}
-              >
+              <div className="mt-0.5 text-sm font-semibold text-brand-indigo">
                 {nextSession.type === 'match'
                   ? `vs ${nextSession.opponent ?? 'Match'}`
                   : nextSession.type === 'training_match'
                   ? 'Training match'
                   : 'Training session'}
               </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.14em',
-                  color: 'var(--brand-indigo-mute)',
-                  fontWeight: 600,
-                  marginTop: 2,
-                }}
-              >
+              <div className="mt-0.5 font-fragment text-[10.5px] font-semibold tracking-[0.14em] text-brand-indigo-mute">
                 {formatNextDate(nextSession.date)} · {nextSession.startTime}
               </div>
             </div>
