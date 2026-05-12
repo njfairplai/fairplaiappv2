@@ -62,20 +62,7 @@ export function ShareMenu({ title, url, mode = 'icon', body }: ShareMenuProps) {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '8px 14px',
-          borderRadius: 999,
-          background: 'var(--brand-yellow)',
-          color: 'var(--brand-indigo)',
-          border: 'none',
-          fontFamily: 'var(--font-body)',
-          fontSize: 12.5,
-          fontWeight: 700,
-          cursor: 'pointer',
-        }}
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-none bg-brand-yellow px-3.5 py-2 font-satoshi text-[12.5px] font-bold text-brand-indigo"
       >
         <Share2 size={13} /> Share
       </button>
@@ -84,45 +71,19 @@ export function ShareMenu({ title, url, mode = 'icon', body }: ShareMenuProps) {
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-label="Share"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 26,
-          height: 26,
-          borderRadius: 6,
-          background: 'transparent',
-          border: '1px solid var(--brand-line)',
-          color: 'var(--brand-indigo)',
-          cursor: 'pointer',
-        }}
+        className="inline-flex h-[26px] w-[26px] cursor-pointer items-center justify-center rounded-md border border-brand-line bg-transparent text-brand-indigo"
       >
         <Share2 size={12} />
       </button>
     )
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+    <div ref={ref} className="relative inline-flex">
       {trigger}
       {open && (
         <div
           role="menu"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 6px)',
-            right: 0,
-            minWidth: 200,
-            background: 'var(--brand-paper)',
-            border: '1px solid var(--brand-line)',
-            borderRadius: 10,
-            boxShadow: '0 12px 28px rgba(11, 8, 40, 0.18)',
-            padding: 6,
-            zIndex: 30,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-            fontFamily: 'var(--font-body)',
-          }}
+          className="absolute right-0 top-[calc(100%+6px)] z-30 flex min-w-[200px] flex-col gap-0.5 rounded-[10px] border border-brand-line bg-brand-paper p-1.5 font-satoshi shadow-[0_12px_28px_rgba(11,8,40,0.18)]"
         >
           <MenuItem
             href={waLink}
@@ -158,23 +119,8 @@ function MenuItem({
   label: string
   onClick: () => void
 }) {
-  const sharedStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    padding: '8px 10px',
-    borderRadius: 6,
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--brand-indigo)',
-    fontFamily: 'inherit',
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: 'pointer',
-    textDecoration: 'none',
-    width: '100%',
-    textAlign: 'left',
-  }
+  const sharedClassName =
+    'flex w-full cursor-pointer items-center gap-2.5 rounded-md border-none bg-transparent px-2.5 py-2 text-left font-[inherit] text-[13px] font-semibold text-brand-indigo no-underline'
   if (href) {
     return (
       <a
@@ -182,14 +128,14 @@ function MenuItem({
         target="_blank"
         rel="noopener noreferrer"
         onClick={onClick}
-        style={sharedStyle}
+        className={sharedClassName}
       >
         {icon} {label}
       </a>
     )
   }
   return (
-    <button type="button" onClick={onClick} style={sharedStyle}>
+    <button type="button" onClick={onClick} className={sharedClassName}>
       {icon} {label}
     </button>
   )
