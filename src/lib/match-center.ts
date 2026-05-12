@@ -219,7 +219,7 @@ export interface MatchCenterHighlight {
  * Feb 24 carries 20 clips so the Highlights "+N more clips" expand UI
  * has something to demo against. Other matches stay tighter.
  */
-export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
+const RAW_MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
   // ── Feb 24 · vs Al Wasl Academy · 3-1 W (the populated reference match,
   // demo-anchor — see src/lib/demo-video.ts).
   // Every clip below carries a `clipUrl` time-fragment of the single
@@ -296,6 +296,22 @@ export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] = [
   { id: 'h-m15-5', sessionDay: 15, sessionMonth: 3, ev: 'SHOT', player: 'Salem Al-Dhaheri', num: 11, minute: 58, dur: 9,  headline: 'Curler off the inside of the post' },
   { id: 'h-m15-6', sessionDay: 15, sessionMonth: 3, ev: 'SAVE', player: 'Omar Al-Sayed',    num: 1,  minute: 71, dur: 12, headline: 'Reaction stop from a deflection' },
 ]
+
+/**
+ * Public highlights array, with `clipUrl` backfilled on every entry
+ * that lacks one so EVERY tile on the Highlights surface plays real
+ * footage — not just the Feb 24 demo-anchor match. We spread fragments
+ * across the 300-second source deterministically (idx-based offset)
+ * so each clip plays a different slice and consecutive clips don't
+ * collide.
+ */
+export const MATCH_CENTER_HIGHLIGHTS: MatchCenterHighlight[] =
+  RAW_MATCH_CENTER_HIGHLIGHTS.map((h, i) => {
+    if (h.clipUrl) return h
+    const start = (i * 13) % 270
+    const end = Math.min(300, start + Math.max(8, h.dur))
+    return { ...h, clipUrl: demoClipUrl(start, end) }
+  })
 
 /**
  * The demo's virtual "today". Single source of truth — `DEFAULT_SELECTED_DAY`

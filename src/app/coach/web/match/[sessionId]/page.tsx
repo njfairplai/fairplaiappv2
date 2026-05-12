@@ -19,6 +19,7 @@ import {
 import { InjurySheet } from '@/components/coach/match-center/InjurySheet'
 import { FatigueTile } from '@/components/welfare/FatigueTile'
 import { MatchVideoPanel } from '@/components/video/MatchVideoPanel'
+import { DEMO_MATCH_VIDEO_URL, DEMO_MATCH_OVERLAY_URL } from '@/lib/demo-video'
 
 const RadarChartDynamic = dynamic(() => import('@/components/charts/RadarChart'), { ssr: false, loading: () => <div className="h-[220px]" /> })
 
@@ -47,6 +48,36 @@ const gameTeamStats: Record<string, { home: TeamStat; away: TeamStat }> = {
   session_010: { home: { possession: 51, passAccuracy: 74, shotsOnTarget: 4, tackles: 20, intercepts: 25 }, away: { possession: 49, passAccuracy: 71, shotsOnTarget: 3, tackles: 17, intercepts: 22 } },
   session_013: { home: { possession: 62, passAccuracy: 84, shotsOnTarget: 9, tackles: 14, intercepts: 30 }, away: { possession: 38, passAccuracy: 62, shotsOnTarget: 2, tackles: 11, intercepts: 16 } },
   session_014: { home: { possession: 55, passAccuracy: 77, shotsOnTarget: 10, tackles: 16, intercepts: 27 }, away: { possession: 45, passAccuracy: 70, shotsOnTarget: 7, tackles: 18, intercepts: 23 } },
+}
+
+/** Stable team-stats fallback for analysed sessions we haven't hand-
+ *  authored entries for. Seeds off the sessionId so the same match
+ *  always shows the same numbers — possession sums to 100, the rest
+ *  sit in plausible per-match ranges. Demo-only; real analyser will
+ *  hydrate these from the AI run. */
+function getOrSynthTeamStats(sessionId: string): { home: TeamStat; away: TeamStat } {
+  const known = gameTeamStats[sessionId]
+  if (known) return known
+  let seed = 0
+  for (let i = 0; i < sessionId.length; i++) seed = (seed * 31 + sessionId.charCodeAt(i)) >>> 0
+  const rng = (n: number, range: number, base: number) => base + (((seed >>> (n * 3)) & 0xff) % range)
+  const homePoss = rng(0, 21, 44)
+  return {
+    home: {
+      possession: homePoss,
+      passAccuracy: rng(1, 22, 64),
+      shotsOnTarget: rng(2, 10, 3),
+      tackles: rng(3, 12, 12),
+      intercepts: rng(4, 16, 16),
+    },
+    away: {
+      possession: 100 - homePoss,
+      passAccuracy: rng(5, 22, 60),
+      shotsOnTarget: rng(6, 9, 2),
+      tackles: rng(7, 12, 10),
+      intercepts: rng(8, 14, 14),
+    },
+  }
 }
 
 /* ── Helpers ── */
@@ -1039,17 +1070,18 @@ export default function CoachMatchAnalysisPage() {
         venue={venue}
       />
 
-      <V3MatchStats stats={gameTeamStats[sessionId]} homeName={homeName} awayName={awayName} />
+      <V3MatchStats stats={getOrSynthTeamStats(sessionId)} homeName={homeName} awayName={awayName} />
 
-      {/* Watch full match — only renders when the session has both raw +
-       *  overlay video URLs (currently only session_017, the demo
-       *  footage). The Standard ↔ AI Overlay toggle defaults to overlay
-       *  because the AI moment is the demo's wow. */}
-      {session.matchVideoUrl && session.matchOverlayUrl && (
+      {/* Watch full match — renders for every analysed session. Sessions
+       *  with their own footage use it; the rest fall back to the demo
+       *  asset so coaches always see a "play full match" affordance with
+       *  real video behind it. Standard ↔ AI Overlay toggle defaults to
+       *  overlay because the AI moment is the demo's wow. */}
+      {session.status === 'analysed' && (
         <div className={cn(isMobile ? 'px-[18px] pb-3' : 'px-7 pb-4')}>
           <MatchVideoPanel
-            rawUrl={session.matchVideoUrl}
-            overlayUrl={session.matchOverlayUrl}
+            rawUrl={session.matchVideoUrl ?? DEMO_MATCH_VIDEO_URL}
+            overlayUrl={session.matchOverlayUrl ?? DEMO_MATCH_OVERLAY_URL}
           />
         </div>
       )}
