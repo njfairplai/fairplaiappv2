@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react'
 import { BRAND } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/cn'
 import {
   MATCH_CENTER_HIGHLIGHTS,
   type MatchCenterHighlight,
   type MatchCenterSession,
 } from '@/lib/match-center'
+import { DEMO_MATCH_VIDEO_URL, DEMO_MATCH_OVERLAY_URL } from '@/lib/demo-video'
+import { getMatchTeamStats, type TeamStat } from '@/lib/match-team-stats'
+import { MatchVideoPanel } from '@/components/video/MatchVideoPanel'
 import {
   Card,
   MEyebrow,
@@ -35,9 +39,15 @@ interface State5ReadyProps {
  * Lets a training session render an internal-training framing while
  * a competitive match renders the scoreline + MOTM. Real wiring (full
  * MatchAnalysis records joined from the API) lands in a follow-up. */
+/* Day-of-month → scoreline for analysed competitive matches reachable
+ * from the Match Center calendar. The state-5 drill-in keys off the
+ * selected day; sessions without an entry render without a scoreline.
+ * Mar 8 (vs Al Nasr Cubs) and Mar 15 (vs Hatta Academy) added so the
+ * Mar drill-ins show a result instead of looking unfinished. */
 const DEMO_OUR_SCORE: Record<number, number> = {
   3: 4,
   8: 1,
+  15: 2,
   17: 2,
   22: 3,
   24: 3,
@@ -45,6 +55,7 @@ const DEMO_OUR_SCORE: Record<number, number> = {
 const DEMO_OPP_SCORE: Record<number, number> = {
   3: 2,
   8: 0,
+  15: 1,
   17: 0,
   22: 1,
   24: 1,
@@ -161,11 +172,38 @@ export function State5Ready({
 
       {/* Body */}
       <div className={isMobile ? 'px-4 py-4' : 'px-[26px] py-5'}>
-        <VideoBlock
-          height={isMobile ? 200 : 300}
-          label={`MATCH FOOTAGE${session.day === 24 ? ' · 84M' : ''}`}
-          sub={`${dateLabel(session)} · 15:00 · PITCH 1`}
-        />
+        {/* Competitive matches get the real playable video + AI overlay
+         *  toggle, backed by the demo footage. Training matches keep the
+         *  decorative placeholder — no per-training-session footage to
+         *  show today, and the placeholder reads as "footage stored but
+         *  not surfaced" which is the truth there. */}
+        {!isTraining ? (
+          // Today every analysed competitive match plays the demo
+          // footage. Per-session URLs can land later on MatchCenterSession
+          // and override at this site.
+          <MatchVideoPanel
+            rawUrl={DEMO_MATCH_VIDEO_URL}
+            overlayUrl={DEMO_MATCH_OVERLAY_URL}
+          />
+        ) : (
+          <VideoBlock
+            height={isMobile ? 200 : 300}
+            label="MATCH FOOTAGE"
+            sub={`${dateLabel(session)} · 15:00 · PITCH 1`}
+          />
+        )}
+
+        {/* MATCH IN NUMBERS — possession / pass acc / shots / tackles /
+         *  intercepts. Single source of truth in src/lib/match-team-stats.ts:
+         *  hand-authored for the canonical sessions, deterministic synth
+         *  for the rest so every analysed match in the calendar shows
+         *  stats instead of just a roster. */}
+        {!isTraining && session.id && (
+          <MatchStatsBlock
+            stats={getMatchTeamStats(session.id)}
+            isMobile={isMobile}
+          />
+        )}
 
         {/* Highlights row */}
         <div className="mt-[22px]">
@@ -366,6 +404,76 @@ function summaryRows(
   rows.push(['Possession', '62%'])
   rows.push(['Pass accuracy', '78%'])
   return rows
+}
+
+/** Compact MATCH IN NUMBERS block for the State 5 drill-in. Mirrors
+ *  V3MatchStats on the deep-link page (same five rows, same yellow
+ *  leading-tip on winning bars) so the two surfaces stay visually
+ *  aligned — but slimmer so it sits cleanly between the video and the
+ *  highlights row without dominating the card. */
+function MatchStatsBlock({
+  stats,
+  isMobile,
+}: {
+  stats: { home: TeamStat; away: TeamStat }
+  isMobile: boolean
+}) {
+  const rows: { key: keyof TeamStat; label: string; suffix: string }[] = [
+    { key: 'possession',    label: 'POSSESSION',     suffix: '%' },
+    { key: 'passAccuracy',  label: 'PASS ACCURACY',  suffix: '%' },
+    { key: 'shotsOnTarget', label: 'SHOTS ON TARGET', suffix: '' },
+    { key: 'tackles',       label: 'TACKLES',         suffix: '' },
+    { key: 'intercepts',    label: 'INTERCEPTS',      suffix: '' },
+  ]
+  return (
+    <div className="mt-5">
+      <MEyebrow>MATCH IN NUMBERS</MEyebrow>
+      <div
+        className={cn(
+          'mt-3 grid gap-x-6 gap-y-3',
+          isMobile ? 'grid-cols-1' : 'grid-cols-2',
+        )}
+      >
+        {rows.map(({ key, label, suffix }) => {
+          const h = stats.home[key]
+          const a = stats.away[key]
+          const total = h + a || 1
+          const homePct = (h / total) * 100
+          const awayPct = (a / total) * 100
+          const homeWon = h > a
+          const drew = h === a
+          return (
+            <div key={key} className="flex flex-col gap-1">
+              <div className="flex items-center justify-between font-fragment text-[9.5px] font-bold tracking-[0.16em] text-brand-indigo-mute">
+                <span className="font-clash text-lg tracking-[-0.01em] text-brand-indigo">{h}{suffix}</span>
+                <span>{label}</span>
+                <span className="font-clash text-lg tracking-[-0.01em] text-brand-indigo">{a}{suffix}</span>
+              </div>
+              <div className="flex h-1.5 overflow-hidden rounded-[3px] bg-brand-indigo-soft">
+                <div
+                  className={cn('relative', homeWon ? 'bg-brand-indigo' : 'bg-brand-indigo-mid')}
+                  style={{ width: `${homePct}%` }}
+                >
+                  {homeWon && (
+                    <span className="absolute top-0 right-0 bottom-0 w-1 bg-brand-yellow" />
+                  )}
+                </div>
+                <div className="w-px bg-brand-sand" />
+                <div
+                  className={cn('relative', !homeWon && !drew ? 'bg-brand-indigo' : 'bg-brand-indigo-mute')}
+                  style={{ width: `${awayPct}%` }}
+                >
+                  {!homeWon && !drew && (
+                    <span className="absolute top-0 bottom-0 left-0 w-1 bg-brand-yellow" />
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function topPerformersFor(
