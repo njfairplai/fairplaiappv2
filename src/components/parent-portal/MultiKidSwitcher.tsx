@@ -20,19 +20,11 @@ export function MultiKidSwitcher({ kids, activeKidId, onSwitch }: MultiKidSwitch
   return (
     <div
       className={cn(
-        'flex gap-2 px-4 py-3 overflow-x-auto',
-        'bg-brand-paper border-b border-brand-line',
+        'flex gap-1.5 overflow-x-auto px-4 py-1.5',
+        'border-b border-brand-line bg-brand-paper',
         '[scrollbar-width:none]',
       )}
     >
-      <span
-        className={cn(
-          'self-center mr-1 whitespace-nowrap',
-          'font-fragment text-[9.5px] font-bold tracking-[0.18em] text-brand-indigo-mute',
-        )}
-      >
-        VIEWING
-      </span>
       {kids.map(k => {
         const isActive = k.id === activeKidId
         return (
@@ -42,16 +34,15 @@ export function MultiKidSwitcher({ kids, activeKidId, onSwitch }: MultiKidSwitch
             onClick={() => onSwitch(k.id)}
             aria-pressed={isActive}
             className={cn(
-              'inline-flex items-center gap-2 pr-3 py-1.5 pl-1.5 rounded-full',
-              'font-satoshi text-[13px] font-semibold whitespace-nowrap shrink-0 cursor-pointer',
-              'border transition-colors duration-150',
+              'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5',
+              'whitespace-nowrap border font-satoshi text-[12px] font-semibold transition-colors duration-150',
               isActive
-                ? 'bg-brand-indigo text-brand-sand border-brand-indigo'
-                : 'bg-brand-sand text-brand-indigo border-brand-line hover:bg-brand-paper-hi',
+                ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
+                : 'border-brand-line bg-brand-sand text-brand-indigo hover:bg-brand-paper-hi',
             )}
           >
             <PlayerGlyph
-              size={26}
+              size={20}
               jerseyNumber={k.jerseyNumber}
               name={`${k.firstName} ${k.lastName}`}
             />
