@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Play, Flag } from 'lucide-react'
 import { highlights, sessions } from '@/lib/mockData'
 import type { Player, Highlight } from '@/lib/types'
+import { isClipFlagged, toggleFlaggedClip } from '@/lib/match-center-state'
 import { ShareMenu } from './ShareMenu'
 
 type EventFilter = 'all' | 'goal' | 'shot' | 'key_pass' | 'def' | 'save'
@@ -329,6 +330,20 @@ function ClipCard({ clip, playerName }: { clip: Highlight; playerName: string })
   const minute = Math.floor(clip.timestampSeconds / 60)
   const meta = EVENT_BADGES[clip.eventType] ?? { label: clip.eventType.toUpperCase(), color: 'var(--brand-indigo-mid)' }
 
+  // Flag state — hydrates from localStorage on mount, falls back to the
+  // clip's coach-flagged signal from mock data. Persists via the same
+  // helper Match Center / Highlights pages use, so flag state is shared
+  // across every surface that renders this clip.
+  const [flagged, setFlagged] = useState<boolean>(clip.flaggedByCoach ?? false)
+  useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
+    setFlagged(isClipFlagged(clip.id) || (clip.flaggedByCoach ?? false))
+  }, [clip.id, clip.flaggedByCoach])
+  function handleFlag() {
+    const next = toggleFlaggedClip(clip.id)
+    setFlagged(next)
+  }
+
   return (
     <div className="bg-brand-paper border border-brand-line rounded-lg px-3 py-2.5 flex items-center gap-2.5">
       <button
@@ -362,13 +377,15 @@ function ClipCard({ clip, playerName }: { clip: Highlight; playerName: string })
         />
         <button
           type="button"
-          aria-label="Flag for review"
-          title="Flag for review"
-          className={`inline-flex items-center justify-center w-[26px] h-[26px] rounded-md bg-transparent border border-brand-line cursor-pointer ${
-            clip.flaggedByCoach ? 'text-brand-coral' : 'text-brand-indigo'
+          onClick={handleFlag}
+          aria-label={flagged ? 'Unflag clip' : 'Flag for review'}
+          aria-pressed={flagged}
+          title={flagged ? 'Unflag clip' : 'Flag for review'}
+          className={`inline-flex items-center justify-center w-[26px] h-[26px] rounded-md bg-transparent border cursor-pointer transition-colors ${
+            flagged ? 'border-brand-coral text-brand-coral' : 'border-brand-line text-brand-indigo'
           }`}
         >
-          <Flag size={12} fill={clip.flaggedByCoach ? 'currentColor' : 'none'} />
+          <Flag size={12} fill={flagged ? 'currentColor' : 'none'} />
         </button>
       </div>
     </div>

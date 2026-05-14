@@ -109,34 +109,51 @@ export function Filmstrip({
   const muted = dark ? 'rgba(238, 228, 200, 0.65)' : 'var(--brand-indigo-mute)'
   const yellow = 'var(--brand-yellow)'
   const ringBtn = dark ? 'rgba(238, 228, 200, 0.3)' : 'var(--brand-line)'
+  // Compact mode triggers off the same threshold the windowSize hook
+  // uses (sub-720 = mobile). Frames are tighter, header drops its
+  // descriptive text, and chevrons go icon-only.
+  const isCompact = windowSize <= 3
 
   return (
     <div
-      className="rounded-xl px-7 pt-5 pb-[26px] relative"
+      className="relative rounded-xl px-4 pt-4 pb-5 sm:px-7 sm:pt-5 sm:pb-[26px]"
       style={{ background: bg, color: fg }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3.5 gap-4">
-        <div className="flex items-baseline gap-3.5">
+      {/* Header — compact on mobile (drops the "FEB 24 – APR 19 · 28
+          MATCHES" descriptor + the date-range labels inside the chevron
+          buttons). Desktop keeps the full chrome. */}
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-3.5 sm:gap-4">
+        <div className="flex items-baseline gap-2 sm:gap-3.5">
           <span
-            className="font-fragment text-[10.5px] tracking-[0.22em] font-bold"
+            className="font-fragment text-[10.5px] font-bold tracking-[0.22em]"
             style={{ color: yellow }}
           >
-            SEASON FILMSTRIP
+            SEASON
           </span>
-          <span
-            className="font-fragment text-[11px] tracking-[0.16em] font-semibold"
-            style={{ color: muted }}
-          >
-            {currentRange} · {totalLen} MATCHES
-          </span>
+          {!isCompact && (
+            <span
+              className="font-fragment text-[11px] font-semibold tracking-[0.16em]"
+              style={{ color: muted }}
+            >
+              {currentRange} · {totalLen} MATCHES
+            </span>
+          )}
+          {isCompact && (
+            <span
+              className="font-fragment text-[10px] font-semibold tracking-[0.14em]"
+              style={{ color: muted }}
+            >
+              {totalLen} MATCHES
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           <button
             type="button"
             onClick={() => canBack && setStart(Math.max(0, start - windowSize))}
             disabled={!canBack}
-            className="bg-transparent px-3.5 py-[7px] rounded-full font-fragment text-[10px] font-bold tracking-[0.16em]"
+            aria-label="Previous window"
+            className="rounded-full bg-transparent px-2.5 py-1 font-fragment text-[12px] font-bold tracking-[0.16em] sm:px-3.5 sm:py-[7px] sm:text-[10px]"
             style={{
               color: fg,
               border: `1px solid ${ringBtn}`,
@@ -144,7 +161,8 @@ export function Filmstrip({
               cursor: canBack ? 'pointer' : 'default',
             }}
           >
-            ‹ {canBack ? prevWin : ''}
+            <span className="sm:hidden">‹</span>
+            <span className="hidden sm:inline">‹ {canBack ? prevWin : ''}</span>
           </button>
           <button
             type="button"
@@ -152,7 +170,8 @@ export function Filmstrip({
               canFwd && setStart(Math.min(totalLen - windowSize, start + windowSize))
             }
             disabled={!canFwd}
-            className="bg-transparent px-3.5 py-[7px] rounded-full font-fragment text-[10px] font-bold tracking-[0.16em]"
+            aria-label="Next window"
+            className="rounded-full bg-transparent px-2.5 py-1 font-fragment text-[12px] font-bold tracking-[0.16em] sm:px-3.5 sm:py-[7px] sm:text-[10px]"
             style={{
               color: fg,
               border: `1px solid ${ringBtn}`,
@@ -160,7 +179,8 @@ export function Filmstrip({
               cursor: canFwd ? 'pointer' : 'default',
             }}
           >
-            {canFwd ? nextWin : ''} ›
+            <span className="sm:hidden">›</span>
+            <span className="hidden sm:inline">{canFwd ? nextWin : ''} ›</span>
           </button>
         </div>
       </div>
