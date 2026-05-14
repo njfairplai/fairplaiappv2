@@ -183,14 +183,19 @@ const v3Motion = `
  * sharing competes with the action surface elsewhere in the app. The
  * roster + player detail surfaces here are about review, not export. */
 function V3BackRow({ onBack }: { onBack: () => void }) {
+  /* Back row compacted to icon-only chevron on mobile (saves ~24px
+   * above the fold). Desktop keeps the labelled "← BACK TO MATCHES"
+   * button so the affordance is obvious on a wide screen where chrome
+   * cost is cheaper. */
   return (
-    <div className="flex items-center gap-3.5 bg-brand-sand px-7 pt-3.5 pb-1 font-satoshi">
+    <div className="flex items-center gap-3.5 bg-brand-sand px-7 pt-3 pb-1 font-satoshi">
       <button
         onClick={onBack}
-        className="v3-cta flex items-center gap-2 border-none bg-transparent px-0 py-1 font-fragment text-sm font-semibold tracking-[0.16em] text-brand-indigo cursor-pointer"
+        className="v3-cta flex cursor-pointer items-center gap-2 border-none bg-transparent px-0 py-0.5 font-fragment text-sm font-semibold tracking-[0.16em] text-brand-indigo"
         aria-label="Back to matches"
       >
-        ← BACK TO MATCHES
+        <span aria-hidden className="text-[18px] leading-none">←</span>
+        <span className="hidden sm:inline">BACK TO MATCHES</span>
       </button>
     </div>
   )
