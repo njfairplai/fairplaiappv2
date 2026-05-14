@@ -136,12 +136,19 @@ export default function PublicPlayerCVPage() {
 
   return (
     <div className="min-h-[100dvh] bg-brand-sand text-brand-indigo">
-      {/* Slim header — brand mark + nothing else. The CV is the page;
-       *  no nav, no tabs, no menu. */}
-      <header className="flex items-center justify-center border-b border-brand-line py-3">
+      {/* Slim header — brand mark + a single demo affordance to flip to
+       *  the scout side. Tap "Scouts" → /scout. Reads as a soft cross-
+       *  link, not a primary nav. */}
+      <header className="flex items-center justify-between border-b border-brand-line px-4 py-3">
         <span className="font-fragment text-[10px] font-extrabold uppercase tracking-[0.32em] text-brand-indigo">
           fairplai
         </span>
+        <a
+          href="/scout"
+          className="inline-flex items-center gap-1 rounded-full border border-brand-line bg-brand-paper px-3 py-1 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em] text-brand-indigo no-underline"
+        >
+          Scouts →
+        </a>
       </header>
 
       {/* Hero — centered Instagram-profile style. */}
@@ -178,12 +185,34 @@ export default function PublicPlayerCVPage() {
         </div>
       </section>
 
-      {/* Composite score — the hero number. */}
+      {/* Composite score — the hero number. ScoreArc renders the
+       *  outer ring only; we overlay the score value in the center via
+       *  absolute positioning so the visual reads as "score sits inside
+       *  the trajectory ring". */}
       <section className="flex flex-col items-center gap-2 pb-7">
         <div className="font-fragment text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-indigo-mute">
           Composite score · season
         </div>
-        <ScoreArcDynamic score={compositeScore} size={140} strokeWidth={10} dark={false} />
+        <div className="relative inline-flex items-center justify-center">
+          <ScoreArcDynamic
+            score={compositeScore}
+            size={140}
+            strokeWidth={10}
+            color={scoreColor}
+            dark={false}
+          />
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <span
+              className="font-clash text-[44px] leading-none tracking-[-0.03em]"
+              style={{ color: scoreColor }}
+            >
+              {compositeScore}
+            </span>
+            <span className="mt-1 font-fragment text-[8.5px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
+              / 100
+            </span>
+          </div>
+        </div>
         <div className="max-w-[300px] text-center font-satoshi text-[12.5px] leading-[1.5] text-brand-indigo-mid">
           AI-verified across {playerAnalyses.length} matches this season. Higher is better.
         </div>

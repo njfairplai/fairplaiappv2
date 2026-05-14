@@ -153,13 +153,22 @@ export default function ScoutHomePage() {
 
   return (
     <div className="min-h-[100dvh] bg-brand-sand text-brand-indigo">
-      {/* Slim sticky header */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-brand-line bg-brand-sand px-4 py-3 md:px-8">
-        <span className="font-fragment text-[10px] font-extrabold uppercase tracking-[0.32em] text-brand-indigo">
+      {/* Slim sticky header — brand mark + a soft cross-link back to
+       *  the public player CV (demo affordance, lets the demo viewer
+       *  flip between the two surfaces with one tap). Scout name shows
+       *  on desktop only; mobile keeps the header tight. */}
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-brand-line bg-brand-sand px-4 py-3 md:px-8">
+        <span className="shrink-0 font-fragment text-[10px] font-extrabold uppercase tracking-[0.28em] text-brand-indigo">
           fairplai · scouts
         </span>
-        <div className="flex items-center gap-2">
-          <span className="hidden font-fragment text-[10px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute sm:inline">
+        <a
+          href="/p/saeed-khalifa"
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-brand-line bg-brand-paper px-2.5 py-1 font-fragment text-[9.5px] font-bold uppercase tracking-[0.16em] text-brand-indigo no-underline"
+        >
+          Player view →
+        </a>
+        <div className="ml-auto hidden items-center gap-2 sm:flex">
+          <span className="font-fragment text-[10px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute">
             {profile.organisation}
           </span>
           <span className="font-satoshi text-[12.5px] font-semibold text-brand-indigo">
