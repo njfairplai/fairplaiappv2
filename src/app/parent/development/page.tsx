@@ -141,8 +141,8 @@ export default function ParentDevelopmentPage() {
         </section>
       )}
 
-      <section className="px-4 py-6">
-        <p className="font-satoshi text-[11.5px] text-brand-indigo-mute text-center leading-[1.5] m-0">
+      <section className="px-4 pb-6 pt-4">
+        <p className="m-0 text-center font-satoshi text-[11.5px] leading-[1.5] text-brand-indigo-mute">
           The coach owns this plan. To respond, send Coach Sara a message
           from the Hub.
         </p>

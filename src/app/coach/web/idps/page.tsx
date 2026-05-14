@@ -601,9 +601,12 @@ export default function IDPsPage() {
         </div>
       </div>
 
-      {/* Player list */}
+      {/* Player list — on mobile the row sheds the inline position pill
+       *  (visible in the player detail view), bumps row gap up, and
+       *  increases internal padding. Saves horizontal crush and lets
+       *  the row read in one glance. */}
       <div className={cn(isMobile ? 'px-3.5 pb-6' : 'px-8 pb-8')}>
-        <div className="flex flex-col gap-2">
+        <div className={cn('flex flex-col', isMobile ? 'gap-3' : 'gap-2')}>
           {rosterPlayers.map(player => {
             const score = squadScores[player.id]
             const compositeScore = score?.compositeScore ?? 0
@@ -616,7 +619,10 @@ export default function IDPsPage() {
                 key={player.id}
                 type="button"
                 onClick={() => setSelectedPlayerId(player.id)}
-                className="flex w-full cursor-pointer items-center gap-3.5 rounded-md border border-brand-line bg-brand-paper px-3.5 py-3 text-left font-satoshi shadow-[0_1px_3px_rgba(11,8,40,0.04)] transition-all duration-150"
+                className={cn(
+                  'flex w-full cursor-pointer items-center gap-3 rounded-md border border-brand-line bg-brand-paper px-3.5 text-left font-satoshi shadow-[0_1px_3px_rgba(11,8,40,0.04)] transition-all duration-150',
+                  isMobile ? 'py-3.5' : 'py-3 gap-3.5',
+                )}
               >
                 <PlayerAvatar player={player} size="sm" />
                 <div className="min-w-0 flex-1">
@@ -624,7 +630,9 @@ export default function IDPsPage() {
                     <span className="text-sm font-bold text-brand-indigo">
                       {player.firstName} {player.lastName}
                     </span>
-                    <span className="rounded-sm border border-brand-line px-1.5 py-0.5 font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute">
+                    {/* Position pill hidden on mobile to free horizontal
+                     *  space; visible in player detail view + on desktop. */}
+                    <span className="hidden rounded-sm border border-brand-line px-1.5 py-0.5 font-fragment text-[9px] font-bold tracking-[0.16em] text-brand-indigo-mute sm:inline">
                       {position}
                     </span>
                   </div>

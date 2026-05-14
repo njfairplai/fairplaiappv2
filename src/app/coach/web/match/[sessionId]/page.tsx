@@ -224,24 +224,27 @@ function V3ScoreStrip({
 }) {
   const homeWon = homeGoals > awayGoals
   const drew = homeGoals === awayGoals
+  /* Score strip sized down on mobile (team names 32→22, goals 44→32)
+   * so the row reads in a single visual line instead of wrapping
+   * across 2-3 lines on a 375px viewport. */
   return (
-    <div className="flex flex-wrap items-center gap-[18px] border-b border-brand-line bg-brand-sand px-7 pt-3.5 pb-[22px]">
-      <div className="font-clash text-[32px] tracking-[0.02em] text-brand-indigo">{homeName.toUpperCase()}</div>
+    <div className="flex flex-wrap items-center gap-3 border-b border-brand-line bg-brand-sand px-4 pt-3 pb-4 sm:gap-[18px] sm:px-7 sm:pt-3.5 sm:pb-[22px]">
+      <div className="font-clash text-[22px] tracking-[0.02em] text-brand-indigo sm:text-[32px]">{homeName.toUpperCase()}</div>
       {hasScore ? (
-        <div className="flex items-baseline gap-2.5 font-clash text-[44px] tracking-[-0.02em] text-brand-indigo">
+        <div className="flex items-baseline gap-2 font-clash text-[32px] tracking-[-0.02em] text-brand-indigo sm:gap-2.5 sm:text-[44px]">
           <span className="relative inline-block">
             {/* yellow swatch behind the winning team's goal count (or both, if draw) */}
             {(homeWon || drew) && (
-              <span className="absolute inset-[-8px_-10px] z-0 rounded-[4px] bg-brand-yellow" />
+              <span className="absolute inset-[-6px_-8px] z-0 rounded-[4px] bg-brand-yellow sm:inset-[-8px_-10px]" />
             )}
             <span className="relative z-[1]">{homeGoals}</span>
           </span>
-          <span className="text-2xl text-brand-indigo-mute">-</span>
+          <span className="text-xl text-brand-indigo-mute sm:text-2xl">-</span>
           <span
             className={cn('relative inline-block', homeWon ? 'text-brand-indigo-mid' : 'text-brand-indigo')}
           >
             {(drew || (!homeWon && homeGoals !== awayGoals)) && (
-              <span className="absolute inset-[-8px_-10px] z-0 rounded-[4px] bg-brand-yellow" />
+              <span className="absolute inset-[-6px_-8px] z-0 rounded-[4px] bg-brand-yellow sm:inset-[-8px_-10px]" />
             )}
             <span className="relative z-[1]">{awayGoals}</span>
           </span>
@@ -251,12 +254,11 @@ function V3ScoreStrip({
           VS
         </div>
       )}
-      <div className="font-clash text-[32px] tracking-[0.02em] text-brand-indigo-mute">{awayName.toUpperCase()}</div>
+      <div className="font-clash text-[22px] tracking-[0.02em] text-brand-indigo-mute sm:text-[32px]">{awayName.toUpperCase()}</div>
       <div className="ml-1.5 h-7 w-px bg-brand-line" />
       <div className="font-fragment text-[10.5px] tracking-[0.18em] text-brand-indigo-mute">
         {hasScore ? `FT · ${dateLabel} · ${venue}` : `${dateLabel} · ${venue}`}
       </div>
-
     </div>
   )
 }
