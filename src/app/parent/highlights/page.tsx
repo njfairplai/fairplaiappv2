@@ -8,10 +8,6 @@ import {
   getKidsForParent,
   getDefaultKid,
   getMatchListForKid,
-  getNotificationsForKid,
-  readClientNotifications,
-  mergeNotifications,
-  type PortalNotification,
 } from '@/lib/parent-portal'
 import { MATCH_CENTER_HIGHLIGHTS } from '@/lib/match-center'
 import {
@@ -194,36 +190,13 @@ export default function ParentHighlightsPage() {
     0,
   )
 
-  // Notifications for bell badge.
-  const baseNotifications = useMemo(
-    () => (activeKid ? getNotificationsForKid(activeKid.id) : []),
-    [activeKid],
-  )
-  const [clientNotifications, setClientNotifications] = useState<PortalNotification[]>([])
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
-  useEffect(() => {
-    if (typeof window === 'undefined' || !activeKid) return
-    setClientNotifications(readClientNotifications(activeKid.id))
-    try {
-      const raw = localStorage.getItem('fairplai_parent_notifications_read')
-      if (raw) setReadIds(new Set(JSON.parse(raw) as string[]))
-    } catch {
-      /* ignore */
-    }
-  }, [activeKid])
-  const allNotifications = useMemo(
-    () => mergeNotifications(baseNotifications, clientNotifications),
-    [baseNotifications, clientNotifications],
-  )
-  const unreadCount = allNotifications.filter(n => !readIds.has(n.id)).length
-
   if (!activeKid) {
     return null
   }
 
   return (
     <div className="min-h-[100dvh] bg-brand-sand pb-20 text-brand-indigo">
-      <PortalTopBar unreadCount={unreadCount} />
+      <PortalTopBar />
 
       <MultiKidSwitcher
         kids={kids}

@@ -1,21 +1,16 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Calendar as CalendarIcon, ChevronRight } from 'lucide-react'
 import { matchAnalyses, squadScores } from '@/lib/mockData'
 import { parentScoreColor } from '@/lib/parent-score-color'
-import { cn } from '@/lib/cn'
 import {
   getKidsForParent,
   getDefaultKid,
   getLatestAnalysedMatch,
   getNextUpcomingSession,
   getBestClipFromMatch,
-  getNotificationsForKid,
-  readClientNotifications,
-  mergeNotifications,
-  type PortalNotification,
 } from '@/lib/parent-portal'
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { HomeHero } from '@/components/parent-portal/HomeHero'
@@ -56,30 +51,6 @@ export default function ParentHomePage() {
     if (!activeKid || !latestMatch) return null
     return getBestClipFromMatch(activeKid.id, latestMatch.id)
   }, [activeKid, latestMatch])
-  const baseNotifications = useMemo(
-    () => (activeKid ? getNotificationsForKid(activeKid.id) : []),
-    [activeKid],
-  )
-  const [clientNotifications, setClientNotifications] = useState<PortalNotification[]>([])
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !activeKid) return
-    setClientNotifications(readClientNotifications(activeKid.id))
-    try {
-      const raw = localStorage.getItem('fairplai_parent_notifications_read')
-      if (raw) setReadIds(new Set(JSON.parse(raw) as string[]))
-    } catch {
-      /* ignore */
-    }
-  }, [activeKid])
-
-  const allNotifications = useMemo(
-    () => mergeNotifications(baseNotifications, clientNotifications),
-    [baseNotifications, clientNotifications],
-  )
-  const unreadCount = allNotifications.filter(n => !readIds.has(n.id)).length
-  const lately = allNotifications.slice(0, 5)
 
   const nextSession = useMemo(
     () => (activeKid ? getNextUpcomingSession(activeKid.id) : null),
@@ -100,7 +71,7 @@ export default function ParentHomePage() {
     <div
       className="min-h-[100dvh] bg-brand-sand pb-20 text-brand-indigo"
     >
-      <PortalTopBar unreadCount={unreadCount} />
+      <PortalTopBar />
 
       <MultiKidSwitcher
         kids={kids}
@@ -142,60 +113,6 @@ export default function ParentHomePage() {
           </section>
         )
       })()}
-
-      {/* Lately — preview of the top notifications. Full list now lives
-          at /parent/hub (system events merged into the unified feed). */}
-      {lately.length > 0 && (
-        <section className="flex flex-col gap-1 border-t border-brand-line px-4 py-3.5">
-          <div className="mb-1.5 flex items-baseline justify-between">
-            <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
-              LATELY
-            </span>
-            <button
-              type="button"
-              onClick={() => router.push('/parent/hub')}
-              className="cursor-pointer border-none bg-transparent p-0 font-fragment text-[10px] font-bold tracking-[0.18em] text-brand-indigo"
-            >
-              SEE ALL
-            </button>
-          </div>
-          {lately.map(n => (
-            <button
-              key={n.id}
-              type="button"
-              onClick={() => router.push(n.href)}
-              className="grid cursor-pointer items-center gap-3 border-0 border-b border-solid border-brand-line bg-transparent px-1 py-2.5 text-left font-satoshi [grid-template-columns:auto_1fr_auto]"
-            >
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{
-                  background:
-                    n.kind === 'clips'
-                      ? 'var(--brand-indigo)'
-                      : n.kind === 'coach_note'
-                      ? 'var(--brand-yellow)'
-                      : n.kind === 'idp_update'
-                      ? 'var(--brand-coral)'
-                      : n.kind === 'attendance_milestone'
-                      ? 'var(--brand-yellow)'
-                      : 'var(--brand-indigo-mute)',
-                }}
-              />
-              <span
-                className={cn(
-                  'overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] text-brand-indigo',
-                  readIds.has(n.id) ? 'font-medium' : 'font-semibold',
-                )}
-              >
-                {n.title}
-              </span>
-              <span className="whitespace-nowrap font-fragment text-[10px] font-semibold tracking-[0.14em] text-brand-indigo-mute">
-                {n.shortDate.toUpperCase()}
-              </span>
-            </button>
-          ))}
-        </section>
-      )}
 
       {/* Next session footer card */}
       {nextSession && (

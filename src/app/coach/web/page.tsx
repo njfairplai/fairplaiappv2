@@ -1,87 +1,190 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { AlertTriangle, Footprints } from 'lucide-react'
-import { BRAND } from '@/lib/constants'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/cn'
 import { HubFrame, MikelGlyph } from '@/components/coach/hub/HubEmbeds'
 import {
   HubChatInput,
-  SuggestionChips,
   type HubChatInputHandle,
 } from '@/components/coach/hub/HubChatInput'
 import { HubResponseCard } from '@/components/coach/hub/HubResponseCard'
-import { HubTiles } from '@/components/coach/hub/HubTiles'
 import { Toast } from '@/components/coach/match-center/Toast'
 import {
   getAllOpenPPEFlags,
   getLatestFatigueByPlayer,
   fatigueTier,
 } from '@/lib/parent-portal'
-import { players } from '@/lib/mockData'
 
 /* Coach's Hub — /coach/web
  *
- * Mikel as the front door. Direction translated from the Claude Design
- * handoff at .claude/claude-design-pack/Handoffs/Coach Mikel/.
+ * Chat-first redesign (May 2026). Replaces the earlier "hero + chips +
+ * tile rail + smart-flag rail + response card" pastiche with a genuine
+ * LLM-chat surface. Mikel is the front door; everything is the
+ * conversation.
  *
- * Surface composition:
- *   1. Greeting eyebrow (M-glyph + "MORNING, COACH SARA")
- *   2. Hero "Ask Mikel anything." — display, scaled
- *   3. Subtitle one-liner
- *   4. Six suggestion chips (mono-pill) — tap fills the chat input
- *   5. Chat textarea — Cmd/Ctrl-K focus, Enter to submit
- *   6. Response card (mocked Mikel reply with embedded chips)
- *   7. Tile rail of destinations
- *   8. Privacy footer
+ * What's on the surface:
+ *   1. Compact header (Mikel glyph + name + New chat reset)
+ *   2. Message stream (scrollable). User bubbles right, Mikel bubbles
+ *      left with the yellow-rule treatment. Rich Mikel responses render
+ *      as <HubResponseCard> inside a bubble (mocked Saeed-pressing reel).
+ *   3. Empty state: Mikel proactive greeting + 3-4 suggestion chips.
+ *      Welfare smart-flag content (high fatigue / open PPE) becomes part
+ *      of the greeting, not a separate rail.
+ *   4. Sticky input pinned to the bottom of the viewport.
  *
- * Every CTA fires real feedback through the shared Toast component.
- * No real LLM streaming yet — the response card is static mock content.
+ * Thread persistence: messages stored in localStorage under
+ * `fairplai_coach_mikel_thread`. "New chat" clears the thread and
+ * re-seeds the greeting. Single-thread for now; multi-thread switcher
+ * is a follow-up.
  *
- * Animations: greeting / hero / subtitle / chip strip stagger fade-in
- * via the `hubFadeIn` keyframe; the M-glyph carries a slow pulse so
- * the surface feels alive on idle. Hover lifts on the tile rail.
+ * What was removed from this surface:
+ *   - The greeting eyebrow + hero + subtitle stack (no longer needed
+ *     when the page IS the chat).
+ *   - The 6-chip wrapping suggestion rail (replaced by 4 prompts on
+ *     the empty state only).
+ *   - The separate smart-flag rail (welfare content folded into Mikel's
+ *     proactive greeting).
+ *   - The 2x2 tile rail (destinations already in the top nav).
+ *   - The privacy footer (deferred; reinstate as a tooltip if needed).
  */
 
 const SUGGESTION_CHIPS = [
-  'Who needs prep this week?',
-  'What was our weakness vs Al Wasl?',
-  "Build a 5-clip reel on Saeed's pressing",
-  'Who improved most this month?',
-  "Suggest tomorrow's drills",
-  'Anyone overworked?',
+  "Yesterday's match summary",
+  'Who needs rest this week?',
+  "Tomorrow's session plan",
+  'Build a reel from last match',
 ]
+
+const STORAGE_KEY = 'fairplai_coach_mikel_thread'
+
+interface ChatMessage {
+  id: string
+  role: 'mikel' | 'coach'
+  body: string
+  /** When true, render this Mikel message as the rich HubResponseCard
+   *  (mocked Saeed-pressing reel) instead of a plain bubble. */
+  isRichResponse?: boolean
+  timestamp: number
+}
+
+function loadThread(): ChatMessage[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    return JSON.parse(raw) as ChatMessage[]
+  } catch {
+    return []
+  }
+}
+
+function saveThread(msgs: ChatMessage[]): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs))
+  } catch {
+    /* quota or disabled — silent */
+  }
+}
+
+/** Build Mikel's proactive opening message. Folds welfare smart-flag
+ *  content directly into the greeting so the coach lands with a real
+ *  starting point, not a generic prompt. */
+function buildGreeting(highFatigueCount: number, openPPECount: number): string {
+  const parts: string[] = ['Morning Sara.']
+  if (highFatigueCount > 0 && openPPECount > 0) {
+    parts.push(
+      `${highFatigueCount} player${highFatigueCount === 1 ? '' : 's'} over fatigue threshold this week, plus ${openPPECount} open gear flag${openPPECount === 1 ? '' : 's'}.`,
+    )
+  } else if (highFatigueCount > 0) {
+    parts.push(
+      `${highFatigueCount} player${highFatigueCount === 1 ? '' : 's'} over fatigue threshold this week — worth a look.`,
+    )
+  } else if (openPPECount > 0) {
+    parts.push(
+      `${openPPECount} open gear flag${openPPECount === 1 ? '' : 's'} on the squad.`,
+    )
+  }
+  parts.push("What's on your mind?")
+  return parts.join(' ')
+}
 
 export default function CoachWebHubPage() {
   const isMobile = useIsMobile()
-  const router = useRouter()
   const inputHandle = useRef<HubChatInputHandle>(null)
-  const [hasThread, setHasThread] = useState(true)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [toast, setToast] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
 
-  // Welfare smart-flag rail. Re-reads localStorage on mount so the seeded
-  // demo data renders without a manual refresh after first visit.
-  const [welfareTick, setWelfareTick] = useState(0)
-  useEffect(() => {
-    setWelfareTick(t => t + 1)
-    // Re-trigger on visibility/focus so flags added in another tab show up
-    const onFocus = () => setWelfareTick(t => t + 1)
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [])
   const fatigueByPlayer = getLatestFatigueByPlayer()
   const highFatigueCount = Object.values(fatigueByPlayer).filter(
     s => fatigueTier(s.load) === 'high',
   ).length
   const openPPECount = getAllOpenPPEFlags().length
 
-  function pickSuggestion(chip: string) {
-    inputHandle.current?.setValueAndFocus(chip)
+  // Hydrate from localStorage on mount. If thread is empty, seed with
+  // Mikel's proactive greeting.
+  useEffect(() => {
+    const loaded = loadThread()
+    if (loaded.length === 0) {
+      const greeting: ChatMessage = {
+        id: `mikel-greet-${Date.now()}`,
+        role: 'mikel',
+        body: buildGreeting(highFatigueCount, openPPECount),
+        timestamp: Date.now(),
+      }
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setMessages([greeting])
+      saveThread([greeting])
+    } else {
+      setMessages(loaded)
+    }
+    setHydrated(true)
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // Dependencies intentionally empty — welfare counts are read once
+    // on mount to seed the greeting. Re-running would overwrite the
+    // user's conversation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Persist + scroll on every message change.
+  useEffect(() => {
+    if (!hydrated || messages.length === 0) return
+    saveThread(messages)
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [messages, hydrated])
+
+  function submitQuestion(text: string) {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    const userMsg: ChatMessage = {
+      id: `coach-${Date.now()}`,
+      role: 'coach',
+      body: trimmed,
+      timestamp: Date.now(),
+    }
+    setMessages(prev => [...prev, userMsg])
+    setToast('Mikel is thinking…')
+    // Mock Mikel reply after a brief delay. Always renders the rich
+    // response card (Saeed-pressing reel) for demo purposes — the
+    // backend will hydrate this with a real LLM response later.
+    setTimeout(() => {
+      const reply: ChatMessage = {
+        id: `mikel-${Date.now()}`,
+        role: 'mikel',
+        body: '',
+        isRichResponse: true,
+        timestamp: Date.now(),
+      }
+      setMessages(prev => [...prev, reply])
+      setToast(null)
+    }, 900)
   }
 
-  function submitQuestion() {
-    setToast('Mikel is thinking…')
+  function pickSuggestion(chip: string) {
+    inputHandle.current?.setValueAndFocus(chip)
   }
 
   function shareReel() {
@@ -93,116 +196,131 @@ export default function CoachWebHubPage() {
   }
 
   function newThread() {
-    setHasThread(false)
-    setToast('Started a new thread')
+    const greeting: ChatMessage = {
+      id: `mikel-greet-${Date.now()}`,
+      role: 'mikel',
+      body: buildGreeting(highFatigueCount, openPPECount),
+      timestamp: Date.now(),
+    }
+    setMessages([greeting])
+    setToast('Started a new chat')
   }
+
+  // Empty state = only the greeting message is present. Show suggestion
+  // chips below the greeting until the coach actually engages.
+  const isEmpty = messages.length === 1 && messages[0]?.role === 'mikel'
 
   return (
     <HubFrame>
-      {/* Hero zone — eyebrow / hero / subtitle / chips / input,
-       *  centered with stagger fade-in animation. */}
-      <div className="flex flex-col items-center px-4 pt-7 pb-[18px] md:px-9 md:pt-10 md:pb-6">
-        <div className="font-fragment text-[10.5px] tracking-[0.22em] text-brand-indigo-mute font-bold mb-3 flex items-center gap-2 [animation:hubFadeIn_360ms_ease_0ms_both]">
-          <MikelGlyph size={18} pulse />
-          MORNING, COACH SARA
+      <div className="flex h-[100dvh] flex-col">
+        {/* Compact header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-brand-line bg-brand-sand px-4 py-3 md:px-9">
+          <div className="flex items-center gap-2">
+            <MikelGlyph size={20} pulse />
+            <span className="font-clash text-[16px] font-bold tracking-[-0.01em] text-brand-indigo">
+              Coach Mikel
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={newThread}
+            className="cursor-pointer rounded-full border border-brand-line bg-transparent px-3 py-1 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em] text-brand-indigo"
+          >
+            New chat
+          </button>
         </div>
 
-        <div className="font-clash text-[28px] md:text-5xl leading-[0.96] tracking-[-0.025em] text-brand-indigo text-center mb-1.5 [animation:hubFadeIn_360ms_ease_80ms_both]">
-          Ask Mikel{' '}
-          <span className="bg-brand-yellow px-1.5 md:px-2">
-            anything
-          </span>
-          .
+        {/* Message stream */}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 md:px-9 md:py-7">
+          {messages.map(m => {
+            if (m.role === 'mikel' && m.isRichResponse) {
+              return (
+                <div key={m.id} className="flex justify-start">
+                  <div className="w-full max-w-[720px]">
+                    <HubResponseCard
+                      onShare={shareReel}
+                      onNewThread={newThread}
+                      onExportReel={() => setToast('Reel queued for export')}
+                      onRegenerate={() =>
+                        setToast('Regenerating — new angle on the way')
+                      }
+                    />
+                  </div>
+                </div>
+              )
+            }
+            if (m.role === 'mikel') {
+              return <MikelMessage key={m.id} body={m.body} />
+            }
+            return <CoachMessage key={m.id} body={m.body} />
+          })}
+
+          {/* Suggestion chips — only show on empty state (just the
+              greeting message in the thread). Once the coach engages,
+              they disappear. */}
+          {isEmpty && (
+            <div className="mt-1 flex flex-wrap gap-2">
+              {SUGGESTION_CHIPS.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => pickSuggestion(c)}
+                  className={cn(
+                    'cursor-pointer rounded-full border border-brand-line bg-brand-paper font-satoshi text-brand-indigo transition-colors hover:bg-brand-paper-hi',
+                    'px-3.5 py-1.5 text-[12.5px]',
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
         </div>
 
-        <div className="font-satoshi text-[13px] md:text-sm text-brand-indigo-mid text-center mb-[18px] md:mb-[22px] max-w-[520px] leading-[1.5] [animation:hubFadeIn_360ms_ease_160ms_both]">
-          Match prep, player questions, clip reels, drill ideas. Mikel knows this
-          week&apos;s footage.
-        </div>
-
-        <div className="w-full flex justify-center [animation:hubFadeIn_360ms_ease_240ms_both]">
-          <SuggestionChips chips={SUGGESTION_CHIPS} onPick={pickSuggestion} />
-        </div>
-        <div className="w-full flex justify-center [animation:hubFadeIn_400ms_ease_320ms_both]">
-          <HubChatInput
-            ref={inputHandle}
-            initialFocus={!isMobile}
-            onSubmit={submitQuestion}
-            onAttach={() => setToast('Attach clip — coming soon')}
-            onMention={() => setToast('Player mention — coming soon')}
-          />
-        </div>
-      </div>
-
-      {/* Recent reply (when a thread exists) */}
-      {hasThread && (
-        <div className="flex justify-center px-3.5 py-3 md:px-9 md:py-4 [animation:hubFadeIn_480ms_ease_480ms_both]">
-          <HubResponseCard
-            onShare={shareReel}
-            onNewThread={newThread}
-            onExportReel={() => setToast('Reel queued for export')}
-            onRegenerate={() => setToast('Regenerating — new angle on the way')}
-          />
-        </div>
-      )}
-
-      {/* Smart-flag rail — surfaces welfare intel that needs the coach's
-       *  attention. Reads from the same localStorage stream the parent
-       *  inbox uses, so producer + consumer stay in sync. */}
-      {(highFatigueCount > 0 || openPPECount > 0) && (
-        <div className="flex justify-center px-3.5 pt-1 md:px-9 md:pt-2">
-          <div className="flex flex-wrap gap-2.5 max-w-[720px] w-full [animation:hubFadeIn_480ms_ease_540ms_both]">
-            {highFatigueCount > 0 && (
-              <button
-                type="button"
-                onClick={() => router.push('/coach/web/squad')}
-                className="inline-flex items-center gap-2 px-3.5 py-2 bg-brand-paper border border-brand-line rounded-lg text-brand-indigo font-satoshi text-[12.5px] cursor-pointer transition-all duration-150"
-                style={{ borderLeft: `3px solid ${BRAND.coral}` }}
-              >
-                <Footprints size={14} />
-                <span>
-                  <strong className="font-extrabold">{highFatigueCount}</strong>{' '}
-                  player{highFatigueCount === 1 ? '' : 's'} over fatigue threshold this week
-                </span>
-                <span className="font-satoshi text-sm text-brand-indigo-mute ml-1">→</span>
-              </button>
-            )}
-            {openPPECount > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  // Open PPE flags don't have a top-level home yet; the
-                  // squad surface is the closest entrypoint into players.
-                  router.push('/coach/web/squad')
-                }}
-                className="inline-flex items-center gap-2 px-3.5 py-2 bg-brand-paper border border-brand-line rounded-lg text-brand-indigo font-satoshi text-[12.5px] cursor-pointer transition-all duration-150"
-                style={{ borderLeft: `3px solid ${BRAND.indigo}` }}
-              >
-                <AlertTriangle size={14} />
-                <span>
-                  <strong className="font-extrabold">{openPPECount}</strong>{' '}
-                  open gear flag{openPPECount === 1 ? '' : 's'}
-                </span>
-                <span className="font-satoshi text-sm text-brand-indigo-mute ml-1">→</span>
-              </button>
-            )}
+        {/* Sticky input */}
+        <div className="shrink-0 border-t border-brand-line bg-brand-sand px-4 py-3 md:px-9 md:py-4">
+          <div className="mx-auto flex justify-center">
+            <HubChatInput
+              ref={inputHandle}
+              initialFocus={!isMobile}
+              onSubmit={submitQuestion}
+              onAttach={() => setToast('Attach clip — coming soon')}
+              onMention={() => setToast('Player mention — coming soon')}
+            />
           </div>
         </div>
-      )}
-
-      {/* Tile rail */}
-      <div className="flex justify-center px-3.5 pt-4 pb-8 md:px-9 md:pt-5 md:pb-14">
-        <HubTiles />
-      </div>
-
-      {/* Privacy footer */}
-      <div className="text-center pb-9">
-        <span className="font-fragment text-[9.5px] tracking-[0.22em] text-brand-indigo-mute font-bold">
-          MIKEL DOESN&apos;T STORE QUESTIONS · YOUR CONVERSATIONS ARE PRIVATE
-        </span>
       </div>
 
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </HubFrame>
+  )
+}
+
+function MikelMessage({ body }: { body: string }) {
+  return (
+    <div className="flex justify-start">
+      <div className="max-w-[85%] rounded-lg border-l-[3px] border-brand-yellow bg-brand-paper px-4 py-3">
+        <div className="mb-1 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em] text-brand-indigo-mute">
+          Mikel
+        </div>
+        <p className="m-0 whitespace-pre-wrap font-satoshi text-[14px] leading-[1.55] text-brand-indigo">
+          {body}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function CoachMessage({ body }: { body: string }) {
+  return (
+    <div className="flex justify-end">
+      <div className="max-w-[85%] rounded-lg bg-brand-indigo px-4 py-3">
+        <p className="m-0 whitespace-pre-wrap font-satoshi text-[14px] leading-[1.55] text-brand-sand">
+          {body}
+        </p>
+      </div>
+    </div>
   )
 }

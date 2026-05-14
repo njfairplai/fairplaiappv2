@@ -162,7 +162,6 @@ export default function ParentHubPage() {
     () => mergeNotifications(baseNotifications, clientNotifications),
     [baseNotifications, clientNotifications],
   )
-  const unreadCount = allNotifications.filter(n => !readIds.has(n.id)).length
 
   // Unified feed: HUB_DEMO items + system items from notifications,
   // sorted newest first. Filter narrows to one kind.
@@ -171,12 +170,6 @@ export default function ParentHubPage() {
     const merged = [...HUB_DEMO, ...systemItems]
     return merged.sort((a, b) => b.date.localeCompare(a.date))
   }, [allNotifications])
-
-  const counts = useMemo(() => {
-    const c: Record<FilterId, number> = { all: allItems.length, coach: 0, announcement: 0, community: 0, system: 0 }
-    for (const it of allItems) c[it.kind]++
-    return c
-  }, [allItems])
 
   const filteredItems = useMemo(
     () => (filter === 'all' ? allItems : allItems.filter(it => it.kind === filter)),
@@ -207,7 +200,7 @@ export default function ParentHubPage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-brand-sand pb-20 text-brand-indigo">
-      <PortalTopBar unreadCount={unreadCount} />
+      <PortalTopBar />
 
       <MultiKidSwitcher
         kids={kids}
@@ -215,42 +208,53 @@ export default function ParentHubPage() {
         onSwitch={setActiveKidId}
       />
 
-      {/* Eyebrow */}
+      {/* Page anchor — H1 stands alone. The "HUB" eyebrow was removed
+          because the page IS the Hub; the eyebrow added chrome without
+          new information. */}
       <section className="px-4 pt-5">
-        <span className="font-fragment text-[10px] font-bold tracking-[0.22em] text-brand-indigo-mute">
-          HUB
-        </span>
-        <h1 className="m-0 mt-1 font-clash text-[28px] leading-[1.1] tracking-[-0.02em] text-brand-indigo">
+        <h1 className="m-0 font-clash text-[28px] leading-[1.1] tracking-[-0.02em] text-brand-indigo">
           Everything in one place.
         </h1>
       </section>
 
-      {/* Filter chip rail — narrows the merged feed. Counts on each
-          chip so the parent sees what's there before filtering. */}
-      <section className="flex flex-wrap gap-1.5 px-4 pt-3.5">
-        {(['all', 'coach', 'announcement', 'community', 'system'] as FilterId[]).map(f => {
-          const active = filter === f
-          const label = f === 'all' ? 'All' : f === 'coach' ? 'Coach' : f === 'announcement' ? 'Academy' : f === 'community' ? 'Community' : 'Updates'
-          return (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFilter(f)}
-              className={cn(
-                'cursor-pointer rounded-full border px-[11px] py-1.5 font-satoshi text-[11.5px] transition-all duration-150',
-                active
-                  ? 'border-brand-indigo bg-brand-indigo font-semibold text-brand-sand'
-                  : 'border-brand-line bg-transparent font-medium text-brand-indigo',
-              )}
-            >
-              {label} <span className="ml-0.5 opacity-70">{counts[f]}</span>
-            </button>
-          )
-        })}
+      {/* Filter chip rail — horizontal scroll on mobile so a single
+          discoverable row of pills doesn't wrap into a wall of controls.
+          Count badges were dropped (the All chip already implies the
+          total scope; per-filter counts read as noise). */}
+      <section className="px-4 pt-5">
+        <div
+          className="flex gap-2.5 overflow-x-auto pb-1"
+          style={{
+            scrollSnapType: 'x mandatory',
+            touchAction: 'pan-x',
+            scrollbarWidth: 'none',
+          }}
+        >
+          {(['all', 'coach', 'announcement', 'community', 'system'] as FilterId[]).map(f => {
+            const active = filter === f
+            const label = f === 'all' ? 'All' : f === 'coach' ? 'Coach' : f === 'announcement' ? 'Academy' : f === 'community' ? 'Community' : 'Updates'
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={cn(
+                  'shrink-0 cursor-pointer rounded-full border px-[11px] py-1.5 font-satoshi text-[10.5px] transition-all duration-150',
+                  active
+                    ? 'border-brand-indigo bg-brand-indigo font-semibold text-brand-sand'
+                    : 'border-brand-line bg-transparent font-medium text-brand-indigo',
+                )}
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
       </section>
 
       {/* Feed */}
-      <section className="flex flex-1 flex-col gap-2.5 px-4 py-3.5">
+      <section className="flex flex-1 flex-col gap-4 px-4 py-5">
         {filteredItems.length === 0 ? (
           <div className="px-5 py-10 text-center font-satoshi text-[13px] text-brand-indigo-mute">
             Nothing in this view yet.
@@ -331,27 +335,28 @@ function FeedCard({
         interactive ? 'cursor-pointer' : 'cursor-default',
       )}
     >
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'rounded-[3px] px-1.5 py-0.5 font-fragment text-[8.5px] font-extrabold leading-none tracking-[0.18em]',
-              tone.className,
-            )}
-          >
-            {tone.label}
-          </span>
-          <span className="font-satoshi text-[12.5px] font-bold text-brand-indigo">
-            {item.author}
-          </span>
-        </div>
-        <span className="font-fragment text-[9.5px] font-bold tracking-[0.16em] text-brand-indigo-mute">
-          {item.shortDate.toUpperCase()}
+      {/* Header: tag pill + author only. Date moved below body so the
+          top row reads cleanly as "who said this" without three elements
+          fighting for the same line. */}
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            'rounded-[3px] px-1.5 py-0.5 font-fragment text-[8.5px] font-extrabold leading-none tracking-[0.18em]',
+            tone.className,
+          )}
+        >
+          {tone.label}
+        </span>
+        <span className="font-satoshi text-[12.5px] font-bold text-brand-indigo">
+          {item.author}
         </span>
       </div>
       <p className="m-0 font-satoshi text-[13.5px] leading-[1.5] text-brand-indigo">
         {item.body}
       </p>
+      <span className="self-end font-fragment text-[10px] tracking-[0.16em] text-brand-indigo-mute">
+        {item.shortDate.toUpperCase()}
+      </span>
     </article>
   )
 }

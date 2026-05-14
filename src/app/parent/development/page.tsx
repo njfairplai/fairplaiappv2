@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   attendanceData,
   developmentReportData,
@@ -11,10 +11,6 @@ import {
 import {
   getKidsForParent,
   getDefaultKid,
-  getNotificationsForKid,
-  readClientNotifications,
-  mergeNotifications,
-  type PortalNotification,
 } from '@/lib/parent-portal'
 import { MultiKidSwitcher } from '@/components/parent-portal/MultiKidSwitcher'
 import { PortalTopBar } from '@/components/parent-portal/PortalTopBar'
@@ -54,29 +50,7 @@ export default function ParentDevelopmentPage() {
         .find(a => a.playerId === activeKid.id)
     : null
 
-  // Notifications for bell badge.
-  const baseNotifications = useMemo(
-    () => (activeKid ? getNotificationsForKid(activeKid.id) : []),
-    [activeKid],
-  )
-  const [clientNotifications, setClientNotifications] = useState<PortalNotification[]>([])
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const [idpOpen, setIdpOpen] = useState(false)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !activeKid) return
-    setClientNotifications(readClientNotifications(activeKid.id))
-    try {
-      const raw = localStorage.getItem('fairplai_parent_notifications_read')
-      if (raw) setReadIds(new Set(JSON.parse(raw) as string[]))
-    } catch {
-      /* ignore */
-    }
-  }, [activeKid])
-  const allNotifications = useMemo(
-    () => mergeNotifications(baseNotifications, clientNotifications),
-    [baseNotifications, clientNotifications],
-  )
-  const unreadCount = allNotifications.filter(n => !readIds.has(n.id)).length
 
   if (!activeKid) {
     return null
@@ -89,7 +63,7 @@ export default function ParentDevelopmentPage() {
 
   return (
     <div className="bg-brand-sand min-h-[100dvh] text-brand-indigo pb-20">
-      <PortalTopBar unreadCount={unreadCount} />
+      <PortalTopBar />
 
       <MultiKidSwitcher
         kids={kids}

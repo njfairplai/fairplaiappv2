@@ -1,13 +1,11 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { Bell, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import { Logo } from '@/components/shared/Logo'
 import { cn } from '@/lib/cn'
 
 interface PortalTopBarProps {
-  /** Optional unread count for the bell badge. 0 hides the badge. */
-  unreadCount?: number
   /** When set, renders this string in the centre instead of the
    *  Fairplai wordmark. Used by deep pages ("Match", "Settings", etc). */
   title?: string
@@ -19,10 +17,10 @@ const ICON_BTN_CLASS =
   'inline-flex items-center justify-center w-9 h-9 rounded-lg bg-transparent border-none cursor-pointer text-brand-indigo text-[22px] font-clash'
 
 /* Slim sticky top bar with avatar (left) → settings, brand mark
- * (centre — wordmark by default, or a deep-page title), notification
- * bell (right) with unread-count badge. */
+ * (centre — wordmark by default, or a deep-page title). The notification
+ * bell was removed (May 2026); the Hub tab in the bottom nav is now the
+ * only path to communications. */
 export function PortalTopBar({
-  unreadCount = 0,
   title,
   showBack = false,
 }: PortalTopBarProps) {
@@ -69,33 +67,10 @@ export function PortalTopBar({
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() =>
-          // Parent: bell routes to /parent/hub which is now the unified
-          // feed (system events + coach + announcements + community).
-          // Player portal still has its own /player/notifications until
-          // we unify there too.
-          router.push(pathname.startsWith('/player') ? '/player/notifications' : '/parent/hub')
-        }
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-        className={cn(ICON_BTN_CLASS, 'relative')}
-      >
-        <Bell size={18} />
-        {unreadCount > 0 && (
-          <span
-            className={cn(
-              'absolute top-1 right-1 inline-flex items-center justify-center',
-              'min-w-[16px] h-4 px-1 rounded-lg',
-              'bg-brand-yellow text-brand-indigo',
-              'font-fragment text-[9.5px] font-extrabold',
-              'border-[1.5px] border-brand-sand',
-            )}
-          >
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+      {/* Right slot intentionally empty — keeps the centred logo balanced.
+       *  Previously held the notification bell; removed in favour of the
+       *  Hub tab in the bottom nav. */}
+      <span aria-hidden />
     </header>
   )
 }
