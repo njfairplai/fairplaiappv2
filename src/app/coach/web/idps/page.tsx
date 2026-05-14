@@ -579,10 +579,10 @@ export default function IDPsPage() {
 
   return (
     <div className="min-h-full bg-brand-sand font-satoshi text-brand-indigo">
-      {/* List header */}
+      {/* List header — eyebrow dropped (the top nav already says where
+          you are). */}
       <div className={cn(isMobile ? 'px-3.5 pt-5 pb-3.5' : 'px-8 pt-8 pb-4')}>
-        <MEyebrow>COACH WORKSPACE</MEyebrow>
-        <MDisplay size={isMobile ? 32 : 56} style={{ marginTop: 6 }}>
+        <MDisplay size={isMobile ? 28 : 56}>
           Individual Development Plans
         </MDisplay>
         <div className="mt-2.5 flex flex-wrap items-center gap-3.5">

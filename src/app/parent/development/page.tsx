@@ -71,12 +71,10 @@ export default function ParentDevelopmentPage() {
         onSwitch={setActiveKidId}
       />
 
-      {/* Eyebrow + headline */}
+      {/* Page anchor — eyebrow dropped (the top nav and Progress tab
+          already establish scope; eyebrow was chrome without info). */}
       <section className="px-4 pt-5">
-        <span className="font-fragment text-[10px] tracking-[0.22em] text-brand-indigo-mute font-bold">
-          DEVELOPMENT
-        </span>
-        <h1 className="font-clash text-[28px] text-brand-indigo tracking-[-0.02em] mt-1 mb-0 leading-[1.1]">
+        <h1 className="m-0 font-clash text-[28px] leading-[1.1] tracking-[-0.02em] text-brand-indigo">
           What {activeKid.firstName} is working on.
         </h1>
       </section>

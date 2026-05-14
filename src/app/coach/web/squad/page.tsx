@@ -210,12 +210,15 @@ export default function CoachWebSquadPage() {
 
       {/* Squad filter pills — focus the pitch on a welfare slice. Tokens
        *  not matching the active filter dim out. Pills are mutually
-       *  exclusive; tap the active pill again to return to "All". */}
+       *  exclusive; tap the active pill again to return to "All".
+       *  Horizontal scroll on mobile instead of wrap to keep them on one
+       *  thumb-swipe row. */}
       <div
         className={cn(
-          'flex items-center gap-2 flex-wrap',
+          'flex items-center gap-2 overflow-x-auto',
           isMobile ? 'px-4' : 'px-7',
         )}
+        style={{ scrollbarWidth: 'none', touchAction: 'pan-x' }}
       >
         {[
           { id: 'all' as const, label: 'All', count: rosterPlayers.length, dot: 'var(--brand-indigo)' },
@@ -231,7 +234,7 @@ export default function CoachWebSquadPage() {
               onClick={() => setActiveFilter(isActive ? 'all' : pill.id)}
               aria-pressed={isActive}
               className={cn(
-                'inline-flex items-center gap-2 px-3.5 py-2 rounded-full font-satoshi text-[12.5px] font-semibold cursor-pointer tracking-[0.02em] whitespace-nowrap border',
+                'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-full font-satoshi text-[12.5px] font-semibold cursor-pointer tracking-[0.02em] whitespace-nowrap border',
                 isActive
                   ? 'border-brand-indigo bg-brand-indigo text-brand-sand'
                   : 'border-brand-line bg-transparent text-brand-indigo',

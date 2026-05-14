@@ -196,10 +196,10 @@ export default function CoachMatchCenterPage() {
         isMobile ? 'px-3.5 py-5' : 'px-9 py-8',
       )}
     >
-      {/* Page header */}
+      {/* Page header — eyebrow dropped, the top nav and title already
+          establish scope. */}
       <div>
-        <MEyebrow>SPRING 2026 SEASON</MEyebrow>
-        <MDisplay size={isMobile ? 36 : 64} style={{ marginTop: 6 }}>
+        <MDisplay size={isMobile ? 28 : 64}>
           Match Center
         </MDisplay>
         <div

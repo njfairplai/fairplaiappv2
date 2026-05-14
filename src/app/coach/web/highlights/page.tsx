@@ -153,8 +153,10 @@ export default function CoachHighlightsPage() {
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <MEyebrow>SPRING 2026 SEASON</MEyebrow>
-          <MDisplay size={isMobile ? 36 : 64} style={{ marginTop: 6 }}>
+          {/* SPRING 2026 SEASON eyebrow dropped — the top nav and the
+              page title already establish scope; the eyebrow was chrome
+              without information. */}
+          <MDisplay size={isMobile ? 28 : 64}>
             Highlights
           </MDisplay>
           <div className="mt-1 font-satoshi text-sm text-brand-indigo-mid">
@@ -171,12 +173,16 @@ export default function CoachHighlightsPage() {
         </button>
       </div>
 
-      {/* Filters */}
+      {/* Filters — chip rails scroll horizontally on mobile instead of
+       *  wrapping into 2-3 rows. Same pattern used on Parent Hub. */}
       <div className="mt-6">
         <div className="rounded-md border border-brand-line bg-brand-paper px-[18px] py-3.5">
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2.5">
             <MEyebrow>EVENT</MEyebrow>
-            <div className="flex flex-wrap gap-1">
+            <div
+              className="flex flex-1 gap-1.5 overflow-x-auto pb-0.5"
+              style={{ scrollbarWidth: 'none', touchAction: 'pan-x' }}
+            >
               {EVENT_FILTERS.map(f => {
                 const active = f === eventFilter
                 return (
@@ -185,7 +191,7 @@ export default function CoachHighlightsPage() {
                     type="button"
                     onClick={() => setEventFilter(f)}
                     className={cn(
-                      'cursor-pointer rounded-[3px] px-2.5 py-1.5 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em]',
+                      'shrink-0 cursor-pointer rounded-[3px] px-2.5 py-1.5 font-fragment text-[10px] font-bold uppercase tracking-[0.18em]',
                       active
                         ? 'border-none bg-brand-indigo text-brand-sand'
                         : 'border border-brand-line bg-transparent text-brand-indigo',
@@ -197,9 +203,12 @@ export default function CoachHighlightsPage() {
               })}
             </div>
           </div>
-          <div className="mt-2.5 flex flex-wrap items-center gap-2.5 border-t border-brand-line-soft pt-2.5">
+          <div className="mt-2.5 flex items-center gap-2.5 border-t border-brand-line-soft pt-2.5">
             <MEyebrow>PLAYER</MEyebrow>
-            <div className="flex flex-wrap gap-1">
+            <div
+              className="flex flex-1 gap-1.5 overflow-x-auto pb-0.5"
+              style={{ scrollbarWidth: 'none', touchAction: 'pan-x' }}
+            >
               {playerOptions.map(name => {
                 const active = name === playerFilter
                 const label = name === 'ALL' ? 'ALL' : abbreviatePlayerName(name)
@@ -209,7 +218,7 @@ export default function CoachHighlightsPage() {
                     type="button"
                     onClick={() => setPlayerFilter(name)}
                     className={cn(
-                      'cursor-pointer rounded-[3px] px-2.5 py-1.5 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em]',
+                      'shrink-0 cursor-pointer rounded-[3px] px-2.5 py-1.5 font-fragment text-[10px] font-bold uppercase tracking-[0.18em]',
                       active
                         ? 'border-none bg-brand-indigo text-brand-sand'
                         : 'border border-brand-line bg-transparent text-brand-indigo',
