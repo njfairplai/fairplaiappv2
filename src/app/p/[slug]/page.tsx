@@ -1,12 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
-import dynamic from 'next/dynamic'
-import { Link2, Download, Share2, Copy } from 'lucide-react'
+import { Link2, Download, Share2 } from 'lucide-react'
 import {
   getPlayerBySlug,
-  getSlugForPlayer,
   getFifaConnectId,
 } from '@/lib/player-public'
 import {
@@ -15,35 +13,50 @@ import {
   sessions,
   squadScores,
 } from '@/lib/mockData'
-import { parentScoreColor } from '@/lib/parent-score-color'
 import { cn } from '@/lib/cn'
-import { PlayerGlyph } from '@/components/coach/player-profile/PlayerGlyph'
 import { Toast } from '@/components/coach/match-center/Toast'
-
-const ScoreArcDynamic = dynamic(
-  () => import('@/components/charts/ScoreArc'),
-  { ssr: false, loading: () => <div className="h-[140px] w-[140px]" /> },
-)
+import { BibCard, computeBibRadar } from '@/components/coach/player-profile/BibCard'
 
 /* Public Player CV — /p/[slug]
  *
- * The kid's owned, shareable profile. Reachable without auth. The
- * surface that gets posted to TikTok, WhatsApp'd to grandparents,
- * shared with scouts and clubs.
+ * v2 rebuild. The hero is the existing BibCard (the same component
+ * that powers the coach Share modal) in 'square' format, scaled
+ * responsively for web embedding. The bib carries identity (name +
+ * jersey + position + foot dominance), the season score, the 6-stat
+ * radar, matches/mins/trend, FAIRPL.AI watermark, and the season
+ * label — so the page above it stays minimal.
  *
- * Visual direction: Instagram-profile-feel rather than the coach/parent
- * product UI. Centered. Big headlines. Prominent share affordance.
- * Brand stays (sand surface, indigo structure, yellow accent) but the
- * chrome reads as a SHAREABLE artifact, not a logged-in dashboard.
+ * Below the bib: magazine-editorial body — FIFA Connect ID, share
+ * row, additional stats, highlight grid, coach quote, footer.
  *
- * Read-only for the prototype. Authoring tools (edit bio, pin clips,
- * privacy controls) land in the next slice. */
+ * Distinctly FairplAI. Not borrowed from FUT. */
+
+const BIB_NATIVE_W = 1080
+const BIB_NATIVE_H = 1080
+const BIB_DESKTOP_MAX_W = 520
+
+function useResponsiveBibScale(): number {
+  const [scale, setScale] = useState(0.4)
+  useEffect(() => {
+    function compute() {
+      const w = typeof window !== 'undefined' ? window.innerWidth : 375
+      const targetW = Math.min(w - 32, BIB_DESKTOP_MAX_W)
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
+      setScale(targetW / BIB_NATIVE_W)
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    return () => window.removeEventListener('resize', compute)
+  }, [])
+  return scale
+}
 
 export default function PublicPlayerCVPage() {
   const params = useParams<{ slug: string }>()
   const slug = params?.slug
   const player = slug ? getPlayerBySlug(slug) : null
   const [toast, setToast] = useState<string | null>(null)
+  const bibScale = useResponsiveBibScale()
 
   const playerAnalyses = useMemo(
     () => (player ? matchAnalyses.filter(a => a.playerId === player.id) : []),
@@ -56,44 +69,67 @@ export default function PublicPlayerCVPage() {
   const squadScore = player ? squadScores[player.id] : null
   const compositeScore = squadScore?.compositeScore ?? 0
   const fifaConnectId = player ? getFifaConnectId(player.id) : null
+  const radar = useMemo(() => computeBibRadar(playerAnalyses), [playerAnalyses])
 
-  const age = useMemo(() => {
-    if (!player) return null
-    const dob = new Date(`${player.dateOfBirth}T00:00:00`)
-    const now = new Date('2026-05-14T00:00:00')
-    let years = now.getFullYear() - dob.getFullYear()
-    const monthDiff = now.getMonth() - dob.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) years--
-    return years
-  }, [player])
+  const minutesPlayed = useMemo(
+    () => playerAnalyses.reduce((s, a) => s + (a.minutesPlayed ?? 0), 0),
+    [playerAnalyses],
+  )
+  const matchesPlayed = playerAnalyses.length
+
+  // Trend = latest score minus the average of the prior 3 matches'
+  // compositeScore. Same shape as the coach Share modal.
+  const trend = useMemo(() => {
+    if (playerAnalyses.length < 2) return 0
+    const sorted = [...playerAnalyses].sort((a, b) =>
+      (sessions.find(s => s.id === a.sessionId)?.date ?? '').localeCompare(
+        sessions.find(s => s.id === b.sessionId)?.date ?? '',
+      ),
+    )
+    const recent = sorted[sorted.length - 1].compositeScore
+    const slice = sorted.slice(-4, -1)
+    if (slice.length === 0) return 0
+    const baseline = Math.round(
+      slice.reduce((s, a) => s + a.compositeScore, 0) / slice.length,
+    )
+    return recent - baseline
+  }, [playerAnalyses])
 
   const topStats = useMemo(() => {
     if (!player || playerAnalyses.length === 0) return null
     const goals = playerHighlights.filter(h => h.eventType === 'goal').length
-    const assists = playerHighlights.filter(h => h.eventType === 'key' || h.eventType === 'key_pass').length
+    const assists = playerHighlights.filter(
+      h => h.eventType === 'key' || h.eventType === 'key_pass',
+    ).length
     const avgPassCompletion = Math.round(
       playerAnalyses.reduce((s, a) => s + a.passCompletion, 0) / playerAnalyses.length,
     )
     const topSpeed = Math.max(...playerAnalyses.map(a => a.topSpeed)).toFixed(1)
-    const totalDistance = playerAnalyses.reduce((s, a) => s + a.distanceCovered, 0).toFixed(1)
-    return { goals, assists, avgPassCompletion, topSpeed, totalDistance }
+    return { goals, assists, avgPassCompletion, topSpeed }
   }, [player, playerAnalyses, playerHighlights])
 
   const recentMatchHighlights = useMemo(() => {
     if (!playerHighlights.length) return []
-    // Sort by session date, take the most recent 6 clips
     const withDates = playerHighlights
       .map(h => {
         const s = sessions.find(ss => ss.id === h.sessionId)
-        return s ? { clip: h, date: s.date, opponent: s.opponent } : null
+        return s
+          ? { clip: h, date: s.date, opponent: s.opponent }
+          : null
       })
-      .filter((x): x is { clip: typeof playerHighlights[0]; date: string; opponent: string | undefined } => x !== null)
+      .filter(
+        (x): x is {
+          clip: (typeof playerHighlights)[0]
+          date: string
+          opponent: string | undefined
+        } => x !== null,
+      )
     return withDates.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)
   }, [playerHighlights])
 
   if (!player) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-brand-sand px-6 text-brand-indigo">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-brand-paper px-6 text-brand-indigo">
         <div className="text-center">
           <div className="font-fragment text-[10px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
             Not found
@@ -101,21 +137,16 @@ export default function PublicPlayerCVPage() {
           <div className="mt-2 font-clash text-[28px] leading-[1.1] tracking-[-0.02em]">
             This player CV doesn&apos;t exist.
           </div>
-          <div className="mt-3 font-satoshi text-[13.5px] text-brand-indigo-mid">
-            Check the link or ask the player to send it again.
-          </div>
         </div>
       </div>
     )
   }
 
-  const positionDisplay = player.position[0] ?? 'Player'
   const displayName = `${player.firstName} ${player.lastName}`
   const profileUrl =
     typeof window !== 'undefined'
       ? window.location.href
       : `https://demo.fairpl.ai/p/${slug ?? ''}`
-  const scoreColor = parentScoreColor(compositeScore)
 
   function handleCopyLink() {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -125,7 +156,7 @@ export default function PublicPlayerCVPage() {
   }
 
   function handleWhatsApp() {
-    const text = `${displayName} on Fairplai — composite ${compositeScore}, ${playerAnalyses.length} matches this season. ${profileUrl}`
+    const text = `${displayName} on Fairplai — composite ${compositeScore}, ${matchesPlayed} matches this season. ${profileUrl}`
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`
     if (typeof window !== 'undefined') window.open(url, '_blank')
   }
@@ -135,14 +166,11 @@ export default function PublicPlayerCVPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-brand-sand text-brand-indigo">
-      {/* Slim header — brand mark + a single demo affordance to flip to
-       *  the scout side. Tap "Scouts" → /scout. Reads as a soft cross-
-       *  link, not a primary nav. */}
-      <header className="flex items-center justify-between border-b border-brand-line px-4 py-3">
-        <span className="font-fragment text-[10px] font-extrabold uppercase tracking-[0.32em] text-brand-indigo">
-          fairplai
-        </span>
+    <div className="min-h-[100dvh] bg-brand-paper text-brand-indigo">
+      {/* Minimal header — just the cross-nav to scouts. Brand mark
+       *  lives inside the bib (FAIRPL.AI · PLAYER CARD), so we don't
+       *  repeat it on the page. */}
+      <header className="flex items-center justify-end border-b border-brand-line px-4 py-2.5">
         <a
           href="/scout"
           className="inline-flex items-center gap-1 rounded-full border border-brand-line bg-brand-paper px-3 py-1 font-fragment text-[9.5px] font-bold uppercase tracking-[0.18em] text-brand-indigo no-underline"
@@ -151,75 +179,33 @@ export default function PublicPlayerCVPage() {
         </a>
       </header>
 
-      {/* Hero — centered Instagram-profile style. */}
-      <section className="px-5 pb-6 pt-8 text-center md:pt-12">
-        <div className="mx-auto flex flex-col items-center gap-3">
-          <div className="relative">
-            <div
-              className="rounded-full"
-              style={{ boxShadow: `0 0 0 4px ${scoreColor}, 0 12px 32px rgba(11,8,40,0.18)` }}
-            >
-              <PlayerGlyph
-                size={120}
-                jerseyNumber={player.jerseyNumber}
-                name={displayName}
-              />
-            </div>
-          </div>
-          <div className="mt-2">
-            <div className="font-fragment text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-indigo-mute">
-              {positionDisplay} · #{player.jerseyNumber} · AGE {age ?? '—'}
-            </div>
-            <h1 className="m-0 mt-1.5 font-clash text-[36px] leading-[1.05] tracking-[-0.02em] text-brand-indigo md:text-[48px]">
-              {displayName}
-            </h1>
-            <div className="mt-1.5 font-satoshi text-[14px] text-brand-indigo-mid">
-              MAK Academy U13 Lions · UAE
-            </div>
-            {fifaConnectId && (
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-brand-paper px-3 py-1 font-fragment text-[10px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute">
-                FIFA Connect <span className="text-brand-indigo">{fifaConnectId}</span>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Hero — the bib. Sized responsively, centred. */}
+      <section className="flex justify-center px-4 pt-5 pb-1 md:pt-8">
+        <BibCard
+          player={player}
+          radar={radar}
+          seasonScore={compositeScore}
+          matchesPlayed={matchesPlayed}
+          minutesPlayed={minutesPlayed}
+          trend={trend}
+          rosterName="MAK Academy U13 Lions"
+          format="square"
+          scale={bibScale}
+        />
       </section>
 
-      {/* Composite score — the hero number. ScoreArc renders the
-       *  outer ring only; we overlay the score value in the center via
-       *  absolute positioning so the visual reads as "score sits inside
-       *  the trajectory ring". */}
-      <section className="flex flex-col items-center gap-2 pb-7">
-        <div className="font-fragment text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-indigo-mute">
-          Composite score · season
-        </div>
-        <div className="relative inline-flex items-center justify-center">
-          <ScoreArcDynamic
-            score={compositeScore}
-            size={140}
-            strokeWidth={10}
-            color={scoreColor}
-            dark={false}
-          />
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className="font-clash text-[44px] leading-none tracking-[-0.03em]"
-              style={{ color: scoreColor }}
-            >
-              {compositeScore}
-            </span>
-            <span className="mt-1 font-fragment text-[8.5px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
-              / 100
-            </span>
-          </div>
-        </div>
-        <div className="max-w-[300px] text-center font-satoshi text-[12.5px] leading-[1.5] text-brand-indigo-mid">
-          AI-verified across {playerAnalyses.length} matches this season. Higher is better.
-        </div>
-      </section>
+      {/* FIFA Connect ID — a small badge under the bib, before the
+       *  share row. Sits in the page surface (paper), not on the bib. */}
+      {fifaConnectId && (
+        <section className="flex justify-center pt-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-brand-sand px-3 py-1 font-fragment text-[10px] font-bold uppercase tracking-[0.16em] text-brand-indigo-mute">
+            FIFA Connect <span className="text-brand-indigo">{fifaConnectId}</span>
+          </span>
+        </section>
+      )}
 
-      {/* Share row — prominent, brand-yellow primary, sticky on mobile. */}
-      <section className="sticky top-0 z-10 border-y border-brand-line bg-brand-paper px-5 py-3 backdrop-blur md:static md:bg-transparent md:py-4">
+      {/* Share row — sticky on mobile so it follows the scroll. */}
+      <section className="sticky top-0 z-10 border-y border-brand-line bg-brand-paper px-5 py-3 mt-5 backdrop-blur md:static md:bg-transparent md:py-4">
         <div className="mx-auto flex max-w-[480px] items-center justify-center gap-2">
           <button
             type="button"
@@ -248,9 +234,16 @@ export default function PublicPlayerCVPage() {
         </div>
       </section>
 
-      {/* Top stats — 4-up tile row. */}
+      {/* Magazine-editorial body — additional context that doesn't fit
+       *  on the bib. The bib already carries the 6-stat radar; below
+       *  is the event-flavoured stat row (goals, key passes, top
+       *  speed, pass accuracy) + highlight grid + coach quote. */}
+
       {topStats && (
         <section className="mx-auto max-w-[480px] px-5 pt-6">
+          <div className="mb-3 font-fragment text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-indigo-mute">
+            Season at a glance
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <StatTile label="Goals" value={String(topStats.goals)} />
             <StatTile label="Key passes" value={String(topStats.assists)} />
@@ -260,7 +253,6 @@ export default function PublicPlayerCVPage() {
         </section>
       )}
 
-      {/* Highlight reel grid — most recent first. */}
       {recentMatchHighlights.length > 0 && (
         <section className="mx-auto mt-7 max-w-[480px] px-5">
           <div className="mb-3 flex items-baseline justify-between">
@@ -285,16 +277,15 @@ export default function PublicPlayerCVPage() {
         </section>
       )}
 
-      {/* Coach endorsement — single pull quote. Hardcoded for prototype;
-       *  in real product this comes from coach IDP / freeform notes. */}
       <section className="mx-auto mt-7 max-w-[480px] px-5">
-        <div className="rounded-xl border-l-[3px] border-brand-yellow bg-brand-paper px-4 py-4">
+        <div className="rounded-xl border-l-[3px] border-brand-yellow bg-brand-sand px-4 py-4">
           <div className="font-fragment text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-indigo-mute">
             Coach&apos;s note
           </div>
           <p className="m-0 mt-1.5 font-satoshi text-[14px] leading-[1.55] text-brand-indigo">
-            &ldquo;Reads the game two passes ahead of everyone else on the pitch. The
-            kind of player who makes others around them better.&rdquo;
+            &ldquo;Reads the game two passes ahead of everyone else on the
+            pitch. The kind of player who makes others around them
+            better.&rdquo;
           </p>
           <div className="mt-2 font-fragment text-[10px] font-bold tracking-[0.16em] text-brand-indigo-mute">
             COACH SARA · MAK ACADEMY · APR 2026
@@ -302,7 +293,6 @@ export default function PublicPlayerCVPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="mx-auto mt-10 max-w-[480px] px-5 pb-10 pt-8 text-center">
         <div className="font-fragment text-[9px] font-bold uppercase tracking-[0.22em] text-brand-indigo-mute">
           fairplai · {displayName.toUpperCase()} · UAE
@@ -321,7 +311,7 @@ export default function PublicPlayerCVPage() {
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col rounded-xl border border-brand-line bg-brand-paper px-4 py-3.5">
+    <div className="flex flex-col rounded-xl border border-brand-line bg-brand-sand px-4 py-3.5">
       <span className="font-clash text-[24px] leading-none tracking-[-0.02em] text-brand-indigo">
         {value}
       </span>
@@ -351,7 +341,10 @@ function HighlightTile({
     def:      { label: 'DEF',   color: 'bg-brand-coral text-brand-sand' },
     save:     { label: 'SAVE',  color: 'bg-brand-indigo text-brand-sand' },
   }
-  const m = meta[eventType] ?? { label: eventType.toUpperCase(), color: 'bg-brand-indigo-mute text-brand-sand' }
+  const m = meta[eventType] ?? {
+    label: eventType.toUpperCase(),
+    color: 'bg-brand-indigo-mute text-brand-sand',
+  }
   return (
     <div className="flex aspect-[3/4] flex-col justify-between overflow-hidden rounded-xl bg-brand-indigo p-3 text-brand-sand">
       <div className="flex items-center justify-between">
@@ -384,7 +377,3 @@ function formatDate(iso: string): string {
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
   return `${months[d.getMonth()]} ${d.getDate()} ${String(d.getFullYear()).slice(-2)}`
 }
-
-// Suppress unused warning for slug-helper exports that other surfaces
-// (scout discovery) will consume in a follow-up slice.
-void getSlugForPlayer
