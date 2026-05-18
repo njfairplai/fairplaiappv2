@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Logo } from '@/components/shared/Logo'
 import { DemoFeedbackForm } from '@/components/demo/DemoFeedbackForm'
 
@@ -119,9 +120,31 @@ function SubmittedThanks() {
       >
         Got it — thanks.
       </div>
-      <p style={{ fontSize: 14, color: 'var(--brand-indigo-mute)', maxWidth: 460, margin: '0 auto' }}>
-        Your responses just opened in your email composer. Hit send and we&apos;ll pick this up on the call.
+      <p style={{ fontSize: 14, color: 'var(--brand-indigo-mute)', maxWidth: 460, margin: '0 auto 20px' }}>
+        One more thing before you go: a quick palette vote. You&apos;ve seen
+        the app in our default colours; now you&apos;ll see four alternates
+        and tell us which one felt right.
       </p>
+      <Link
+        href="/user-testing/explore?step=1"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '12px 22px',
+          background: 'var(--brand-indigo)',
+          color: 'var(--brand-sand)',
+          border: 'none',
+          borderRadius: 8,
+          fontFamily: 'var(--font-satoshi)',
+          fontWeight: 600,
+          fontSize: 14,
+          textDecoration: 'none',
+        }}
+      >
+        Pick a palette
+        <span aria-hidden>→</span>
+      </Link>
     </div>
   )
 }

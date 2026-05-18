@@ -2,15 +2,16 @@
 
 import Link from 'next/link'
 import { useEffect } from 'react'
-import { applyTheme, THEMES } from '@/lib/themes'
+import { applyTheme } from '@/lib/themes'
 import { Logo } from '@/components/shared/Logo'
 
 /**
- * /user-testing — landing screen.
+ * / (landing).
  *
- * Sets the default sand palette on mount, then invites the voter to walk
- * through 5 palettes one at a time. We DON'T let them choose freely;
- * sequential exposure gives us cleaner comparison data.
+ * Sets the default Cloudline palette on mount. CTA takes the tester
+ * straight into the demo (no more upfront palette voting — that now
+ * happens AFTER the demo so testers form their colour opinions from
+ * inside the actual product experience, not from sterile preview iframes).
  */
 export default function UserTestingLandingPage() {
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function UserTestingLandingPage() {
           fontWeight: 700,
           marginBottom: 14,
         }}>
-          USER TESTING · TWO PHASES
+          USER TESTING
         </div>
 
         {/* Headline */}
@@ -84,66 +85,15 @@ export default function UserTestingLandingPage() {
         </h1>
 
         {/* Body */}
-        <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 16, maxWidth: 580 }}>
-          Fairplai is a sports-tech platform for football academies. This test
-          has <strong>two phases</strong>, takes about 5–7 minutes, and ends
-          with one short form.
+        <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 32, maxWidth: 580 }}>
+          Fairplai is a sports-tech platform for football academies. Take a
+          short guided demo (~5 minutes), tell us what worked, then vote on
+          a palette at the end.
         </p>
-        <ol style={{ fontSize: 17, lineHeight: 1.6, marginBottom: 32, maxWidth: 580, paddingLeft: 22 }}>
-          <li><strong>Pick a palette.</strong> You&apos;ll see the same coach
-            page rendered in {THEMES.length} colour palettes, one at a time. Vote for the
-            one that felt right.</li>
-          <li><strong>Try the app.</strong> We&apos;ll re-render the app in
-            your chosen palette and let you click around. Tell us which
-            features you&apos;d use and which feel unnecessary.</li>
-        </ol>
-
-        {/* Palette swatches preview */}
-        <div style={{
-          fontFamily: 'var(--font-fragment)',
-          fontSize: 11,
-          letterSpacing: '0.2em',
-          color: 'var(--brand-indigo-mute)',
-          fontWeight: 700,
-          marginBottom: 12,
-        }}>
-          THE {THEMES.length} PALETTES
-        </div>
-        <div style={{
-          display: 'flex',
-          gap: 12,
-          flexWrap: 'wrap',
-          marginBottom: 40,
-        }}>
-          {THEMES.map(t => (
-            <div key={t.id} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '8px 12px',
-              background: 'var(--brand-paper)',
-              border: '1px solid var(--brand-line)',
-              borderRadius: 8,
-            }}>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {t.swatches.map((c, i) => (
-                  <span key={i} style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: 3,
-                    background: c,
-                    border: '1px solid rgba(0,0,0,0.08)',
-                  }} />
-                ))}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</div>
-            </div>
-          ))}
-        </div>
 
         {/* CTA */}
         <Link
-          href="/user-testing/explore?step=1"
+          href="/demo/persona"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -161,7 +111,7 @@ export default function UserTestingLandingPage() {
             boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
           }}
         >
-          Start exploring
+          Start the demo
           <span aria-hidden>→</span>
         </Link>
 

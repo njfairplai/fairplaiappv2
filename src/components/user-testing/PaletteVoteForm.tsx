@@ -67,9 +67,13 @@ export function PaletteVoteForm() {
         palette_words: words,
       }))
     } catch { /* noop */ }
-    // Apply the chosen theme so the next page renders in it immediately
+    // Apply the chosen theme so the final feedback page renders in it.
     applyTheme(paletteVote)
-    router.push('/user-testing/portal')
+    // Post-demo flow change: vote now routes straight to the final
+    // feedback form. The /user-testing/portal interstitial used to live
+    // between vote and demo when palette voting happened FIRST; that
+    // page is gone in the post-demo-voting flow.
+    router.push('/user-testing/feedback')
   }
 
   return (

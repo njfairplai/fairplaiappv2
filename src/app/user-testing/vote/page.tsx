@@ -35,7 +35,7 @@ export default function PaletteVotePage() {
           color: 'var(--brand-indigo-mute)',
           fontWeight: 700,
           marginBottom: 12,
-        }}>PHASE 1 OF 2 · PALETTE VOTE</div>
+        }}>PALETTE VOTE</div>
         <h1 style={{
           fontFamily: 'var(--font-clash)',
           fontSize: 44,
@@ -46,8 +46,8 @@ export default function PaletteVotePage() {
           Pick the palette<br />that felt right.
         </h1>
         <p style={{ fontSize: 17, lineHeight: 1.55, marginBottom: 36, maxWidth: 560 }}>
-          Two questions, ~30 seconds. Once you continue, we&apos;ll re-render
-          the app in your chosen palette so you can explore it for real.
+          Two questions, ~30 seconds. Once you continue, you&apos;ll land
+          on the final feedback form in your chosen palette.
         </p>
 
         <PaletteVoteForm />
