@@ -40,9 +40,10 @@
  * there.
  */
 
-:root,
 [data-theme="touchline"] {
-  /* Touchline — default. Sage-tinted cards on warm cream. */
+  /* Touchline — sage-tinted cards on warm cream. Was the default
+     palette through Q1 2026; demoted in favour of Cloudline (now in
+     the :root block below) for the Digital CV v2 launch. */
   --brand-sand:        #F1EFE4;  /* page base — warm cream */
   --brand-sand-deep:   #E2DFCE;
   --brand-sand-deeper: #C9C5AE;
@@ -100,7 +101,11 @@
   --font-mono:    "Fragment Mono", ui-monospace, "SF Mono", monospace;
 }
 
-/* Cloudline — brand-anchored. Cool light surface, AHOY Blue lead. */
+/* Cloudline — brand-anchored. Cool light surface, AHOY Blue lead.
+ * Default palette since the Digital CV v2 launch — `:root` selector
+ * means every page renders Cloudline unless something explicitly sets
+ * `data-theme` to another palette key. */
+:root,
 [data-theme="cloudline"] {
   --brand-sand:        #EDEFF7;
   --brand-sand-deep:   #DDE0EC;
@@ -121,6 +126,8 @@
   /* Cloud — training-match frame body (see Almanac for rationale). */
   --brand-cloud:       #BFC3D8;
   --brand-cloud-deep:  #9DA4BD;
+
+  --logo-invert: none;
 
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body:    "Satoshi", system-ui, sans-serif;

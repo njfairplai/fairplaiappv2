@@ -26,7 +26,9 @@ export default function FeedbackPage() {
   // screen for a calm finish.
   useEffect(() => {
     if (submitted) {
-      applyTheme('touchline')
+      // Calm thank-you palette switched from 'touchline' to 'cloudline'
+      // (matches the new default).
+      applyTheme('cloudline')
     } else {
       applyTheme(readStoredTheme())
     }

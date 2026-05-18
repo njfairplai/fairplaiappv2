@@ -14,7 +14,10 @@ import { Logo } from '@/components/shared/Logo'
  */
 export default function UserTestingLandingPage() {
   useEffect(() => {
-    applyTheme('touchline')
+    // Default palette switched from 'touchline' (green) to 'cloudline'
+    // (cool light + indigo + electric blue) — closer to the intended
+    // FairplAI brand, cleaner canvas for the Digital CV bib hero.
+    applyTheme('cloudline')
     // Reset any prior dwell tracking from a previous session
     try { localStorage.removeItem('fairplai-testing-dwell') } catch { /* noop */ }
     // Wipe stale auth + demo state from prior testing sessions. Without
